@@ -1,0 +1,13 @@
+{
+  "name": "ai-jue",
+  "version": "1.0.0",
+  "description": "[![NPM version](https://img.shields.io/npm/v/jue-core.svg?style=flat)](https://www.npmjs.com/package/jue-core) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Build Status](https://img.shields.io/travis/your-username/jue.svg?branch=main)](https://travis-ci.org/your-username/jue)",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs"
+}
