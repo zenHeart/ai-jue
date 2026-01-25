@@ -1,0 +1,26 @@
+{
+  "name": "ai-jue-cli",
+  "version": "1.0.0",
+  "description": "",
+  "main": "dist/index.js",
+  "bin": {
+    "jue": "dist/cli.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsc"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "cosmiconfig": "^9.0.0",
+    "glob": "^13.0.0",
+    "yargs": "^18.0.0"
+  },
+  "devDependencies": {
+    "@types/glob": "^8.1.0",
+    "@types/yargs": "^17.0.33"
+  }
+}

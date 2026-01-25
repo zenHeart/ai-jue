@@ -1,0 +1,8 @@
+{
+  "model": "gemini-pro",
+  "safetySettings": {
+    "harassment": "BLOCK_LOW_AND_ABOVE"
+  },
+  "temperature": 0.9,
+  "customSetting": "enabled"
+}

@@ -1,7 +1,8 @@
 {
-  "name": "ai-jue",
+  "name": "ai-jue-monorepo",
   "version": "1.0.0",
-  "description": "[![NPM version](https://img.shields.io/npm/v/jue-core.svg?style=flat)](https://www.npmjs.com/package/jue-core) [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE) [![Build Status](https://img.shields.io/travis/your-username/jue.svg?branch=main)](https://travis-ci.org/your-username/jue)",
+  "private": true,
+  "description": "Monorepo for the ai-jue project",
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
@@ -9,5 +10,13 @@
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "type": "commonjs"
+  "type": "commonjs",
+  "workspaces": [
+    "packages/*"
+  ],
+  "devDependencies": {
+    "@types/node": "^25.0.10",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.9.3"
+  }
 }

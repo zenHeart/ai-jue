@@ -1,2 +1,3 @@
-   .specstory/**
-   node_modules/**
+.specstory/**
+node_modules
+dist/

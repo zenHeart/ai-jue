@@ -1,3 +1,10 @@
+<!-- AI-JUE:START -->
+<!-- 警告：以下内容由 ai-jue 自动生成，手动修改将在下次运行时被覆盖。 -->
+<!-- 要修改这部分内容，请更新你的 ai.config.js 或相关预设。 -->
+
+Project-specific prompt for Claude: This is an override from ai.config.js.
+<!-- AI-JUE:END -->
+
 # CLAUDE.md
 
 此文件为 Claude Code 在此仓库中工作时提供指导，包含项目的核心理念、长期战略和开发约定。
@@ -61,22 +68,33 @@
 *   **`npx jue check`**：检查预设是否有更新。
 *   **`npx jue create-preset`**：从本地 `.ai` 目录一键打包新预设。
 
-## 开发约定
+## 开发约定 (Development Conventions)
 
-*   **语言:** 所有文档、注释和输出必须使用中文。
-*   **配置文件:** **`ai.config.js` 必须位于项目根目录**，作为项目的唯一入口和指挥官。`.ai` 目录同样位于根目录，作为本地资产的专属工作区。为保持兼容性，工具可支持 `jue.config.js` 和 `.jue` 目录作为备选，但 `ai.*` 为第一优先级和强力推荐。
-*   **多语言支持 (i18n):** 在 `ai.config.js` 中可通过 `language` 属性声明项目语言（如 `zh-CN`）。`ai-jue` 在加载资产时，将优先查找对应语言的子目录（如 `prompts/zh-CN/`），若未找到，则回退到通用资产。这为能力资产的国际化提供了标准支持。
-*   **版本控制:** `ai.config.js` 和 `.ai` 目录应纳入版本控制。生成的工具配置文件（`CLAUDE.md`等）是否纳入版本控制取决于用户选择，但 `ai-jue` 必须通过“智能共存”策略（区块管理/深度合并）来兼容两种模式。
-*   **架构:** 遵循“编译器”思想，将核心逻辑与特定工具的生成器分离。
-*   **环境特定性:** 为了处理不同AI工具的输入内容差异，资产目录（本地 `.ai` 或预设中）支持通过与工具同名的子目录（如 `prompts/claude/`, `skills/gemini/`）来提供特定环境的资产。加载时遵循“专属覆写、通用回退”的逻辑。
+*   **语言 (Language):** 所有新代码都必须使用 **TypeScript** 编写。所有文档、注释和日志输出必须使用中文。
+*   **核心架构：插件化的 Monorepo (Core Architecture: Plugin-based Monorepo):**
+    *   项目采用 Monorepo 结构，通过 `npm workspaces` 进行管理。
+    *   **`ai-jue-cli`**: 核心包，作为“微内核”。其职责仅限于：
+        1.  读取并合并配置。
+        2.  加载预设（Presets）。
+        3.  发现并调用所有已安装的适配器（Adapters）。
+        它**不包含**任何针对特定工具的文件生成逻辑。
+    *   **`jue-preset-*`**: 预设包。用于封装可复用的“能力资产”（prompts, skills 等）。命名必须以 `jue-preset-` 开头。
+    *   **`ai-jue-adapter-*`**: 适配器包（插件）。负责将最终配置“编译”为特定工具的配置文件。命名必须以 `ai-jue-adapter-` 开头。
+*   **适配器 API 契约 (Adapter API Contract):**
+    *   每个适配器包的入口文件必须导出一个名为 `generate` 的异步函数。
+    *   函数签名: `async function generate(config: MergedConfig, outputDir: string): Promise<void>`
+    *   `generate` 函数负责从 `config` 对象中提取自己关心的部分，并生成相应的文件到 `outputDir` 中。
+*   **配置文件 (Configuration):** 根目录的 `ai.config.js` 依然是用户与 `ai-jue` 交互的唯一入口点。
+*   **版本控制 (Version Control):** 整个 Monorepo 仓库应被完整地纳入版本控制。
 
 ## 技术栈与开发哲学 (Technical Stack & Development Philosophy)
 
-*   **技术栈:**
-    *   **核心语言:** 最新的 TypeScript。
-    *   **命令行工具:** Yargs。
-*   **编码风格:**
+*   **核心语言 (Core Language):** **TypeScript**。利用其强类型系统提高代码质量和可维护性。
+*   **Monorepo 管理 (Monorepo Management):** **npm Workspaces**。
+*   **命令行工具 (CLI Framework):** Yargs。
+*   **编码风格 (Coding Style):**
     *   **函数式编程范式:** 鼓励使用纯函数、不可变数据和函数组合。
-*   **设计原则:**
-    *   **Unix 哲学:** “各司其职、小而精巧、组合为王”。
-    *   **KISS 原则 (Keep It Simple, Stupid):** 优先选择最简单、最直接的解决方案，避免不必要的复杂性。
+*   **设计原则 (Design Principles):**
+    *   **Unix 哲学:** 每个包（CLI, Adapter, Preset）都应该“各司其职、小而精巧”。
+    *   **KISS 原则 (Keep It Simple, Stupid):** 在满足架构要求的前提下，保持实现上的简洁。
+    *   **约定优于配置 (Convention over Configuration):** 通过明确的包命名（`ai-jue-adapter-*`）和 API 契约来简化插件的发现和使用。
