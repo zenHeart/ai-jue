@@ -5,6 +5,9 @@
   "description": "Monorepo for the ai-jue project",
   "main": "index.js",
   "scripts": {
+    "build": "npm run build --workspaces",
+    "start:cli": "ts-node packages/ai-jue-cli/src/cli.ts",
+    "docs:dev": "npm run docs:dev -w docs",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
