@@ -2,6 +2,7 @@
 node_modules
 dist/
 .vitepress/cache/
+
 # AI-JUE generated files
 /CLAUDE.md
 /GEMINI.md
