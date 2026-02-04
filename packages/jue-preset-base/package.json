@@ -1,14 +1,14 @@
 {
   "name": "jue-preset-base",
   "version": "1.0.0",
-  "description": "",
-  "main": "dist/index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "build": "tsc"
-  },
-  "keywords": [],
+  "description": "Base preset for ai-jue, providing common best-practice skills.",
+  "files": [
+    "prompts/",
+    "skills/"
+  ],
+  "keywords": [
+    "jue-preset"
+  ],
   "author": "",
-  "license": "ISC",
-  "type": "commonjs"
+  "license": "ISC"
 }

@@ -19,31 +19,23 @@ npm install -D ai-jue jue-preset-react
 
 ## 为什么需要 ai-jue？
 
-作为前端开发者，你已经习惯了标准化的工具链：
+`ai-jue` 项目的诞生，是为了解决 AI 辅助开发时代下，开发者经验无法有效沉淀、复用和共享的核心痛点。
 
-- **代码质量**: `eslint` + `eslint-config-airbnb`
-- **代码格式**: `prettier` + `prettier-config-standard`
+具体来说，它要解决以下三个相互关联的问题：
 
-**但是配置 AI 工具时呢？** 你的工作流可能是这样的：
+1.  **配置碎片化 (Configuration Fragmentation)**
+    *   **问题**: 随着 AI 编程工具（如 Gemini, Claude, Cursor, Copilot Workspace）的增多，每个工具都有自己独立的配置文件（`.gemini/`, `CLAUDE.md`, `.vscode/settings.json` 等）。开发者需要在不同项目、不同工具间手动维护这些零散的配置，非常繁琐且容易出错。
+    *   **`ai-jue` 的解法**: 提供一个统一的入口 `ai.config.js`，实现“一次配置，多处生效”，将开发者从重复的配置工作中解放出来。
 
-- ❌ 手动维护不同工具下的配置文件，比如 `.gemini、.cursor、.claude` 等
-- ❌ 如何沉淀经验实现跨项目的复用，比如 `skill、command、sub-agent、mcp 配置` 等
+2.  **经验难沉淀 (Experience Evaporation)**
+    *   **问题**: 开发者在使用 AI 的过程中，会总结出很多高价值的“最佳实践”，例如针对特定场景的优质 Prompt、解决特定问题的“技能”（Skill）、或者与项目代码库深度结合的上下文指令。这些宝贵的智力资产，目前大多以零散的文本片段形式存在于开发者的个人笔记或大脑中，无法形成系统性的知识库。
+    *   **`ai-jue` 的解法**: 创造 **“预设（Preset）”** 的概念。让开发者可以将这些碎片化的经验，打包成一个结构化的、可被版本控制和分发的 `npm` 包。
 
-`ai-jue` 将 AI 工具的配置带入你所熟悉的标准化时代。我们复用了你已有的知识，无需学习新概念：
+3.  **共享成本高 (High Sharing Cost)**
+    *   **问题**: 即使一个团队总结出了一套高效的 AI 使用模式，也很难在团队成员或跨团队之间高效地同步和推广。传统的做法是口口相传或维护一篇共享文档，效率低下且难以保持更新。
+    *   **`ai-jue` 的解法**: 通过 `npm` 生态来实现“一键分享、一键复用”。团队的最佳实践可以发布为一个私有的 `@my-company/jue-preset-internal` 包，团队成员只需在 `ai.config.js` 中引入即可。优秀的通用能力也可以发布到公共 `npm` 仓库，供整个社区使用。
 
-| 核心概念     | 与 ESLint 的类比             | 说明                               |
-|--------------|------------------------------|------------------------------------|
-| **预设 (Preset)**  | `eslint-config-airbnb` | 开箱即用的 AI 能力配置包 (e.g., `jue-preset-react`) |
-| **配置 (Config)**  | `.eslintrc.js`               | 项目配置文件 (e.g., `ai.config.js`) |
-
-**ai-jue 让 AI 工具配置和 ESLint 一样简单：**
-
-```bash
-npm install -D ai-jue jue-preset-react
-npx jue init
-```
-
-只需一条命令，即可自动生成 `CLAUDE.md`、`.cursor/cli.json`、`.gemini/settings.json` 等所有 AI 工具的配置，让你的 AI 助手即刻理解项目上下文和团队规范。
+**总结来说，`ai-jue` 的使命，就是成为 AI 开发领域的 `ESLint` 或 `Babel`：它不直接产出业务代码，而是通过提供标准、工具和生态，将开发者高价值的、抽象的“AI 开发能力”进行标准化、工程化和资产化，从而极大地提升整个开发工作流的效率和质量。**
 
 ---
 
@@ -169,8 +161,13 @@ export default {
 - **MCP Servers** - Model Context Protocol 服务器配置
 - **Sub-agents** - 子代理配置
 
-**高级用法提示：**
-`ai-jue` 的预设和 `.ai` 目录支持通过子目录为不同环境提供差异化配置。例如，你可以创建一个 `prompts/claude/` 或 `prompts/zh-CN/` 目录来存放特定于 Claude 或中文环境的能力资产。详情请关注未来的高级配置指南。
+**多语言资产加载 (i18n) 提示：**
+`ai-jue` 采用**渐进增强**的策略加载多语言资产。它不强制预设提供 `prompt.md` 这样的通用文件，而是根据用户在 `ai.config.js` 中 `language` 配置（如 `zh-CN`）智能地选择。
+查找优先级如下：
+1.  如果 `language` 已配置，则优先查找 `[文件名].<language>.md`（例如 `prompt.zh-CN.md`）。
+2.  其次，查找 `[文件名].md`（无语言后缀的通用版本）。
+3.  其次，如果找不到特定语言的文件，则回退到加载 `[文件名].md`（无语言后缀的通用版本）。
+这种策略确保了默认情况下用户无需关心语言配置，系统会自动适应现有文件；但当需要时，用户可以简单地通过配置来获得本地化体验。
 
 **官方预设：**
 

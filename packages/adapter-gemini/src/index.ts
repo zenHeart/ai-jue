@@ -74,9 +74,10 @@ function generateJsonFile(filePath: string, newConfig: any) {
 
 export async function generate(config: any, outputDir: string): Promise<void> {
   // Generate GEMINI.md
-  if (config.prompts && config.prompts.gemini) {
+  const prompt = config.prompts?.gemini || config.prompts?.agents;
+  if (prompt && prompt.content) { // Changed from prompt.prompt
     const mdFilePath = path.join(outputDir, 'GEMINI.md');
-    generateMarkdownFile(mdFilePath, config.prompts.gemini);
+    generateMarkdownFile(mdFilePath, prompt.content);
   }
 
   // Generate .gemini/settings.json

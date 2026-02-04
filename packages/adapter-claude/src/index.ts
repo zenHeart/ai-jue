@@ -34,8 +34,9 @@ function generateMarkdownFile(filePath: string, newContent: string) {
 }
 
 export async function generate(config: any, outputDir: string): Promise<void> {
-  if (config.prompts && config.prompts.claude) {
+  const prompt = config.prompts?.claude || config.prompts?.agents;
+  if (prompt && prompt.content) { // Changed from prompt.prompt
     const filePath = path.join(outputDir, 'CLAUDE.md');
-    generateMarkdownFile(filePath, config.prompts.claude);
+    generateMarkdownFile(filePath, prompt.content);
   }
 }

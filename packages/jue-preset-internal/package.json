@@ -1,0 +1,15 @@
+{
+  "name": "jue-preset-internal",
+  "version": "1.0.0",
+  "description": "Internal preset for developing the ai-jue project itself.",
+  "files": [
+    "AGENTS.zh-CN.md",
+    "META.json",
+    "tools/"
+  ],
+  "keywords": [
+    "jue-preset"
+  ],
+  "author": "",
+  "license": "ISC"
+}

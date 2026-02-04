@@ -18,7 +18,7 @@
       "type": "string"
     },
     "language": {
-      "description": "The preferred language for loading assets from presets (e.g., 'zh-CN', 'en').",
+      "description": "The preferred language for loading assets from presets (e.g., 'zh-CN', 'en'). ai-jue CLI uses a progressive enhancement strategy for loading multi-language assets; see the 'Multi-language Asset Loading' section for details.",
       "type": "string"
     },
     "prompts": {
@@ -147,4 +147,4 @@
 
 *   **功能**: 指定项目当前使用的主要语言，用于国际化（i18n）。
 *   **示例**: `'zh-CN'`, `'en'`
-*   **行为**: `ai-jue` CLI 会根据此设置，在加载预设中的能力资产时，优先选择对应语言的版本。
+*   **行为**: `ai-jue` CLI 采用**渐进增强**的策略加载多语言资产。它会根据此设置，智能地查找并加载预设或本地资产中的多语言文件。详细的加载优先级规则，请参阅 [多语言资产加载](#多语言资产加载) 部分。

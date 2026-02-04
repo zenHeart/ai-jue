@@ -1,0 +1,4 @@
+{
+  "name": "Write Tests Skill",
+  "description": "Generates comprehensive unit tests for the provided code snippet, covering normal cases, edge cases, and error conditions."
+}

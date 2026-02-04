@@ -1,11 +1,21 @@
-declare const config: {
-    prompts: {
-        claude: string;
-        gemini: string;
+interface AssetContent {
+    [key: string]: any;
+}
+interface SkillConfig {
+    name: string;
+    description: string;
+    [key: string]: any;
+}
+interface MergedConfig {
+    prompts?: {
+        [key: string]: AssetContent;
     };
-    skills: {
-        codeReview: string;
-        explainCode: string;
+    skills?: {
+        [key: string]: SkillConfig;
     };
-};
-export = config;
+    [key: string]: any;
+}
+declare const _default: (options?: {
+    language?: string;
+}) => MergedConfig;
+export = _default;

@@ -87,8 +87,9 @@ yargs(hideBin(process.argv))
 
       const presetName = config.preset;
       if (presetName) {
-        const presetConfig = await loadPreset(presetName);
-        console.log(`Loaded preset "${presetName}":`, presetConfig);
+        // Pass the language from the config to the preset loader
+        const presetConfig = await loadPreset(presetName, config.language);
+        console.log(`Loaded preset "${presetName}" with language "${config.language || 'default'}":`, presetConfig);
         finalConfig = deepMerge(presetConfig, finalConfig);
       } else {
         console.log('No preset specified in config.');

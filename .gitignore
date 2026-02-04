@@ -1,4 +1,8 @@
 .specstory/**
 node_modules
 dist/
-.vitepress/cache/\n# AI-JUE generated files\n/CLAUDE.md\n/GEMINI.md\n/.gemini/
+.vitepress/cache/
+# AI-JUE generated files
+/CLAUDE.md
+/GEMINI.md
+/.gemini/
