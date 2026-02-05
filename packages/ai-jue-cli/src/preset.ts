@@ -1,8 +1,9 @@
 import path from 'path';
 import fs from 'fs';
+// Assuming MergedConfig is defined in './config'
 import { MergedConfig } from './config';
 
-function findContentFile(assetPath: string, patterns: string[], userLanguage?: string): string | null {
+function findContentFile(assetPath: string, patterns: string[], userLanguage?: string): string | null { // Added userLanguage here
   // 1. Exact language match (if userLanguage is set)
   if (userLanguage) {
     for (const pattern of patterns) {
@@ -25,26 +26,26 @@ function findContentFile(assetPath: string, patterns: string[], userLanguage?: s
 function loadAssetsFromDir(dirPath: string, userLanguage?: string): MergedConfig {
   const config: MergedConfig = {};
 
-  const assetTypes: { [key: string]: string[] } = {
+  const contentAssetTypes: { [key: string]: string[] } = {
     prompts: ['AGENTS.md', 'prompt.md'],
     skills: ['AGENTS.md', 'prompt.md'],
     commands: ['command.js', 'command.ts'],
     'sub-agents': ['AGENTS.md', 'prompt.md'],
-    tools: ['config.json'], // Added tools definition
-    mcp: ['*.js', '*.ts'],
+    mcp: ['index.js', 'index.ts'], // assuming mcp assets have an index file
   };
-  
-  for (const assetType in assetTypes) {
-    const assetDir = path.join(dirPath, assetType);
-    if (fs.existsSync(assetDir)) {
+
+  // Load content-based asset types (prompts, skills, commands, sub-agents, mcp)
+  for (const assetType in contentAssetTypes) {
+    const currentAssetDir = path.join(dirPath, assetType);
+    if (fs.existsSync(currentAssetDir)) {
       config[assetType] = {};
-      const assetFolders = fs.readdirSync(assetDir, { withFileTypes: true })
+      const assetFolders = fs.readdirSync(currentAssetDir, { withFileTypes: true })
         .filter(dirent => dirent.isDirectory())
         .map(dirent => dirent.name);
 
       for (const folderName of assetFolders) {
-        const assetPath = path.join(assetDir, folderName);
-        const contentFilePath = findContentFile(assetPath, assetTypes[assetType], userLanguage);
+        const assetPath = path.join(currentAssetDir, folderName);
+        const contentFilePath = findContentFile(assetPath, contentAssetTypes[assetType], userLanguage);
         
         if (contentFilePath) {
           const fileContent = fs.readFileSync(contentFilePath, 'utf8');
@@ -53,13 +54,7 @@ function loadAssetsFromDir(dirPath: string, userLanguage?: string): MergedConfig
           if (fs.existsSync(metaPath)) {
             metadata = JSON.parse(fs.readFileSync(metaPath, 'utf8'));
           }
-
-          // Handle JSON files for 'tools' differently
-          if (assetType === 'tools' && path.extname(contentFilePath) === '.json') {
-            config[assetType][folderName] = JSON.parse(fileContent);
-          } else {
-            config[assetType][folderName] = { ...metadata, content: fileContent };
-          }
+          config[assetType][folderName] = { ...metadata, content: fileContent };
         }
       }
     }
@@ -71,6 +66,25 @@ function loadAssetsFromDir(dirPath: string, userLanguage?: string): MergedConfig
     if (!config.prompts) config.prompts = {};
     config.prompts['agents'] = { content: fs.readFileSync(topLevelAgentsFile, 'utf8') };
   }
+
+  // --- NEW: Handle Tools separately ---
+  const toolsDir = path.join(dirPath, 'tools');
+  if (fs.existsSync(toolsDir)) {
+    config.tools = {};
+    const toolFolders = fs.readdirSync(toolsDir, { withFileTypes: true })
+      .filter(dirent => dirent.isDirectory())
+      .map(dirent => dirent.name);
+
+    for (const folderName of toolFolders) {
+      const toolPath = path.join(toolsDir, folderName);
+      const configJsonPath = path.join(toolPath, 'config.json'); // Expecting config.json directly
+
+      if (fs.existsSync(configJsonPath)) {
+        config.tools[folderName] = JSON.parse(fs.readFileSync(configJsonPath, 'utf8'));
+      }
+    }
+  }
+  // --- END NEW ---
 
   return config;
 }

@@ -12,7 +12,7 @@ function deepMerge(target: any, source: any) {
   for (const key in source) {
     if (source.hasOwnProperty(key)) {
       if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key]) &&
-          typeof target[key] === 'object' && target[key] !== null && !Array.isArray(target[key])) {
+          typeof target[key] === 'object' && target[key] !== null && !Array.isArray(target[key])) { // Corrected: Array.isArray
         target[key] = deepMerge(target[key], source[key]);
       } else {
         target[key] = source[key];
@@ -80,20 +80,23 @@ yargs(hideBin(process.argv))
     (yargs) => {},
     async (argv) => {
       console.log('Running apply command...');
-      const config = await loadConfig();
+      const config = await loadConfig(); // user config from ai.config.js
       console.log('Loaded user config:', config);
 
-      let finalConfig: MergedConfig = { ...config };
+      let finalConfig: MergedConfig = { }; // Start with an empty base
 
       const presetName = config.preset;
       if (presetName) {
-        // Pass the language from the config to the preset loader
         const presetConfig = await loadPreset(presetName, config.language);
         console.log(`Loaded preset "${presetName}" with language "${config.language || 'default'}":`, presetConfig);
-        finalConfig = deepMerge(presetConfig, finalConfig);
+        finalConfig = deepMerge(finalConfig, presetConfig); // Apply preset config
       } else {
         console.log('No preset specified in config.');
       }
+      
+      // Finally, apply user config on top to ensure highest priority
+      finalConfig = deepMerge(finalConfig, config);
+
 
       console.log('Final merged config:', finalConfig);
 

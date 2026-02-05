@@ -1,7 +1,7 @@
 .specstory/**
 node_modules
 dist/
-.vitepress/cache/
+cache
 
 # AI-JUE generated files
 /CLAUDE.md

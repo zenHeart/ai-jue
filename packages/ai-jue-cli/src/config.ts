@@ -2,7 +2,8 @@ import { cosmiconfig } from 'cosmiconfig';
 
 export interface MergedConfig {
   preset?: string;
-  language?: string; // Add language property
+  language?: string;
+  tools?: { [key: string]: any }; // Added tools property
   [key: string]: any;
 }
 
