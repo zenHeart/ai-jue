@@ -1,0 +1,29 @@
+{
+  "name": "ai-jue-adapter-claude",
+  "version": "1.0.0",
+  "description": "Adapter for generating Claude AI configurations.",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "ai-jue-core": "*"
+  },
+  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ai-jue/ai-jue.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ai-jue/ai-jue/issues"
+  },
+  "homepage": "https://github.com/ai-jue/ai-jue#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "types": "dist/index.d.ts"
+}

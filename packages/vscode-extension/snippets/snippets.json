@@ -1,0 +1,29 @@
+{
+    "ai.config.js Template": {
+        "prefix": "ai-config",
+        "body": [
+            "module.exports = {",
+            "  preset: '${1:base}',",
+            "  language: '${2:zh-CN}',",
+            "  prompts: {",
+            "    ${3:claude}: '${4:Your prompt here}'",
+            "  }",
+            "};"
+        ],
+        "description": "Basic ai.config.js template"
+    },
+    "MCP Server Config": {
+        "prefix": "ai-mcp",
+        "body": [
+            "  mcp: {",
+            "    servers: {",
+            "      '${1:server-name}': {",
+            "        command: '${2:uvx}',",
+            "        args: ['${3:mcp-server-package}']",
+            "      }",
+            "    }",
+            "  },"
+        ],
+        "description": "MCP Server Configuration"
+    }
+}

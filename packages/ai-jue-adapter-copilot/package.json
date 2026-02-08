@@ -1,0 +1,38 @@
+{
+  "name": "ai-jue-adapter-copilot",
+  "version": "1.0.0",
+  "description": "AI-Jue adapter for GitHub Copilot",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc"
+  },
+  "keywords": [
+    "ai-jue",
+    "adapter",
+    "copilot"
+  ],
+  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "license": "MIT",
+  "dependencies": {
+    "ai-jue-core": "*",
+    "@types/node": "^20.0.0"
+  },
+  "devDependencies": {
+    "typescript": "^5.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ai-jue/ai-jue.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ai-jue/ai-jue/issues"
+  },
+  "homepage": "https://github.com/ai-jue/ai-jue#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "dist"
+  ],
+  "types": "dist/index.d.ts"
+}

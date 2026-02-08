@@ -20,6 +20,7 @@ export default withMermaid(
             { text: "什么是 ai-jue?", link: "/guide/what-is-ai-jue" },
             { text: "快速上手", link: "/guide/getting-started" },
             { text: "配置指南", link: "/guide/configuration-guide" },
+            { text: "官方预设", link: "/guide/presets" },
           ],
         },
         {
@@ -27,6 +28,8 @@ export default withMermaid(
           items: [
             { text: "架构", link: "/guide/architecture" },
             { text: "创建预设", link: "/guide/creating-a-preset" },
+            { text: "适配器标准化", link: "/guide/adapter-standardization" },
+            { text: "与脚手架集成", link: "/guide/integration" },
           ],
         },
       ],

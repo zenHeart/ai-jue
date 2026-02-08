@@ -3,12 +3,26 @@
   "version": "1.0.0",
   "description": "Base preset for ai-jue, providing common best-practice skills.",
   "files": [
-    "prompts/",
-    "skills/"
+    "prompts",
+    "skills",
+    "index.js",
+    "META.json"
   ],
   "keywords": [
     "jue-preset"
   ],
-  "author": "",
-  "license": "ISC"
+  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ai-jue/ai-jue.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ai-jue/ai-jue/issues"
+  },
+  "homepage": "https://github.com/ai-jue/ai-jue#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "index.js"
 }

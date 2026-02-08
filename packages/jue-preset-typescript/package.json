@@ -1,0 +1,28 @@
+{
+  "name": "jue-preset-typescript",
+  "version": "1.0.0",
+  "description": "TypeScript preset for ai-jue",
+  "files": [
+    "prompts",
+    "skills",
+    "index.js",
+    "META.json"
+  ],
+  "keywords": [
+    "jue-preset"
+  ],
+  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ai-jue/ai-jue.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ai-jue/ai-jue/issues"
+  },
+  "homepage": "https://github.com/ai-jue/ai-jue#readme",
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "index.js"
+}

@@ -1,0 +1,48 @@
+{
+  "name": "ai-jue-vscode",
+  "displayName": "ai-jue",
+  "description": "VS Code extension for ai-jue configuration management",
+  "version": "0.0.1",
+  "publisher": "ai-jue",
+  "engines": {
+    "vscode": "^1.80.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "ai-jue.init",
+        "title": "ai-jue: Initialize"
+      },
+      {
+        "command": "ai-jue.apply",
+        "title": "ai-jue: Apply Configuration"
+      }
+    ],
+    "snippets": [
+      {
+        "language": "javascript",
+        "path": "./snippets/snippets.json"
+      },
+      {
+        "language": "typescript",
+        "path": "./snippets/snippets.json"
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run package",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "tsc -p ./"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.80.0",
+    "@types/node": "^16.x",
+    "typescript": "^5.0.0"
+  },
+  "private": true
+}
