@@ -46,7 +46,11 @@ function parseReleaseNote(content) {
 }
 
 function main() {
-  const file = process.argv[2] || 'release-note.md';
+  const args = process.argv.slice(2);
+  const file = args.find(arg => !arg.startsWith('--')) || 'release-note.md';
+  const tagIndex = args.indexOf('--tag');
+  const tag = tagIndex !== -1 ? args[tagIndex + 1] : null;
+
   if (!fs.existsSync(file)) {
     process.stderr.write(`release note not found: ${file}\n`);
     process.exit(1);
@@ -78,6 +82,13 @@ function main() {
     const tgz = `${safeName}-${version}.tgz`;
     return { name, version, dir: found.dir, tgz };
   });
+
+  if (tag) {
+    const filtered = items.filter(item => `${item.name}@v${item.version}` === tag);
+    if (filtered.length > 0) {
+      items = filtered;
+    }
+  }
 
   process.stdout.write(JSON.stringify(items));
 }

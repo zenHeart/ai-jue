@@ -342,8 +342,6 @@ async function main() {
     // All successful. Now Git Commit & Tag.
     log.step('Finalizing Git...');
 
-    const batchTag = `${BATCH_TAG_PREFIX}${new Date().toISOString().replace(/[-:TZ.]/g, '').slice(0, 14)}`;
-
     const releaseNoteLines = [
       `# Release ${new Date().toISOString()}`,
       '',
@@ -375,27 +373,33 @@ async function main() {
       tagNames.push(tagName);
     }
 
-    run(`git tag ${batchTag}`);
-    log.success(`Tagged ${batchTag}`);
-    tagNames.push(batchTag);
-
     // Push
     if (!IS_DRY_RUN) {
         log.info('Pushing to remote...');
-        run('git push');
-        if (tagNames.length > 0) {
-          try {
-            run(`git push origin ${tagNames.join(' ')}`);
-          } catch (e) {
-            run('git push origin --tags');
-          }
+        try {
+            // Push current branch
+            run('git push origin HEAD');
+            
+            // Push tags
+            if (tagNames.length > 0) {
+                 log.info(`Pushing ${tagNames.length} tags...`);
+                 // Try pushing specific tags first
+                 try {
+                     run(`git push origin ${tagNames.join(' ')}`);
+                 } catch (e) {
+                     log.warn('Failed to push specific tags, trying --tags...');
+                     run('git push origin --tags');
+                 }
+            }
+        } catch (e) {
+             log.error('Failed to push to remote. Please push manually.');
+             throw e;
         }
     }
 
     // Summary
     log.step('Release Summary');
     console.table(sortedPlan.map(p => ({ Package: p.name, Version: `v${p.nextVersion}`, Tag: `${p.name}@v${p.nextVersion}` })));
-    log.info(`Batch Tag: ${batchTag}`);
     if (!IS_DRY_RUN) log.success('release-note.md committed and tags pushed.');
 
   } catch (e) {

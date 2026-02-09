@@ -3,7 +3,7 @@ name: Release
 on:
   push:
     tags:
-      - 'release-batch@v*'
+      - '*@v*'
   workflow_dispatch:
 
 concurrency:
@@ -13,14 +13,8 @@ concurrency:
 jobs:
   prepare:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      id-token: write
-
     outputs:
-      items: ${{ steps.items.outputs.items }}
-      tag_name: ${{ github.ref_name }}
-
+      items: ${{ steps.parse.outputs.items }}
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -28,19 +22,41 @@ jobs:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
 
-      - name: Determine Ref
-        id: ref
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Parse Release Note
+        id: parse
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            # For manual run, find the latest release-batch tag
-            LATEST_TAG=$(git tag --list 'release-batch@v*' --sort=-v:refname | head -n 1)
-            echo "Using latest tag: ${LATEST_TAG}"
-            echo "ref=${LATEST_TAG}" >> $GITHUB_OUTPUT
-            # Checkout that tag
-            git checkout ${LATEST_TAG}
+          if [ -f "release-note.md" ]; then
+            ITEMS=$(node .github/scripts/parse-release-note.js release-note.md --tag ${{ github.ref_name }})
+            echo "Parsed items: $ITEMS"
+            echo "items=$ITEMS" >> $GITHUB_OUTPUT
           else
-            echo "ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+            echo "release-note.md not found, skipping."
+            echo "items=[]" >> $GITHUB_OUTPUT
+            exit 1
           fi
+
+  publish:
+    needs: prepare
+    if: needs.prepare.outputs.items != '[]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
+    strategy:
+      fail-fast: false
+      matrix:
+        item: ${{ fromJson(needs.prepare.outputs.items) }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -52,116 +68,16 @@ jobs:
         run: npm ci
 
       - name: Build
-        run: npm run build
+        run: npm run build -w ${{ matrix.item.name }}
 
-      - name: Parse release-note
-        id: items
-        shell: bash
+      - name: Pack
+        id: pack
         run: |
-          items=$(node .github/scripts/parse-release-note.js release-note.md)
-          echo "items=${items}" >> "$GITHUB_OUTPUT"
-          echo "${items}" > release-items.json
-
-      - name: Pack tarballs
-        shell: bash
-        env:
-          RELEASE_ITEMS: ${{ steps.items.outputs.items }}
-        run: |
-          node .github/scripts/pack-tarballs.js
-
-      - name: Upload tarballs
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-tarballs
-          path: artifacts/tarballs
-
-      - name: Upload release-items
-        uses: actions/upload-artifact@v4
-        with:
-          name: release-items
-          path: release-items.json
-
-  publish:
-    needs: prepare
-    if: needs.prepare.outputs.items != '[]' && needs.prepare.outputs.items != ''
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-
-    strategy:
-      fail-fast: false
-      matrix:
-        item: ${{ fromJson(needs.prepare.outputs.items) }}
-
-    steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.ref_name }}
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          registry-url: 'https://registry.npmjs.org'
-
-      - name: Upgrade npm
-        run: npm install -g npm@latest
-
-      - name: Show tool versions
-        run: |
-          node --version
-          npm --version
-
-      - name: Download tarballs
-        uses: actions/download-artifact@v4
-        with:
-          name: release-tarballs
-          path: artifacts/tarballs
+          cd packages/${{ matrix.item.dir }}
+          npm pack
+          echo "tgz=${{ matrix.item.tgz }}" >> $GITHUB_OUTPUT
 
       - name: Publish
-        shell: bash
+        working-directory: packages/${{ matrix.item.dir }}
         run: |
-          set -euo pipefail
-          pkg='${{ matrix.item.name }}'
-          version='${{ matrix.item.version }}'
-          tgz='artifacts/tarballs/${{ matrix.item.tgz }}'
-
-          if npm view "${pkg}@${version}" version --silent >/dev/null 2>&1; then
-            echo "Already published: ${pkg}@${version} (skip)"
-            exit 0
-          fi
-
-          echo "Publishing: ${pkg}@${version}"
-          npm publish "${tgz}" --access public --provenance
-
-      - name: Upload npm logs
-        if: failure()
-        uses: actions/upload-artifact@v4
-        with:
-          name: npm-logs-${{ matrix.item.name }}
-          path: ~/.npm/_logs
-
-  github_release:
-    needs: [prepare, publish]
-    runs-on: ubuntu-latest
-    permissions:
-      contents: write
-
-    steps:
-      - name: Download tarballs
-        uses: actions/download-artifact@v4
-        with:
-          name: release-tarballs
-          path: artifacts/tarballs
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@v2
-        if: success()
-        with:
-          tag_name: ${{ needs.prepare.outputs.tag_name }}
-          generate_release_notes: true
-          fail_on_unmatched_files: false
-          files: |
-            artifacts/tarballs/*.tgz
-            artifacts/tarballs/checksums.sha256
+          npm publish "${{ steps.pack.outputs.tgz }}" --access public --provenance
