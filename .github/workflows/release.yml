@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - 'release-batch@v*'
+  workflow_dispatch:
 
 concurrency:
   group: release-${{ github.ref_name }}
@@ -26,6 +27,20 @@ jobs:
         with:
           fetch-depth: 0
           ref: ${{ github.ref_name }}
+
+      - name: Determine Ref
+        id: ref
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            # For manual run, find the latest release-batch tag
+            LATEST_TAG=$(git tag --list 'release-batch@v*' --sort=-v:refname | head -n 1)
+            echo "Using latest tag: ${LATEST_TAG}"
+            echo "ref=${LATEST_TAG}" >> $GITHUB_OUTPUT
+            # Checkout that tag
+            git checkout ${LATEST_TAG}
+          else
+            echo "ref=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          fi
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -68,6 +83,7 @@ jobs:
 
   publish:
     needs: prepare
+    if: needs.prepare.outputs.items != '[]' && needs.prepare.outputs.items != ''
     runs-on: ubuntu-latest
     permissions:
       id-token: write
@@ -140,7 +156,7 @@ jobs:
           path: artifacts/tarballs
 
       - name: Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         if: success()
         with:
           tag_name: ${{ needs.prepare.outputs.tag_name }}
