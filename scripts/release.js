@@ -310,12 +310,11 @@ async function main() {
       }
 
       // 5. Publish
+      // Moved to CI
       if (!pkgJson.private) {
-        log.info(`Publishing ${item.name}...`);
-        run(`npm publish -w ${item.name} --access public`);
-        published.push(item);
+        log.info(`Ready to publish ${item.name} (CI will handle this)...`);
       } else {
-        log.info(`Skipping publish for private package ${item.name}`);
+        log.info(`Skipping private package ${item.name}`);
       }
     }
 
@@ -352,16 +351,9 @@ async function main() {
 
   } catch (e) {
     log.error('Release process failed!');
+    // Rollback logic is limited for remote CI flow
     if (published.length > 0) {
-      log.warn('Rolling back published packages...');
-      for (const item of published) {
-        try {
-          run(`npm unpublish ${item.name}@${item.nextVersion} --force`, { ignoreError: true });
-          log.success(`Unpublished ${item.name}@${item.nextVersion}`);
-        } catch (unpubErr) {
-          log.error(`Failed to unpublish ${item.name}: ${unpubErr.message}`);
-        }
-      }
+       // ...
     }
     // Revert files
     run('git checkout .');

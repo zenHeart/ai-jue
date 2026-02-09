@@ -34,10 +34,10 @@ jobs:
       - name: Build
         run: npm run build
 
-      # - name: Publish Package (Trusted)
-      #   run: node .github/scripts/publish-manager.js
-      #   env:
-      #     CI: true
+      - name: Publish Package (Trusted)
+        run: node .github/scripts/publish-manager.js
+        env:
+          CI: true
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
