@@ -9,5 +9,5 @@
       "message": "chore(release): publish"
     }
   },
-  "packages": ["packages/*", "!packages/docs"]
+  "packages": ["packages/*", "!packages/docs", "!packages/vscode-extension", "!packages/jue-preset-internal"]
 }

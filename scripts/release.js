@@ -157,7 +157,7 @@ async function main() {
     if (selectAll) {
       changedPackages = fs.readdirSync(PACKAGES_DIR)
         .filter(f => fs.statSync(path.join(PACKAGES_DIR, f)).isDirectory())
-        .filter(f => f !== 'docs'); // Ignore docs package
+        .filter(f => !['docs', 'vscode-extension', 'jue-preset-internal'].includes(f)); // Ignore excluded packages
         
       // Map directory names back to package names
       const pkgNames = [];
