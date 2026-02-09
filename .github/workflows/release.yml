@@ -83,6 +83,14 @@ jobs:
           node-version: '20'
           registry-url: 'https://registry.npmjs.org'
 
+      - name: Upgrade npm
+        run: npm install -g npm@latest
+
+      - name: Show tool versions
+        run: |
+          node --version
+          npm --version
+
       - name: Download tarballs
         uses: actions/download-artifact@v4
         with:
