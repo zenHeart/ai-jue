@@ -1,0 +1,75 @@
+# Trusted Publishing 配置与验证报告
+
+## 1. 概述
+本报告记录了为 `ai-jue` Monorepo 项目配置 npm Trusted Publishing 的全过程。该机制利用 OpenID Connect (OIDC) 实现 GitHub Actions 与 npm 的无密钥安全认证。
+
+## 2. 项目结构分析 (Monorepo)
+- **仓库类型**: Monorepo (npm workspaces / turbo)
+- **包结构**: `packages/*` (e.g., `ai-jue`, `ai-jue-core`, `jue-preset-react`)
+- **发布策略**: 独立发布 (Atomic Release)，基于 Tag 触发。
+
+### 官方文档分析结论
+1.  **Monorepo 支持**: 支持，但**必须为每个子包单独配置**。
+    - npm 目前不支持在 Scope 或 Root 级别统一配置 Trust 关系。
+    - 每个 `package.json` 中的 `name` 对应的 npm package 页面都需要单独添加 Trusted Publisher。
+2.  **工作流复用**: 所有包可以共用同一个 GitHub Actions Workflow 文件 (`.github/workflows/release.yml`)。
+3.  **首次发布限制**: 如果是全新的包（从未在 npm 发布过），无法配置 Trusted Publisher。必须先手动发布 `v0.0.1` 或 `v1.0.0`，产生 package 页面后，才能在 Settings 中添加配置。
+
+## 3. 配置实施详情
+
+### 3.1 GitHub Actions Workflow
+已创建/更新 `.github/workflows/release.yml`：
+- **触发器**: `on.push.tags: ['*@v*']` (匹配 `ai-jue@v1.0.1` 等)
+- **权限**: 
+  ```yaml
+  permissions:
+    id-token: write  # 关键：申请 OIDC Token
+    contents: write  # 用于创建 GitHub Release
+  ```
+- **发布命令**: 调用自定义脚本 `.github/scripts/publish-manager.js`。
+
+### 3.2 智能发布脚本 (`publish-manager.js`)
+脚本逻辑：
+1.  解析 `GITHUB_REF` 提取包名和版本。
+2.  在 `packages/` 目录下定位对应包路径。
+3.  验证 `package.json` 版本号一致性。
+4.  执行 `npm publish --provenance --access public`。
+
+## 4. 验证与测试流程 (验证报告)
+
+### 4.1 代码级验证 (Local Simulation)
+- [x] **Tag 解析逻辑**: 测试脚本能正确解析 `ai-jue@v1.0.1` 为 `name: ai-jue`, `version: 1.0.1`。
+- [x] **路径查找**: 确认脚本能通过 `packages/*/package.json` 找到正确目录。
+- [x] **版本校验**: 模拟版本不匹配场景，脚本应抛出错误。
+
+### 4.2 npm 网站配置指南 (需手动执行)
+**请务必对每个包执行以下步骤：**
+
+1.  登录 [npmjs.com](https://www.npmjs.com/)。
+2.  进入包设置页 (e.g., `https://www.npmjs.com/package/ai-jue/settings`)。
+3.  找到 **Publishing Access** 区域。
+4.  点击 **Connect to GitHub**。
+5.  配置如下：
+    - **Repository**: `zenHeart/ai-jue` (您的 GitHub 仓库)
+    - **Workflow filename**: `release.yml` (注意：只填文件名，不要路径)
+    - **Environment**: (留空)
+6.  重复上述步骤，为 `ai-jue-core`, `jue-preset-react` 等所有子包配置。
+
+### 4.3 最终发布验证 (End-to-End)
+1.  本地修改 `packages/ai-jue/package.json` 版本至 `1.0.3`。
+2.  提交并打 Tag:
+    ```bash
+    git add .
+    git commit -m "chore: release ai-jue v1.0.3"
+    git tag ai-jue@v1.0.3
+    git push origin ai-jue@v1.0.3
+    ```
+3.  观察 GitHub Actions `Release` 任务：
+    - 预期：`Install` -> `Build` -> `Publish` 成功。
+    - 检查 npm 页面：版本更新，且带有 **Provenance** (来源证明) 徽章。
+
+## 5. 最佳实践建议
+1.  **权限最小化**: Workflow 仅申请必要的 `id-token: write` 权限。
+2.  **Provenance**: 始终启用 `--provenance`，提升包的安全可信度。
+3.  **版本一致性**: 严格遵守 Tag 与 package.json 版本一致，利用脚本进行自动化校验。
+4.  **新包处理**: 对于 Monorepo 中新增的包，先手动发布第一版，再配置 Trust，最后合入 Master。

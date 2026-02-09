@@ -3,6 +3,7 @@ import path from 'path';
 
 /**
  * Deep merges two objects.
+ * (Recursive implementation)
  */
 export function deepMerge(target: any, source: any) {
   for (const key in source) {

@@ -212,6 +212,38 @@
 - [x] **[Workflow] 完善 Release Workflow** (Priority: Medium, ETA: 30m)
   - 优化 `.github/workflows/release.yml`，增加 provenance 证明。
   - 配置 npm token secret (文档说明)。
+- [ ] **[Infra] Monorepo 发布工作流 (One-click Release)** (Phase 6)
+  - [ ] **1. 前置约束与准备**
+    - [ ] 确保待发布包位于 `packages/*`，包含符合 Conventional Commits 的提交。
+    - [ ] 确保本地已 rebase 到最新 master，且 CI 状态为绿色。
+    - [ ] 补充 CI 状态检查脚本。
+  - [ ] **2. 本地 Release 命令封装** (`npm run release`)
+    - [ ] 新建 `scripts/release.js`：
+      - [ ] 使用 `@lerna/listable` 或 `pnpm -r list` 扫描并自动识别需 bump 的包（对比 tag 与 HEAD diff）。
+      - [ ] 集成 `enquirer` 实现交互式包选择列表。
+      - [ ] 实现版本策略选择 (patch/minor/major/prerelease) 并自动改写 `package.json`。
+      - [ ] 集成 `conventional-changelog-cli` 生成 CHANGELOG 片段。
+      - [ ] 自动执行 git add/commit/tag 流程 (`chore(release): packagename@vxx.xx.xx`)。
+      - [ ] 支持 `--dry-run` 参数方便调试。
+    - [ ] 提供版本计算逻辑的单元测试覆盖。
+  - [ ] **3. Tag 规范与校验**
+    - [ ] 新建 `scripts/verify-tags.js`：
+      - [ ] 校验 Tag 格式严格匹配 `packagename@vxx.xx.xx`。
+      - [ ] Push 前校验本地 Tag 与远程冲突情况。
+  - [ ] **4. GitHub Actions 自动发布**
+    - [ ] 新增 `.github/workflows/release.yml`：
+      - [ ] 配置 `on.push.tags: '**@[0-9]+.[0-9]+.[0-9]+*'` 触发器。
+      - [ ] 解析 Tag 前缀，定位到 `packages/{packagename}`。
+      - [ ] 执行 `npm publish --provenance`。
+      - [ ] 调用 `actions/create-release` 自动创建 GitHub Release 并填充 CHANGELOG。
+  - [ ] **5. 文档同步**
+    - [ ] 更新 README.md Release 章节（环境准备、交互示例、错误码）。
+    - [ ] 确保 `WORKFLOW_DESIGN.md` 与实际实现一致。
+
+> **💡 贴心提醒：**
+> 在配置 **Trusted Publishers** 时，记得先在 npm 仓库设置中关联好 GitHub Repository 和对应的 Workflow 名称，这样可以省去手动管理 `NODE_AUTH_TOKEN` 的麻烦，安全性直接拉满。
+
+需要我帮你起草 `WORKFLOW_DESIGN.md` 的初步大纲，还是直接帮你写那个 `.js` 脚本的逻辑框架？
 
 ---
 
