@@ -1,3 +1,7 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-react@v1.0.6...jue-preset-react@1.0.0) (2026-02-09)
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-react@v1.0.5...jue-preset-react@1.0.0) (2026-02-09)
 
 

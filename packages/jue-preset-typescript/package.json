@@ -1,6 +1,6 @@
 {
   "name": "jue-preset-typescript",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "TypeScript preset for ai-jue",
   "files": [
     "prompts",
