@@ -66,10 +66,11 @@ function main() {
     }
 
     // 4. Publish
-    // Note: --provenance is key for Trusted Publishing
+    // Note: --provenance is key for Trusted Publishing, but requires PUBLIC repo.
+    // Since ai-jue is PRIVATE, we must disable provenance to avoid 422 errors.
     console.log('Executing npm publish...');
     // Add --verbose for better debugging in CI
-    const cmd = 'npm publish --provenance --access public --verbose';
+    const cmd = 'npm publish --access public --verbose';
     console.log(`> ${cmd}`);
     
     execSync(cmd, { 

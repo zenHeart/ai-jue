@@ -211,7 +211,9 @@ async function main() {
 
     if (push) {
       step('Pushing...');
-      run('git', ['push', '--follow-tags']);
+      // Explicitly push tags to ensure GitHub Actions triggers Release workflow
+      run('git', ['push', 'origin', tagName]); // Push specific tag first
+      run('git', ['push']); // Push commits
       console.log(pc.green(`\nVersion ${tagName} pushed! CI should trigger now.`));
     } else {
       console.log(pc.green(`\nRun 'git push --follow-tags' manually to trigger release.`));
