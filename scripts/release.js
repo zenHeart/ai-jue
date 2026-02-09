@@ -40,8 +40,34 @@ const run = (cmd, opts = {}) => {
   }
 };
 
+// Map package name to directory name
+const PKG_MAP = new Map();
+
+const loadPackageMap = () => {
+  const dirs = fs.readdirSync(PACKAGES_DIR).filter(f => fs.statSync(path.join(PACKAGES_DIR, f)).isDirectory());
+  dirs.forEach(dir => {
+    const pkgPath = path.join(PACKAGES_DIR, dir, 'package.json');
+    if (fs.existsSync(pkgPath)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
+        PKG_MAP.set(pkg.name, dir);
+      } catch (e) {
+        log.warn(`Failed to parse package.json in ${dir}`);
+      }
+    }
+  });
+};
+
+const getPackageDir = (pkgName) => {
+  if (PKG_MAP.size === 0) loadPackageMap();
+  const dir = PKG_MAP.get(pkgName);
+  if (!dir) throw new Error(`Directory for package ${pkgName} not found`);
+  return dir;
+};
+
 const getPackageJson = (pkgName) => {
-  const p = path.join(PACKAGES_DIR, pkgName, 'package.json');
+  const dir = getPackageDir(pkgName);
+  const p = path.join(PACKAGES_DIR, dir, 'package.json');
   return JSON.parse(fs.readFileSync(p, 'utf8'));
 };
 
@@ -50,7 +76,8 @@ const writePackageJson = (pkgName, data) => {
     log.info(`[Dry Run] Write package.json for ${pkgName} version ${data.version}`);
     return;
   }
-  const p = path.join(PACKAGES_DIR, pkgName, 'package.json');
+  const dir = getPackageDir(pkgName);
+  const p = path.join(PACKAGES_DIR, dir, 'package.json');
   fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\n');
 };
 
@@ -59,7 +86,7 @@ const writePackageJson = (pkgName, data) => {
 // 1. Check Git
 const checkGitClean = () => {
   if (IS_DRY_RUN) return;
-  const status = run('git status --porcelain', { force: true }); // force run even in dry-run to ensure safety? No, dry-run can skip.
+  const status = run('git status --porcelain', { force: true });
   if (status && status.length > 0) {
     log.error('Git working directory is dirty. Please commit or stash changes.');
     process.exit(1);
@@ -85,7 +112,7 @@ const getTopologicalOrder = (pkgNames) => {
   const graph = new Map();
   pkgNames.forEach(name => {
     const pkg = getPackageJson(name);
-    const deps = { ...pkg.dependencies, ...pkg.peerDependencies }; // DevDeps usually don't block publishing order unless strict
+    const deps = { ...pkg.dependencies, ...pkg.peerDependencies }; 
     const internalDeps = Object.keys(deps).filter(d => pkgNames.includes(d));
     graph.set(name, internalDeps);
   });
@@ -113,14 +140,13 @@ const getTopologicalOrder = (pkgNames) => {
 async function main() {
   console.log(pc.bold('📦 AI-Jue Batch Release Script'));
   
+  loadPackageMap();
   checkGitClean();
 
   // Detect
   log.step('Detecting changes...');
   let changedPackages = getChangedPackages();
   
-  // If lerna fails or returns empty, maybe we want to select manually?
-  // But requirement says "forbidden to select one by one".
   if (changedPackages.length === 0) {
     log.warn('No changed packages detected by Lerna.');
     const { selectAll } = await prompt({
@@ -132,6 +158,17 @@ async function main() {
       changedPackages = fs.readdirSync(PACKAGES_DIR)
         .filter(f => fs.statSync(path.join(PACKAGES_DIR, f)).isDirectory())
         .filter(f => f !== 'docs'); // Ignore docs package
+        
+      // Map directory names back to package names
+      const pkgNames = [];
+      changedPackages.forEach(dir => {
+         const p = path.join(PACKAGES_DIR, dir, 'package.json');
+         if (fs.existsSync(p)) {
+             const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
+             pkgNames.push(pkg.name);
+         }
+      });
+      changedPackages = pkgNames;
     } else {
       process.exit(0);
     }
@@ -218,11 +255,11 @@ async function main() {
 
   // Execute
   const published = [];
-  const errors = [];
 
   try {
     for (const item of sortedPlan) {
       log.step(`Processing ${item.name}...`);
+      const dir = getPackageDir(item.name);
       
       // 1. Update Version
       const pkgJson = getPackageJson(item.name);
@@ -230,13 +267,17 @@ async function main() {
       writePackageJson(item.name, pkgJson);
 
       // 2. Build
-      run(`npm run build -w packages/${item.name}`);
+      // Note: npm run build -w uses workspace NAME (item.name) usually, but to be safe with name mismatch
+      // we can use workspace directory if we pass path relative to root?
+      // Actually `npm run build -w <workspace-name>` is standard. 
+      // If `ai-jue-vscode` is the workspace name defined in package.json, then `-w ai-jue-vscode` works.
+      run(`npm run build -w ${item.name}`);
 
       // 3. Lint
       if (!SKIP_LINT) {
         if (pkgJson.scripts && pkgJson.scripts.lint) {
             log.info(`Linting ${item.name}...`);
-            run(`npm run lint -w packages/${item.name} --if-present`);
+            run(`npm run lint -w ${item.name} --if-present`);
         }
       }
 
@@ -244,7 +285,7 @@ async function main() {
       if (!SKIP_TEST) {
         if (pkgJson.scripts && pkgJson.scripts.test) {
            log.info(`Testing ${item.name}...`);
-           run(`npm run test -w packages/${item.name} --if-present`);
+           run(`npm run test -w ${item.name} --if-present`);
         } else {
            log.warn(`No test script for ${item.name}, skipping.`);
         }
@@ -255,34 +296,23 @@ async function main() {
       if (!IS_DRY_RUN) {
         const changelogArgs = [
             '-p', 'angular',
-            '-i', path.join(PACKAGES_DIR, item.name, 'CHANGELOG.md'),
+            '-i', path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'),
             '-s',
-            '--commit-path', path.join(PACKAGES_DIR, item.name),
+            '--commit-path', path.join(PACKAGES_DIR, dir),
             '--lerna-package', item.name,
             '--tag-prefix', `${item.name}@` // Ensure prefix matches
         ];
         // Ensure CHANGELOG exists
-        if (!fs.existsSync(path.join(PACKAGES_DIR, item.name, 'CHANGELOG.md'))) {
-            fs.writeFileSync(path.join(PACKAGES_DIR, item.name, 'CHANGELOG.md'), '');
+        if (!fs.existsSync(path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'))) {
+            fs.writeFileSync(path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'), '');
         }
         run(`npx conventional-changelog ${changelogArgs.join(' ')}`);
       }
 
       // 5. Publish
-      // Note: We publish BEFORE git commit/tag to allow rollback? 
-      // Actually standard is: Bump -> Commit -> Tag -> Publish.
-      // If Publish fails, we have to delete tag, reset commit.
-      // But if we publish first, we can just unpublish and revert file. 
-      // However, npm publish usually packs the current directory. 
-      // If we haven't committed, it publishes the modified package.json. This is fine.
-      // BUT, some prepublish scripts might check git tag.
-      // Given the user wants "Serial... success... rollback", and we are local.
-      // I will publish now.
-      
       if (!pkgJson.private) {
         log.info(`Publishing ${item.name}...`);
-        // Use --tag next if needed, but default to latest
-        run(`npm publish -w packages/${item.name} --access public`);
+        run(`npm publish -w ${item.name} --access public`);
         published.push(item);
       } else {
         log.info(`Skipping publish for private package ${item.name}`);
@@ -295,10 +325,6 @@ async function main() {
     // We commit ALL changes (changelogs, package.jsons)
     run('git add .');
     
-    // Create one commit? Or one per package?
-    // User asked for "release note... summary".
-    // Lerna independent usually creates one commit per package? No, often one commit "Publish" with multiple tags.
-    // I will do ONE commit for atomicity.
     const message = `chore(release): publish \n\n${sortedPlan.map(p => ` - ${p.name}@${p.nextVersion}`).join('\n')}`;
     run(`git commit -m "${message}"`);
 
