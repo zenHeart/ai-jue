@@ -38,7 +38,7 @@ function main() {
     const tag = ref.replace('refs/tags/', '');
     console.log(`Detected Tag: ${tag}`);
 
-    // Tag format: name@version (e.g. @scope/pkg@1.0.0 or pkg@1.0.0)
+    // Tag format: name@version (e.g. @scope/pkg@v1.0.0 or pkg@v1.0.0)
     // We look for the *last* '@' to separate version
     const lastAtIndex = tag.lastIndexOf('@');
     if (lastAtIndex === -1 || lastAtIndex === 0) {

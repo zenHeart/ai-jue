@@ -345,7 +345,7 @@ async function main() {
 
     // Create Tags
     for (const item of sortedPlan) {
-      const tagName = `${item.name}@${item.nextVersion}`;
+      const tagName = `${item.name}@v${item.nextVersion}`;
       run(`git tag ${tagName}`);
       log.success(`Tagged ${tagName}`);
     }
