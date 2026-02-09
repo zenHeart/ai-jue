@@ -1,3 +1,7 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.0.3...ai-jue-adapter-cursor@1.0.0) (2026-02-09)
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.0.2...ai-jue-adapter-cursor@1.0.0) (2026-02-09)
 
 
