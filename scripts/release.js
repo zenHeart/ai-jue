@@ -176,17 +176,11 @@ async function main() {
       '-i', path.join(PACKAGES_DIR, targetPackage, 'CHANGELOG.md'),
       '-s',
       '--commit-path', path.join(PACKAGES_DIR, targetPackage),
-      '-l', `${targetPackage}`, // tag prefix if any, but standard is usually no prefix or pkg-name@
-      // Actually, conventional-changelog uses tags to find previous version.
-      // If we use tag format pkg@v1.0.0, we need to ensure config handles it.
-      // For simplicity, we append to CHANGELOG.md.
-      // If tag-prefix is needed, we might need --tag-prefix or -t
+      '--lerna-package', targetPackage, // Use lerna-package to handle monorepo tag filtering properly
     ];
     
     // We try to use a tag prefix matching our monorepo convention: package-name@
-    // run('npx', ['conventional-changelog', ...changelogArgs, '-t', `${targetPackage}@`]);
-    // Simplification: Just generate based on commits in path
-    run('npx', ['conventional-changelog', ...changelogArgs, '--pkg', path.join(PACKAGES_DIR, targetPackage, 'package.json')]);
+    run('npx', ['conventional-changelog', ...changelogArgs, '--tag-prefix', `${targetPackage}@`, '--pkg', path.join(PACKAGES_DIR, targetPackage, 'package.json')]);
 
     // 8. Git Commit & Tag
     step('Committing & Tagging...');
