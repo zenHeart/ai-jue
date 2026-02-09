@@ -1,13 +1,13 @@
-# ai-jue
+# ai-jue-adapter-gemini
 
-> The AI coding capability management framework.
+> Adapter for generating Gemini AI configurations.
 
 Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Installation
 
 ```bash
-npm install ai-jue
+npm install ai-jue-adapter-gemini
 ```
 
 ## License

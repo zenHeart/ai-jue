@@ -1,13 +1,13 @@
-# ai-jue
+# ai-jue-adapter-claude
 
-> The AI coding capability management framework.
+> Adapter for generating Claude AI configurations.
 
 Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Installation
 
 ```bash
-npm install ai-jue
+npm install ai-jue-adapter-claude
 ```
 
 ## License

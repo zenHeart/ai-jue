@@ -1,13 +1,13 @@
-# ai-jue
+# jue-preset-typescript
 
-> The AI coding capability management framework.
+> TypeScript preset for ai-jue
 
 Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Installation
 
 ```bash
-npm install ai-jue
+npm install jue-preset-typescript
 ```
 
 ## License

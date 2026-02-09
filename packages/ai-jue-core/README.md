@@ -1,13 +1,13 @@
-# ai-jue
+# ai-jue-core
 
-> The AI coding capability management framework.
+> Core logic for ai-jue
 
 Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Installation
 
 ```bash
-npm install ai-jue
+npm install ai-jue-core
 ```
 
 ## License

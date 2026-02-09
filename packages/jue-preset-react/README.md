@@ -1,13 +1,13 @@
-# ai-jue
+# jue-preset-react
 
-> The AI coding capability management framework.
+> React preset for ai-jue
 
 Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Installation
 
 ```bash
-npm install ai-jue
+npm install jue-preset-react
 ```
 
 ## License

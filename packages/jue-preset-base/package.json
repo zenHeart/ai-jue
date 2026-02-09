@@ -15,12 +15,13 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/ai-jue/ai-jue.git"
+    "url": "git+https://github.com/zenHeart/ai-jue.git",
+    "directory": "packages/jue-preset-base"
   },
   "bugs": {
-    "url": "https://github.com/ai-jue/ai-jue/issues"
+    "url": "https://github.com/zenHeart/ai-jue/issues"
   },
-  "homepage": "https://github.com/ai-jue/ai-jue#readme",
+  "homepage": "https://github.com/zenHeart/ai-jue/tree/main/packages/jue-preset-base#readme",
   "publishConfig": {
     "access": "public"
   },

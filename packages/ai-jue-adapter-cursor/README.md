@@ -1,13 +1,13 @@
-# ai-jue
+# ai-jue-adapter-cursor
 
-> The AI coding capability management framework.
+> AI-Jue adapter for Cursor
 
 Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Installation
 
 ```bash
-npm install ai-jue
+npm install ai-jue-adapter-cursor
 ```
 
 ## License

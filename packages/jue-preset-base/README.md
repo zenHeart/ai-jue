@@ -1,13 +1,13 @@
-# ai-jue
+# jue-preset-base
 
-> The AI coding capability management framework.
+> Base preset for ai-jue, providing common best-practice skills.
 
 Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Installation
 
 ```bash
-npm install ai-jue
+npm install jue-preset-base
 ```
 
 ## License

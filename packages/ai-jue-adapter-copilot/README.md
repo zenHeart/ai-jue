@@ -1,13 +1,13 @@
-# ai-jue
+# ai-jue-adapter-copilot
 
-> The AI coding capability management framework.
+> AI-Jue adapter for GitHub Copilot
 
 Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Installation
 
 ```bash
-npm install ai-jue
+npm install ai-jue-adapter-copilot
 ```
 
 ## License
