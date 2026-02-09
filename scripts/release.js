@@ -192,7 +192,18 @@ async function main() {
     step('Committing & Tagging...');
     const tagName = `${targetPackage}@v${targetVersion}`;
     run('git', ['add', '.']);
-    run('git', ['commit', '-m', `chore(release): ${tagName}`]);
+    
+    // Fix: Wrap commit message in quotes to handle special characters properly
+    // And execSync via run() splits args by space which breaks message with spaces/parens if not handled carefully
+    // We should pass args as array to spawn/execFile, but execSync takes string.
+    // Let's manually construct the command string with proper quoting
+    
+    // Actually run helper does: execSync(`${bin} ${args.join(' ')}`
+    // So ['commit', '-m', 'msg'] becomes "git commit -m msg" -> broken if msg has spaces/parens
+    
+    // Fix: Use quoted string for message
+    run('git', ['commit', '-m', `"${`chore(release): ${tagName}`}"`]);
+    
     run('git', ['tag', tagName]);
 
     step(`Release ${tagName} successful!`);
