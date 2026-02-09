@@ -1,6 +1,6 @@
 {
   "name": "jue-preset-base",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Base preset for ai-jue, providing common best-practice skills.",
   "files": [
     "prompts",
