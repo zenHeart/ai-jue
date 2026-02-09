@@ -5,7 +5,6 @@ This guide describes the release process for the `ai-jue` monorepo.
 ## Prerequisites
 
 - Ensure you have write access to the repository.
-- Ensure you are logged in to npm (if running manually, though CI handles actual publishing).
 - Ensure your local environment is set up (`npm install`).
 
 ## Pre-Release Checklist
@@ -34,7 +33,6 @@ We use a custom release script that wraps `semver` and `git` commands to manage 
     ```bash
     npm run release
     ```
-    *Optional: Use `--scope <package_name>` to release a specific package.*
 
 2.  **Follow Prompts**:
     - Select the release type (patch, minor, major, etc.).
@@ -45,18 +43,16 @@ We use a custom release script that wraps `semver` and `git` commands to manage 
         - Bump the version in `package.json`.
         - Update `CHANGELOG.md`.
         - Create a git commit.
-        - Create a git tag (e.g., `ai-jue-core@1.0.6`).
-        - Push the commit and tag to GitHub.
+        - Create per-package tags (e.g., `ai-jue-core@v1.0.6`).
+        - Create a batch tag (e.g., `release-batch@v20260209063350`).
+        - Push the commit and all tags to GitHub.
 
 4.  **CI/CD Trigger**:
-    - Pushing the tag triggers the GitHub Action defined in `.github/workflows/release.yml`.
-    - This workflow will:
-        - Build the project.
-        - Publish to npm using Provenance (if public) or standard auth (if private).
-        - Create a GitHub Release.
+    - Pushing the batch tag triggers the GitHub Action defined in `.github/workflows/release.yml`.
+    - This workflow will build once, then publish all packages listed in `release-note.md` in a single workflow run.
 
 ## Troubleshooting
 
--   **Release not triggering**: Check if the tag was pushed (`git push --tags`).
+-   **Release not triggering**: Check if the batch tag was pushed (`git push origin --tags`).
 -   **CI Failure**: Check the GitHub Actions logs.
 -   **Metadata Errors**: Run `npm run check-consistency` and fix reported issues.

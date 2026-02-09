@@ -606,15 +606,14 @@ npx jue apply
 
 ## Release (发布流程)
 
-本项目的发布流程设计为「代码合并到 master 后一键发布」，遵循严格的 Monorepo 规范。
+本项目的发布流程采用「本地生成版本与标签 → GitHub Actions 批量发布」模式，遵循 Monorepo 批量发布规范。
 
 ### 1. 环境准备
 
-发布操作需在本地执行，请确保满足以下条件：
+发布准备需在本地执行，请确保满足以下条件：
 - **Node.js**: ≥ 18.0.0
 - **Git**: ≥ 2.35
-- **NPM**: 已登录 (`npm login`) 且拥有对应包的发布权限
-- **Branch**: 当前处于 `master` 分支，且已同步最新代码 (`git pull --rebase`)
+- **Branch**: 当前处于 `main` 分支，且已同步最新代码 (`git pull --rebase`)
 
 ### 2. 执行发布
 
@@ -624,43 +623,21 @@ npx jue apply
 npm run release
 ```
 
-**交互示例：**
+该命令会自动完成：
+- 计算并写入各包的新版本号
+- 生成/更新各包的 `CHANGELOG.md`
+- 生成 `release-note.md`（批量发布清单）
+- 创建并推送：
+  - 包标签：`<package>@v<version>`（例如 `ai-jue-core@v1.0.8`）
+  - 批量标签：`release-batch@v<timestamp>`（例如 `release-batch@v20260209063350`）
 
-```text
-? Select packages to release: (Press <space> to select, <a> to toggle all, <i> to invert selection)
-❯ ◯ ai-jue (current: 1.0.1)
-  ◉ ai-jue-core (current: 1.0.0) -> has changes
-  ◯ jue-preset-react (current: 1.0.2)
+### 3. 自动化流程
 
-? Select release type for ai-jue-core:
-  Patch (1.0.1)
-❯ Minor (1.1.0)
-  Major (2.0.0)
-  Prerelease (1.0.1-beta.0)
-
-✓ Updated package.json
-✓ Generated CHANGELOG.md
-✓ Created git tag: ai-jue-core@1.1.0
-✓ Pushed to remote
-```
-
-### 3. 常见错误码对照表
-
-| 错误码 | 描述 | 解决方案 |
-|--------|------|----------|
-| `E_TAG_EXISTS` | 远程已存在相同 Tag | 检查是否重复发布，或手动删除远程错误 Tag |
-| `E_GIT_DIRTY` | 本地有未提交的变更 | 请先提交或 stash 本地变更后再执行发布 |
-| `E_CI_FAILED` | CI 状态检查未通过 | 确保最近一次 commit 的 CI 构建成功 |
-| `E_NPM_AUTH` | NPM 未授权 (401) | 运行 `npm login` 重新登录 |
-| `E_PREID_CONFLICT` | Prerelease ID 冲突 | 检查版本号策略，确保 preid (如 beta/alpha) 一致 |
-
-### 4. 自动化流程
-
-本地命令执行成功并 push tag 后，GitHub Actions 会自动接管：
-1.  **触发**：识别 `packagename@vxx.xx.xx` 格式的 tag。
-2.  **构建**：安装依赖并构建对应包。
-3.  **发布**：执行 `npm publish --provenance` 发布到 npm registry。
-4.  **Release**：在 GitHub 生成 Release 记录，并附带 CHANGELOG。
+本地命令执行成功并推送 `release-batch@v*` 批量标签后，GitHub Actions 会自动接管：
+1.  **触发**：识别 `release-batch@v*` 标签触发批量发布工作流（[release.yml](file://REPO_ROOT/.github/workflows/release.yml)）。
+2.  **构建**：安装依赖并构建一次，打包待发布包的 tarball。
+3.  **发布**：对 `release-note.md` 中列出的包执行幂等发布（已存在版本自动跳过）。
+4.  **Release**：创建 GitHub Release，并上传 tarball 与 `checksums.sha256`。
 
 ---
 
