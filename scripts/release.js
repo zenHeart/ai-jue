@@ -271,7 +271,11 @@ async function main() {
       // we can use workspace directory if we pass path relative to root?
       // Actually `npm run build -w <workspace-name>` is standard. 
       // If `ai-jue-vscode` is the workspace name defined in package.json, then `-w ai-jue-vscode` works.
-      run(`npm run build -w ${item.name}`);
+      if (pkgJson.scripts && pkgJson.scripts.build) {
+          run(`npm run build -w ${item.name}`);
+      } else {
+          log.warn(`No build script for ${item.name}, skipping build.`);
+      }
 
       // 3. Lint
       if (!SKIP_LINT) {
