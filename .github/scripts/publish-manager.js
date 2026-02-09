@@ -68,7 +68,8 @@ function main() {
     // 4. Publish
     // Note: --provenance is key for Trusted Publishing
     console.log('Executing npm publish...');
-    const cmd = 'npm publish --provenance --access public';
+    // Add --verbose for better debugging in CI
+    const cmd = 'npm publish --provenance --access public --verbose';
     console.log(`> ${cmd}`);
     
     execSync(cmd, { 

@@ -39,9 +39,8 @@ jobs:
         env:
           # CI=true is often needed for some build scripts
           CI: true
-          # NODE_AUTH_TOKEN is NOT needed for Trusted Publishing OIDC flow
-          # But we pass GITHUB_TOKEN if we want to create releases (optional step below)
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Note: NODE_AUTH_TOKEN is NOT needed for Trusted Publishing (OIDC)
+          # The id-token: write permission handles the authentication
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
