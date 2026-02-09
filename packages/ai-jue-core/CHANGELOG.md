@@ -1,3 +1,7 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.0.5...ai-jue-core@1.0.0) (2026-02-09)
+
+
+
 ## [1.0.5](https://github.com/ai-jue/ai-jue/compare/ai-jue-core@v1.0.4...ai-jue-core@1.0.5) (2026-02-09)
 
 
