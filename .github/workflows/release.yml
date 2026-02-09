@@ -14,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      id-token: write
 
     outputs:
       items: ${{ steps.items.outputs.items }}
@@ -77,6 +78,11 @@ jobs:
         item: ${{ fromJson(needs.prepare.outputs.items) }}
 
     steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -111,10 +117,7 @@ jobs:
           fi
 
           echo "Publishing: ${pkg}@${version}"
-          work="$(mktemp -d)"
-          tar -xzf "${tgz}" -C "${work}"
-          cd "${work}/package"
-          npm publish --access public --verbose
+          npm publish "${tgz}" --access public --provenance
 
       - name: Upload npm logs
         if: failure()
