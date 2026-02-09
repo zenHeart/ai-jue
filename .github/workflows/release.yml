@@ -4,12 +4,6 @@ on:
   push:
     tags:
       - 'release-batch@v*'
-  workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Batch tag to publish (e.g. release-batch@v20260209063350)'
-        required: true
-        type: string
 
 concurrency:
   group: release-${{ github.ref_name }}
@@ -23,23 +17,14 @@ jobs:
 
     outputs:
       items: ${{ steps.items.outputs.items }}
-      tag_name: ${{ steps.tag.outputs.name }}
+      tag_name: ${{ github.ref_name }}
 
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
-
-      - name: Resolve Tag
-        id: tag
-        shell: bash
-        run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "name=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "name=${{ github.ref_name }}" >> "$GITHUB_OUTPUT"
-          fi
+          ref: ${{ github.ref_name }}
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -118,7 +103,10 @@ jobs:
           fi
 
           echo "Publishing: ${pkg}@${version}"
-          npm publish "${tgz}" --access public --verbose
+          work="$(mktemp -d)"
+          tar -xzf "${tgz}" -C "${work}"
+          cd "${work}/package"
+          npm publish --access public --verbose
 
       - name: Upload npm logs
         if: failure()
