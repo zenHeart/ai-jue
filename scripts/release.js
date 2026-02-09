@@ -11,6 +11,7 @@ const IS_DRY_RUN = ARGS.includes('--dry-run');
 const IS_YES = ARGS.includes('--yes');
 const SKIP_TEST = ARGS.includes('--skip-test');
 const SKIP_LINT = ARGS.includes('--skip-lint');
+const IS_VERBOSE = ARGS.includes('--verbose');
 
 // --- Utils ---
 
@@ -30,7 +31,9 @@ const run = (cmd, opts = {}) => {
       return '';
     }
     log.info(`Running: ${cmd}`);
-    return execSync(cmd, options).trim();
+    const out = execSync(cmd, options).trim();
+    if (IS_VERBOSE && out) console.log(out);
+    return out;
   } catch (e) {
     if (opts.ignoreError) return null;
     log.error(`Command failed: ${cmd}`);
@@ -255,6 +258,7 @@ async function main() {
 
   // Execute
   const published = [];
+  const tagNames = [];
 
   try {
     for (const item of sortedPlan) {
@@ -336,34 +340,55 @@ async function main() {
 
     // All successful. Now Git Commit & Tag.
     log.step('Finalizing Git...');
-    
-    // We commit ALL changes (changelogs, package.jsons)
+
+    const releaseNoteLines = [
+      `# Release ${new Date().toISOString()}`,
+      '',
+      ...sortedPlan.map(p => `- ${p.name}@v${p.nextVersion}`)
+    ];
+
+    if (!IS_DRY_RUN) {
+      fs.writeFileSync(path.resolve(__dirname, '../release-note.md'), releaseNoteLines.join('\n') + '\n');
+    }
+
     run('git add .');
-    
-    const message = `chore(release): publish \n\n${sortedPlan.map(p => ` - ${p.name}@${p.nextVersion}`).join('\n')}`;
-    run(`git commit -m "${message}"`);
+
+    const commitTitle = 'chore(release): publish';
+    const commitBody = sortedPlan.map(p => `- ${p.name}@v${p.nextVersion}`).join('\n');
+    const commitMsgPath = path.resolve(__dirname, '../.release-commit-message.txt');
+    if (!IS_DRY_RUN) {
+      fs.writeFileSync(commitMsgPath, `${commitTitle}\n\n${commitBody}\n`);
+    }
+    run(`git commit -F ${commitMsgPath}`);
+    if (!IS_DRY_RUN) {
+      fs.unlinkSync(commitMsgPath);
+    }
 
     // Create Tags
     for (const item of sortedPlan) {
       const tagName = `${item.name}@v${item.nextVersion}`;
       run(`git tag ${tagName}`);
       log.success(`Tagged ${tagName}`);
+      tagNames.push(tagName);
     }
 
     // Push
     if (!IS_DRY_RUN) {
         log.info('Pushing to remote...');
-        run('git push --follow-tags');
+        run('git push');
+        if (tagNames.length > 0) {
+          try {
+            run(`git push origin ${tagNames.join(' ')}`);
+          } catch (e) {
+            run('git push origin --tags');
+          }
+        }
     }
 
     // Summary
     log.step('Release Summary');
-    console.table(sortedPlan.map(p => ({ Package: p.name, Version: p.nextVersion, Status: 'Published' })));
-    
-    // Write Release Note
-    const releaseNote = `# Release ${new Date().toISOString()}\n\n${sortedPlan.map(p => `- ${p.name}@${p.nextVersion}`).join('\n')}`;
-    fs.writeFileSync(path.resolve(__dirname, '../release-note.md'), releaseNote);
-    log.success('release-note.md generated.');
+    console.table(sortedPlan.map(p => ({ Package: p.name, Version: `v${p.nextVersion}`, Tag: `${p.name}@v${p.nextVersion}` })));
+    if (!IS_DRY_RUN) log.success('release-note.md committed and tags pushed.');
 
   } catch (e) {
     log.error('Release process failed!');

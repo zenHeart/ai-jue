@@ -5,6 +5,12 @@ on:
     tags:
       # Trigger on tags like: ai-jue@v1.0.0, @scope/pkg@v2.0.0
       - '*@v*'
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: 'Tag name to publish (e.g. ai-jue-core@v1.0.6)'
+        required: true
+        type: string
 
 jobs:
   publish:
@@ -25,6 +31,16 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
           # No token needed here for OIDC, setup-node handles it if id-token permission exists
 
+      - name: Resolve Tag
+        id: tag
+        shell: bash
+        run: |
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            echo "ref=refs/tags/${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "ref=${{ github.ref }}" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Install Dependencies
         run: npm ci
 
@@ -38,6 +54,7 @@ jobs:
         run: node .github/scripts/publish-manager.js
         env:
           CI: true
+          GITHUB_REF: ${{ steps.tag.outputs.ref }}
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -47,3 +64,10 @@ jobs:
           # body_path: release-note.md # Optional: Use the note generated locally if committed
           files: |
             packages/*/dist/*.tgz
+
+      - name: Upload npm logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-logs
+          path: ~/.npm/_logs
