@@ -285,7 +285,19 @@ async function main() {
       if (!SKIP_TEST) {
         if (pkgJson.scripts && pkgJson.scripts.test) {
            log.info(`Testing ${item.name}...`);
-           run(`npm run test -w ${item.name} --if-present`);
+           try {
+             run(`npm run test -w ${item.name} --if-present`);
+           } catch (e) {
+             // If test fails, check if it's the default "Error: no test specified"
+             // But run() throws, so we catch it.
+             // Ideally we should check if script content is "echo ... exit 1" but that's hard.
+             // If user wants to skip tests, they should use --skip-test.
+             // However, user specifically asked: "if pkg has no test script, skip or warn, don't exit"
+             // But here pkgJson.scripts.test EXISTS, it just fails.
+             // We can try to grep the error? Or just fix the package.json test script to exit 0?
+             // Best practice: fix package.json.
+             throw e;
+           }
         } else {
            log.warn(`No test script for ${item.name}, skipping.`);
         }
