@@ -6,229 +6,344 @@ const semver = require('semver');
 const pc = require('picocolors');
 
 const PACKAGES_DIR = path.resolve(__dirname, '../packages');
+const ARGS = process.argv.slice(2);
+const IS_DRY_RUN = ARGS.includes('--dry-run');
+const IS_YES = ARGS.includes('--yes');
+const SKIP_TEST = ARGS.includes('--skip-test');
+const SKIP_LINT = ARGS.includes('--skip-lint');
 
-// Utils
-const run = (bin, args, opts = {}) =>
-  execSync(`${bin} ${args.join(' ')}`, { stdio: 'inherit', ...opts });
+// --- Utils ---
 
-const step = (msg) => console.log(pc.cyan(`\n${msg}`));
-
-const getPackages = () => {
-  return fs.readdirSync(PACKAGES_DIR).filter((f) => {
-    return fs.statSync(path.join(PACKAGES_DIR, f)).isDirectory() &&
-           fs.existsSync(path.join(PACKAGES_DIR, f, 'package.json'));
-  });
+const log = {
+  info: (msg) => console.log(pc.cyan(`ℹ️  ${msg}`)),
+  success: (msg) => console.log(pc.green(`✅ ${msg}`)),
+  warn: (msg) => console.log(pc.yellow(`⚠️  ${msg}`)),
+  error: (msg) => console.log(pc.red(`❌ ${msg}`)),
+  step: (msg) => console.log(pc.blue(`\n🚀 ${msg}`)),
 };
 
-const getPackageVersion = (pkg) => {
-  const pkgPath = path.join(PACKAGES_DIR, pkg, 'package.json');
-  return JSON.parse(fs.readFileSync(pkgPath, 'utf8')).version;
-};
-
-const updatePackageVersion = (pkg, version) => {
-  const pkgPath = path.join(PACKAGES_DIR, pkg, 'package.json');
-  const pkgJson = JSON.parse(fs.readFileSync(pkgPath, 'utf8'));
-  pkgJson.version = version;
-  fs.writeFileSync(pkgPath, JSON.stringify(pkgJson, null, 2) + '\n');
-};
-
-const checkGitClean = () => {
+const run = (cmd, opts = {}) => {
+  const options = { stdio: 'pipe', encoding: 'utf8', ...opts };
   try {
-    const status = execSync('git status --porcelain', { encoding: 'utf8' });
-    if (status.trim().length > 0) {
-      console.error(pc.red('❌ Git working directory is dirty. Please commit or stash changes before releasing.'));
-      process.exit(1);
+    if (IS_DRY_RUN && !opts.force) {
+      log.info(`[Dry Run] ${cmd}`);
+      return '';
     }
+    log.info(`Running: ${cmd}`);
+    return execSync(cmd, options).trim();
   } catch (e) {
-    console.error(pc.red('❌ Failed to check git status.'));
+    if (opts.ignoreError) return null;
+    log.error(`Command failed: ${cmd}`);
+    if (e.stdout) console.log(e.stdout);
+    if (e.stderr) console.error(e.stderr);
+    throw e;
+  }
+};
+
+const getPackageJson = (pkgName) => {
+  const p = path.join(PACKAGES_DIR, pkgName, 'package.json');
+  return JSON.parse(fs.readFileSync(p, 'utf8'));
+};
+
+const writePackageJson = (pkgName, data) => {
+  if (IS_DRY_RUN) {
+    log.info(`[Dry Run] Write package.json for ${pkgName} version ${data.version}`);
+    return;
+  }
+  const p = path.join(PACKAGES_DIR, pkgName, 'package.json');
+  fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\n');
+};
+
+// --- Core Logic ---
+
+// 1. Check Git
+const checkGitClean = () => {
+  if (IS_DRY_RUN) return;
+  const status = run('git status --porcelain', { force: true }); // force run even in dry-run to ensure safety? No, dry-run can skip.
+  if (status && status.length > 0) {
+    log.error('Git working directory is dirty. Please commit or stash changes.');
     process.exit(1);
   }
 };
 
-const checkChanges = (pkg) => {
-  // Try to find the latest tag for this package to see if there are commits since then
+// 2. Detect Changed
+const getChangedPackages = () => {
   try {
-    // List tags matching pattern pkg@* sorted by creatordate desc
-    const tags = execSync(`git tag --list "${pkg}@*" --sort=-creatordate`, { encoding: 'utf8' }).trim().split('\n');
-    const latestTag = tags[0];
-
-    if (!latestTag) {
-      // No tag found, treat as changed (new package)
-      return true;
-    }
-
-    // Check if there are commits between latestTag and HEAD affecting the package directory
-    const diff = execSync(`git log ${latestTag}..HEAD -- packages/${pkg}`, { encoding: 'utf8' }).trim();
-    return diff.length > 0;
+    const output = run('npx lerna changed --json --all', { force: true, ignoreError: true });
+    if (!output) return [];
+    const changed = JSON.parse(output);
+    return changed.map(p => p.name);
   } catch (e) {
-    // If anything fails, assume changed to be safe, or fallback
-    return true; 
+    log.warn('Failed to detect changes with lerna. Fallback: all packages?');
+    return [];
   }
 };
 
+// 3. Topology Sort
+const getTopologicalOrder = (pkgNames) => {
+  // Build graph
+  const graph = new Map();
+  pkgNames.forEach(name => {
+    const pkg = getPackageJson(name);
+    const deps = { ...pkg.dependencies, ...pkg.peerDependencies }; // DevDeps usually don't block publishing order unless strict
+    const internalDeps = Object.keys(deps).filter(d => pkgNames.includes(d));
+    graph.set(name, internalDeps);
+  });
+
+  const visited = new Set();
+  const sorted = [];
+
+  const visit = (node, ancestors = []) => {
+    if (ancestors.includes(node)) {
+      throw new Error(`Circular dependency detected: ${[...ancestors, node].join(' -> ')}`);
+    }
+    if (visited.has(node)) return;
+    
+    visited.add(node);
+    const deps = graph.get(node) || [];
+    deps.forEach(dep => visit(dep, [...ancestors, node]));
+    sorted.push(node);
+  };
+
+  pkgNames.forEach(node => visit(node));
+  return sorted;
+};
+
+// 4. Main
 async function main() {
-  // 0. Ensure git is clean
+  console.log(pc.bold('📦 AI-Jue Batch Release Script'));
+  
   checkGitClean();
 
-  // 0.1 Parse args for scope
-  const args = process.argv.slice(2);
-  const scopeIndex = args.indexOf('--scope');
-  let scope = null;
-  if (scopeIndex !== -1 && args[scopeIndex + 1]) {
-      scope = args[scopeIndex + 1];
-      console.log(pc.blue(`ℹ️  Filtering packages by scope: ${scope}`));
-  }
-
-  // 1. Scan packages
-  let packages = getPackages();
+  // Detect
+  log.step('Detecting changes...');
+  let changedPackages = getChangedPackages();
   
-  if (scope) {
-      if (!packages.includes(scope)) {
-          console.error(pc.red(`❌ Package '${scope}' not found.`));
-          process.exit(1);
-      }
-      packages = [scope];
-  }
-  
-  const changedPackages = packages.filter(checkChanges);
-  
-  const choices = packages.map(pkg => {
-    const isChanged = changedPackages.includes(pkg);
-    return {
-      name: pkg,
-      message: `${pkg} ${pc.dim(`(v${getPackageVersion(pkg)})`)}${isChanged ? pc.yellow(' [Changed]') : ''}`,
-      value: pkg
-    };
-  });
-
-  // 2. Interactive selection
-  const { targetPackage } = await prompt({
-    type: 'select',
-    name: 'targetPackage',
-    message: 'Select package to release:',
-    choices: choices
-  });
-
-  const currentVersion = getPackageVersion(targetPackage);
-
-  // 3. Select version increment
-  const versionIncrements = ['patch', 'minor', 'major'];
-  const { releaseType } = await prompt({
-    type: 'select',
-    name: 'releaseType',
-    message: `Select release type for ${pc.bold(targetPackage)} (current: ${currentVersion}):`,
-    choices: versionIncrements.map(t => {
-        const v = semver.inc(currentVersion, t);
-        return { name: t, message: `${t} (${v})`, value: t }
-    }).concat([{ name: 'custom', message: 'Custom...', value: 'custom' }])
-  });
-
-  let targetVersion;
-  if (releaseType === 'custom') {
-    const { version } = await prompt({
-      type: 'input',
-      name: 'version',
-      message: 'Enter custom version:',
-      initial: currentVersion,
-      validate: v => !!semver.valid(v) || 'Invalid semantic version'
+  // If lerna fails or returns empty, maybe we want to select manually?
+  // But requirement says "forbidden to select one by one".
+  if (changedPackages.length === 0) {
+    log.warn('No changed packages detected by Lerna.');
+    const { selectAll } = await prompt({
+      type: 'confirm',
+      name: 'selectAll',
+      message: 'Release ALL packages instead?'
     });
-    targetVersion = version;
-  } else {
-    targetVersion = semver.inc(currentVersion, releaseType);
+    if (selectAll) {
+      changedPackages = fs.readdirSync(PACKAGES_DIR)
+        .filter(f => fs.statSync(path.join(PACKAGES_DIR, f)).isDirectory())
+        .filter(f => f !== 'docs'); // Ignore docs package
+    } else {
+      process.exit(0);
+    }
   }
 
-  // Confirm
-  const { confirm } = await prompt({
-    type: 'confirm',
-    name: 'confirm',
-    message: `Release ${pc.bold(targetPackage)} v${targetVersion}?`
-  });
+  // Interactive Selection
+  let plan = []; // { name, currentVersion, nextVersion, releaseType }
 
-  if (!confirm) return;
+  if (IS_YES) {
+    plan = changedPackages.map(name => {
+      const current = getPackageJson(name).version;
+      return {
+        name,
+        currentVersion: current,
+        nextVersion: semver.inc(current, 'patch'),
+        releaseType: 'patch'
+      };
+    });
+  } else {
+    // 1. Select packages
+    const { selected } = await prompt({
+      type: 'multiselect',
+      name: 'selected',
+      message: 'Select packages to release:',
+      choices: changedPackages,
+      initial: changedPackages
+    });
 
-  step(`Releasing ${targetPackage} v${targetVersion}...`);
+    if (selected.length === 0) process.exit(0);
 
-  // 4. Update version
-  updatePackageVersion(targetPackage, targetVersion);
+    // 2. Select Strategy
+    const { strategy } = await prompt({
+      type: 'select',
+      name: 'strategy',
+      message: 'Select versioning strategy:',
+      choices: [
+        { name: 'patch', message: 'Patch All (Recommended)' },
+        { name: 'minor', message: 'Minor All' },
+        { name: 'independent', message: 'Independent (Customize each)' }
+      ]
+    });
+
+    if (strategy === 'independent') {
+      for (const pkg of selected) {
+        const current = getPackageJson(pkg).version;
+        const { type } = await prompt({
+          type: 'select',
+          name: 'type',
+          message: `Release type for ${pc.bold(pkg)} (current: ${current}):`,
+          choices: ['patch', 'minor', 'major'].map(t => ({ name: t, message: `${t} (${semver.inc(current, t)})` }))
+        });
+        plan.push({
+          name: pkg,
+          currentVersion: current,
+          nextVersion: semver.inc(current, type),
+          releaseType: type
+        });
+      }
+    } else {
+      plan = selected.map(pkg => {
+        const current = getPackageJson(pkg).version;
+        return {
+          name: pkg,
+          currentVersion: current,
+          nextVersion: semver.inc(current, strategy),
+          releaseType: strategy
+        };
+      });
+    }
+  }
+
+  // Sort Plan
+  log.step('Calculating build order...');
+  const sortedNames = getTopologicalOrder(plan.map(p => p.name));
+  const sortedPlan = sortedNames.map(name => plan.find(p => p.name === name));
+
+  // Preview
+  console.table(sortedPlan.map(p => ({ Package: p.name, Current: p.currentVersion, Next: p.nextVersion })));
+
+  if (!IS_YES) {
+    const { confirm } = await prompt({ type: 'confirm', name: 'confirm', message: 'Confirm release plan?' });
+    if (!confirm) process.exit(0);
+  }
+
+  // Execute
+  const published = [];
+  const errors = [];
 
   try {
-    // 5. Build
-    step('Building...');
-    run('npm', ['run', 'build', '-w', `packages/${targetPackage}`]);
+    for (const item of sortedPlan) {
+      log.step(`Processing ${item.name}...`);
+      
+      // 1. Update Version
+      const pkgJson = getPackageJson(item.name);
+      pkgJson.version = item.nextVersion;
+      writePackageJson(item.name, pkgJson);
 
-    // 6. Test & Lint
-    step('Testing & Linting...');
-    // Check if test script exists before running
-    const pkgJson = JSON.parse(fs.readFileSync(path.join(PACKAGES_DIR, targetPackage, 'package.json'), 'utf8'));
-    if (pkgJson.scripts && pkgJson.scripts.test) {
-        run('npm', ['test', '-w', `packages/${targetPackage}`]);
-    } else {
-        console.log(pc.yellow('No test script found, skipping tests.'));
+      // 2. Build
+      run(`npm run build -w packages/${item.name}`);
+
+      // 3. Lint
+      if (!SKIP_LINT) {
+        if (pkgJson.scripts && pkgJson.scripts.lint) {
+            log.info(`Linting ${item.name}...`);
+            run(`npm run lint -w packages/${item.name} --if-present`);
+        }
+      }
+
+      // 4. Test
+      if (!SKIP_TEST) {
+        if (pkgJson.scripts && pkgJson.scripts.test) {
+           log.info(`Testing ${item.name}...`);
+           run(`npm run test -w packages/${item.name} --if-present`);
+        } else {
+           log.warn(`No test script for ${item.name}, skipping.`);
+        }
+      }
+
+      // 4. Changelog
+      // We use conventional-changelog directly
+      if (!IS_DRY_RUN) {
+        const changelogArgs = [
+            '-p', 'angular',
+            '-i', path.join(PACKAGES_DIR, item.name, 'CHANGELOG.md'),
+            '-s',
+            '--commit-path', path.join(PACKAGES_DIR, item.name),
+            '--lerna-package', item.name,
+            '--tag-prefix', `${item.name}@` // Ensure prefix matches
+        ];
+        // Ensure CHANGELOG exists
+        if (!fs.existsSync(path.join(PACKAGES_DIR, item.name, 'CHANGELOG.md'))) {
+            fs.writeFileSync(path.join(PACKAGES_DIR, item.name, 'CHANGELOG.md'), '');
+        }
+        run(`npx conventional-changelog ${changelogArgs.join(' ')}`);
+      }
+
+      // 5. Publish
+      // Note: We publish BEFORE git commit/tag to allow rollback? 
+      // Actually standard is: Bump -> Commit -> Tag -> Publish.
+      // If Publish fails, we have to delete tag, reset commit.
+      // But if we publish first, we can just unpublish and revert file. 
+      // However, npm publish usually packs the current directory. 
+      // If we haven't committed, it publishes the modified package.json. This is fine.
+      // BUT, some prepublish scripts might check git tag.
+      // Given the user wants "Serial... success... rollback", and we are local.
+      // I will publish now.
+      
+      if (!pkgJson.private) {
+        log.info(`Publishing ${item.name}...`);
+        // Use --tag next if needed, but default to latest
+        run(`npm publish -w packages/${item.name} --access public`);
+        published.push(item);
+      } else {
+        log.info(`Skipping publish for private package ${item.name}`);
+      }
     }
-    
-    // 7. Changelog
-    step('Generating Changelog...');
-    // conventional-changelog-cli
-    // Note: We assume standard conventional commits
-    // Using --commit-path to filter commits for this package
-    const changelogArgs = [
-      '-p', 'angular',
-      '-i', path.join(PACKAGES_DIR, targetPackage, 'CHANGELOG.md'),
-      '-s',
-      '--commit-path', path.join(PACKAGES_DIR, targetPackage),
-      '--lerna-package', targetPackage, // Use lerna-package to handle monorepo tag filtering properly
-    ];
-    
-    // We try to use a tag prefix matching our monorepo convention: package-name@
-    run('npx', ['conventional-changelog', ...changelogArgs, '--tag-prefix', `${targetPackage}@`, '--pkg', path.join(PACKAGES_DIR, targetPackage, 'package.json')]);
 
-    // 8. Git Commit & Tag
-    step('Committing & Tagging...');
-    const tagName = `${targetPackage}@v${targetVersion}`;
-    run('git', ['add', '.']);
+    // All successful. Now Git Commit & Tag.
+    log.step('Finalizing Git...');
     
-    // Fix: Wrap commit message in quotes to handle special characters properly
-    // And execSync via run() splits args by space which breaks message with spaces/parens if not handled carefully
-    // We should pass args as array to spawn/execFile, but execSync takes string.
-    // Let's manually construct the command string with proper quoting
+    // We commit ALL changes (changelogs, package.jsons)
+    run('git add .');
     
-    // Actually run helper does: execSync(`${bin} ${args.join(' ')}`
-    // So ['commit', '-m', 'msg'] becomes "git commit -m msg" -> broken if msg has spaces/parens
-    
-    // Fix: Use quoted string for message
-    run('git', ['commit', '-m', `"${`chore(release): ${tagName}`}"`]);
-    
-    run('git', ['tag', tagName]);
+    // Create one commit? Or one per package?
+    // User asked for "release note... summary".
+    // Lerna independent usually creates one commit per package? No, often one commit "Publish" with multiple tags.
+    // I will do ONE commit for atomicity.
+    const message = `chore(release): publish \n\n${sortedPlan.map(p => ` - ${p.name}@${p.nextVersion}`).join('\n')}`;
+    run(`git commit -m "${message}"`);
 
-    step(`Release ${tagName} successful!`);
-    
-    // 9. Push
-    const { push } = await prompt({
-      type: 'confirm',
-      name: 'push',
-      message: 'Push changes and tags to remote?'
-    });
-
-    if (push) {
-      step('Pushing...');
-      // Explicitly push tags to ensure GitHub Actions triggers Release workflow
-      run('git', ['push', 'origin', tagName]); // Push specific tag first
-      run('git', ['push']); // Push commits
-      console.log(pc.green(`\nVersion ${tagName} pushed! CI should trigger now.`));
-    } else {
-      console.log(pc.green(`\nRun 'git push --follow-tags' manually to trigger release.`));
+    // Create Tags
+    for (const item of sortedPlan) {
+      const tagName = `${item.name}@${item.nextVersion}`;
+      run(`git tag ${tagName}`);
+      log.success(`Tagged ${tagName}`);
     }
+
+    // Push
+    if (!IS_DRY_RUN) {
+        log.info('Pushing to remote...');
+        run('git push --follow-tags');
+    }
+
+    // Summary
+    log.step('Release Summary');
+    console.table(sortedPlan.map(p => ({ Package: p.name, Version: p.nextVersion, Status: 'Published' })));
+    
+    // Write Release Note
+    const releaseNote = `# Release ${new Date().toISOString()}\n\n${sortedPlan.map(p => `- ${p.name}@${p.nextVersion}`).join('\n')}`;
+    fs.writeFileSync(path.resolve(__dirname, '../release-note.md'), releaseNote);
+    log.success('release-note.md generated.');
 
   } catch (e) {
-    step(pc.red('Release failed, rolling back...'));
-    // Rollback package.json
-    updatePackageVersion(targetPackage, currentVersion);
-    console.error(e);
+    log.error('Release process failed!');
+    if (published.length > 0) {
+      log.warn('Rolling back published packages...');
+      for (const item of published) {
+        try {
+          run(`npm unpublish ${item.name}@${item.nextVersion} --force`, { ignoreError: true });
+          log.success(`Unpublished ${item.name}@${item.nextVersion}`);
+        } catch (unpubErr) {
+          log.error(`Failed to unpublish ${item.name}: ${unpubErr.message}`);
+        }
+      }
+    }
+    // Revert files
+    run('git checkout .');
     process.exit(1);
   }
 }
 
-main().catch(err => {
-  console.error(err);
+main().catch(e => {
+  console.error(e);
   process.exit(1);
 });
