@@ -1,6 +1,6 @@
 {
   "name": "ai-jue-adapter-cursor",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "AI-Jue adapter for Cursor",
   "main": "dist/index.js",
   "scripts": {

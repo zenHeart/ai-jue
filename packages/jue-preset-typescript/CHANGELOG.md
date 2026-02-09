@@ -1,3 +1,7 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-typescript@v1.0.2...jue-preset-typescript@1.0.0) (2026-02-09)
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-typescript@1.0.1...jue-preset-typescript@1.0.0) (2026-02-09)
 
 

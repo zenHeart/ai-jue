@@ -1,3 +1,7 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-copilot@v1.0.2...ai-jue-adapter-copilot@1.0.0) (2026-02-09)
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-copilot@1.0.1...ai-jue-adapter-copilot@1.0.0) (2026-02-09)
 
 
