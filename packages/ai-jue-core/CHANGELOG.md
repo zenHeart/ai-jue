@@ -1,3 +1,7 @@
+## [1.0.4](https://github.com/ai-jue/ai-jue/compare/ai-jue-core@v1.0.3...ai-jue-core@1.0.4) (2026-02-09)
+
+
+
 ## [1.0.3](https://github.com/ai-jue/ai-jue/compare/ai-jue-core@v1.0.2...ai-jue-core@1.0.3) (2026-02-09)
 
 
