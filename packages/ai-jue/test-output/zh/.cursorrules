@@ -1,0 +1,32 @@
+<!-- AI-JUE:START -->
+# 全局上下文与智能体 (Global Context & Agents)
+
+Global Context Content
+
+## 提示词 (Prompt): claude
+
+Claude Specific Content
+
+## 技能 (Skills)
+
+你可以使用以下技能：
+
+### test-skill
+Test Skill Content
+
+## 指令 (Commands)
+
+当用户使用特定触发词时，请遵循这些规则：
+
+### test-cmd
+**触发词:** /test-cmd
+
+**执行动作:** Test Command Prompt
+
+## 工作流钩子 (Workflow Hooks)
+
+请遵循以下工作流规则：
+
+- **Pre-commit**: 提交代码前，请确保运行： `echo test`
+
+<!-- AI-JUE:END -->

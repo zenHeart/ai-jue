@@ -7,6 +7,8 @@
 [![NPM version](https://img.shields.io/npm/v/ai-jue.svg?style=flat)](https://www.npmjs.com/package/ai-jue)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
+[English](README.en.md) | **简体中文**
+
 标准化项目的 AI 能力（Prompt、Skills、MCP Server），自动适配 Claude Code / Cursor / Gemini / Copilot 等编辑器。
 
 [**📖 为什么叫 ai-jue (AI 诀)？**](#为什么叫-ai-jue-ai-诀)

@@ -292,14 +292,86 @@
 ### 4. 用户角度 (User Perspective)
 
 - [x] **[UX] CLI 输出美化**
-  - **问题**: CLI 输出目前主要是纯文本，缺乏颜色高亮和进度指示（除了简单的 log）。
-  - **建议**: 使用 `chalk` 或 `picocolors` 增加颜色，使用 `ora` 增加加载动画，提升专业感。
+  - [x] **问题**: CLI 输出目前主要是纯文本，缺乏颜色高亮和进度指示（除了简单的 log）。
+  - [x] **建议**: 使用 `chalk` 或 `picocolors` 增加颜色，使用 `ora` 增加加载动画，提升专业感。
 
 - [x] **[Performance] `check` 命令性能**
-  - **问题**: `check` 命令串行执行 `npm view`，网络请求可能较慢。
-  - **建议**: 并行化执行版本检查请求，并增加超时控制。
+  - [x] **问题**: `check` 命令串行执行 `npm view`，网络请求可能较慢。
+  - [x] **建议**: 并行化执行版本检查请求，并增加超时控制。
 
-<!-- 完整性检查 -->
-- [x] 所有 `[ ]` 已变为 `[x]` (Phase 0, 1)
-- [x] 无悬空依赖
+---
+
+## Phase 6: 国际化 (i18n) 与全球化生态
+
+**状态：** ⏳ **计划中**
+
+**目标：** 实现项目的全面国际化，支持中英文双语，为全球开发者提供无障碍的使用体验。
+
+- [x] **全量 README 双语化适配**
+  - [x] **根目录**: 提供中文 `README.md` 与英文 `README.en.md`。
+  - [x] **核心 CLI (`packages/ai-jue`)**: 提供中英文双语 README。
+  - [x] **核心库 (`packages/ai-jue-core`)**: 编写并提供中英文双语 README。
+  - [x] **各适配器包 (`packages/ai-jue-adapter-*`)**: 编写并提供中英文双语 README。
+  - [x] **官方预设包 (`packages/jue-preset-*`)**: 编写并提供中英文双语 README。
+- [x] **README 增强**
+  - [x] 在主 README 顶部增加明显的语言切换链接 (Language Switcher)。
+- [ ] **核心文档库 (Docs) 翻译**
+  - [ ] 翻译 `packages/docs` 下的所有指南（架构、适配器标准、预设创建等）。
+  - [ ] 建立 `en` 子目录或使用多语言文档工具。
+
+### 2. CLI 交互国际化 (CLI i18n)
+
+- [x] **字符串提取与注入**
+  - [x] 提取 `packages/ai-jue/src/commands` 中所有 hardcoded 交互提示语（如 `init` 命令的引导语）。
+  - [x] 引入 `i18next` 或自定义轻量级 i18n 方案。
+- [x] **智能语言探测**
+  - [x] 默认根据系统 Locale 自动选择显示语言。
+  - [x] 在 `ai.config.js` 中增加 `language` 配置项用于手动锁定显示语言。
+
+### 3. 预设内容国际化 (Presets i18n)
+
+- [x] **官方预设双语化**
+  - [x] 为 `jue-preset-base`, `react`, `typescript` 提供完整的英文版 `.en.md` 提示词。
+- [x] **加载引擎增强**
+  - [x] 确保核心引擎在 `language: 'en'` 时，优先加载 `*.en.md` 或 `en/*.md` 资产。
+  - [x] 若无英文版，则优雅回退至默认版本（中文）。
+
+### 4. 适配器翻译支持 (Adapter i18n)
+
+- [x] **产物国际化**
+  - [x] 确保生成的 artifacts（如 `CLAUDE.md`, `.cursorrules`）中的自动生成注释支持双语。
+  - [x] 引入简单的模板替换机制。
+
+### 5. 文档库翻译 (Docs Translation)
+
+- [x] **核心文档库 (packages/docs)**
+  - [x] 配置 VitePress i18n。
+  - [x] 翻译所有 Core Guides。
 - [x] 无空文件夹或临时文件
+
+## Phase 7: 查漏补缺与深度完善 (Gap Filling & Polish)
+
+**状态：** ⏳ **待开始**
+
+**目标：** 填补当前实现与设计目标之间的差异，确保所有核心特性（Sub-Agents, MCP 完整支持）均已落地，并进一步打磨体验。
+
+### 1. 核心特性补全 (Core Features Completion)
+
+- [ ] **[Feature] Sub-Agents (子智能体) 支持**
+  - [ ] **Core**: 确保 `subAgents` 配置能正确传递给适配器。
+  - [ ] **Adapter-Cursor**: 将 `subAgents` 转换为 Cursor 的 Project Rules 或特定 Agent 上下文。
+  - [ ] **Adapter-Gemini**: 映射 `subAgents` 到 `.gemini/settings.json` (如支持)。
+  - [ ] **Adapter-Claude**: 探索如何在 `CLAUDE.md` 中有效表达子智能体逻辑。
+
+- [ ] **[Feature] Claude MCP 支持**
+  - [ ] 调研 Claude Desktop 的 MCP 配置机制（目前多为全局配置 `claude_desktop_config.json`）。
+  - [ ] 决定是否支持生成全局配置（需谨慎处理覆盖风险），或等待官方支持项目级配置。
+
+### 2. 体验优化 (Experience Polish)
+
+- [ ] **[VS Code] 状态栏功能增强**
+  - [ ] **现状**: 仅为一个静态按钮，点击运行 check。
+  - [ ] **目标**: 实现后台静默检查，仅在有更新时显示提示图标/文字。
+
+- [ ] **[CLI] 交互优化**
+  - [ ] `init` 命令增加对 MCP Servers 和 Sub-Agents 的引导配置。

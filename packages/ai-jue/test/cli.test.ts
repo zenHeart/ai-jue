@@ -1,77 +1,90 @@
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { handler as initHandler } from '../src/commands/init';
-import fs from 'fs';
-import path from 'path';
-import readline from 'readline';
-import { logger } from '../src/logger';
+import { describe, it, expect, vi, beforeEach } from "vitest";
+import { handler as initHandler } from "../src/commands/init";
+import fs from "fs";
+import path from "path";
+import readline from "readline";
+import { logger } from "../src/logger";
 
-vi.mock('fs');
-vi.mock('readline');
-vi.mock('../src/logger');
+vi.mock("fs");
+vi.mock("readline");
+vi.mock("../src/logger");
+vi.mock("../src/i18n", () => ({
+  t: (key: string) => key,
+  initI18n: vi.fn(),
+}));
 
-describe('init command', () => {
-    let questionCallback: (answer: string) => void;
+describe("init command", () => {
+  let questionCallback: (answer: string) => void;
 
-    beforeEach(() => {
-        vi.resetAllMocks();
-        
-        // Mock readline to capture callback
-        const rlMock = {
-            question: vi.fn((q, cb) => {
-                questionCallback = cb;
-            }),
-            close: vi.fn()
-        };
-        (readline.createInterface as any).mockReturnValue(rlMock);
+  beforeEach(() => {
+    vi.resetAllMocks();
 
-        // Mock fs
-        (fs.existsSync as any).mockReturnValue(false);
-        (fs.writeFileSync as any).mockImplementation(() => {});
-        (fs.mkdirSync as any).mockImplementation(() => {});
-    });
+    // Mock readline to capture callback
+    const rlMock = {
+      question: vi.fn((q, cb) => {
+        questionCallback = cb;
+      }),
+      close: vi.fn(),
+    };
+    (readline.createInterface as any).mockReturnValue(rlMock);
 
-    it('should create ai.config.js and .ai directory when user answers Y', async () => {
-        const promise = initHandler({} as any);
-        
-        // Wait for first question
-        await new Promise(resolve => setTimeout(resolve, 0));
-        expect(readline.createInterface().question).toHaveBeenCalledWith(expect.stringContaining('Create ai.config.js?'), expect.any(Function));
-        questionCallback('Y');
+    // Mock fs
+    (fs.existsSync as any).mockReturnValue(false);
+    (fs.writeFileSync as any).mockImplementation(() => {});
+    (fs.mkdirSync as any).mockImplementation(() => {});
+  });
 
-        // Wait for second question
-        await new Promise(resolve => setTimeout(resolve, 0));
-        expect(readline.createInterface().question).toHaveBeenCalledWith(expect.stringContaining('Enter preset name'), expect.any(Function));
-        questionCallback('base');
+  it("should create ai.config.js and .ai directory when user answers Y", async () => {
+    const promise = initHandler({} as any);
 
-        // Wait for third question
-        await new Promise(resolve => setTimeout(resolve, 0));
-        expect(readline.createInterface().question).toHaveBeenCalledWith(expect.stringContaining('Create .ai directory structure?'), expect.any(Function));
-        questionCallback('Y');
+    // Wait for first question
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(readline.createInterface().question).toHaveBeenCalledWith(
+      expect.stringContaining("commands.init.ask_create_config"),
+      expect.any(Function),
+    );
+    questionCallback("Y");
 
-        await promise;
+    // Wait for second question
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(readline.createInterface().question).toHaveBeenCalledWith(
+      expect.stringContaining("commands.init.ask_preset"),
+      expect.any(Function),
+    );
+    questionCallback("base");
 
-        expect(fs.writeFileSync).toHaveBeenCalledWith(
-            expect.stringContaining('ai.config.js'), 
-            expect.stringContaining("preset: 'base'")
-        );
-        expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining('.ai'));
-        expect(logger.success).toHaveBeenCalledWith('Created ai.config.js');
-    });
+    // Wait for third question
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(readline.createInterface().question).toHaveBeenCalledWith(
+      expect.stringContaining("commands.init.ask_create_dir"),
+      expect.any(Function),
+    );
+    questionCallback("Y");
 
-    it('should skip creation if user answers n', async () => {
-        const promise = initHandler({} as any);
-        
-        // Create ai.config.js? n
-        await new Promise(resolve => setTimeout(resolve, 0));
-        questionCallback('n');
+    await promise;
 
-        // Create .ai directory? n
-        await new Promise(resolve => setTimeout(resolve, 0));
-        questionCallback('n');
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      expect.stringContaining("ai.config.js"),
+      expect.stringContaining("preset: 'base'"),
+    );
+    expect(fs.mkdirSync).toHaveBeenCalledWith(expect.stringContaining(".ai"));
+    expect(logger.success).toHaveBeenCalledWith("commands.init.created_config");
+  });
 
-        await promise;
+  it("should skip creation if user answers n", async () => {
+    const promise = initHandler({} as any);
 
-        expect(fs.writeFileSync).not.toHaveBeenCalled();
-        expect(fs.mkdirSync).not.toHaveBeenCalled();
-    });
+    // Create ai.config.js? n
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    questionCallback("n");
+
+    // Create .ai directory? n
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    questionCallback("n");
+
+    await promise;
+
+    expect(fs.writeFileSync).not.toHaveBeenCalled();
+    expect(fs.mkdirSync).not.toHaveBeenCalled();
+  });
 });

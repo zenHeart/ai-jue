@@ -1,0 +1,32 @@
+<!-- AI-JUE:START -->
+# Global Context & Agents
+
+Global Context Content
+
+## Prompt: claude
+
+Claude Specific Content
+
+## Skills
+
+You have access to the following skills:
+
+### test-skill
+Test Skill Content
+
+## Commands
+
+Follow these rules when the user uses specific triggers:
+
+### test-cmd
+**Triggers:** /test-cmd
+
+**Action:** Test Command Prompt
+
+## Workflow Hooks
+
+Please follow these workflow rules:
+
+- **Pre-commit**: Before committing changes, please ensure you run: `echo test`
+
+<!-- AI-JUE:END -->
