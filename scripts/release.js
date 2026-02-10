@@ -97,17 +97,93 @@ const checkGitClean = () => {
   }
 };
 
-// 2. Detect Changed
-const getChangedPackages = () => {
+// 2. Detect Changed (git-based, no lerna dependency)
+const EXCLUDED_DIRS = new Set(['docs', 'vscode-extension', 'jue-preset-internal']);
+const IGNORE_PATTERNS = ['*.md', 'CHANGELOG.md', 'LICENSE'];
+
+const getLatestTag = (pkgName) => {
+  // Find the latest tag matching <pkgName>@v*
+  const tagPrefix = `${pkgName}@v`;
   try {
-    const output = run('npx lerna changed --json --all', { force: true, ignoreError: true });
-    if (!output) return [];
-    const changed = JSON.parse(output);
-    return changed.map(p => p.name);
+    const tags = run(`git tag -l "${tagPrefix}*" --sort=-v:refname`, { force: true });
+    if (!tags) return null;
+    return tags.split('\n')[0].trim() || null;
   } catch (e) {
-    log.warn('Failed to detect changes with lerna. Fallback: all packages?');
-    return [];
+    return null;
   }
+};
+
+const hasChanges = (pkgName) => {
+  const dir = getPackageDir(pkgName);
+  const pkgPath = `packages/${dir}/`;
+  const latestTag = getLatestTag(pkgName);
+
+  if (!latestTag) {
+    log.info(`No previous tag for ${pkgName}, marking as changed.`);
+    return true;
+  }
+
+  try {
+    // Get changed files in this package since the latest tag
+    const diffOutput = run(`git diff --name-only ${latestTag}..HEAD -- ${pkgPath}`, { force: true });
+    if (!diffOutput) return false;
+
+    // Filter out ignored files (*.md, CHANGELOG.md, etc.)
+    const changedFiles = diffOutput.split('\n')
+      .map(f => f.trim())
+      .filter(f => f.length > 0)
+      .filter(f => {
+        const basename = path.basename(f);
+        return !IGNORE_PATTERNS.some(pattern => {
+          if (pattern.startsWith('*')) {
+            return basename.endsWith(pattern.slice(1));
+          }
+          return basename === pattern;
+        });
+      });
+
+    if (changedFiles.length > 0 && IS_VERBOSE) {
+      log.info(`Changed files in ${pkgName}:`);
+      changedFiles.forEach(f => console.log(`  - ${f}`));
+    }
+
+    return changedFiles.length > 0;
+  } catch (e) {
+    log.warn(`Failed to detect changes for ${pkgName}, marking as changed.`);
+    return true;
+  }
+};
+
+const getChangedPackages = () => {
+  const allPackages = [];
+  const dirs = fs.readdirSync(PACKAGES_DIR)
+    .filter(f => fs.statSync(path.join(PACKAGES_DIR, f)).isDirectory())
+    .filter(f => !EXCLUDED_DIRS.has(f));
+
+  dirs.forEach(dir => {
+    const p = path.join(PACKAGES_DIR, dir, 'package.json');
+    if (fs.existsSync(p)) {
+      try {
+        const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
+        if (!pkg.private) {
+          allPackages.push(pkg.name);
+        }
+      } catch (e) { /* skip */ }
+    }
+  });
+
+  const changed = allPackages.filter(name => {
+    const changed = hasChanges(name);
+    const tag = getLatestTag(name);
+    if (changed) {
+      log.success(`${name} has changes since ${tag || '(no tag)'}`);
+    } else {
+      log.info(`${name} unchanged since ${tag}`);
+    }
+    return changed;
+  });
+
+  return changed;
 };
 
 // 3. Topology Sort
@@ -116,7 +192,7 @@ const getTopologicalOrder = (pkgNames) => {
   const graph = new Map();
   pkgNames.forEach(name => {
     const pkg = getPackageJson(name);
-    const deps = { ...pkg.dependencies, ...pkg.peerDependencies }; 
+    const deps = { ...pkg.dependencies, ...pkg.peerDependencies };
     const internalDeps = Object.keys(deps).filter(d => pkgNames.includes(d));
     graph.set(name, internalDeps);
   });
@@ -129,7 +205,7 @@ const getTopologicalOrder = (pkgNames) => {
       throw new Error(`Circular dependency detected: ${[...ancestors, node].join(' -> ')}`);
     }
     if (visited.has(node)) return;
-    
+
     visited.add(node);
     const deps = graph.get(node) || [];
     deps.forEach(dep => visit(dep, [...ancestors, node]));
@@ -143,40 +219,20 @@ const getTopologicalOrder = (pkgNames) => {
 // 4. Main
 async function main() {
   console.log(pc.bold('📦 AI-Jue Batch Release Script'));
-  
+
   loadPackageMap();
   checkGitClean();
 
   // Detect
-  log.step('Detecting changes...');
+  log.step('Detecting changes since last tag...');
   let changedPackages = getChangedPackages();
-  
+
   if (changedPackages.length === 0) {
-    log.warn('No changed packages detected by Lerna.');
-    const { selectAll } = await prompt({
-      type: 'confirm',
-      name: 'selectAll',
-      message: 'Release ALL packages instead?'
-    });
-    if (selectAll) {
-      changedPackages = fs.readdirSync(PACKAGES_DIR)
-        .filter(f => fs.statSync(path.join(PACKAGES_DIR, f)).isDirectory())
-        .filter(f => !['docs', 'vscode-extension', 'jue-preset-internal'].includes(f)); // Ignore excluded packages
-        
-      // Map directory names back to package names
-      const pkgNames = [];
-      changedPackages.forEach(dir => {
-         const p = path.join(PACKAGES_DIR, dir, 'package.json');
-         if (fs.existsSync(p)) {
-             const pkg = JSON.parse(fs.readFileSync(p, 'utf8'));
-             pkgNames.push(pkg.name);
-         }
-      });
-      changedPackages = pkgNames;
-    } else {
-      process.exit(0);
-    }
+    log.success('No packages have changed since their last release. Nothing to do.');
+    process.exit(0);
   }
+
+  log.info(`${changedPackages.length} package(s) with changes detected.`);
 
   // Interactive Selection
   let plan = []; // { name, currentVersion, nextVersion, releaseType }
@@ -265,7 +321,7 @@ async function main() {
     for (const item of sortedPlan) {
       log.step(`Processing ${item.name}...`);
       const dir = getPackageDir(item.name);
-      
+
       // 1. Update Version
       const pkgJson = getPackageJson(item.name);
       pkgJson.version = item.nextVersion;
@@ -277,38 +333,38 @@ async function main() {
       // Actually `npm run build -w <workspace-name>` is standard. 
       // If `ai-jue-vscode` is the workspace name defined in package.json, then `-w ai-jue-vscode` works.
       if (pkgJson.scripts && pkgJson.scripts.build) {
-          run(`npm run build -w ${item.name}`);
+        run(`npm run build -w ${item.name}`);
       } else {
-          log.warn(`No build script for ${item.name}, skipping build.`);
+        log.warn(`No build script for ${item.name}, skipping build.`);
       }
 
       // 3. Lint
       if (!SKIP_LINT) {
         if (pkgJson.scripts && pkgJson.scripts.lint) {
-            log.info(`Linting ${item.name}...`);
-            run(`npm run lint -w ${item.name} --if-present`);
+          log.info(`Linting ${item.name}...`);
+          run(`npm run lint -w ${item.name} --if-present`);
         }
       }
 
       // 4. Test
       if (!SKIP_TEST) {
         if (pkgJson.scripts && pkgJson.scripts.test) {
-           log.info(`Testing ${item.name}...`);
-           try {
-             run(`npm run test -w ${item.name} --if-present`);
-           } catch (e) {
-             // If test fails, check if it's the default "Error: no test specified"
-             // But run() throws, so we catch it.
-             // Ideally we should check if script content is "echo ... exit 1" but that's hard.
-             // If user wants to skip tests, they should use --skip-test.
-             // However, user specifically asked: "if pkg has no test script, skip or warn, don't exit"
-             // But here pkgJson.scripts.test EXISTS, it just fails.
-             // We can try to grep the error? Or just fix the package.json test script to exit 0?
-             // Best practice: fix package.json.
-             throw e;
-           }
+          log.info(`Testing ${item.name}...`);
+          try {
+            run(`npm run test -w ${item.name} --if-present`);
+          } catch (e) {
+            // If test fails, check if it's the default "Error: no test specified"
+            // But run() throws, so we catch it.
+            // Ideally we should check if script content is "echo ... exit 1" but that's hard.
+            // If user wants to skip tests, they should use --skip-test.
+            // However, user specifically asked: "if pkg has no test script, skip or warn, don't exit"
+            // But here pkgJson.scripts.test EXISTS, it just fails.
+            // We can try to grep the error? Or just fix the package.json test script to exit 0?
+            // Best practice: fix package.json.
+            throw e;
+          }
         } else {
-           log.warn(`No test script for ${item.name}, skipping.`);
+          log.warn(`No test script for ${item.name}, skipping.`);
         }
       }
 
@@ -316,16 +372,16 @@ async function main() {
       // We use conventional-changelog directly
       if (!IS_DRY_RUN) {
         const changelogArgs = [
-            '-p', 'angular',
-            '-i', path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'),
-            '-s',
-            '--commit-path', path.join(PACKAGES_DIR, dir),
-            '--lerna-package', item.name,
-            '--tag-prefix', `${item.name}@` // Ensure prefix matches
+          '-p', 'angular',
+          '-i', path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'),
+          '-s',
+          '--commit-path', path.join(PACKAGES_DIR, dir),
+          '--lerna-package', item.name,
+          '--tag-prefix', `${item.name}@` // Ensure prefix matches
         ];
         // Ensure CHANGELOG exists
         if (!fs.existsSync(path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'))) {
-            fs.writeFileSync(path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'), '');
+          fs.writeFileSync(path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'), '');
         }
         run(`npx conventional-changelog ${changelogArgs.join(' ')}`);
       }
@@ -375,26 +431,26 @@ async function main() {
 
     // Push
     if (!IS_DRY_RUN) {
-        log.info('Pushing to remote...');
-        try {
-            // Push current branch
-            run('git push origin HEAD');
-            
-            // Push tags
-            if (tagNames.length > 0) {
-                 log.info(`Pushing ${tagNames.length} tags...`);
-                 // Try pushing specific tags first
-                 try {
-                     run(`git push origin ${tagNames.join(' ')}`);
-                 } catch (e) {
-                     log.warn('Failed to push specific tags, trying --tags...');
-                     run('git push origin --tags');
-                 }
-            }
-        } catch (e) {
-             log.error('Failed to push to remote. Please push manually.');
-             throw e;
+      log.info('Pushing to remote...');
+      try {
+        // Push current branch
+        run('git push origin HEAD');
+
+        // Push tags
+        if (tagNames.length > 0) {
+          log.info(`Pushing ${tagNames.length} tags...`);
+          // Try pushing specific tags first
+          try {
+            run(`git push origin ${tagNames.join(' ')}`);
+          } catch (e) {
+            log.warn('Failed to push specific tags, trying --tags...');
+            run('git push origin --tags');
+          }
         }
+      } catch (e) {
+        log.error('Failed to push to remote. Please push manually.');
+        throw e;
+      }
     }
 
     // Summary
@@ -406,7 +462,7 @@ async function main() {
     log.error('Release process failed!');
     // Rollback logic is limited for remote CI flow
     if (published.length > 0) {
-       // ...
+      // ...
     }
     // Revert files
     run('git checkout .');
