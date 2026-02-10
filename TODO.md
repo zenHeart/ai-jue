@@ -303,7 +303,7 @@
 
 ## Phase 6: 国际化 (i18n) 与全球化生态
 
-**状态：** ⏳ **计划中**
+**状态：** ✅ **已完成**
 
 **目标：** 实现项目的全面国际化，支持中英文双语，为全球开发者提供无障碍的使用体验。
 
@@ -315,9 +315,9 @@
   - [x] **官方预设包 (`packages/jue-preset-*`)**: 编写并提供中英文双语 README。
 - [x] **README 增强**
   - [x] 在主 README 顶部增加明显的语言切换链接 (Language Switcher)。
-- [ ] **核心文档库 (Docs) 翻译**
-  - [ ] 翻译 `packages/docs` 下的所有指南（架构、适配器标准、预设创建等）。
-  - [ ] 建立 `en` 子目录或使用多语言文档工具。
+- [x] **核心文档库 (Docs) 翻译**
+  - [x] 翻译 `packages/docs` 下的所有指南（架构、适配器标准、预设创建等）。
+  - [x] 建立 `en` 子目录或使用多语言文档工具。
 
 ### 2. CLI 交互国际化 (CLI i18n)
 
@@ -351,21 +351,27 @@
 
 ## Phase 7: 查漏补缺与深度完善 (Gap Filling & Polish)
 
-**状态：** ⏳ **待开始**
+**状态：** ✅ **已完成**
 
 **目标：** 填补当前实现与设计目标之间的差异，确保所有核心特性（Sub-Agents, MCP 完整支持）均已落地，并进一步打磨体验。
 
 ### 1. 核心特性补全 (Core Features Completion)
 
-- [ ] **[Feature] Claude MCP 支持**
-  - [ ] **调研结果**: Claude Code 支持项目级配置及其 `.mcp.json` 文件（Project scope）。
-  - [ ] **任务**: 更新 `ai-jue-adapter-claude`，使其除了生成 `CLAUDE.md` 外，还能根据配置生成 `.mcp.json`。
+- [x] **[Feature] Sub-Agents (子智能体) 支持**
+  - [x] **Core**: 确保 `subAgents` 配置能正确传递给适配器。
+  - [x] **Adapter-Cursor**: 将 `subAgents` 转换为 Cursor 的 Project Rules 或特定 Agent 上下文。
+  - [x] **Adapter-Gemini**: 映射 `subAgents` 到 `.gemini/settings.json` (如支持)。
+  - [x] **Adapter-Claude**: 探索如何在 `CLAUDE.md` 中有效表达子智能体逻辑。
+
+- [x] **[Feature] Claude MCP 支持**
+  - [x] **调研结果**: Claude Code 支持项目级配置及其 `.mcp.json` 文件（Project scope）。
+  - [x] **任务**: 更新 `ai-jue-adapter-claude`，使其除了生成 `CLAUDE.md` 外，还能根据配置生成 `.mcp.json`。
 
 ### 2. 体验优化 (Experience Polish)
 
-- [ ] **[VS Code] 状态栏功能增强**
-  - [ ] **现状**: 仅为一个静态按钮，点击运行 check。
-  - [ ] **目标**: 实现后台静默检查，仅在有更新时显示提示图标/文字。
+- [x] **[VS Code] 状态栏功能增强**
+  - [x] **现状**: 仅为一个静态按钮，点击运行 check。
+  - [x] **目标**: 实现后台静默检查，仅在有更新时显示提示图标/文字。
 
-- [ ] **[CLI] 交互优化**
-  - [ ] `init` 命令增加对 MCP Servers 和 Sub-Agents 的引导配置。
+- [x] **[CLI] 交互优化**
+  - [x] `init` 命令增加对 MCP Servers 和 Sub-Agents 的引导配置。

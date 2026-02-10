@@ -101,4 +101,33 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     };
     generateJsonFile(path.join(outputDir, ".cursor", "mcp.json"), mcpConfig);
   }
+
+  // 3. Generate .cursor/rules (Sub-Agents as individual rules)
+  if (config.subAgents) {
+    const rulesDir = path.join(outputDir, ".cursor", "rules");
+    for (const [key, value] of Object.entries(config.subAgents)) {
+      const agent = value as any;
+      let agentContent = "";
+
+      // Agent Prompt
+      if (agent.prompt) {
+        agentContent += `# ${key}\n\n${agent.prompt}\n\n`;
+      }
+
+      // Agent Skills
+      if (agent.skills && Array.isArray(agent.skills) && config.skills) {
+        agentContent += `## ${t.skillsTitle}\n\n`;
+        for (const skillKey of agent.skills) {
+          const skill = config.skills[skillKey];
+          if (skill) {
+            agentContent += `### ${skillKey}\n${skill.content || skill.prompt || ""}\n\n`;
+          }
+        }
+      }
+
+      if (agentContent.trim()) {
+        generateMarkdownFile(path.join(rulesDir, `${key}.md`), agentContent);
+      }
+    }
+  }
 }

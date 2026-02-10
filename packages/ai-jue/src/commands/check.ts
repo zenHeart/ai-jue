@@ -11,24 +11,42 @@ const execAsync = promisify(exec);
 export const command = "check";
 export const describe = "";
 
-export const builder: CommandBuilder = (yargs) => yargs;
+export const builder: CommandBuilder = (yargs) =>
+  yargs.option("json", {
+    type: "boolean",
+    describe: "Output result as JSON",
+    default: false,
+  });
 
 export const handler = async (argv: Arguments) => {
-  logger.info(pc.blue(t("commands.check.checking")));
+  const isJson = argv.json;
+
+  if (!isJson) {
+    logger.info(pc.blue(t("commands.check.checking")));
+  }
+
   const config = await loadConfig();
   const presets = config.presets || (config.preset ? [config.preset] : []);
 
   if (presets.length === 0) {
-    logger.warn(pc.yellow(t("commands.list.no_presets")));
+    if (!isJson) {
+      logger.warn(pc.yellow(t("commands.list.no_presets")));
+    } else {
+      console.log(JSON.stringify({ presets: [] }));
+    }
     return;
   }
+
+  const results: any[] = [];
 
   const checks = presets.map(async (presetName: string) => {
     // Security check: ensure presetName contains only safe characters to prevent shell injection
     if (!/^[a-zA-Z0-9\-_@\/]+$/.test(presetName)) {
-      logger.error(
-        pc.red(`[SECURITY] Invalid preset name skipped: "${presetName}"`),
-      );
+      if (!isJson) {
+        logger.error(
+          pc.red(`[SECURITY] Invalid preset name skipped: "${presetName}"`),
+        );
+      }
       return;
     }
 
@@ -46,33 +64,55 @@ export const handler = async (argv: Arguments) => {
       }
 
       // Check latest version from npm
-      // Use --json for easier parsing if needed, but version string is fine
       const { stdout } = await execAsync(`npm view ${packageName} version`);
       const latestVersion = stdout.trim();
 
-      if (
+      const hasUpdate =
         installedVersion !== "unknown" &&
         latestVersion &&
-        installedVersion !== latestVersion
-      ) {
-        logger.info(
-          `${packageName}: ${installedVersion} -> ${pc.green(latestVersion)} ${pc.yellow("[UPDATE]")}`,
-        );
-      } else if (installedVersion === latestVersion) {
-        logger.info(
-          `${packageName}: ${pc.green(installedVersion)} ${pc.dim("[LATEST]")}`,
-        );
-      } else {
-        logger.info(
-          `${packageName}: Installed=${installedVersion}, Latest=${latestVersion}`,
-        );
+        installedVersion !== latestVersion;
+
+      results.push({
+        preset: presetName,
+        packageName,
+        installedVersion,
+        latestVersion,
+        hasUpdate,
+      });
+
+      if (!isJson) {
+        if (hasUpdate) {
+          logger.info(
+            `${packageName}: ${installedVersion} -> ${pc.green(latestVersion)} ${pc.yellow("[UPDATE]")}`,
+          );
+        } else if (installedVersion === latestVersion) {
+          logger.info(
+            `${packageName}: ${pc.green(installedVersion)} ${pc.dim("[LATEST]")}`,
+          );
+        } else {
+          logger.info(
+            `${packageName}: Installed=${installedVersion}, Latest=${latestVersion}`,
+          );
+        }
       }
     } catch (error: any) {
-      logger.error(
-        pc.red(t("commands.check.failed", { message: error.message })),
-      );
+      if (!isJson) {
+        logger.error(
+          pc.red(t("commands.check.failed", { message: error.message })),
+        );
+      } else {
+        results.push({
+          preset: presetName,
+          packageName,
+          error: error.message,
+        });
+      }
     }
   });
 
   await Promise.all(checks);
+
+  if (isJson) {
+    console.log(JSON.stringify({ presets: results }));
+  }
 };

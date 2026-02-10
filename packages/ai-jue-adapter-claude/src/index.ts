@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs";
-import { generateMarkdownFile } from "ai-jue-core";
+import { generateMarkdownFile, generateJsonFile } from "ai-jue-core";
 
 const LOCALES: Record<string, any> = {
   zh: {
@@ -72,8 +72,36 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     }
   }
 
+  // 6. Sub-Agents Documentation
+  if (config.subAgents) {
+    const subAgentsTitle =
+      lang === "zh" ? "子智能体 (Sub-Agents)" : "Sub-Agents";
+    content += `## ${subAgentsTitle}\n\n`;
+    for (const [key, value] of Object.entries(config.subAgents)) {
+      const agent = value as any;
+      content += `### ${key}\n${agent.prompt || ""}\n\n`;
+      if (agent.skills && Array.isArray(agent.skills) && config.skills) {
+        for (const skillKey of agent.skills) {
+          const skill = config.skills[skillKey];
+          if (skill) {
+            content += `- **${skillKey}**: ${skill.description || ""}\n`;
+          }
+        }
+        content += "\n";
+      }
+    }
+  }
+
   if (content.trim()) {
     const filePath = path.join(outputDir, "CLAUDE.md");
     generateMarkdownFile(filePath, content);
+  }
+
+  // 2. Generate .mcp.json (Claude Code Project Scope)
+  if (config.mcp && config.mcp.servers) {
+    const mcpConfig = {
+      mcpServers: config.mcp.servers,
+    };
+    generateJsonFile(path.join(outputDir, ".mcp.json"), mcpConfig);
   }
 }

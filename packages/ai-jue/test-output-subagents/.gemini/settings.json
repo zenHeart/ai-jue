@@ -1,0 +1,10 @@
+{
+  "subAgents": {
+    "test-expert": {
+      "prompt": "You are a specialized agent for writing unit tests.",
+      "skills": [
+        "unit-testing"
+      ]
+    }
+  }
+}

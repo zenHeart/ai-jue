@@ -41,7 +41,34 @@ export const handler = async (argv: Arguments) => {
 
   if (createConfig) {
     const preset = await askQuestion(t("commands.init.ask_preset"));
-    const content = `module.exports = {\n  preset: '${preset || "base"}',\n};\n`;
+    const content = `/** @type {import('ai-jue').Config} */
+module.exports = {
+  // Primary preset to use
+  preset: '${preset || "base"}',
+
+  // Language for generated artifacts (en, zh)
+  language: 'en',
+
+  // MCP Servers configuration (Distributed to Cursor, Claude Code, Gemini etc.)
+  mcp: {
+    servers: {
+      // Example: SQLite MCP Server
+      // "sqlite": {
+      //   command: "npx",
+      //   args: ["-y", "@modelcontextprotocol/server-sqlite", "--db", "path/to/db"]
+      // }
+    }
+  },
+
+  // Sub-Agents configuration
+  subAgents: {
+    // Example: Specialized Agent
+    // "test-expert": {
+    //   prompt: "You are a specialized agent for writing unit tests.",
+    //   skills: ["unit-testing"]
+    // }
+  }
+};\n`;
     fs.writeFileSync(configPath, content);
     logger.success(t("commands.init.created_config"));
   }
