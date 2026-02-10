@@ -357,15 +357,9 @@
 
 ### 1. 核心特性补全 (Core Features Completion)
 
-- [ ] **[Feature] Sub-Agents (子智能体) 支持**
-  - [ ] **Core**: 确保 `subAgents` 配置能正确传递给适配器。
-  - [ ] **Adapter-Cursor**: 将 `subAgents` 转换为 Cursor 的 Project Rules 或特定 Agent 上下文。
-  - [ ] **Adapter-Gemini**: 映射 `subAgents` 到 `.gemini/settings.json` (如支持)。
-  - [ ] **Adapter-Claude**: 探索如何在 `CLAUDE.md` 中有效表达子智能体逻辑。
-
 - [ ] **[Feature] Claude MCP 支持**
-  - [ ] 调研 Claude Desktop 的 MCP 配置机制（目前多为全局配置 `claude_desktop_config.json`）。
-  - [ ] 决定是否支持生成全局配置（需谨慎处理覆盖风险），或等待官方支持项目级配置。
+  - [ ] **调研结果**: Claude Code 支持项目级配置及其 `.mcp.json` 文件（Project scope）。
+  - [ ] **任务**: 更新 `ai-jue-adapter-claude`，使其除了生成 `CLAUDE.md` 外，还能根据配置生成 `.mcp.json`。
 
 ### 2. 体验优化 (Experience Polish)
 
