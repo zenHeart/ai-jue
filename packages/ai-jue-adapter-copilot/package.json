@@ -1,6 +1,6 @@
 {
   "name": "ai-jue-adapter-copilot",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "AI-Jue adapter for GitHub Copilot",
   "main": "dist/index.js",
   "scripts": {

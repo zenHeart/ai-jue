@@ -1,6 +1,6 @@
 {
   "name": "ai-jue-adapter-claude",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "Adapter for generating Claude AI configurations.",
   "main": "dist/index.js",
   "scripts": {

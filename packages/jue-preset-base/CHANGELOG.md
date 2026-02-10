@@ -1,3 +1,7 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-base@v1.0.8...jue-preset-base@1.0.0) (2026-02-10)
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-base@v1.0.7...jue-preset-base@1.0.0) (2026-02-10)
 
 
