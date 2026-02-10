@@ -64,7 +64,7 @@ function main() {
   }
 
   const pkgMap = loadPkgMap();
-  const items = noteItems.map(({ name, version }) => {
+  let items = noteItems.map(({ name, version }) => {
     const found = pkgMap.get(name);
     if (!found) {
       process.stderr.write(`package not found in repo: ${name}\n`);
