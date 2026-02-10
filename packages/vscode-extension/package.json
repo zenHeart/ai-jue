@@ -20,6 +20,10 @@
       {
         "command": "ai-jue.apply",
         "title": "ai-jue: Apply Configuration"
+      },
+      {
+        "command": "ai-jue.check",
+        "title": "ai-jue: Check Updates"
       }
     ],
     "snippets": [

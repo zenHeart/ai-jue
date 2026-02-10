@@ -121,6 +121,7 @@
 **目标：** 全面提升系统的稳定性、性能和可观测性，建立完整的测试体系，确保生产级可用性。
 
 ### 1. 深度优化 (Deep Optimization)
+
 - [x] **性能优化 (Performance)**
   - [x] **异步 Check**: 重构 `check` 命令，将同步的 `execSync` 替换为 `Promise.all` + 异步 `exec/spawn`，实现并发版本检查。
   - [x] **异步 I/O**: 重构 `findAdapters` 和 `loadAssetsFromDir`，使用 `fs.promises` 和 `Promise.all` 替代循环中的同步读取，提升大规模项目的加载速度。
@@ -138,6 +139,7 @@
   - [x] **错误处理**: 建立统一的 `ErrorHandler` 类和自定义 `AppError` 体系，支持错误码和上下文信息。
 
 ### 2. 全面测试矩阵 (Comprehensive Testing Matrix)
+
 - [x] **单元测试 (Unit Tests)**
   - [x] **Core Logic**: 覆盖 `deepMerge` (数组/对象/Null处理)、`generateMarkdownFile` (区块标记完整性)、`generateJsonFile`。
   - [x] **Config Loader**: 覆盖 `loadConfig` 的 Schema 校验逻辑，测试各种无效配置的报错信息。
@@ -150,6 +152,7 @@
   - [x] **Stress Test**: 模拟包含 50+ 个预设/适配器的大规模项目，验证 CLI 的内存占用和并发处理能力 (Optimizations implemented)。
 
 ### 3. 生产级标准 (Production Standards)
+
 - [x] **可用性与稳定性 (Availability)**
   - [x] **Exit Codes**: 确保所有错误场景下 CLI 返回非零退出码 (Exit Code 1)，便于 CI/CD 集成。
   - [x] **Graceful Shutdown**: 在 `watch` 模式和长任务中正确处理 `SIGINT` (Ctrl+C) 信号，确保资源正确释放。
@@ -183,6 +186,7 @@
 **目标：** 将经过验证的代码库发布到 npm，并建立自动化发布流程。
 
 ### 1. 发布准备 (Release Preparation)
+
 - [x] **[Metadata] 检查包元数据** (Priority: High, ETA: 10m)
   - 检查所有包 (`ai-jue-cli`, `ai-jue-core`, adapters, presets) 的 `package.json`。
   - 确保没有 `private: true` (除了根目录)。
@@ -193,6 +197,7 @@
   - 确认所有包的版本号一致（当前为 `1.0.0`）。
 
 ### 2. 第一阶段：本地发布验证 (Phase 1: Local Manual Publish)
+
 - [x] **[DryRun] 模拟发布** (Priority: High, ETA: 15m)
   - 在每个包目录运行 `npm publish --dry-run`。
   - 检查输出的文件列表，确保没有遗漏重要文件，也没有包含敏感文件。
@@ -209,41 +214,34 @@
   - 更新 `package.json` 中的 `name` 为 `ai-jue`，并配置多重 `bin` 映射 (`jue`, `ai-jue`, `ai-jue-cli`)。
 
 ### 3. 第二阶段：自动化发布 (Phase 2: Automation)
+
 - [x] **[Workflow] 完善 Release Workflow** (Priority: Medium, ETA: 30m)
   - 优化 `.github/workflows/release.yml`，增加 provenance 证明。
   - 配置 npm token secret (文档说明)。
-- [ ] **[Infra] Monorepo 发布工作流 (One-click Release)** (Phase 6)
-  - [ ] **1. 前置约束与准备**
-    - [ ] 确保待发布包位于 `packages/*`，包含符合 Conventional Commits 的提交。
-    - [ ] 确保本地已 rebase 到最新 master，且 CI 状态为绿色。
-    - [ ] 补充 CI 状态检查脚本。
-  - [ ] **2. 本地 Release 命令封装** (`npm run release`)
-    - [ ] 新建 `scripts/release.js`：
-      - [ ] 使用 `@lerna/listable` 或 `pnpm -r list` 扫描并自动识别需 bump 的包（对比 tag 与 HEAD diff）。
-      - [ ] 集成 `enquirer` 实现交互式包选择列表。
-      - [ ] 实现版本策略选择 (patch/minor/major/prerelease) 并自动改写 `package.json`。
-      - [ ] 集成 `conventional-changelog-cli` 生成 CHANGELOG 片段。
-      - [ ] 自动执行 git add/commit/tag 流程 (`chore(release): packagename@vxx.xx.xx`)。
-      - [ ] 支持 `--dry-run` 参数方便调试。
-    - [ ] 提供版本计算逻辑的单元测试覆盖。
-  - [ ] **3. Tag 规范与校验**
-    - [ ] 新建 `scripts/verify-tags.js`：
-      - [ ] 校验 Tag 格式严格匹配 `packagename@vxx.xx.xx`。
-      - [ ] Push 前校验本地 Tag 与远程冲突情况。
-  - [ ] **4. GitHub Actions 自动发布**
-    - [ ] 新增 `.github/workflows/release.yml`：
-      - [ ] 配置 `on.push.tags: '**@[0-9]+.[0-9]+.[0-9]+*'` 触发器。
-      - [ ] 解析 Tag 前缀，定位到 `packages/{packagename}`。
-      - [ ] 执行 `npm publish --provenance`。
-      - [ ] 调用 `actions/create-release` 自动创建 GitHub Release 并填充 CHANGELOG。
-  - [ ] **5. 文档同步**
-    - [ ] 更新 README.md Release 章节（环境准备、交互示例、错误码）。
-    - [ ] 确保 `WORKFLOW_DESIGN.md` 与实际实现一致。
+- [x] **[Infra] Monorepo 发布工作流 (One-click Release)**
+  - [x] **1. 前置约束与准备**
+    - [x] 确保待发布包位于 `packages/*`，包含符合 Conventional Commits 的提交。
+    - [x] 确保本地已 rebase 到最新 main，且 CI 状态为绿色（`release.js` 中 `checkGitClean()` 校验）。
+  - [x] **2. 本地 Release 命令封装** (`npm run release`)
+    - [x] `scripts/release.js` 已实现：
+      - [x] 使用 `git diff` 对比每个包的最新 tag 与 HEAD，自动识别有变更的包。
+      - [x] 集成 `enquirer` 实现交互式包选择和版本策略选择。
+      - [x] 实现版本策略选择 (patch/minor/major/prerelease) 并自动改写 `package.json`。
+      - [x] 集成 `conventional-changelog-cli` 生成 CHANGELOG 片段。
+      - [x] 自动执行 git add/commit/tag 流程（tag 格式：`packagename@vX.X.X`）。
+      - [x] 支持 `--dry-run` 参数方便调试。
+  - [x] **3. Tag 规范**
+    - [x] Tag 格式严格为 `packagename@vX.X.X`，由 `release.js` 自动生成和推送。
+  - [x] **4. GitHub Actions 自动发布**
+    - [x] `.github/workflows/release.yml` 已实现：
+      - [x] 触发方式：push 到 main 分支且 `release-note.md` 有变更，或手动 `workflow_dispatch`。
+      - [x] 解析 `release-note.md` 提取待发布包列表，matrix 并行构建和发布。
+      - [x] 使用 npm Trusted Publisher (OIDC) 进行身份认证，无需手动管理 Token。
+  - [x] **5. 文档同步**
+    - [x] README.md Release 章节已更新。
 
 > **💡 贴心提醒：**
 > 在配置 **Trusted Publishers** 时，记得先在 npm 仓库设置中关联好 GitHub Repository 和对应的 Workflow 名称，这样可以省去手动管理 `NODE_AUTH_TOKEN` 的麻烦，安全性直接拉满。
-
-需要我帮你起草 `WORKFLOW_DESIGN.md` 的初步大纲，还是直接帮你写那个 `.js` 脚本的逻辑框架？
 
 ---
 
