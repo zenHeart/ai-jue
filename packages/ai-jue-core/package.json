@@ -1,6 +1,6 @@
 {
   "name": "ai-jue-core",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "description": "Core logic for ai-jue",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

@@ -1,6 +1,6 @@
 {
   "name": "ai-jue-adapter-gemini",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "description": "Adapter for generating Gemini AI configurations.",
   "main": "dist/index.js",
   "scripts": {
