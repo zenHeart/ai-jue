@@ -2,17 +2,13 @@ name: Release
 
 on:
   push:
-    tags:
-      - '*@v*'
+    branches: [main]
+    paths:
+      - 'release-note.md'
   workflow_dispatch:
-    inputs:
-      tag:
-        description: 'Tag name to filter (leave empty to publish all items in release-note.md)'
-        required: false
-        type: string
 
 concurrency:
-  group: release-${{ github.ref_name }}
+  group: release
   cancel-in-progress: false
 
 jobs:
@@ -35,8 +31,7 @@ jobs:
         id: parse
         run: |
           if [ -f "release-note.md" ]; then
-            TAG="${{ github.event.inputs.tag || github.ref_name }}"
-            ITEMS=$(node .github/scripts/parse-release-note.js release-note.md --tag "$TAG")
+            ITEMS=$(node .github/scripts/parse-release-note.js release-note.md)
             echo "Parsed items: $ITEMS"
             echo "items=$ITEMS" >> $GITHUB_OUTPUT
           else
