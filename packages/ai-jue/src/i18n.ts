@@ -18,6 +18,18 @@ const resources = {
             "Specify adapters to run (repeatable or comma-separated), e.g. --adapter cursor --adapter gemini",
           all_describe: "Run all discovered adapters (-a)",
           running: "\n🚀 Running apply command...",
+          no_config_detected:
+            "No ai/jue config file detected in current project.",
+          ask_init_before_apply:
+            "Run interactive initialization now? (Y/n)",
+          no_config_non_interactive:
+            "Non-interactive mode cannot run initialization. Please run `jue init` first or create ai.config.js.",
+          init_declined:
+            "Initialization skipped. Apply is not executed.",
+          init_not_completed:
+            "Initialization did not produce a valid config. Apply is not executed.",
+          init_completed_continue:
+            "Initialization completed. Continuing apply...",
           finding_adapters: "Finding adapters...",
           no_adapters: "No adapters found. No files will be generated.",
           no_adapter_detected:
@@ -31,7 +43,9 @@ const resources = {
           manual_selection_intro:
             "No local tool footprint found. Please select adapters to run:",
           manual_selection_hint:
-            "Enter numbers or adapter names separated by commas (for example: 1,3 or cursor,gemini). Enter \"all\" to select all.",
+            "Multiple selection supported. Enter numbers or adapter names separated by commas/spaces (for example: 1,3 or cursor gemini). Enter \"all\" to select all.",
+          manual_selection_hint_inquirer:
+            "Use ↑/↓ to navigate, <space> to select, <enter> to confirm.",
           manual_selection_prompt: "Adapter selection>",
           manual_selection_unavailable:
             "Interactive adapter selection is unavailable in non-interactive mode.",
@@ -107,6 +121,18 @@ const resources = {
             "指定要执行的适配器（可重复或逗号分隔），例如 --adapter cursor --adapter gemini",
           all_describe: "执行全部已发现的适配器（-a）",
           running: "\n🚀 正在运行 apply 命令...",
+          no_config_detected:
+            "当前项目未检测到 ai/jue 配置文件。",
+          ask_init_before_apply:
+            "是否现在执行交互式初始化？(Y/n)",
+          no_config_non_interactive:
+            "当前为非交互模式，无法自动初始化。请先执行 `jue init` 或创建 ai.config.js。",
+          init_declined:
+            "已跳过初始化，本次不会执行 apply。",
+          init_not_completed:
+            "初始化后仍未生成有效配置，本次不会执行 apply。",
+          init_completed_continue:
+            "初始化完成，继续执行 apply...",
           finding_adapters: "正在查找适配器...",
           no_adapters: "未找到适配器。将不会生成任何文件。",
           no_adapter_detected:
@@ -120,7 +146,9 @@ const resources = {
           manual_selection_intro:
             "未发现本地工具环境痕迹，请手动选择要执行的适配器：",
           manual_selection_hint:
-            "请输入编号或适配器名称，多个用逗号分隔（例如：1,3 或 cursor,gemini）。输入 all 表示全部。",
+            "支持多选。请输入编号或适配器名称，多个可用逗号或空格分隔（例如：1,3 或 cursor gemini）。输入 all 表示全部。",
+          manual_selection_hint_inquirer:
+            "使用 ↑/↓ 移动，空格选择，回车确认。",
           manual_selection_prompt: "适配器选择>",
           manual_selection_unavailable:
             "当前为非交互模式，无法手动选择适配器。",

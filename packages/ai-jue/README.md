@@ -75,6 +75,11 @@ npx jue create-preset <name>
 - `jue apply -a` / `jue apply --all`：执行全部已发现适配器
 - 当未传参且未识别到工具痕迹时，不会盲目执行全部适配器，会提示用户显式选择
 
+## 首次初始化体验
+
+- 在新项目首次执行 `jue apply` 时，如果未检测到 `ai/jue` 配置文件，会先触发初始化引导。
+- 引导完成后继续执行 apply，减少“小白用户先学命令再配置”的门槛。
+
 ## License
 
 [MIT](LICENSE)

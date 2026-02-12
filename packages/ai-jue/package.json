@@ -20,6 +20,7 @@
     "ai-jue-core": "*",
     "chokidar": "^4.0.3",
     "cosmiconfig": "^9.0.0",
+    "enquirer": "^2.4.1",
     "glob": "^13.0.0",
     "i18next": "^25.8.4",
     "ora": "^9.3.0",

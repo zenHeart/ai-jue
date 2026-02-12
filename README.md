@@ -105,6 +105,8 @@ export default {
 npx jue apply --all
 ```
 
+首次在新项目执行 `jue apply` 时，如果未检测到 `ai.config.js` / `jue.config.js`（及对应 rc），会先进入初始化引导（类似 `eslint init`），完成最小配置后再继续 apply。
+
 完成！ai-jue 会根据项目的 AI 配置策略，自动为各编辑器生成对应的配置文件：
 
 ```

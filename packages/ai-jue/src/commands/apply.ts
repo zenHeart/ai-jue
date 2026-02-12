@@ -10,6 +10,7 @@ import ora from "ora";
 import { createInterface } from "readline/promises";
 import { logger } from "../logger";
 import { t } from "../i18n";
+import { runInitFlow } from "./init";
 
 export const command = "apply";
 export const describe = ""; // Managed in cli.ts for dynamic translation
@@ -42,6 +43,7 @@ const ADAPTER_ALIAS_MAP: Record<string, string> = {
   gemini: "ai-jue-adapter-gemini",
   copilot: "ai-jue-adapter-copilot",
 };
+const KNOWN_ADAPTERS = [...new Set(Object.values(ADAPTER_ALIAS_MAP))];
 
 const ADAPTER_INDICATORS: Record<string, string[]> = {
   "ai-jue-adapter-cursor": [
@@ -61,6 +63,16 @@ const ADAPTER_INDICATORS: Record<string, string[]> = {
     ".github/copilot-settings.json",
   ],
 };
+const CONFIG_SEARCH_PATHS = [
+  "ai.config.js",
+  "ai.config.json",
+  ".airc.js",
+  ".airc.json",
+  "jue.config.js",
+  "jue.config.json",
+  ".juerc.js",
+  ".juerc.json",
+];
 
 function parseRequestedAdapters(raw: unknown): string[] {
   const list = Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [];
@@ -101,7 +113,7 @@ function parseManualSelection(
   if (input.toLowerCase() === "all") return discoveredAdapters;
 
   const picked = input
-    .split(",")
+    .split(/[,\s，]+/)
     .map((item) => item.trim())
     .filter(Boolean);
 
@@ -130,13 +142,81 @@ async function promptManualAdapterSelection(
     return [];
   }
 
-  logger.info(pc.cyan(t("commands.apply.manual_selection_intro")));
-  discoveredAdapters.forEach((adapter, index) => {
-    logger.log(
-      `  ${index + 1}. ${toAdapterShortName(adapter)} (${adapter})`,
-    );
-  });
-  logger.log(pc.dim(t("commands.apply.manual_selection_hint")));
+  try {
+    const Enquirer: any = require("enquirer");
+    const MultiSelect = Enquirer.MultiSelect as any;
+    const prompt = new MultiSelect({
+      name: "adapters",
+      message: t("commands.apply.manual_selection_intro"),
+      hint: t("commands.apply.manual_selection_hint_inquirer"),
+      choices: discoveredAdapters.map((adapter) => ({
+        name: adapter,
+        message: `${toAdapterShortName(adapter)} (${adapter})`,
+      })),
+      result(names: string[]) {
+        return names;
+      },
+    });
+    const selected = await prompt.run();
+    if (!Array.isArray(selected)) return [];
+    return selected.filter((item) => discoveredAdapters.includes(item));
+  } catch (_error) {
+    // Fallback for terminals that don't support interactive multiselect.
+    logger.info(pc.cyan(t("commands.apply.manual_selection_intro")));
+    discoveredAdapters.forEach((adapter, index) => {
+      logger.log(
+        `  ${index + 1}. ${toAdapterShortName(adapter)} (${adapter})`,
+      );
+    });
+    logger.log(pc.dim(t("commands.apply.manual_selection_hint")));
+
+    const rl = createInterface({
+      input: process.stdin,
+      output: process.stdout,
+    });
+    try {
+      const answer = await rl.question(
+        `${t("commands.apply.manual_selection_prompt")} `,
+      );
+      return parseManualSelection(answer, discoveredAdapters);
+    } finally {
+      rl.close();
+    }
+  }
+}
+
+function hasProjectConfig(cwd: string): boolean {
+  if (
+    CONFIG_SEARCH_PATHS.some((fileName) =>
+      fs.existsSync(path.join(cwd, fileName)),
+    )
+  ) {
+    return true;
+  }
+
+  const packageJsonPath = path.join(cwd, "package.json");
+  if (!fs.existsSync(packageJsonPath)) {
+    return false;
+  }
+
+  try {
+    const pkg = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+    return Boolean(pkg?.ai || pkg?.jue);
+  } catch {
+    return false;
+  }
+}
+
+async function ensureConfigReadyForApply(): Promise<boolean> {
+  const cwd = process.cwd();
+  if (hasProjectConfig(cwd)) return true;
+
+  logger.warn(pc.yellow(t("commands.apply.no_config_detected")));
+
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    logger.warn(pc.yellow(t("commands.apply.no_config_non_interactive")));
+    return false;
+  }
 
   const rl = createInterface({
     input: process.stdin,
@@ -144,13 +224,24 @@ async function promptManualAdapterSelection(
   });
 
   try {
-    const answer = await rl.question(
-      `${t("commands.apply.manual_selection_prompt")} `,
-    );
-    return parseManualSelection(answer, discoveredAdapters);
+    const answer = await rl.question(`${t("commands.apply.ask_init_before_apply")} `);
+    if (answer.trim().toLowerCase() === "n") {
+      logger.warn(pc.yellow(t("commands.apply.init_declined")));
+      return false;
+    }
   } finally {
     rl.close();
   }
+
+  await runInitFlow();
+
+  if (!hasProjectConfig(cwd)) {
+    logger.warn(pc.yellow(t("commands.apply.init_not_completed")));
+    return false;
+  }
+
+  logger.info(pc.green(t("commands.apply.init_completed_continue")));
+  return true;
 }
 
 async function findAdapters(): Promise<string[]> {
@@ -192,6 +283,52 @@ async function runAdapters(
 
   if (discoveredAdapters.length === 0) {
     spinner.warn(pc.yellow(t("commands.apply.no_adapters")));
+    if (!options.all && options.requestedAdapters.length === 0) {
+      const manualSelected = await promptManualAdapterSelection(KNOWN_ADAPTERS);
+      if (manualSelected.length === 0) {
+        logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
+        return;
+      }
+      logger.info(
+        pc.cyan(
+          t("commands.apply.manual_selected_adapters", {
+            count: manualSelected.length,
+            names: manualSelected.join(", "),
+          }),
+        ),
+      );
+
+      for (const adapterName of manualSelected) {
+        const adapterSpinner = ora(
+          t("commands.apply.running_adapter", { name: adapterName }),
+        ).start();
+        try {
+          const adapter = require(adapterName);
+          if (adapter.generate && typeof adapter.generate === "function") {
+            await adapter.generate(config, outputDir);
+            adapterSpinner.succeed(
+              pc.green(t("commands.apply.adapter_success", { name: adapterName })),
+            );
+          } else {
+            adapterSpinner.warn(
+              pc.yellow(
+                t("commands.apply.adapter_no_generate", { name: adapterName }),
+              ),
+            );
+          }
+        } catch (error: any) {
+          adapterSpinner.fail(
+            pc.red(
+              t("commands.apply.adapter_failed", {
+                name: adapterName,
+                message: error.message,
+              }),
+            ),
+          );
+          process.exitCode = 1;
+        }
+      }
+    }
     return;
   }
 
@@ -302,6 +439,12 @@ export const handler = async (argv: Arguments) => {
 
   const runApply = async () => {
     logger.info(pc.bold(pc.blue(t("commands.apply.running"))));
+    const configReady = await ensureConfigReadyForApply();
+    if (!configReady) {
+      process.exitCode = 1;
+      return;
+    }
+
     const configEntries = [
       "ai.config.js",
       "jue.config.js",

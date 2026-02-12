@@ -24,7 +24,7 @@ export const describe = "";
 
 export const builder: CommandBuilder = (yargs) => yargs;
 
-export const handler = async (argv: Arguments) => {
+export async function runInitFlow(): Promise<void> {
   logger.info(t("commands.init.running"));
   const configPath = path.join(process.cwd(), "ai.config.js");
 
@@ -90,4 +90,8 @@ module.exports = {
   } else {
     logger.info(t("commands.init.dir_exists"));
   }
+}
+
+export const handler = async (_argv: Arguments) => {
+  await runInitFlow();
 };

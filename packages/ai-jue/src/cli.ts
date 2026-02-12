@@ -40,12 +40,14 @@ import {
 import { logger, LogLevel } from "./logger";
 import { initI18n, t } from "./i18n";
 import { loadConfig } from "./config";
+const CLI_VERSION: string = require("../package.json").version;
 
 async function main() {
   const config = await loadConfig();
   await initI18n(config.language);
 
   yargs(hideBin(process.argv))
+    .version(CLI_VERSION)
     .option("verbose", {
       alias: "v",
       type: "boolean",

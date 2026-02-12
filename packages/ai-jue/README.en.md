@@ -75,6 +75,11 @@ npx jue create-preset <name>
 - `jue apply -a` / `jue apply --all`: run all discovered adapters
 - If no adapter is passed and no footprint is detected, it will not run all adapters implicitly; it prompts for explicit selection
 
+## First-Run Initialization UX
+
+- On first run in a new project, if no `ai/jue` config file is detected, `jue apply` starts an initialization guide first.
+- After initialization, apply continues automatically to reduce first-time setup friction.
+
 ## License
 
 [MIT](LICENSE)

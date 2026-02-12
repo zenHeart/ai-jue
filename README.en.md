@@ -72,6 +72,8 @@ export default {
 npx jue apply --all
 ```
 
+On first run in a new project, if no `ai.config.js` / `jue.config.js` (or rc variants) is detected, `jue apply` starts an initialization flow first (similar to `eslint init`), then continues apply.
+
 Done! `ai-jue` generates tool files automatically:
 
 ```
