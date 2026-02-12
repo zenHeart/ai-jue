@@ -34,19 +34,12 @@ export async function generate(config: any, outputDir: string): Promise<void> {
   const lang = config.language === "zh" || config.language === "zh-CN" ? "zh" : "en";
   const t = LOCALES[lang];
 
-  // 1. AGENTS context -> .cursor/rules/agents.mdc
+  // 1. AGENTS context -> root AGENTS.md (Cursor native entry)
   const globalContext = config.context?.global;
   if (typeof globalContext === "string" && globalContext.trim()) {
-    const frontmatter = [
-      "---",
-      "description: ai-jue generated global context",
-      "alwaysApply: true",
-      "---",
-      "",
-    ].join("\n");
     generateMarkdownFile(
-      path.join(outputDir, ".cursor", "rules", "agents.mdc"),
-      `${frontmatter}${globalContext.trim()}\n`,
+      path.join(outputDir, "AGENTS.md"),
+      `${globalContext.trim()}\n`,
     );
   }
 

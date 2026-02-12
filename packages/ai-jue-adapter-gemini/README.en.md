@@ -20,7 +20,7 @@ Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 This adapter transforms `ai-jue` configs into Gemini CLI outputs:
 
 - **System Settings**: `.gemini/settings.json` from `tools.gemini` plus commands/hooks/agents/mcp mapping.
-- **System Prompt**: `GEMINI.md` (`prompts.gemini` takes priority; fallback to `context.global`).
+- **System Prompt**: `GEMINI.md` (references global context via `@AGENTS.md`, then layers `prompts.gemini`).
 - **Rules Degradation**: canonical `rules` are explicitly written to `GEMINI.md` to avoid silent dropping.
 
 ## Installation

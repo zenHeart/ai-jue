@@ -109,10 +109,10 @@ npx jue apply --all
 
 ```
 ✓ CLAUDE.md                          — Claude Code
-✓ .cursor/rules/agents.mdc                       — Cursor (AGENTS 上下文)
 ✓ .cursor/rules/*.mdc                — Cursor (Rules 转换产物，存在 rules/ 时生成)
 ✓ .gemini/settings.json              — Gemini CLI
 ✓ .github/copilot-instructions.md    — GitHub Copilot
+✓ AGENTS.md                          — Cursor 原生全局上下文入口（项目根目录）
 ```
 
 ---

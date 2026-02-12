@@ -14,21 +14,21 @@
   - [x] 固化规则：项目根目录 `AGENTS.md` 存在即自动注入，不新增配置负担。
   - [x] 清理历史/错误概念残留（命名、路径、兼容叙述），避免二义性。
 - [x] **A2 Cursor 能力映射复核与收敛（P0）**
-  - [x] AGENTS/context -> `.cursor/rules/agents.mdc`（统一 mdc 路径，不引入历史产物名）。
+  - [x] Cursor 采用原生 `AGENTS.md` 作为全局上下文入口；`rules/*` 映射到 `.cursor/rules/*.mdc`。
   - [x] `rules/*` -> `.cursor/rules/*.mdc`（frontmatter 保留 description/alwaysApply/globs）。
   - [x] `commands/*` -> `.cursor/commands/*.md`，`skills/*` -> `.cursor/skills/*/SKILL.md`。
   - [x] `hooks` -> `.cursor/hooks.json`，`mcp.servers` -> `.cursor/mcp.json`，`agents` -> `.cursor/agents/*.md`。
   - [x] 回归验证：base/internal 自举 smoke + Cursor 适配器契约测试。
 - [x] **A3 Claude 能力映射补齐（P0）**
-  - [x] AGENTS/context、commands、skills、hooks、agents、mcp 的输出契约逐项核对。
+  - [x] AGENTS.md、commands、skills、hooks、agents、mcp 的输出契约逐项核对。
   - [x] 明确 `rules` 在 Claude 的落地策略：显式降级到 `CLAUDE.md`。
   - [x] 补充缺失测试：rules 与 hooks 的行为断言，避免静默忽略。
 - [x] **A4 Gemini 能力映射补齐（P0）**
-  - [x] AGENTS/context -> `GEMINI.md` 注入策略核对（与 prompts 优先级一致）。
+  - [x] AGENTS.md -> `GEMINI.md` 引用注入策略核对（与 prompts 优先级一致）。
   - [x] `commands/hooks/mcp/agents/tools.gemini` -> `.gemini/settings.json` 的映射校验。
   - [x] 明确 `rules` 能力策略：显式降级写入 `GEMINI.md`。
 - [x] **A5 Copilot 能力映射补齐（P0）**
-  - [x] AGENTS/context、commands、skills、hooks 的注入边界核对。
+  - [x] AGENTS.md、commands、skills、hooks 的注入边界核对。
   - [x] `mcp/agents/rules` 的降级说明标准化（统一文案+行为，不夸大支持度）。
   - [x] 文档声明与实现一致化，避免“文档支持但实现仅提示”偏差。
 - [x] **A6 统一降级策略与失败策略（P1）**
@@ -96,12 +96,13 @@
   - [x] 文档先行：更新 `packages/jue-preset-internal/README.md`、`packages/jue-preset-base/README.md`、preset 设计文档说明嵌套机制。
   - [x] 实现层支持嵌套解析，并让 `jue-preset-internal` 声明依赖 `jue-preset-base`，保证自举默认具备 base 核心能力。
   - [x] 补充集成测试：验证 `preset: "internal"` 时可自动消费 base 命令资产。
-- [ ] **C0 AGENTS 单一来源与跨工具引用收敛（文档先行）**
-  - [ ] 固化规则：项目根目录 `AGENTS.md` 作为单一来源；适配器优先引用而非复制。
-  - [ ] Cursor 维持 `.cursor/rules/agents.mdc` 生成为 `AGENTS.md` 投影；保留注释块增量更新策略。
-  - [ ] Claude/Gemini 生成文件改为包含 `@AGENTS.md` 引用语义（而不是内联复制全部内容）。
-  - [ ] 明确本地已有 `CLAUDE.md`/`GEMINI.md`/`AGENTS.md` 时的合并策略：仅管理注释块，用户自定义内容保持不变。
-  - [ ] 补充回归测试：验证引用语义与注释块追加语义均生效。
+- [x] **C0 AGENTS 单一来源与跨工具引用收敛（文档先行）**
+  - [x] 固化规则：项目根目录 `AGENTS.md` 作为单一来源；适配器优先引用而非复制。
+  - [x] Cursor 对齐原生能力：直接消费根目录 `AGENTS.md`。
+  - [x] 保留注释块增量更新策略于 `CLAUDE.md` / `GEMINI.md` 等生成文件，避免覆盖用户手写内容。
+  - [x] Claude/Gemini 生成文件改为包含 `@AGENTS.md` 引用语义（而不是内联复制全部内容）。
+  - [x] 明确本地已有 `CLAUDE.md`/`GEMINI.md`/`AGENTS.md` 时的合并策略：仅管理注释块，用户自定义内容保持不变。
+  - [x] 补充回归测试：验证引用语义与注释块追加语义均生效。
 - [ ] **C1 新增 `jue format`（多工具配置规整到 `.ai`）**
   - [ ] 输出命令设计：`jue format` 默认探测 `.cursor/.gemini/.claude` 等痕迹并生成迁移计划（dry-run）。
   - [ ] 提供执行模式：`--write` 将可收敛内容写入 `.ai`（`AGENTS.md`、`commands/`、`rules/`、`tools/<tool>/`）。
@@ -153,7 +154,7 @@
   - [x] 验证并修复 `npx jue apply` 在四适配器目标产物上的稳定生成。
   - [x] 对齐 README 与实际产物路径命名（尤其 Cursor 相关产物），避免“文档可运行性”偏差。
   - [x] 保持双命名入口：`ai.config.*`/`.ai` 优先，`jue.config.*`/`.jue` 次优先支持。
-  - [x] Cursor 输出分层：`AGENTS/context` -> `.cursor/rules/agents.mdc`，`rules/*` -> `.cursor/rules/*.mdc`（仅规则做 mdc 转换）。
+  - [x] Cursor 输出分层：`AGENTS.md` 为全局上下文入口，`rules/*` -> `.cursor/rules/*.mdc`（仅规则做 mdc 转换）。
   - [x] 明确 Cursor 仅做格式转换：统一 `md + YAML frontmatter` 输入 -> 输出 `.mdc`，不重复实现规则能力逻辑。
   - [x] 修复 `apply --watch` 监听可靠性：确保 `.ai/.jue/ai.config.js/jue.config.js` 变化可稳定触发。
 - [x] **配置语义冲突止血（过渡期）**

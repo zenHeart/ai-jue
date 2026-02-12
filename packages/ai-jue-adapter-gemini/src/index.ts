@@ -4,13 +4,19 @@ import { generateMarkdownFile, generateJsonFile, deepMerge } from "ai-jue-core";
 export async function generate(config: any, outputDir: string): Promise<void> {
   const promptEntries = config.prompts ? Object.values(config.prompts) : [];
   const firstPrompt = promptEntries.length > 0 ? (promptEntries[0] as any) : null;
+  const globalContext =
+    typeof config.context?.global === "string" ? config.context.global.trim() : "";
+  if (globalContext) {
+    generateMarkdownFile(path.join(outputDir, "AGENTS.md"), `${globalContext}\n`);
+  }
   // Generate GEMINI.md from prompt/context and degraded rules
   const prompt = config.prompts?.gemini || firstPrompt;
   const sections: string[] = [];
+  if (globalContext) {
+    sections.push("@AGENTS.md");
+  }
   if (prompt?.content) {
     sections.push(String(prompt.content).trim());
-  } else if (config.context?.global) {
-    sections.push(String(config.context.global).trim());
   }
 
   if (config.rules && typeof config.rules === "object") {

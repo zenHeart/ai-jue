@@ -20,7 +20,7 @@ describe('ai-jue-adapter-cursor', () => {
     }
   });
 
-  it('should map AGENTS context to .cursor/rules/agents.mdc', async () => {
+  it('should map AGENTS context to root AGENTS.md', async () => {
     const config = {
       context: {
         global: 'Global Agent Context'
@@ -29,9 +29,9 @@ describe('ai-jue-adapter-cursor', () => {
 
     await generate(config, TEST_DIR);
 
-    const rulesPath = path.join(TEST_DIR, '.cursor/rules/agents.mdc');
-    expect(fs.existsSync(rulesPath)).toBe(true);
-    const content = fs.readFileSync(rulesPath, 'utf8');
+    const agentsPath = path.join(TEST_DIR, 'AGENTS.md');
+    expect(fs.existsSync(agentsPath)).toBe(true);
+    const content = fs.readFileSync(agentsPath, 'utf8');
     expect(content).toContain('Global Agent Context');
   });
 
@@ -116,8 +116,8 @@ describe('ai-jue-adapter-cursor', () => {
     expect(content.temperature).toBe(0.1);
   });
 
-  it('should preserve user content outside of the managed block in .cursor/rules/agents.mdc', async () => {
-    const rulesPath = path.join(TEST_DIR, '.cursor/rules/agents.mdc');
+  it('should preserve user content outside of the managed block in AGENTS.md', async () => {
+    const rulesPath = path.join(TEST_DIR, 'AGENTS.md');
     const userContent = 'User Custom Content';
     
     // Initial run

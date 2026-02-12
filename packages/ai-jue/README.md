@@ -28,10 +28,10 @@ npx jue apply
 默认可生成：
 
 - `CLAUDE.md`
-- `.cursor/rules/agents.mdc`
 - `.cursor/rules/*.mdc`
 - `.gemini/settings.json`
 - `.github/copilot-instructions.md`
+- `AGENTS.md`（Cursor 原生消费入口）
 
 ## 目录与概念（最小知识原则）
 

@@ -54,7 +54,7 @@ Strict rules:
 
 | Capability | Claude | Cursor | Gemini | Copilot |
 | --- | --- | --- | --- | --- |
-| AGENTS/context | `CLAUDE.md` | `.cursor/rules/agents.mdc` | `GEMINI.md` | `.github/copilot-instructions.md` |
+| AGENTS.md | `CLAUDE.md` (references `@AGENTS.md`) | root `AGENTS.md` (Cursor native) | `GEMINI.md` (references `@AGENTS.md`) | `.github/copilot-instructions.md` |
 | rules | degraded into `CLAUDE.md` | `.cursor/rules/*.mdc` | degraded into `GEMINI.md` | degraded into `.github/copilot-instructions.md` |
 | commands | `CLAUDE.md` | `.cursor/commands/*.md` | `.gemini/settings.json.customCommands` | `.github/copilot-instructions.md` |
 | skills | `CLAUDE.md` | `.cursor/skills/*/SKILL.md` | degraded into `GEMINI.md` (text) | `.github/copilot-instructions.md` |
@@ -69,7 +69,7 @@ Notes:
 
 ## 6. Cursor Conversion Constraint
 
-- `AGENTS.md` (`context.global`) maps to `.cursor/rules/agents.mdc`
+- `AGENTS.md` (`context.global`) remains at project root for Cursor; only `rules/*` are converted into `.cursor/rules/*.mdc`
 - `rules/*` use canonical `md + YAML frontmatter` and are converted to `.cursor/rules/*.mdc`
 - The adapter only performs format conversion; rule semantics remain in the unified layer
 

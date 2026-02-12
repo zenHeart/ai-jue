@@ -7,6 +7,7 @@ cache
 /CLAUDE.md
 /GEMINI.md
 /.gemini/
+/.cursor/
 .turbo
 **/.turbo/
 **/.turbo/turbo-build.log

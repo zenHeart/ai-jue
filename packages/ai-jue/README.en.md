@@ -28,10 +28,10 @@ npx jue apply
 Typical outputs:
 
 - `CLAUDE.md`
-- `.cursor/rules/agents.mdc`
 - `.cursor/rules/*.mdc`
 - `.gemini/settings.json`
 - `.github/copilot-instructions.md`
+- `AGENTS.md` (Cursor native entry)
 
 ## Directory & Concepts (Minimal Knowledge Principle)
 

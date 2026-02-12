@@ -53,7 +53,7 @@ async function testAdapterI18n() {
     "自定义指令",
     "工作流钩子",
   ]);
-  verifyFileContent(path.join(OUTPUT_DIR_ZH, ".cursor/rules/agents.mdc"), [
+  verifyFileContent(path.join(OUTPUT_DIR_ZH, "AGENTS.md"), [
     "Global Context Content",
   ]);
 
@@ -68,7 +68,7 @@ async function testAdapterI18n() {
     "Custom Commands",
     "Workflow Hooks",
   ]);
-  verifyFileContent(path.join(OUTPUT_DIR_EN, ".cursor/rules/agents.mdc"), [
+  verifyFileContent(path.join(OUTPUT_DIR_EN, "AGENTS.md"), [
     "Global Context Content",
   ]);
 

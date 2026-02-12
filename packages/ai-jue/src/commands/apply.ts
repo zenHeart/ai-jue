@@ -45,7 +45,6 @@ const ADAPTER_ALIAS_MAP: Record<string, string> = {
 const ADAPTER_INDICATORS: Record<string, string[]> = {
   "ai-jue-adapter-cursor": [
     ".cursor",
-    ".cursor/rules/agents.mdc",
   ],
   "ai-jue-adapter-gemini": [
     ".gemini",

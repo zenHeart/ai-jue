@@ -20,7 +20,7 @@
 该适配器将 `ai-jue` 配置转换为 Gemini CLI 格式，支持：
 
 - **系统设置**：生成 `.gemini/settings.json`（`tools.gemini`、commands/hooks/agents/mcp 合并注入）。
-- **系统提示词**：生成 `GEMINI.md`（`prompts.gemini` 优先，缺失时使用 `context.global`）。
+- **系统提示词**：生成 `GEMINI.md`（通过 `@AGENTS.md` 引用全局上下文，并叠加 `prompts.gemini`）。
 - **规则降级**：`rules` 显式降级写入 `GEMINI.md`，避免静默丢失。
 
 ## 安装

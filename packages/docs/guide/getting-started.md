@@ -35,7 +35,7 @@ Created .ai directory with AGENTS.md, rules/, commands/, skills/, agents/, hooks
 npx jue apply --all
 ```
 
-`ai-jue` 会读取 `ai.config.js`、加载预设以及本地 `.ai` 目录中的资产；如果项目根目录存在 `AGENTS.md` 也会自动注入，并生成相应配置文件（如 `CLAUDE.md`, `.cursor/rules/agents.mdc`, `.cursor/rules/*.mdc`, `.gemini/settings.json` 等）。
+`ai-jue` 会读取 `ai.config.js`、加载预设以及本地 `.ai` 目录中的资产；如果项目根目录存在 `AGENTS.md` 也会自动注入，并生成相应配置文件（如 `CLAUDE.md`, `.cursor/rules/*.mdc`, `.gemini/settings.json` 等，Cursor 直接消费根目录 `AGENTS.md`）。
 
 ## 4. 常用命令
 

@@ -67,7 +67,7 @@ describe('adapter contract matrix', () => {
     ]);
 
     const claude = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
-    const cursorRules = fs.readFileSync(path.join(TEST_DIR, '.cursor/rules/agents.mdc'), 'utf8');
+    const agentsMd = fs.readFileSync(path.join(TEST_DIR, 'AGENTS.md'), 'utf8');
     const cursorStyleRule = fs.readFileSync(path.join(TEST_DIR, '.cursor', 'rules', 'style.mdc'), 'utf8');
     const cursorSettings = JSON.parse(
       fs.readFileSync(path.join(TEST_DIR, '.cursor', 'settings.json'), 'utf8'),
@@ -87,9 +87,9 @@ describe('adapter contract matrix', () => {
       fs.readFileSync(path.join(TEST_DIR, '.github', 'copilot-settings.json'), 'utf8'),
     );
 
-    expect(claude).toContain('Global context');
+    expect(claude).toContain('@AGENTS.md');
     expect(claude).toContain('Use strict typing');
-    expect(cursorRules).toContain('Global context');
+    expect(agentsMd).toContain('Global context');
     expect(cursorStyleRule).toContain('Use strict typing');
     expect(cursorSettings.temperature).toBe(0.3);
     expect(claudeSettings.permissions.allow).toEqual(['Read']);

@@ -43,7 +43,7 @@ describe('jue-preset-internal bootstrap integration', () => {
     ]);
 
     expect(fs.existsSync(path.join(outDir, 'CLAUDE.md'))).toBe(true);
-    expect(fs.existsSync(path.join(outDir, '.cursor/rules/agents.mdc'))).toBe(true);
+    expect(fs.existsSync(path.join(outDir, 'AGENTS.md'))).toBe(true);
     expect(fs.existsSync(path.join(outDir, '.gemini', 'settings.json'))).toBe(true);
     expect(fs.existsSync(path.join(outDir, '.github', 'copilot-instructions.md'))).toBe(true);
   });

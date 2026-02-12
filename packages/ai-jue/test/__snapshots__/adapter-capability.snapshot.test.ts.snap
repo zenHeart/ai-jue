@@ -2,10 +2,14 @@
 
 exports[`adapter capability snapshot > matches canonical capability output snapshot 1`] = `
 {
+  "agents": "<!-- AI-JUE:START -->
+Global context for snapshot
+
+<!-- AI-JUE:END -->",
   "claude": "<!-- AI-JUE:START -->
 # Context & Rules
 
-Global context for snapshot
+@AGENTS.md
 
 ## Rules
 
@@ -101,14 +105,6 @@ alwaysApply: true
 Common prompt block
 
 <!-- AI-JUE:END -->",
-  "cursorRules": "<!-- AI-JUE:START -->
----
-description: ai-jue generated global context
-alwaysApply: true
----
-Global context for snapshot
-
-<!-- AI-JUE:END -->",
   "cursorSettings": {
     "temperature": 0.3,
   },
@@ -138,7 +134,7 @@ Global context for snapshot
     "temperature": 0.2,
   },
   "geminiMd": "<!-- AI-JUE:START -->
-Global context for snapshot
+@AGENTS.md
 
 ## Rules (Degraded)
 

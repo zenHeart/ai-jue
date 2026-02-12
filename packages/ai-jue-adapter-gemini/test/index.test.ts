@@ -50,9 +50,10 @@ describe('ai-jue-adapter-gemini', () => {
 
     const content = fs.readFileSync(path.join(TEST_DIR, 'GEMINI.md'), 'utf8');
     expect(content).toContain('Prompt Wins');
+    expect(content).toContain('@AGENTS.md');
   });
 
-  it('should prefer context.global when gemini prompt is not provided', async () => {
+  it('should reference AGENTS.md when gemini prompt is not provided', async () => {
     const config = {
       context: {
         global: 'Global Context',
@@ -62,7 +63,9 @@ describe('ai-jue-adapter-gemini', () => {
     await generate(config, TEST_DIR);
 
     const content = fs.readFileSync(path.join(TEST_DIR, 'GEMINI.md'), 'utf8');
-    expect(content).toContain('Global Context');
+    expect(content).toContain('@AGENTS.md');
+    const agents = fs.readFileSync(path.join(TEST_DIR, 'AGENTS.md'), 'utf8');
+    expect(agents).toContain('Global Context');
   });
 
   it('should degrade canonical rules into GEMINI.md', async () => {

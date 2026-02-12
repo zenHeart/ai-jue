@@ -54,7 +54,7 @@
 
 | 能力 | Claude | Cursor | Gemini | Copilot |
 | --- | --- | --- | --- | --- |
-| AGENTS/context | `CLAUDE.md` | `.cursor/rules/agents.mdc` | `GEMINI.md` | `.github/copilot-instructions.md` |
+| AGENTS.md | `CLAUDE.md`（引用 `@AGENTS.md`） | 根目录 `AGENTS.md`（Cursor 原生消费） | `GEMINI.md`（引用 `@AGENTS.md`） | `.github/copilot-instructions.md` |
 | rules | 降级到 `CLAUDE.md` | `.cursor/rules/*.mdc` | 降级到 `GEMINI.md` | 降级到 `.github/copilot-instructions.md` |
 | commands | `CLAUDE.md` | `.cursor/commands/*.md` | `.gemini/settings.json.customCommands` | `.github/copilot-instructions.md` |
 | skills | `CLAUDE.md` | `.cursor/skills/*/SKILL.md` | 降级到 `GEMINI.md`（文本） | `.github/copilot-instructions.md` |
@@ -69,7 +69,7 @@
 
 ## 6. Cursor 转换约束
 
-- `AGENTS.md`（`context.global`）映射为 `.cursor/rules/agents.mdc`
+- `AGENTS.md`（`context.global`）在 Cursor 下保持根目录原生文件；`rules/*` 才转换为 `.cursor/rules/*.mdc`
 - `rules/*` 使用统一源格式 `md + YAML frontmatter`，转换为 `.cursor/rules/*.mdc`
 - 适配器仅负责格式落地，不在 Cursor 层重复定义规则语义
 

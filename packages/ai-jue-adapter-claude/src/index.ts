@@ -32,7 +32,8 @@ export async function generate(config: any, outputDir: string): Promise<void> {
 
   // 1. Inject AGENTS.md content first (Global Context)
   if (globalContext) {
-    content += `# ${t.contextTitle}\n\n${globalContext}\n\n`;
+    generateMarkdownFile(path.join(outputDir, "AGENTS.md"), `${String(globalContext).trim()}\n`);
+    content += `# ${t.contextTitle}\n\n@AGENTS.md\n\n`;
   }
 
   // 2. Add specific Claude prompt

@@ -56,7 +56,7 @@ npx jue apply
 
 - Keep `AGENTS.md` and `AGENTS.en.md` semantically aligned.
 - Keep command prompts aligned across `prompt.md` and `prompt.en.md`.
-- Current implementation storage still maps to legacy folder IDs for some commands:
+- Current command folder mapping:
   - `jue:exp -> commands/explain`
   - `jue:ref -> commands/refactor`
   - `jue:rev -> commands/review`

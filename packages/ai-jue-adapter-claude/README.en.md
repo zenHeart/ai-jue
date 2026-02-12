@@ -19,7 +19,7 @@ Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 This adapter maps canonical `ai-jue` capabilities into Claude outputs:
 
-- **Context/rules/commands/skills/hooks/agents** -> `CLAUDE.md` (`rules` are explicit degradation mapping).
+- **Context/rules/commands/skills/hooks/agents** -> `CLAUDE.md` (global context is referenced via `@AGENTS.md`; `rules` are explicit degradation mapping).
 - **MCP**: `mcp.servers` -> `.mcp.json`.
 - **Tool config**: `tools.claude` -> `.claude/settings.json`.
 

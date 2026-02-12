@@ -19,7 +19,7 @@ Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 This adapter maps canonical `ai-jue` capabilities into Cursor-native outputs:
 
-- **Global Context**: `AGENTS.md/context.global` -> `.cursor/rules/agents.mdc`
+- **Global Context**: Cursor consumes root `AGENTS.md` natively
 - **Project Rules**: `rules/*` -> `.cursor/rules/*.mdc`
 - **Commands**: `commands/*` -> `.cursor/commands/*.md`
 - **Skills**: `skills/*` -> `.cursor/skills/*/SKILL.md`

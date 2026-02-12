@@ -35,9 +35,9 @@ function runApplySmoke(preset) {
   }
 
   const requiredOutputs = [
+    "AGENTS.md",
     "CLAUDE.md",
     "GEMINI.md",
-    ".cursor/rules/agents.mdc",
     path.join(".gemini", "settings.json"),
     path.join(".github", "copilot-instructions.md"),
   ];

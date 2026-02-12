@@ -19,7 +19,7 @@
 
 该适配器将 `ai-jue` 规范能力转换为 Cursor 原生输出，支持：
 
-- **全局上下文**：`AGENTS.md/context.global` -> `.cursor/rules/agents.mdc`
+- **全局上下文**：Cursor 原生消费项目根目录 `AGENTS.md`
 - **项目规则**：`rules/*` -> `.cursor/rules/*.mdc`
 - **命令**：`commands/*` -> `.cursor/commands/*.md`
 - **技能**：`skills/*` -> `.cursor/skills/*/SKILL.md`

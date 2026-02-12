@@ -45,12 +45,16 @@ describe('ai-jue-adapter-claude', () => {
     expect(fs.existsSync(filePath)).toBe(true);
     const content = fs.readFileSync(filePath, 'utf8');
 
-    expect(content).toContain('Claude Context');
+    expect(content).toContain('@AGENTS.md');
     expect(content).toContain('/skill-review: Review code');
     expect(content).toContain('Prompt: Review instruction');
     expect(content).toContain('/deploy: Deploy app');
     expect(content).toContain('Prompt: Deploy instruction');
     expect(content).toContain('<!-- AI-JUE:START -->');
+
+    const agentsPath = path.join(TEST_DIR, 'AGENTS.md');
+    expect(fs.existsSync(agentsPath)).toBe(true);
+    expect(fs.readFileSync(agentsPath, 'utf8')).toContain('Claude Context');
   });
 
   it('should include hooks as documentation', async () => {

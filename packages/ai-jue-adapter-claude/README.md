@@ -19,7 +19,7 @@
 
 该适配器将 `ai-jue` 能力映射为 Claude 可消费产物，支持：
 
-- **上下文/规则/命令/技能/钩子/代理**：统一写入 `CLAUDE.md`（其中 `rules` 为显式降级映射）。
+- **上下文/规则/命令/技能/钩子/代理**：统一写入 `CLAUDE.md`（通过 `@AGENTS.md` 引用全局上下文；`rules` 为显式降级映射）。
 - **MCP**：`mcp.servers` -> `.mcp.json`。
 - **工具配置**：`tools.claude` -> `.claude/settings.json`。
 
