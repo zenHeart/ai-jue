@@ -46,17 +46,32 @@ Typical outputs:
 - `.ai/`: local asset workspace
 - `ai.config.js`: unified config entry
 
+## Preset Nesting
+
+- A preset can declare dependent presets via `ai.presets` (or `jue.presets`) in its own `package.json`.
+- Load order is dependencies first, then the current preset; current preset overrides on conflicts.
+- Example: `internal` depends on `base`, so users can keep `preset: "internal"` only.
+
 ## CLI Commands
 
 ```bash
 npx jue init
-npx jue apply
+npx jue apply                                    # Auto-detect from .cursor/.gemini/.claude/.github footprints
+npx jue apply --adapter cursor --adapter gemini # Run only selected adapters
+npx jue apply -a                                 # Run all discovered adapters (same as --all)
 npx jue apply --watch
 npx jue list
 npx jue check
 npx jue validate
 npx jue create-preset <name>
 ```
+
+## Adapter Selection Rules for `apply`
+
+- `jue apply`: auto-detect adapters from tool footprints in the current project
+- `jue apply --adapter ...`: run only explicitly selected adapters
+- `jue apply -a` / `jue apply --all`: run all discovered adapters
+- If no adapter is passed and no footprint is detected, it will not run all adapters implicitly; it prompts for explicit selection
 
 ## License
 

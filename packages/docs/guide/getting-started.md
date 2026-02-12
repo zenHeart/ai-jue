@@ -32,7 +32,7 @@ Created .ai directory with AGENTS.md, rules/, commands/, skills/, agents/, hooks
 运行 `apply` 命令，根据配置生成 AI 工具文件：
 
 ```bash
-npx jue apply
+npx jue apply --all
 ```
 
 `ai-jue` 会读取 `ai.config.js`、加载预设以及本地 `.ai` 目录中的资产；如果项目根目录存在 `AGENTS.md` 也会自动注入，并生成相应配置文件（如 `CLAUDE.md`, `.cursor/rules/agents.mdc`, `.cursor/rules/*.mdc`, `.gemini/settings.json` 等）。
@@ -54,7 +54,7 @@ npx jue validate
 ### 实时监听 (Watch Mode)
 在开发过程中实时监听配置变化并自动重新应用：
 ```bash
-npx jue apply --watch
+npx jue apply --all --watch
 ```
 
 ### 创建新预设

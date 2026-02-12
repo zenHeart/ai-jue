@@ -46,17 +46,32 @@ npx jue apply
 - `.ai/`：本地资产工作区
 - `ai.config.js`：统一配置入口
 
+## 预设嵌套
+
+- preset 可在自身 `package.json` 中通过 `ai.presets`（或 `jue.presets`）声明依赖 preset。
+- 加载顺序：先依赖、后自身；自身覆盖依赖同名资产。
+- 例如 `internal` 可声明依赖 `base`，用户只需配置 `preset: "internal"`。
+
 ## 常用命令
 
 ```bash
 npx jue init
-npx jue apply
+npx jue apply                                  # 未传参时自动识别 .cursor/.gemini/.claude/.github 等痕迹
+npx jue apply --adapter cursor --adapter gemini # 仅执行白名单适配器
+npx jue apply -a                               # 执行全部已发现适配器（等同 --all）
 npx jue apply --watch
 npx jue list
 npx jue check
 npx jue validate
 npx jue create-preset <name>
 ```
+
+## apply 适配器选择规则
+
+- `jue apply`：自动识别当前目录中的工具痕迹，执行匹配适配器
+- `jue apply --adapter ...`：只执行显式指定的适配器
+- `jue apply -a` / `jue apply --all`：执行全部已发现适配器
+- 当未传参且未识别到工具痕迹时，不会盲目执行全部适配器，会提示用户显式选择
 
 ## License
 

@@ -14,13 +14,76 @@ export const command = "apply";
 export const describe = ""; // Managed in cli.ts for dynamic translation
 
 export const builder: CommandBuilder = (yargs) => {
-  return yargs.option("watch", {
-    alias: "w",
-    type: "boolean",
-    description: t("commands.apply.watch_describe"),
-    default: false,
-  });
+  return yargs
+    .option("watch", {
+      alias: "w",
+      type: "boolean",
+      description: t("commands.apply.watch_describe"),
+      default: false,
+    })
+    .option("adapter", {
+      type: "string",
+      array: true,
+      description: t("commands.apply.adapter_describe"),
+    })
+    .option("all", {
+      alias: "a",
+      type: "boolean",
+      description: t("commands.apply.all_describe"),
+      default: false,
+    });
 };
+
+const ADAPTER_ALIAS_MAP: Record<string, string> = {
+  claude: "ai-jue-adapter-claude",
+  "claude-code": "ai-jue-adapter-claude",
+  cursor: "ai-jue-adapter-cursor",
+  gemini: "ai-jue-adapter-gemini",
+  copilot: "ai-jue-adapter-copilot",
+};
+
+const ADAPTER_INDICATORS: Record<string, string[]> = {
+  "ai-jue-adapter-cursor": [
+    ".cursor",
+    ".cursor/rules/agents.mdc",
+  ],
+  "ai-jue-adapter-gemini": [
+    ".gemini",
+    ".gemini/settings.json",
+    "GEMINI.md",
+  ],
+  "ai-jue-adapter-claude": [
+    ".claude",
+    "CLAUDE.md",
+  ],
+  "ai-jue-adapter-copilot": [
+    ".github/copilot-instructions.md",
+    ".github/copilot-settings.json",
+  ],
+};
+
+function parseRequestedAdapters(raw: unknown): string[] {
+  const list = Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [];
+  const expanded = list
+    .flatMap((item) => String(item).split(","))
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .map((item) => ADAPTER_ALIAS_MAP[item.toLowerCase()] || item);
+  return [...new Set(expanded)];
+}
+
+function autoDetectAdapters(
+  discoveredAdapters: string[],
+  cwd: string,
+): string[] {
+  return discoveredAdapters.filter((adapterName) => {
+    const indicators = ADAPTER_INDICATORS[adapterName];
+    if (!indicators || indicators.length === 0) return false;
+    return indicators.some((relativePath) =>
+      fs.existsSync(path.join(cwd, relativePath)),
+    );
+  });
+}
 
 async function findAdapters(): Promise<string[]> {
   const rootDir = process.cwd();
@@ -51,25 +114,67 @@ async function findAdapters(): Promise<string[]> {
   return packageNames;
 }
 
-async function runAdapters(config: MergedConfig, outputDir: string) {
+async function runAdapters(
+  config: MergedConfig,
+  outputDir: string,
+  options: { all: boolean; requestedAdapters: string[] },
+) {
   const spinner = ora(t("commands.apply.finding_adapters")).start();
-  const adapterNames = await findAdapters();
+  const discoveredAdapters = await findAdapters();
 
-  if (adapterNames.length === 0) {
+  if (discoveredAdapters.length === 0) {
     spinner.warn(pc.yellow(t("commands.apply.no_adapters")));
     return;
+  }
+
+  let targetAdapters = discoveredAdapters;
+  if (!options.all) {
+    if (options.requestedAdapters.length === 0) {
+      const detected = autoDetectAdapters(discoveredAdapters, process.cwd());
+      if (detected.length === 0) {
+        spinner.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
+        return;
+      }
+      targetAdapters = detected;
+      logger.info(
+        pc.cyan(
+          t("commands.apply.auto_detected_adapters", {
+            count: detected.length,
+            names: detected.join(", "),
+          }),
+        ),
+      );
+    } else {
+      const unknown = options.requestedAdapters.filter(
+        (name) => !discoveredAdapters.includes(name),
+      );
+      if (unknown.length > 0) {
+        spinner.fail(
+          pc.red(
+            t("commands.apply.unknown_adapters", {
+              unknown: unknown.join(", "),
+              available: discoveredAdapters.join(", "),
+            }),
+          ),
+        );
+        process.exitCode = 1;
+        return;
+      }
+
+      targetAdapters = options.requestedAdapters;
+    }
   }
 
   spinner.succeed(
     pc.green(
       t("commands.apply.found_adapters", {
-        count: adapterNames.length,
-        names: adapterNames.join(", "),
+        count: targetAdapters.length,
+        names: targetAdapters.join(", "),
       }),
     ),
   );
 
-  for (const adapterName of adapterNames) {
+  for (const adapterName of targetAdapters) {
     const adapterSpinner = ora(
       t("commands.apply.running_adapter", { name: adapterName }),
     ).start();
@@ -103,6 +208,14 @@ async function runAdapters(config: MergedConfig, outputDir: string) {
 }
 
 export const handler = async (argv: Arguments) => {
+  const requestedAdapters = parseRequestedAdapters(
+    (argv as Arguments<{ adapter?: string[] }>).adapter,
+  );
+  const applyOptions = {
+    all: Boolean((argv as Arguments<{ all?: boolean }>).all),
+    requestedAdapters,
+  };
+
   const runApply = async () => {
     logger.info(pc.bold(pc.blue(t("commands.apply.running"))));
     const configEntries = [
@@ -126,8 +239,7 @@ export const handler = async (argv: Arguments) => {
 
       const finalConfig = await resolveFinalConfig(config);
 
-      // Run all discovered adapters
-      await runAdapters(finalConfig, process.cwd());
+      await runAdapters(finalConfig, process.cwd(), applyOptions);
 
       logger.success(pc.bold(pc.green(t("commands.apply.finished"))));
     } catch (error: any) {

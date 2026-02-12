@@ -24,11 +24,12 @@ describe('jue-preset-internal bootstrap integration', () => {
     }
   });
 
-  it('loads internal AGENTS and command assets through canonical loader protocol', async () => {
+  it('loads internal AGENTS, internal commands, and nested base commands', async () => {
     const config = await resolveFinalConfig({ preset: 'internal', language: 'zh-CN' } as any);
 
     expect(config.context?.global).toBeTruthy();
     expect(config.commands?.['repo-governance']?.prompt).toBeTruthy();
+    expect(config.commands?.impl?.prompt).toBeTruthy();
   });
 
   it('consumes internal preset across all adapters for self-bootstrap outputs', async () => {

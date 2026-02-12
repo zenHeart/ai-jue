@@ -36,7 +36,7 @@ If you maintain an internal company project template (e.g., based on Vite or Nex
     ```json
     {
       "scripts": {
-        "postinstall": "npx jue apply"
+        "postinstall": "npx jue apply --all"
       }
     }
     ```
@@ -60,7 +60,7 @@ npm install -D ai-jue jue-preset-base
 npx jue init
 
 # 3. Apply Configuration
-npx jue apply
+npx jue apply --all
 
 echo "AI environment configuration complete!"
 ```
@@ -91,7 +91,7 @@ jobs:
       - run: npm install
       
       # Explicitly generate AI configuration (if the build process depends on it)
-      - run: npx jue apply
+      - run: npx jue apply --all
       
       - run: npm run build
 ```

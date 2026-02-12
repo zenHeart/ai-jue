@@ -1,6 +1,7 @@
 import path from 'path';
 import fs from 'fs';
 import { MergedConfig } from './config';
+import { deepMerge } from 'ai-jue-core';
 
 type FrontmatterResult = {
   content: string;
@@ -232,11 +233,57 @@ export async function loadAssetsFromDir(dirPath: string, userLanguage?: string):
 
 export async function loadPreset(presetName: string, userLanguage?: string): Promise<MergedConfig> {
   if (!presetName) return {};
-  const packageName = `jue-preset-${presetName}`;
+  return loadPresetRecursive(presetName, userLanguage, []);
+}
+
+function normalizePresetPackageName(presetName: string): string {
+  if (presetName.startsWith('jue-preset-')) return presetName;
+  return `jue-preset-${presetName}`;
+}
+
+function extractNestedPresets(packageJson: any): string[] {
+  const candidate =
+    packageJson?.ai?.presets ?? packageJson?.jue?.presets;
+  if (!Array.isArray(candidate)) return [];
+  return candidate
+    .map((item: unknown) => String(item).trim())
+    .filter(Boolean);
+}
+
+async function loadPresetRecursive(
+  presetName: string,
+  userLanguage: string | undefined,
+  resolvingStack: string[],
+): Promise<MergedConfig> {
+  const packageName = normalizePresetPackageName(presetName);
+
+  if (resolvingStack.includes(packageName)) {
+    const cyclePath = [...resolvingStack, packageName].join(' -> ');
+    console.error(`Preset dependency cycle detected: ${cyclePath}`);
+    return {};
+  }
+
+  const nextStack = [...resolvingStack, packageName];
 
   try {
-    const presetPath = path.dirname(require.resolve(`${packageName}/package.json`));
-    return await loadAssetsFromDir(presetPath, userLanguage);
+    const packageJsonPath = require.resolve(`${packageName}/package.json`);
+    const presetPath = path.dirname(packageJsonPath);
+    const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
+    const nestedPresets = extractNestedPresets(packageJson);
+
+    let mergedConfig: MergedConfig = {};
+
+    for (const nestedPresetName of nestedPresets) {
+      const nestedPresetConfig = await loadPresetRecursive(
+        nestedPresetName,
+        userLanguage,
+        nextStack,
+      );
+      mergedConfig = deepMerge(mergedConfig, nestedPresetConfig);
+    }
+
+    const selfConfig = await loadAssetsFromDir(presetPath, userLanguage);
+    return deepMerge(mergedConfig, selfConfig);
   } catch (error: any) {
     console.error(`Error loading preset "${presetName}":`, error.message);
     return {};

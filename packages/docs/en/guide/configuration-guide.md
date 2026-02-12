@@ -11,7 +11,7 @@ export default {
 ```
 
 ```bash
-npx jue apply
+npx jue apply --all
 ```
 
 This means:
@@ -67,7 +67,7 @@ export default {
 
 ### 3.1 Default Mounting Logic (Low Cognitive Load)
 
-When you run `jue apply`, core processing order is:
+When you run `jue apply`, core processing order is (you can explicitly pass `--adapter` or `--all`; if omitted, adapters are auto-detected from tool footprints like `.cursor/.gemini/.claude`):
 
 1. Load assets from configured presets
 2. Auto-scan local `.ai/` (if absent, scan `.jue/`)

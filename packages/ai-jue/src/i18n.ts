@@ -14,10 +14,19 @@ const resources = {
         apply: {
           describe: "Apply AI configurations based on ai.config.js",
           watch_describe: "Watch for changes and re-apply automatically",
+          adapter_describe:
+            "Specify adapters to run (repeatable or comma-separated), e.g. --adapter cursor --adapter gemini",
+          all_describe: "Run all discovered adapters (-a)",
           running: "\n🚀 Running apply command...",
           finding_adapters: "Finding adapters...",
           no_adapters: "No adapters found. No files will be generated.",
+          no_adapter_selected:
+            "No adapters selected and no adapter footprint detected. Use --adapter to choose adapters, or --all/-a to run all.",
+          auto_detected_adapters:
+            "No explicit adapter selected. Auto-detected {{count}} adapter(s): {{names}}",
           found_adapters: "Found {{count}} adapter(s): {{names}}",
+          unknown_adapters:
+            "Unknown adapter(s): {{unknown}}. Available adapters: {{available}}",
           running_adapter: "Running adapter: {{name}}",
           adapter_success: "Adapter {{name}} finished successfully",
           adapter_no_generate:
@@ -83,10 +92,19 @@ const resources = {
         apply: {
           describe: "基于 ai.config.js 应用 AI 配置",
           watch_describe: "监听文件变化并自动重新应用",
+          adapter_describe:
+            "指定要执行的适配器（可重复或逗号分隔），例如 --adapter cursor --adapter gemini",
+          all_describe: "执行全部已发现的适配器（-a）",
           running: "\n🚀 正在运行 apply 命令...",
           finding_adapters: "正在查找适配器...",
           no_adapters: "未找到适配器。将不会生成任何文件。",
+          no_adapter_selected:
+            "未选择适配器且未检测到适配器痕迹。请使用 --adapter 指定，或使用 --all/-a 执行全部。",
+          auto_detected_adapters:
+            "未显式指定适配器，已自动识别 {{count}} 个适配器: {{names}}",
           found_adapters: "找到 {{count}} 个适配器: {{names}}",
+          unknown_adapters:
+            "存在未知适配器: {{unknown}}。可用适配器: {{available}}",
           running_adapter: "正在运行适配器: {{name}}",
           adapter_success: "适配器 {{name}} 成功完成",
           adapter_no_generate: '适配器 {{name}} 未导出 "generate" 函数。',

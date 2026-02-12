@@ -32,7 +32,7 @@ Created .ai directory with AGENTS.md, rules/, commands/, skills/, agents/, hooks
 Run the `apply` command to generate AI tool configuration files based on your settings:
 
 ```bash
-npx jue apply
+npx jue apply --all
 ```
 
 `ai-jue` will read `ai.config.js`, load presets and local `.ai` assets; if root `AGENTS.md` exists, it is auto-injected as global context, then generate target files (for example `CLAUDE.md`, `.cursor/rules/agents.mdc`, `.cursor/rules/*.mdc`, `.gemini/settings.json`).
@@ -60,7 +60,7 @@ npx jue validate
 Watch for configuration changes during development and automatically re-apply:
 
 ```bash
-npx jue apply --watch
+npx jue apply --all --watch
 ```
 
 ### Create New Preset

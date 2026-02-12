@@ -11,7 +11,7 @@ export default {
 ```
 
 ```bash
-npx jue apply
+npx jue apply --all
 ```
 
 这表示：
@@ -67,7 +67,7 @@ export default {
 
 ### 3.1 默认挂载逻辑（降低认知负担）
 
-运行 `jue apply` 时，系统会按顺序自动处理：
+运行 `jue apply` 时，系统会按顺序自动处理（可显式指定 `--adapter`/`--all`；未指定时按 `.cursor/.gemini/.claude` 等痕迹自动识别）：
 
 1. 读取 `preset/presets` 指向的预设资产
 2. 自动扫描本地 `.ai/`（若不存在则扫描 `.jue/`）

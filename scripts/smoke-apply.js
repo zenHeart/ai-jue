@@ -22,7 +22,7 @@ function runApplySmoke(preset) {
       : nodeModulesPath,
   };
 
-  const result = spawnSync(process.execPath, [cliPath, "apply"], {
+  const result = spawnSync(process.execPath, [cliPath, "apply", "--all"], {
     cwd: tmpDir,
     env,
     encoding: "utf8",

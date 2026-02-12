@@ -8,7 +8,7 @@ Users should only learn one canonical model:
 
 1. Declare capabilities in `ai.config.js`
 2. Organize assets in `.ai/` or presets
-3. Run `jue apply` to generate tool-specific outputs
+3. Run `jue apply --all` (or `jue apply --adapter <name>`) to generate tool-specific outputs
 
 Users should not learn non-canonical fields or bridge concepts.
 

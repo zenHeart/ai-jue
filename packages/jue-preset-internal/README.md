@@ -6,6 +6,7 @@
 
 - `jue-preset-base`：通用工程能力，面向大多数用户项目。
 - `jue-preset-internal`：仓库治理能力，面向 `ai-jue` 自身开发流程。
+- `jue-preset-internal` 通过 preset 嵌套默认依赖 `jue-preset-base`，避免在仓库根配置重复声明。
 
 internal 的职责：
 - 约束仓库级开发流程（先文档、后实现、可验证交付）。
@@ -51,7 +52,7 @@ packages/jue-preset-internal/
 ## 5. 吃自己狗粮运行手册
 
 1. 在仓库根目录配置：
-   - `ai.config.js` 使用 `preset: "internal"`（或在 presets 组合中启用）。
+   - `ai.config.js` 使用 `preset: "internal"`（自动包含 `base`，无需重复写 `base`）。
 2. 执行：
    - `npx jue apply`
 3. 验证：
@@ -59,6 +60,24 @@ packages/jue-preset-internal/
    - `npm run smoke-apply`
 4. 迭代：
    - 先更新 internal 文档与 AGENTS 规则，再落地实现与测试。
+
+## 7. 嵌套协议（Preset Extends）
+
+`internal` 使用 preset 元数据声明依赖：
+
+```json
+{
+  "ai": {
+    "presets": ["base"]
+  }
+}
+```
+
+加载顺序：
+
+1. 先加载 `base`
+2. 再加载 `internal`
+3. 若同名资产冲突，以 `internal` 为准
 
 ## 6. 演进原则
 

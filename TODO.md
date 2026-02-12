@@ -68,6 +68,10 @@
   - [x] 加载器去除 `commands/*/index.json` 依赖，仅消费 Markdown + frontmatter。
   - [x] 更新脚手架、测试与校验脚本，取消对 `commands/*/index.json` 的必需约束。
   - [x] 更新 base/spec/TODO 文档协议描述，确保“用户文档-设计文档-实现”一致。
+- [x] **B1.8 适配器执行白名单机制（显式触发）**
+  - [x] `apply` 默认不执行任何适配器，用户必须显式指定 `--adapter` 或 `--all/-a`。
+  - [x] 支持 `--adapter` 多次传入与逗号分隔（含 `cursor/gemini/claude/copilot` 友好别名）。
+  - [x] 更新 smoke 与文档示例，统一为显式适配器执行模式。
 - [x] **B2 `jue-preset-internal` 闭环文档补齐（文档先行）**
   - [x] 新增 `REPO_ROOT/packages/jue-preset-internal/README.md`，定义 internal 的目标、边界、使用方式。
   - [x] 在 internal README 明确“在 base 之上”补充能力：adapter 开发、preset 开发、能力扩展、仓库治理。
@@ -85,6 +89,26 @@
   - [x] base/internal 的场景化 smoke 验证（不仅校验文件存在，还校验场景行为）。
   - [x] 适配器矩阵回归 + docs 一致性回归。
   - [x] 通过后再进入下一轮“能力扩展”迭代。
+- [x] **B6 预设嵌套闭环（internal 自动包含 base）**
+  - [x] 设计并固化 preset 嵌套协议：允许 preset 在自身元数据中声明依赖 preset（类似 eslint extends）。
+  - [x] 明确加载顺序与覆盖规则：先依赖、后自身；自身同名资产覆盖依赖。
+  - [x] 增加循环依赖防护与错误提示，避免递归加载失控。
+  - [x] 文档先行：更新 `packages/jue-preset-internal/README.md`、`packages/jue-preset-base/README.md`、preset 设计文档说明嵌套机制。
+  - [x] 实现层支持嵌套解析，并让 `jue-preset-internal` 声明依赖 `jue-preset-base`，保证自举默认具备 base 核心能力。
+  - [x] 补充集成测试：验证 `preset: "internal"` 时可自动消费 base 命令资产。
+- [ ] **C0 AGENTS 单一来源与跨工具引用收敛（文档先行）**
+  - [ ] 固化规则：项目根目录 `AGENTS.md` 作为单一来源；适配器优先引用而非复制。
+  - [ ] Cursor 维持 `.cursor/rules/agents.mdc` 生成为 `AGENTS.md` 投影；保留注释块增量更新策略。
+  - [ ] Claude/Gemini 生成文件改为包含 `@AGENTS.md` 引用语义（而不是内联复制全部内容）。
+  - [ ] 明确本地已有 `CLAUDE.md`/`GEMINI.md`/`AGENTS.md` 时的合并策略：仅管理注释块，用户自定义内容保持不变。
+  - [ ] 补充回归测试：验证引用语义与注释块追加语义均生效。
+- [ ] **C1 新增 `jue format`（多工具配置规整到 `.ai`）**
+  - [ ] 输出命令设计：`jue format` 默认探测 `.cursor/.gemini/.claude` 等痕迹并生成迁移计划（dry-run）。
+  - [ ] 提供执行模式：`--write` 将可收敛内容写入 `.ai`（`AGENTS.md`、`commands/`、`rules/`、`tools/<tool>/`）。
+  - [ ] 冲突策略：来源优先级、重复去重、不可安全转换项标记为“需人工确认”。
+  - [ ] 保持最小认知负担：不新增概念，仍以 `.ai` 目录和 YAML frontmatter 协议为核心。
+  - [ ] 先完成使用文档与设计文档：迁移路径、边界、风险、回滚方式。
+  - [ ] 最后实现并补测试：fixture 覆盖 Cursor/Gemini/Claude 现存配置导入场景。
 
 ## 实施策略与门禁（执行前必须满足）
 

@@ -8,7 +8,7 @@
 
 1. 在 `ai.config.js` 里声明能力
 2. 在 `.ai/` 或 preset 里组织资产
-3. 执行 `jue apply` 生成各工具配置
+3. 执行 `jue apply --all`（或 `jue apply --adapter <name>`）生成各工具配置
 
 用户无需学习非规范字段或中间桥接概念。
 

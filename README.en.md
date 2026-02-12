@@ -16,7 +16,7 @@ Standardize project AI capabilities (Prompts, Skills, MCP Servers), automaticall
 
 ```bash
 npm install -D ai-jue jue-preset-react
-npx jue apply
+npx jue apply --all
 ```
 
 </div>
@@ -69,7 +69,7 @@ export default {
 ### 3. Generate Config Files
 
 ```bash
-npx jue apply
+npx jue apply --all
 ```
 
 Done! `ai-jue` generates tool files automatically:
@@ -144,7 +144,7 @@ export default {
 ### 👀 Watch Mode
 
 ```bash
-npx jue apply --watch
+npx jue apply --all --watch
 ```
 
 ### 🛡️ Intelligent Coexistence
@@ -172,8 +172,10 @@ ai.config.js          →  Load Presets & Merge Config  →  Adapter Plugins Gen
 
 ```bash
 npx jue init              # Interactive configuration initialization
-npx jue apply             # Apply configuration and generate files
-npx jue apply --watch     # Watch for changes and re-apply automatically
+npx jue apply --adapter cursor --adapter gemini --adapter claude  # Apply only selected adapters
+npx jue apply -a          # Apply all discovered adapters (same as --all)
+npx jue apply             # Auto-detect adapters from existing tool footprints
+npx jue apply --all --watch  # Watch and re-apply with explicit adapters
 npx jue check             # Check if presets have new versions
 npx jue validate          # Validate configuration legality
 npx jue list              # List all loaded presets and assets

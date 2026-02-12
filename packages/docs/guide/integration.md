@@ -36,7 +36,7 @@
     ```json
     {
       "scripts": {
-        "postinstall": "npx jue apply"
+        "postinstall": "npx jue apply --all"
       }
     }
     ```
@@ -60,7 +60,7 @@ npm install -D ai-jue jue-preset-base
 npx jue init
 
 # 3. 应用配置
-npx jue apply
+npx jue apply --all
 
 echo "AI 环境配置完成！"
 ```
@@ -90,7 +90,7 @@ jobs:
       - run: npm install
       
       # 显式生成 AI 配置（如果构建过程依赖它）
-      - run: npx jue apply
+      - run: npx jue apply --all
       
       - run: npm run build
 ```

@@ -43,6 +43,26 @@ jue-preset-myteam/
 
 预设目录与本地 `.ai/` 目录保持同构，便于“先在项目沉淀，再打包发布”。
 
+## 预设嵌套（Preset 依赖 Preset）
+
+可在 preset 的 `package.json` 中声明依赖其他 preset（类似 eslint extends），无需用户在项目侧重复声明：
+
+```json
+{
+  "name": "jue-preset-internal",
+  "ai": {
+    "presets": ["base"]
+  }
+}
+```
+
+规则：
+
+- `ai.presets`（或 `jue.presets`）支持 `base` 或完整包名 `jue-preset-base`
+- 加载顺序为“先依赖、后自身”
+- 同名资产冲突时，自身 preset 覆盖依赖 preset
+- 检测到循环依赖时终止递归并给出错误提示
+
 ## 发布
 
 ```bash

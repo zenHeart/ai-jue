@@ -43,6 +43,26 @@ Notes:
 
 Preset structure is isomorphic to local `.ai/`, so teams can first accumulate assets in a project and then package them with minimal reshaping.
 
+## Preset Nesting (Preset depends on Preset)
+
+You can declare preset dependencies in `package.json` (similar to eslint extends), so users do not need to repeat base presets in project config:
+
+```json
+{
+  "name": "jue-preset-internal",
+  "ai": {
+    "presets": ["base"]
+  }
+}
+```
+
+Rules:
+
+- `ai.presets` (or `jue.presets`) accepts short names (`base`) or full package names (`jue-preset-base`)
+- Load order is dependencies first, then the current preset
+- On conflicts, the current preset overrides dependency presets
+- Cyclic dependencies are detected and recursion is stopped with an explicit error
+
 ## Publish
 
 ```bash

@@ -2,6 +2,11 @@
   "name": "jue-preset-internal",
   "version": "1.0.0",
   "description": "Internal preset for developing the ai-jue project itself.",
+  "ai": {
+    "presets": [
+      "base"
+    ]
+  },
   "files": [
     "AGENTS.md",
     "commands",
