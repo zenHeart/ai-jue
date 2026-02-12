@@ -98,10 +98,10 @@
   - [x] 明确迁移说明：从旧 `skills/*` 结构到当前目录协议的迁移路径与兼容期。
   - [x] 统一“Review 零修改”目标表述：作为 base 的质量目标，不写成当前实现事实。
 
-- [ ] **`jue-preset-internal` 规范文档任务**
-  - [ ] 明确 internal 与 base 的能力边界：internal 负责仓库治理，base 负责通用工程能力。
-  - [ ] 定义 internal 的最小目录协议：`AGENTS.md + commands/rules/hooks/tools`（按需启用）。
-  - [ ] 增加“自举运行说明”：仓库如何通过 internal 预设验证闭环。
+- [x] **`jue-preset-internal` 规范文档任务**
+  - [x] 明确 internal 与 base 的能力边界：internal 负责仓库治理，base 负责通用工程能力。
+  - [x] 定义 internal 的最小目录协议：`AGENTS.md + commands/rules/hooks/tools`（按需启用）。
+  - [x] 增加“自举运行说明”：仓库如何通过 internal 预设验证闭环。
 
 ### Stage 2（P1）实现对齐增强 - 文档评审通过后执行
 
@@ -146,7 +146,7 @@
 ### 里程碑（本专项）
 
 - [x] `N1`：Stage 0 完成，核心运行风险清零。
-- [ ] `N2`：Stage 1 完成，文档语义与能力地图一致。
+- [x] `N2`：Stage 1 完成，文档语义与能力地图一致。
 - [ ] `N3`：Stage 2 完成，代码协议与文档定义一致。
 - [ ] `N4`：Stage 3 完成，可执行修复版发布。
 

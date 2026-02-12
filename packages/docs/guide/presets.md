@@ -51,6 +51,14 @@ npm install -D jue-preset-react
 npm install -D jue-preset-typescript
 ```
 
+## jue-preset-internal（仓库内预设）
+
+**内部治理预设**，用于 `ai-jue` 仓库自身自举，不作为通用对外预设。
+
+*   **能力边界**:
+    *   `base` 负责通用工程能力
+    *   `internal` 负责仓库治理与发布约束
+
 ## 组合使用
 
 你可以通过 `ai.config.js` 中的 `presets` 数组来组合多个预设。例如，在一个 React + TypeScript 项目中：

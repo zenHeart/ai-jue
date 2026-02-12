@@ -54,6 +54,14 @@ npm install -D jue-preset-react
 npm install -D jue-preset-typescript
 ```
 
+## jue-preset-internal (Repo-only Preset)
+
+**Repository governance preset** used to bootstrap the `ai-jue` monorepo itself. It is not intended as a general public preset.
+
+* **Capability boundary**:
+  * `base` handles reusable engineering capabilities
+  * `internal` handles repo governance and release constraints
+
 ## Combination Usage
 
 You can combine multiple presets using the `presets` array in `ai.config.js`. For example, in a React + TypeScript project:
