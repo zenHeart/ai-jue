@@ -123,12 +123,12 @@
   - [ ] Copilot：明确命令/技能降级路径并优化 instructions 注入策略。
   - [ ] 跨适配器统一：同一能力在四工具输出行为可预测、可回归验证。
 
-- [ ] **`jue-preset-base` 落地任务（来自 `_drafts/preset-base.md`）**
-  - [ ] 将 base 的全局元规则稳定落地到 `prompts/AGENTS.md` 与 `prompts/AGENTS.en.md`，并由加载器注入统一 `context.global`（移除历史映射依赖）。
-  - [ ] 校正 base 命令资产结构与加载器协议一致（避免“有内容但不生效”）。
-  - [ ] 校验命令集合与文档一致（含 `/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`）。
-  - [ ] 为 base 增加专项集成测试：验证命令与 AGENTS 可被四个适配器消费。
-  - [ ] 增加双语一致性检查：命令与 AGENTS 的中英文版本结构和语义一致。
+- [x] **`jue-preset-base` 落地任务（来自 `_drafts/preset-base.md`）**
+  - [x] 将 base 的全局元规则稳定落地到 `prompts/AGENTS.md` 与 `prompts/AGENTS.en.md`，并由加载器注入统一 `context.global`（移除历史映射依赖）。
+  - [x] 校正 base 命令资产结构与加载器协议一致（避免“有内容但不生效”）。
+  - [x] 校验命令集合与文档一致（含 `/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`）。
+  - [x] 为 base 增加专项集成测试：验证命令与 AGENTS 可被四个适配器消费。
+  - [x] 增加双语一致性检查：命令与 AGENTS 的中英文版本结构和语义一致。
 
 - [ ] **`jue-preset-internal` 落地任务**
   - [ ] 将 internal 资产结构按统一协议落地，并确保 loader 可完整消费。
