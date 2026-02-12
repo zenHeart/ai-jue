@@ -16,7 +16,7 @@
 
 ```bash
 npm install -D ai-jue jue-preset-react
-npx jue apply --all
+npx jue apply
 ```
 
 </div>
