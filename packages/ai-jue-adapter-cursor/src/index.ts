@@ -37,10 +37,11 @@ export async function generate(config: any, outputDir: string): Promise<void> {
 
   // 1. Generate Cursor Project Rules (.cursor/rules/*.mdc)
   let cursorRulesContent = "";
+  const globalContext = config.context?.global || config.prompts?.agents?.content;
 
   // Inject AGENTS.md content first (Global Context)
-  if (config.prompts?.agents?.content) {
-    cursorRulesContent += `# ${t.agentsTitle}\n\n${config.prompts.agents.content}\n\n`;
+  if (globalContext) {
+    cursorRulesContent += `# ${t.agentsTitle}\n\n${globalContext}\n\n`;
   }
 
   // Add Prompts
@@ -120,9 +121,14 @@ ${cursorRulesContent}`;
       }
 
       // Agent Skills
-      if (Array.isArray(agent.skills) && config.skills) {
+      const agentSkillRefs = Array.isArray(agent.skills)
+        ? agent.skills
+        : Array.isArray(agent.tools)
+          ? agent.tools
+          : [];
+      if (agentSkillRefs.length > 0 && config.skills) {
         agentContent += `## ${t.skillsTitle}\n\n`;
-        for (const skillKey of agent.skills) {
+        for (const skillKey of agentSkillRefs) {
           const skill = config.skills[skillKey];
           if (skill) {
             agentContent += `### ${skillKey}\n${skill.content || skill.prompt || ""}\n\n`;

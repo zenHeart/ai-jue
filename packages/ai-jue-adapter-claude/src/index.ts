@@ -29,10 +29,11 @@ export async function generate(config: any, outputDir: string): Promise<void> {
   const t = LOCALES[lang];
 
   let content = "";
+  const globalContext = config.context?.global || config.prompts?.agents?.content;
 
   // 1. Inject AGENTS.md content first (Global Context)
-  if (config.prompts?.agents?.content) {
-    content += `# ${t.contextTitle}\n\n${config.prompts.agents.content}\n\n`;
+  if (globalContext) {
+    content += `# ${t.contextTitle}\n\n${globalContext}\n\n`;
   }
 
   // 2. Add specific Claude prompt
@@ -72,16 +73,20 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     }
   }
 
-  // 6. Sub-Agents Documentation
-  if (config.subAgents) {
-    const subAgentsTitle =
-      lang === "zh" ? "子智能体 (Sub-Agents)" : "Sub-Agents";
-    content += `## ${subAgentsTitle}\n\n`;
-    for (const [key, value] of Object.entries(config.subAgents)) {
+  // 6. Agents Documentation
+  if (config.agents) {
+    const agentsTitle = lang === "zh" ? "代理 (Agents)" : "Agents";
+    content += `## ${agentsTitle}\n\n`;
+    for (const [key, value] of Object.entries(config.agents)) {
       const agent = value as any;
       content += `### ${key}\n${agent.prompt || ""}\n\n`;
-      if (agent.skills && Array.isArray(agent.skills) && config.skills) {
-        for (const skillKey of agent.skills) {
+      const agentSkillRefs = Array.isArray(agent.skills)
+        ? agent.skills
+        : Array.isArray(agent.tools)
+          ? agent.tools
+          : [];
+      if (agentSkillRefs.length > 0 && config.skills) {
+        for (const skillKey of agentSkillRefs) {
           const skill = config.skills[skillKey];
           if (skill) {
             content += `- **${skillKey}**: ${skill.description || ""}\n`;

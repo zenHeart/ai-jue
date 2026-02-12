@@ -22,8 +22,10 @@ describe('ai-jue-adapter-copilot', () => {
 
   it('should generate .github/copilot-instructions.md with prompts, skills, commands, and hooks', async () => {
     const config = {
+      context: {
+        global: 'Core Instructions'
+      },
       prompts: {
-        agents: { content: 'Core Instructions' },
         style: { content: 'Code Style' }
       },
       skills: {

@@ -4,10 +4,11 @@ import { generateMarkdownFile } from 'ai-jue-core';
 
 export async function generate(config: any, outputDir: string): Promise<void> {
   let instructionsContent = '';
+  const globalContext = config.context?.global || config.prompts?.agents?.content;
 
   // 1. Inject AGENTS.md content first (Global Context)
-  if (config.prompts?.agents?.content) {
-      instructionsContent += `# Core Instructions (AGENTS)\n\n${config.prompts.agents.content}\n\n`;
+  if (globalContext) {
+      instructionsContent += `# Core Instructions (AGENTS)\n\n${globalContext}\n\n`;
   }
 
   // 2. Add Prompts

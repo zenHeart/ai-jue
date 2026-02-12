@@ -3,10 +3,12 @@
   "version": "1.0.9",
   "description": "Base preset for ai-jue, providing common best-practice skills.",
   "files": [
+    "commands",
     "prompts",
-    "skills",
     "index.js",
-    "META.json"
+    "README.md",
+    "README.en.md",
+    "CHANGELOG.md"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0",

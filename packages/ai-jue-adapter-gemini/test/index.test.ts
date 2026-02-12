@@ -81,4 +81,32 @@ describe('ai-jue-adapter-gemini', () => {
     expect(content.nested.a).toBe(1);
     expect(content.customCommands.new).toBe('new');
   });
+
+  it('should generate empty settings.json when no gemini options are configured', async () => {
+    await generate({}, TEST_DIR);
+
+    const filePath = path.join(TEST_DIR, '.gemini', 'settings.json');
+    expect(fs.existsSync(filePath)).toBe(true);
+    const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+    expect(content).toEqual({});
+  });
+
+  it('should map legacy agents.tools to agents.skills output', async () => {
+    await generate(
+      {
+        agents: {
+          reviewer: {
+            prompt: 'Review code',
+            tools: ['review-skill'],
+          },
+        },
+      },
+      TEST_DIR,
+    );
+
+    const content = JSON.parse(
+      fs.readFileSync(path.join(TEST_DIR, '.gemini', 'settings.json'), 'utf8'),
+    );
+    expect(content.agents.reviewer.skills).toEqual(['review-skill']);
+  });
 });

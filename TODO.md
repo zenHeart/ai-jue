@@ -42,23 +42,23 @@
 
 ### Stage 0（P0）基础核心修复 - 先执行
 
-- [ ] **Quick Start 主路径修复（对齐 README 最小承诺）**
-  - [ ] 验证并修复 `npx jue apply` 在四适配器目标产物上的稳定生成。
-  - [ ] 对齐 README 与实际产物路径命名（尤其 Cursor 相关产物），避免“文档可运行性”偏差。
+- [x] **Quick Start 主路径修复（对齐 README 最小承诺）**
+  - [x] 验证并修复 `npx jue apply` 在四适配器目标产物上的稳定生成。
+  - [x] 对齐 README 与实际产物路径命名（尤其 Cursor 相关产物），避免“文档可运行性”偏差。
   - [x] Cursor 规则主产物统一为 `.cursor/rules/*.mdc`（Project Rules），移除 `.cursorrules` 输出路径。
   - [x] 明确 Cursor 仅做格式转换：统一 `md + YAML frontmatter` 输入 -> 输出 `.mdc`，不重复实现规则能力逻辑。
   - [x] 修复 `apply --watch` 监听可靠性：确保 `.ai/.jue/ai.config.js` 变化可稳定触发。
-- [ ] **配置语义冲突止血（过渡期）**
+- [x] **配置语义冲突止血（过渡期）**
   - [x] 明确并固化：历史错误字段停止作为设计与实现输入。
-  - [ ] 统一单一规范输入：`AGENTS.md`（全局上下文）与 `agents`（代理能力），禁止双轨语义。
+  - [x] 统一单一规范输入：`AGENTS.md`（全局上下文）与 `agents`（代理能力），禁止双轨语义。
   - [x] `validate` 增加 fail-fast：检测到历史错误字段直接报错并给出修复指引。
-- [ ] 修复 `jue-preset-base` 资产加载协议：让 `commands/*/{index.json,prompt.md}` 与加载器协议一致。
-- [ ] 修复 `jue-preset-base` 发布元数据：`package.json.files` 与真实目录结构一致。
-- [ ] **`jue-preset-internal` 自举可运行修复**
-  - [ ] 补齐项目自举入口（仓库自身可通过 preset 跑通 `jue apply` 的最小配置）。
-  - [ ] 修复 `jue-preset-internal/package.json` 的 `files` 声明与实际文件一致。
-  - [ ] 确保 internal 最小能力资产可被加载（至少 AGENTS + 一类可验证资产）。
-- [ ] 统一 `agents` 契约：解决 `agents.tools` 与适配器读取 `agents.skills` 的语义冲突（保留兼容迁移层）。
+- [x] 修复 `jue-preset-base` 资产加载协议：让 `commands/*/{index.json,prompt.md}` 与加载器协议一致。
+- [x] 修复 `jue-preset-base` 发布元数据：`package.json.files` 与真实目录结构一致。
+- [x] **`jue-preset-internal` 自举可运行修复**
+  - [x] 补齐项目自举入口（仓库自身可通过 preset 跑通 `jue apply` 的最小配置）。
+  - [x] 修复 `jue-preset-internal/package.json` 的 `files` 声明与实际文件一致。
+  - [x] 确保 internal 最小能力资产可被加载（至少 AGENTS + 一类可验证资产）。
+- [x] 统一 `agents` 契约：解决 `agents.tools` 与适配器读取 `agents.skills` 的语义冲突（保留兼容迁移层）。
 
 ### Stage 1（P1）文档认知纠偏 - 在核心修复后执行
 
@@ -145,7 +145,7 @@
 
 ### 里程碑（本专项）
 
-- [ ] `N1`：Stage 0 完成，核心运行风险清零。
+- [x] `N1`：Stage 0 完成，核心运行风险清零。
 - [ ] `N2`：Stage 1 完成，文档语义与能力地图一致。
 - [ ] `N3`：Stage 2 完成，代码协议与文档定义一致。
 - [ ] `N4`：Stage 3 完成，可执行修复版发布。

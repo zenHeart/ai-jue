@@ -2,8 +2,14 @@ import path from "path";
 import { generateMarkdownFile, generateJsonFile, deepMerge } from "ai-jue-core";
 
 export async function generate(config: any, outputDir: string): Promise<void> {
+  const promptEntries = config.prompts ? Object.values(config.prompts) : [];
+  const firstPrompt = promptEntries.length > 0 ? (promptEntries[0] as any) : null;
   // Generate GEMINI.md
-  const prompt = config.prompts?.gemini || config.prompts?.agents;
+  const prompt =
+    config.prompts?.gemini ||
+    (config.context?.global ? { content: config.context.global } : null) ||
+    config.prompts?.agents ||
+    firstPrompt;
   if (prompt && prompt.content) {
     // Changed from prompt.prompt
     const mdFilePath = path.join(outputDir, "GEMINI.md");
@@ -41,20 +47,23 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     }
   }
 
-  // Inject Sub-Agents
-  if (config.subAgents) {
-    if (!geminiConfig.subAgents) geminiConfig.subAgents = {};
-    for (const [key, value] of Object.entries(config.subAgents)) {
+  // Inject Agents
+  if (config.agents) {
+    if (!geminiConfig.agents) geminiConfig.agents = {};
+    for (const [key, value] of Object.entries(config.agents)) {
       const agent = value as any;
-      geminiConfig.subAgents[key] = {
+      const skillRefs = Array.isArray(agent.skills)
+        ? agent.skills
+        : Array.isArray(agent.tools)
+          ? agent.tools
+          : undefined;
+      geminiConfig.agents[key] = {
         prompt: agent.prompt,
-        skills: agent.skills,
+        skills: skillRefs,
       };
     }
   }
 
-  if (Object.keys(geminiConfig).length > 0) {
-    const jsonFilePath = path.join(outputDir, ".gemini", "settings.json");
-    generateJsonFile(jsonFilePath, geminiConfig);
-  }
+  const jsonFilePath = path.join(outputDir, ".gemini", "settings.json");
+  generateJsonFile(jsonFilePath, geminiConfig);
 }

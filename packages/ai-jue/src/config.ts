@@ -43,7 +43,15 @@ const ConfigSchema = z
         servers: z.record(z.string(), McpServerSchema).optional(),
       })
       .optional(),
+    context: z
+      .object({
+        global: z.string().optional(),
+      })
+      .optional(),
     commands: z.record(z.string(), CommandSchema).optional(),
+    prompts: z.record(z.string(), z.any()).optional(),
+    rules: z.record(z.string(), z.any()).optional(),
+    skills: z.record(z.string(), z.any()).optional(),
     hooks: z.record(z.string(), HookSchema).optional(),
     agents: z.record(z.string(), AgentSchema).optional(),
     tools: z.record(z.string(), z.any()).optional(),

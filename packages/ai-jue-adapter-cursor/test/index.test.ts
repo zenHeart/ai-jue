@@ -22,8 +22,10 @@ describe('ai-jue-adapter-cursor', () => {
 
   it('should generate .cursor/rules/ai-jue.mdc with prompts, skills, commands, and hooks', async () => {
     const config = {
+      context: {
+        global: 'Global Agent Context'
+      },
       prompts: {
-        agents: { content: 'Global Agent Context' },
         style: { content: 'Coding Style' }
       },
       skills: {

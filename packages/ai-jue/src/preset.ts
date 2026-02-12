@@ -1,90 +1,184 @@
 import path from 'path';
 import fs from 'fs';
-// Assuming MergedConfig is defined in './config'
 import { MergedConfig } from './config';
 
-function findContentFile(assetPath: string, patterns: string[], userLanguage?: string): string | null { // Added userLanguage here
-  // 1. Exact language match (if userLanguage is set)
+async function readJsonIfExists(filePath: string): Promise<any> {
+  if (!fs.existsSync(filePath)) return {};
+  const content = await fs.promises.readFile(filePath, 'utf8');
+  return JSON.parse(content);
+}
+
+function findLocalizedFile(baseDir: string, fileNames: string[], userLanguage?: string): string | null {
   if (userLanguage) {
-    for (const pattern of patterns) {
-      const base = path.parse(pattern).name;
-      const ext = path.parse(pattern).ext;
-      const langFile = path.join(assetPath, `${base}.${userLanguage}${ext}`);
-      if (fs.existsSync(langFile)) return langFile;
+    for (const fileName of fileNames) {
+      const parsed = path.parse(fileName);
+      const localized = path.join(baseDir, `${parsed.name}.${userLanguage}${parsed.ext}`);
+      if (fs.existsSync(localized)) return localized;
     }
   }
 
-  // 2. Fallback to generic, non-language-suffixed match
-  for (const pattern of patterns) {
-    const genericFile = path.join(assetPath, pattern);
-    if (fs.existsSync(genericFile)) return genericFile;
+  for (const fileName of fileNames) {
+    const fallback = path.join(baseDir, fileName);
+    if (fs.existsSync(fallback)) return fallback;
   }
-  
+
   return null;
+}
+
+async function loadNamedAssetDir(
+  config: MergedConfig,
+  dirPath: string,
+  section: string,
+  preferredFiles: string[],
+  userLanguage?: string,
+): Promise<void> {
+  if (!fs.existsSync(dirPath)) return;
+  if (!config[section]) config[section] = {};
+
+  const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const assetName = entry.name;
+        const assetDir = path.join(dirPath, assetName);
+        const contentPath = findLocalizedFile(assetDir, preferredFiles, userLanguage);
+        if (!contentPath) return;
+
+        const content = await fs.promises.readFile(contentPath, 'utf8');
+        const metadata = await readJsonIfExists(path.join(assetDir, 'META.json'));
+        config[section][assetName] = { ...metadata, content };
+      }),
+  );
+}
+
+async function loadCommands(config: MergedConfig, dirPath: string, userLanguage?: string): Promise<void> {
+  if (!fs.existsSync(dirPath)) return;
+  const commands = (config.commands ??= {});
+
+  const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const commandName = entry.name;
+        const commandDir = path.join(dirPath, commandName);
+        const meta = await readJsonIfExists(path.join(commandDir, 'index.json'));
+        const promptPath = findLocalizedFile(commandDir, ['prompt.md'], userLanguage);
+        if (!promptPath) return;
+
+        const prompt = await fs.promises.readFile(promptPath, 'utf8');
+        commands[commandName] = {
+          ...meta,
+          prompt,
+          content: prompt,
+        };
+      }),
+  );
+}
+
+async function loadAgents(config: MergedConfig, dirPath: string, userLanguage?: string): Promise<void> {
+  if (!fs.existsSync(dirPath)) return;
+  const agents = (config.agents ??= {});
+
+  const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const agentName = entry.name;
+        const agentDir = path.join(dirPath, agentName);
+        const meta = await readJsonIfExists(path.join(agentDir, 'index.json'));
+        const promptPath = findLocalizedFile(agentDir, ['prompt.md', 'AGENTS.md'], userLanguage);
+        if (!promptPath) return;
+
+        const prompt = await fs.promises.readFile(promptPath, 'utf8');
+        agents[agentName] = { ...meta, prompt, content: prompt };
+      }),
+  );
+}
+
+async function loadHooks(config: MergedConfig, dirPath: string, userLanguage?: string): Promise<void> {
+  if (!fs.existsSync(dirPath)) return;
+  const hooks = (config.hooks ??= {});
+
+  const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const hookName = entry.name;
+        const hookDir = path.join(dirPath, hookName);
+        const meta = await readJsonIfExists(path.join(hookDir, 'index.json'));
+        const promptPath = findLocalizedFile(hookDir, ['prompt.md'], userLanguage);
+
+        if (promptPath) {
+          const script = (await fs.promises.readFile(promptPath, 'utf8')).trim();
+          hooks[hookName] = script;
+          return;
+        }
+
+        if (typeof meta.script === 'string' && meta.script.trim()) {
+          hooks[hookName] = meta.script;
+        }
+      }),
+  );
+}
+
+async function loadToolConfigs(config: MergedConfig, toolsDir: string): Promise<void> {
+  if (!fs.existsSync(toolsDir)) return;
+  const tools = (config.tools ??= {});
+
+  const entries = await fs.promises.readdir(toolsDir, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isDirectory())
+      .map(async (entry) => {
+        const toolName = entry.name;
+        const toolDir = path.join(toolsDir, toolName);
+        const configPath = path.join(toolDir, 'config.json');
+        if (!fs.existsSync(configPath)) return;
+        tools[toolName] = await readJsonIfExists(configPath);
+      }),
+  );
 }
 
 export async function loadAssetsFromDir(dirPath: string, userLanguage?: string): Promise<MergedConfig> {
   const config: MergedConfig = {};
 
-  const contentAssetTypes: { [key: string]: string[] } = {
-    prompts: ['AGENTS.md', 'prompt.md'],
-    skills: ['AGENTS.md', 'prompt.md'],
-    commands: ['command.js', 'command.ts'],
-    'sub-agents': ['AGENTS.md', 'prompt.md'],
-    mcp: ['index.js', 'index.ts'], // assuming mcp assets have an index file
-  };
+  if (!config.context) config.context = {};
 
-  // Load content-based asset types (prompts, skills, commands, sub-agents, mcp)
-  await Promise.all(Object.keys(contentAssetTypes).map(async (assetType) => {
-    const currentAssetDir = path.join(dirPath, assetType);
-    if (fs.existsSync(currentAssetDir)) {
-      config[assetType] = {};
-      const assetFolders = (await fs.promises.readdir(currentAssetDir, { withFileTypes: true }))
-        .filter(dirent => dirent.isDirectory())
-        .map(dirent => dirent.name);
-
-      await Promise.all(assetFolders.map(async (folderName) => {
-        const assetPath = path.join(currentAssetDir, folderName);
-        const contentFilePath = findContentFile(assetPath, contentAssetTypes[assetType], userLanguage);
-        
-        if (contentFilePath) {
-          const fileContent = await fs.promises.readFile(contentFilePath, 'utf8');
-          let metadata = {};
-          const metaPath = path.join(assetPath, 'META.json');
-          if (fs.existsSync(metaPath)) {
-            metadata = JSON.parse(await fs.promises.readFile(metaPath, 'utf8'));
-          }
-          config[assetType][folderName] = { ...metadata, content: fileContent };
-        }
-      }));
-    }
-  }));
-
-  // Handle top-level AGENTS.md
-  const topLevelAgentsFile = findContentFile(dirPath, ['AGENTS.md'], userLanguage);
+  const topLevelAgentsFile = findLocalizedFile(dirPath, ['AGENTS.md'], userLanguage);
   if (topLevelAgentsFile) {
-    if (!config.prompts) config.prompts = {};
-    config.prompts['agents'] = { content: await fs.promises.readFile(topLevelAgentsFile, 'utf8') };
-  }
-
-  // --- NEW: Handle Tools separately ---
-  const toolsDir = path.join(dirPath, 'tools');
-  if (fs.existsSync(toolsDir)) {
-    config.tools = {};
-    const toolFolders = (await fs.promises.readdir(toolsDir, { withFileTypes: true }))
-      .filter(dirent => dirent.isDirectory())
-      .map(dirent => dirent.name);
-
-    await Promise.all(toolFolders.map(async (folderName) => {
-      const toolPath = path.join(toolsDir, folderName);
-      const configJsonPath = path.join(toolPath, 'config.json'); // Expecting config.json directly
-
-      if (fs.existsSync(configJsonPath)) {
-        config.tools![folderName] = JSON.parse(await fs.promises.readFile(configJsonPath, 'utf8'));
+    config.context.global = await fs.promises.readFile(topLevelAgentsFile, 'utf8');
+  } else {
+    // Transitional support: allow prompts/AGENTS.md to serve as global context.
+    const promptsDir = path.join(dirPath, 'prompts');
+    if (fs.existsSync(promptsDir)) {
+      const promptAgents = findLocalizedFile(promptsDir, ['AGENTS.md'], userLanguage);
+      if (promptAgents) {
+        config.context.global = await fs.promises.readFile(promptAgents, 'utf8');
       }
-    }));
+    }
   }
-  // --- END NEW ---
+
+  await Promise.all([
+    loadNamedAssetDir(config, path.join(dirPath, 'rules'), 'rules', ['prompt.md', 'AGENTS.md'], userLanguage),
+    loadNamedAssetDir(config, path.join(dirPath, 'skills'), 'skills', ['prompt.md', 'AGENTS.md'], userLanguage),
+    loadAgents(config, path.join(dirPath, 'agents'), userLanguage),
+    loadCommands(config, path.join(dirPath, 'commands'), userLanguage),
+    loadHooks(config, path.join(dirPath, 'hooks'), userLanguage),
+    loadToolConfigs(config, path.join(dirPath, 'tools')),
+  ]);
+
+  // Transitional support for legacy prompt buckets (tool-specific prompts).
+  await loadNamedAssetDir(
+    config,
+    path.join(dirPath, 'prompts'),
+    'prompts',
+    ['prompt.md', 'AGENTS.md'],
+    userLanguage,
+  );
 
   return config;
 }

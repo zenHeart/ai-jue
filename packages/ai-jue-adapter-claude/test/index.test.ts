@@ -22,8 +22,8 @@ describe('ai-jue-adapter-claude', () => {
 
   it('should generate CLAUDE.md with skills converted to slash commands', async () => {
     const config = {
-      prompts: {
-        agents: { content: 'Claude Context' }
+      context: {
+        global: 'Claude Context'
       },
       skills: {
         review: { 
