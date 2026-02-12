@@ -38,6 +38,7 @@ const ConfigSchema = z
       .record(z.string(), z.union([z.string(), z.array(z.string())]))
       .optional(),
     language: z.string().optional(),
+    conflictPolicy: z.enum(["error", "warn"]).optional(),
     mcp: z
       .object({
         servers: z.record(z.string(), McpServerSchema).optional(),
