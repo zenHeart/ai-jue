@@ -1,0 +1,4 @@
+{
+  "name": "Repo Governance Command",
+  "description": "Apply repository-level governance checks before implementation."
+}
