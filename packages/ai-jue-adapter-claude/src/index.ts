@@ -29,7 +29,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
   const t = LOCALES[lang];
 
   let content = "";
-  const globalContext = config.context?.global || config.prompts?.agents?.content;
+  const globalContext = config.context?.global;
 
   // 1. Inject AGENTS.md content first (Global Context)
   if (globalContext) {

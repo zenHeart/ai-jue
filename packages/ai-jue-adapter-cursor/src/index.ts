@@ -37,7 +37,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
 
   // 1. Generate Cursor Project Rules (.cursor/rules/*.mdc)
   let cursorRulesContent = "";
-  const globalContext = config.context?.global || config.prompts?.agents?.content;
+  const globalContext = config.context?.global;
 
   // Inject AGENTS.md content first (Global Context)
   if (globalContext) {

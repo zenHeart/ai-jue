@@ -3,6 +3,7 @@ import { loadPreset, loadAssetsFromDir } from './preset';
 import { deepMerge } from 'ai-jue-core';
 import path from 'path';
 import fs from 'fs';
+import { normalizeConfig } from './normalize';
 
 async function loadExtendedAssets(extendsConfig: { [key: string]: string | string[] }, rootDir: string): Promise<MergedConfig> {
     const config: MergedConfig = {};
@@ -58,5 +59,5 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
     }
 
     finalConfig = deepMerge(finalConfig, userConfig);
-    return finalConfig;
+    return normalizeConfig(finalConfig);
 }

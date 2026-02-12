@@ -8,7 +8,6 @@ export async function generate(config: any, outputDir: string): Promise<void> {
   const prompt =
     config.prompts?.gemini ||
     (config.context?.global ? { content: config.context.global } : null) ||
-    config.prompts?.agents ||
     firstPrompt;
   if (prompt && prompt.content) {
     // Changed from prompt.prompt

@@ -108,9 +108,9 @@
 - [x] 按统一协议修正加载器：`skills/commands/rules/agents/hooks/tools` 与 `.ai` 同构。
 - [x] 增加 markdown frontmatter 解析与统一映射层（跨适配器，`md + YAML frontmatter` 为统一源格式）。
 - [ ] **建立 normalize 标准化转换层（核心）**
-  - [ ] 新增统一内部模型（建议：`context/rules/commands/skills/agents/hooks/mcp/tools`）。
-  - [ ] 输入归一化：`AGENTS.md -> context.global`、canonical rules -> target rules（不再包含历史字段映射）。
-  - [ ] 适配器只消费规范模型，禁止直接读取历史错误字段。
+  - [x] 新增统一内部模型（建议：`context/rules/commands/skills/agents/hooks/mcp/tools`）。
+  - [x] 输入归一化：`AGENTS.md -> context.global`、canonical rules -> target rules（不再包含历史字段映射）。
+  - [x] 适配器只消费规范模型，禁止直接读取历史错误字段。
   - [ ] 错误处理：对冲突字段与歧义输入给出显式告警或失败策略（可配置）。
 - [x] 增强 `validate` 语义校验：冲突字段、弃用字段、无效组合。
 - [ ] 适配器按“最小知识原则”落地：优先复用目标工具原生概念，不新增用户心智负担。
