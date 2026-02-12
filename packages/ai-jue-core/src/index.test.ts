@@ -71,6 +71,19 @@ describe('generateMarkdownFile', () => {
       'User Notes\n\n<!-- AI-JUE:START -->\nNew\n<!-- AI-JUE:END -->'
     );
   });
+
+  it('should remove orphan tags and keep a single managed block', () => {
+    (fs.existsSync as any).mockReturnValue(true);
+    (fs.readFileSync as any).mockReturnValue(
+      'User Header\n\n<!-- AI-JUE:END -->\n\n<!-- AI-JUE:START -->\nOld\n<!-- AI-JUE:END -->\n'
+    );
+
+    generateMarkdownFile(filePath, 'New');
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      filePath,
+      'User Header\n\n<!-- AI-JUE:START -->\nNew\n<!-- AI-JUE:END -->'
+    );
+  });
 });
 
 describe('generateJsonFile', () => {

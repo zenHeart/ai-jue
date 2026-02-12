@@ -34,7 +34,11 @@ export function generateMarkdownFile(filePath: string, content: string) {
         const escapedStart = startTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const escapedEnd = endTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
         const managedBlockPattern = new RegExp(`${escapedStart}[\\s\\S]*?${escapedEnd}\\n?`, 'g');
-        const userContent = existingContent.replace(managedBlockPattern, '').trim();
+        const orphanTagPattern = new RegExp(`^\\s*(?:${escapedStart}|${escapedEnd})\\s*$`, 'gm');
+        const userContent = existingContent
+          .replace(managedBlockPattern, '')
+          .replace(orphanTagPattern, '')
+          .trim();
         finalContent = userContent ? `${userContent}\n\n${managedContent}` : managedContent;
     } else {
         // Create directory if not exists
