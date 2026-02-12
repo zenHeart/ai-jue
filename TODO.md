@@ -91,12 +91,12 @@
   - [x] 固化“最小知识原则”的适配器设计准则：优先沿用目标工具原生概念与文件布局。
   - [x] 更新能力矩阵中的术语：统一使用 `agents`，移除历史命名歧义。
 
-- [ ] **`jue-preset-base` 规范化文档任务（来自 `_drafts/preset-base.md`）**
-  - [ ] 在 base 规范文档中明确：`AGENTS.md` 是全局元规则入口，覆盖 Phase 1-5。
-  - [ ] 在 base 文档中定义命令能力与 SDLC 阶段映射：`/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`。
-  - [ ] 补齐中英文文档对齐要求：`AGENTS.md` / `AGENTS.en.md` 语义一致。
-  - [ ] 明确迁移说明：从旧 `skills/*` 结构到当前目录协议的迁移路径与兼容期。
-  - [ ] 统一“Review 零修改”目标表述：作为 base 的质量目标，不写成当前实现事实。
+- [x] **`jue-preset-base` 规范化文档任务（来自 `_drafts/preset-base.md`）**
+  - [x] 在 base 规范文档中明确：`AGENTS.md` 是全局元规则入口，覆盖 Phase 1-5。
+  - [x] 在 base 文档中定义命令能力与 SDLC 阶段映射：`/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`。
+  - [x] 补齐中英文文档对齐要求：`AGENTS.md` / `AGENTS.en.md` 语义一致。
+  - [x] 明确迁移说明：从旧 `skills/*` 结构到当前目录协议的迁移路径与兼容期。
+  - [x] 统一“Review 零修改”目标表述：作为 base 的质量目标，不写成当前实现事实。
 
 - [ ] **`jue-preset-internal` 规范文档任务**
   - [ ] 明确 internal 与 base 的能力边界：internal 负责仓库治理，base 负责通用工程能力。

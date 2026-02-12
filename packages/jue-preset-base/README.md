@@ -42,17 +42,16 @@
 
 ```bash
 # 在项目根目录运行
-npx ai-jue init
+npx jue init
 
 # 选择 "base" 预设
-# ai-jue 会自动识别你的编辑器 (Cursor, VSCode+Copilot, Claude, etc.)
-# 并生成对应的配置文件 (如 AGENTS.md, .github/copilot-instructions.md)
+# ai-jue 会自动识别你的编辑器并生成对应配置文件
 ```
 
 或者手动配置 `ai.config.js`:
 
 ```javascript
-export default {
+module.exports = {
   presets: ['base'], // 加载基础元规则
   // ...其他配置
 }
@@ -66,7 +65,6 @@ export default {
 | :--- | :--- | :--- | :--- |
 | **Meta-Rules** | All | 全局行为约束，植入 System Prompt | 自动加载 |
 | **Command: /explain** | Phase 2 | 业务优先的代码解释与可视化 | `/explain` |
-| **Command: /plan** | Phase 3 | 架构设计与实现计划 | `/plan` |
 | **Command: /refactor** | Phase 3 | 保证行为不变的重构建议 | `/refactor` |
 | **Command: /optimize** | Phase 3 | 三层模型性能优化分析 | `/optimize` |
 | **Command: /test** | Phase 4 | 测试金字塔策略生成 | `/test` |
@@ -78,8 +76,14 @@ export default {
 
 ## 💡 最佳实践
 
-- **Review 零修改**: 我们的目标是让 AI 产出的代码无需人类修改即可通过 Review。如果 AI 犯错，请不要直接帮它改，而是指出违反了哪条元规则，让它自己修正。
+- **Review 零修改是质量目标，不是现状承诺**: 我们追求让 AI 产出尽量减少人工返工。如果 AI 犯错，请指出违反的元规则，让它按规则自我修正。
 - **混合使用**: 推荐在本预设基础上，叠加技术栈预设 (如 `jue-preset-react`, `jue-preset-typescript`) 以获得更细粒度的最佳实践。
+
+## 🌐 双语对齐与迁移说明
+
+- 全局上下文采用 `AGENTS.md`（中文）与 `AGENTS.en.md`（英文）双文件语义对齐。
+- 命令资产统一采用 `commands/*/{index.json,prompt.md}` 协议。
+- 旧 `skills/*` 结构仅作为迁移兼容，新增能力必须落在 `commands/`。
 
 ## License
 

@@ -31,7 +31,7 @@ npm install -D ai-jue jue-preset-base
 
 ```js
 // ai.config.js
-export default {
+module.exports = {
   presets: ['base']
 }
 ```
@@ -45,6 +45,16 @@ npx jue apply
 - `AGENTS.md` as global meta-rule entry
 - Command assets for `/explain`, `/refactor`, `/optimize`, `/test`, `/doc`, `/review`, `/security`
 - Compatible with downstream tool adapters through ai-jue transformation
+
+## Bilingual and Migration Notes
+
+- Keep `AGENTS.md` and `AGENTS.en.md` semantically aligned.
+- Use canonical command layout: `commands/*/{index.json,prompt.md}`.
+- Treat legacy `skills/*` assets as migration fallback only; new capabilities must be added under `commands/`.
+
+## Quality Target
+
+"Zero-edit review" is a quality target, not a claim that every output already meets it.
 
 ## Naming Note
 
