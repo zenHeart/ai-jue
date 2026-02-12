@@ -42,12 +42,38 @@ import { initI18n, t } from "./i18n";
 import { loadConfig } from "./config";
 const CLI_VERSION: string = require("../package.json").version;
 
+function parseRuntimeLang(rawArgv: string[]): string | undefined {
+  for (let i = 0; i < rawArgv.length; i++) {
+    const arg = rawArgv[i];
+    if (arg === "--lang" || arg === "-l") {
+      const value = rawArgv[i + 1];
+      if (value && !value.startsWith("-")) return value;
+    }
+    if (arg.startsWith("--lang=")) {
+      const value = arg.slice("--lang=".length).trim();
+      if (value) return value;
+    }
+  }
+  return undefined;
+}
+
 async function main() {
   const config = await loadConfig();
-  await initI18n(config.language);
+  const runtimeLang = parseRuntimeLang(hideBin(process.argv));
+  if (runtimeLang) {
+    process.env.AI_JUE_LANG = runtimeLang;
+  }
+  await initI18n(runtimeLang || config.language);
 
   yargs(hideBin(process.argv))
     .version(CLI_VERSION)
+    .option("lang", {
+      alias: "l",
+      type: "string",
+      description: t("common.lang_describe", {
+        defaultValue: "Runtime language override (e.g. en, zh)",
+      }),
+    })
     .option("verbose", {
       alias: "v",
       type: "boolean",

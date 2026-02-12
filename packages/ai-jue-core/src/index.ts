@@ -31,20 +31,11 @@ export function generateMarkdownFile(filePath: string, content: string) {
 
     if (fs.existsSync(filePath)) {
         const existingContent = fs.readFileSync(filePath, 'utf8');
-        const startIndex = existingContent.indexOf(startTag);
-        const endIndex = existingContent.indexOf(endTag);
-
-        if (startIndex !== -1 && endIndex !== -1) {
-            // Replace the managed block
-            finalContent = existingContent.substring(0, startIndex) +
-                           managedContent +
-                           existingContent.substring(endIndex + endTag.length);
-        } else {
-            // Append if no block found (or just overwrite if it's a new file concept, but append is safer)
-            // But if the user deleted the tags, we might duplicate.
-            // Let's assume if tags are missing, we append to the end.
-            finalContent = existingContent + '\n\n' + managedContent;
-        }
+        const escapedStart = startTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const escapedEnd = endTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const managedBlockPattern = new RegExp(`${escapedStart}[\\s\\S]*?${escapedEnd}\\n?`, 'g');
+        const userContent = existingContent.replace(managedBlockPattern, '').trim();
+        finalContent = userContent ? `${userContent}\n\n${managedContent}` : managedContent;
     } else {
         // Create directory if not exists
         const dir = path.dirname(filePath);

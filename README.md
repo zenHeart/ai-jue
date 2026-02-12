@@ -231,6 +231,7 @@ npx jue init              # 交互式初始化配置
 npx jue apply --adapter cursor --adapter gemini --adapter claude  # 仅生成指定适配器
 npx jue apply -a          # 生成全部已发现适配器（等同 --all）
 npx jue apply             # 未显式传参时，按 .cursor/.gemini/.claude 等痕迹自动识别
+npx jue apply --lang zh   # 运行时覆盖语言（等同 AI_JUE_LANG=zh）
 npx jue apply --all --watch  # 监听变化自动重新生成（显式适配器）
 npx jue check             # 检查预设是否有新版本
 npx jue validate          # 校验配置合法性

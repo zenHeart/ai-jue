@@ -60,6 +60,7 @@ npx jue init
 npx jue apply                                  # 未传参时自动识别 .cursor/.gemini/.claude/.github 等痕迹
 npx jue apply --adapter cursor --adapter gemini # 仅执行白名单适配器
 npx jue apply -a                               # 执行全部已发现适配器（等同 --all）
+npx jue apply --lang zh                        # 运行时覆盖语言（等同 AI_JUE_LANG=zh）
 npx jue apply --watch
 npx jue list
 npx jue check

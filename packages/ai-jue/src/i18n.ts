@@ -7,6 +7,7 @@ const resources = {
         error: "Error: {{message}}",
         warning: "Warning: {{message}}",
         success: "Success: {{message}}",
+        lang_describe: "Runtime language override (e.g. en, zh)",
         verbose_describe: "Run with verbose logging",
         demand_command: "You need at least one command before moving on",
       },
@@ -52,6 +53,12 @@ const resources = {
           found_adapters: "Found {{count}} adapter(s): {{names}}",
           unknown_adapters:
             "Unknown adapter(s): {{unknown}}. Available adapters: {{available}}",
+          installing_adapter:
+            "Installing adapter {{packageName}} via: {{command}}",
+          installed_adapter:
+            "Installed adapter package: {{packageName}}",
+          install_adapter_failed:
+            "Failed to install adapter {{packageName}}. Please install it manually and rerun apply.",
           running_adapter: "Running adapter: {{name}}",
           adapter_success: "Adapter {{name}} finished successfully",
           adapter_no_generate:
@@ -128,6 +135,7 @@ const resources = {
         error: "错误: {{message}}",
         warning: "警告: {{message}}",
         success: "成功: {{message}}",
+        lang_describe: "运行时语言覆盖（如 en、zh）",
       },
       commands: {
         apply: {
@@ -171,6 +179,12 @@ const resources = {
           found_adapters: "找到 {{count}} 个适配器: {{names}}",
           unknown_adapters:
             "存在未知适配器: {{unknown}}。可用适配器: {{available}}",
+          installing_adapter:
+            "正在安装适配器 {{packageName}}，命令: {{command}}",
+          installed_adapter:
+            "适配器安装完成：{{packageName}}",
+          install_adapter_failed:
+            "适配器 {{packageName}} 安装失败，请手动安装后重新执行 apply。",
           running_adapter: "正在运行适配器: {{name}}",
           adapter_success: "适配器 {{name}} 成功完成",
           adapter_no_generate: '适配器 {{name}} 未导出 "generate" 函数。',

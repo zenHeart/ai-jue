@@ -60,6 +60,7 @@ npx jue init
 npx jue apply                                    # Auto-detect from .cursor/.gemini/.claude/.github footprints
 npx jue apply --adapter cursor --adapter gemini # Run only selected adapters
 npx jue apply -a                                 # Run all discovered adapters (same as --all)
+npx jue apply --lang zh                          # Runtime language override (same as AI_JUE_LANG=zh)
 npx jue apply --watch
 npx jue list
 npx jue check

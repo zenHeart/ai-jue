@@ -121,9 +121,14 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     const hooksConfig: Record<string, any> = {};
     for (const [key, value] of Object.entries(config.hooks)) {
       const hookValue = value as any;
-      hooksConfig[key] = typeof hookValue === "string" ? hookValue : hookValue?.script;
+      const script =
+        typeof hookValue === "string" ? hookValue.trim() : String(hookValue?.script || "").trim();
+      if (!script) continue;
+      hooksConfig[key] = script;
     }
-    generateJsonFile(path.join(outputDir, ".cursor", "hooks.json"), hooksConfig);
+    if (Object.keys(hooksConfig).length > 0) {
+      generateJsonFile(path.join(outputDir, ".cursor", "hooks.json"), hooksConfig);
+    }
   }
 
   // 6. Agents -> .cursor/agents/*.md

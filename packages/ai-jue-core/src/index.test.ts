@@ -55,7 +55,20 @@ describe('generateMarkdownFile', () => {
     generateMarkdownFile(filePath, 'New');
     expect(fs.writeFileSync).toHaveBeenCalledWith(
       filePath,
-      'Before\n<!-- AI-JUE:START -->\nNew\n<!-- AI-JUE:END -->\nAfter'
+      'Before\nAfter\n\n<!-- AI-JUE:START -->\nNew\n<!-- AI-JUE:END -->'
+    );
+  });
+
+  it('should collapse duplicated managed blocks into one block', () => {
+    (fs.existsSync as any).mockReturnValue(true);
+    (fs.readFileSync as any).mockReturnValue(
+      '<!-- AI-JUE:START -->\nA\n<!-- AI-JUE:END -->\n\nUser Notes\n\n<!-- AI-JUE:START -->\nB\n<!-- AI-JUE:END -->'
+    );
+
+    generateMarkdownFile(filePath, 'New');
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      filePath,
+      'User Notes\n\n<!-- AI-JUE:START -->\nNew\n<!-- AI-JUE:END -->'
     );
   });
 });

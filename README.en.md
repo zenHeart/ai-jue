@@ -184,6 +184,7 @@ npx jue init              # Interactive configuration initialization
 npx jue apply --adapter cursor --adapter gemini --adapter claude  # Apply only selected adapters
 npx jue apply -a          # Apply all discovered adapters (same as --all)
 npx jue apply             # Auto-detect adapters from existing tool footprints
+npx jue apply --lang zh   # Runtime language override (same as AI_JUE_LANG=zh)
 npx jue apply --all --watch  # Watch and re-apply with explicit adapters
 npx jue check             # Check if presets have new versions
 npx jue validate          # Validate configuration legality

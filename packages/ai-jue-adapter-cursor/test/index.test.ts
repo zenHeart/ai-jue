@@ -77,6 +77,17 @@ describe('ai-jue-adapter-cursor', () => {
     expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'hooks.json'))).toBe(true);
   });
 
+  it('should not generate hooks.json when hooks are empty', async () => {
+    await generate(
+      {
+        hooks: {},
+      },
+      TEST_DIR,
+    );
+
+    expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'hooks.json'))).toBe(false);
+  });
+
   it('should generate .cursor/mcp.json when mcp config is present', async () => {
     const config = {
       mcp: {

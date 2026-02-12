@@ -2,6 +2,7 @@ import { Arguments, CommandBuilder } from "yargs";
 import path from "path";
 import fs from "fs";
 import chokidar from "chokidar";
+import { spawnSync } from "child_process";
 import { loadConfig, MergedConfig } from "../config";
 import { resolveFinalConfig } from "../resolver";
 import * as glob from "glob";
@@ -276,6 +277,128 @@ async function findAdapters(): Promise<string[]> {
   return packageNames;
 }
 
+function detectPackageManager(): "npm" | "pnpm" | "yarn" {
+  if (fs.existsSync(path.join(process.cwd(), "pnpm-lock.yaml"))) return "pnpm";
+  if (fs.existsSync(path.join(process.cwd(), "yarn.lock"))) return "yarn";
+  return "npm";
+}
+
+function installAdapterPackage(adapterName: string): boolean {
+  const pm = detectPackageManager();
+  const argsByPm: Record<string, string[]> = {
+    npm: ["install", "-D", adapterName],
+    pnpm: ["add", "-D", adapterName],
+    yarn: ["add", "-D", adapterName],
+  };
+  const args = argsByPm[pm];
+  logger.info(
+    t("commands.apply.installing_adapter", {
+      packageName: adapterName,
+      command: `${pm} ${args.join(" ")}`,
+    }),
+  );
+  const result = spawnSync(pm, args, {
+    cwd: process.cwd(),
+    stdio: "inherit",
+    env: process.env,
+  });
+  return result.status === 0;
+}
+
+async function ensureAdaptersInstalled(adapterNames: string[]): Promise<string[]> {
+  const ready: string[] = [];
+  for (const adapterName of adapterNames) {
+    if (canResolveAdapter(adapterName)) {
+      ready.push(adapterName);
+      continue;
+    }
+    const installed = installAdapterPackage(adapterName);
+    if (installed && canResolveAdapter(adapterName)) {
+      logger.success(
+        t("commands.apply.installed_adapter", { packageName: adapterName }),
+      );
+      ready.push(adapterName);
+    } else {
+      logger.warn(
+        t("commands.apply.install_adapter_failed", { packageName: adapterName }),
+      );
+    }
+  }
+  return ready;
+}
+
+function canResolveAdapter(adapterName: string): boolean {
+  try {
+    require.resolve(adapterName, {
+      paths: [process.cwd(), __dirname],
+    });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function discoverAvailableAdapters(discoveredAdapters: string[]): string[] {
+  const resolvableKnownAdapters = KNOWN_ADAPTERS.filter((name) =>
+    canResolveAdapter(name),
+  );
+  return [...new Set([...discoveredAdapters, ...resolvableKnownAdapters])];
+}
+
+async function runSingleAdapter(
+  adapterName: string,
+  config: MergedConfig,
+  outputDir: string,
+): Promise<void> {
+  const adapterSpinner = ora(
+    t("commands.apply.running_adapter", { name: adapterName }),
+  ).start();
+  try {
+    const adapterPath = require.resolve(adapterName, {
+      paths: [process.cwd(), __dirname],
+    });
+    const adapter = require(adapterPath);
+    if (adapter.generate && typeof adapter.generate === "function") {
+      await adapter.generate(config, outputDir);
+      adapterSpinner.succeed(
+        pc.green(t("commands.apply.adapter_success", { name: adapterName })),
+      );
+    } else {
+      adapterSpinner.warn(
+        pc.yellow(
+          t("commands.apply.adapter_no_generate", { name: adapterName }),
+        ),
+      );
+    }
+  } catch (error: any) {
+    adapterSpinner.fail(
+      pc.red(
+        t("commands.apply.adapter_failed", {
+          name: adapterName,
+          message: error.message,
+        }),
+      ),
+    );
+    process.exitCode = 1;
+  }
+}
+
+async function runAdapterList(
+  adapterNames: string[],
+  config: MergedConfig,
+  outputDir: string,
+): Promise<void> {
+  const readyAdapters = await ensureAdaptersInstalled(adapterNames);
+  if (readyAdapters.length === 0) {
+    logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
+    process.exitCode = 1;
+    return;
+  }
+  for (const adapterName of readyAdapters) {
+    await runSingleAdapter(adapterName, config, outputDir);
+  }
+}
+
 async function runAdapters(
   config: MergedConfig,
   outputDir: string,
@@ -283,8 +406,9 @@ async function runAdapters(
 ) {
   const spinner = ora(t("commands.apply.finding_adapters")).start();
   const discoveredAdapters = await findAdapters();
+  const availableAdapters = discoverAvailableAdapters(discoveredAdapters);
 
-  if (discoveredAdapters.length === 0) {
+  if (availableAdapters.length === 0) {
     spinner.warn(pc.yellow(t("commands.apply.no_adapters")));
     if (!options.all && options.requestedAdapters.length === 0) {
       const manualSelected = await promptManualAdapterSelection(KNOWN_ADAPTERS);
@@ -300,49 +424,31 @@ async function runAdapters(
           }),
         ),
       );
-
-      for (const adapterName of manualSelected) {
-        const adapterSpinner = ora(
-          t("commands.apply.running_adapter", { name: adapterName }),
-        ).start();
-        try {
-          const adapter = require(adapterName);
-          if (adapter.generate && typeof adapter.generate === "function") {
-            await adapter.generate(config, outputDir);
-            adapterSpinner.succeed(
-              pc.green(t("commands.apply.adapter_success", { name: adapterName })),
-            );
-          } else {
-            adapterSpinner.warn(
-              pc.yellow(
-                t("commands.apply.adapter_no_generate", { name: adapterName }),
-              ),
-            );
-          }
-        } catch (error: any) {
-          adapterSpinner.fail(
-            pc.red(
-              t("commands.apply.adapter_failed", {
-                name: adapterName,
-                message: error.message,
-              }),
-            ),
-          );
-          process.exitCode = 1;
-        }
-      }
+      await runAdapterList(manualSelected, config, outputDir);
+      return;
     }
+
+    if (options.requestedAdapters.length > 0) {
+      await runAdapterList(options.requestedAdapters, config, outputDir);
+      return;
+    }
+
+    if (options.all) {
+      await runAdapterList(KNOWN_ADAPTERS, config, outputDir);
+      return;
+    }
+
     return;
   }
 
-  let targetAdapters = discoveredAdapters;
+  let targetAdapters = availableAdapters;
   if (!options.all) {
     if (options.requestedAdapters.length === 0) {
-      const detected = autoDetectAdapters(discoveredAdapters, process.cwd());
+      const detected = autoDetectAdapters(availableAdapters, process.cwd());
       if (detected.length === 0) {
         spinner.warn(pc.yellow(t("commands.apply.no_adapter_detected")));
         const manualSelected = await promptManualAdapterSelection(
-          discoveredAdapters,
+          availableAdapters,
         );
         if (manualSelected.length === 0) {
           logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
@@ -369,69 +475,59 @@ async function runAdapters(
         );
       }
     } else {
-      const unknown = options.requestedAdapters.filter(
-        (name) => !discoveredAdapters.includes(name),
+      let selected = options.requestedAdapters;
+      const unknown = selected.filter(
+        (name) => !availableAdapters.includes(name),
       );
       if (unknown.length > 0) {
-        spinner.fail(
-          pc.red(
-            t("commands.apply.unknown_adapters", {
-              unknown: unknown.join(", "),
-              available: discoveredAdapters.join(", "),
-            }),
-          ),
+        const installedUnknown = await ensureAdaptersInstalled(unknown);
+        const stillUnknown = unknown.filter(
+          (name) => !installedUnknown.includes(name),
         );
-        process.exitCode = 1;
-        return;
+        if (stillUnknown.length > 0) {
+          spinner.fail(
+            pc.red(
+              t("commands.apply.unknown_adapters", {
+                unknown: stillUnknown.join(", "),
+                available: availableAdapters.join(", "),
+              }),
+            ),
+          );
+          process.exitCode = 1;
+          return;
+        }
+        selected = [...new Set([...selected, ...installedUnknown])];
       }
-
-      targetAdapters = options.requestedAdapters;
+      targetAdapters = selected;
     }
+  }
+
+  const runnableAdapters = await ensureAdaptersInstalled(targetAdapters);
+  if (runnableAdapters.length === 0) {
+    spinner.fail(pc.red(t("commands.apply.no_adapter_selected")));
+    process.exitCode = 1;
+    return;
   }
 
   spinner.succeed(
     pc.green(
       t("commands.apply.found_adapters", {
-        count: targetAdapters.length,
-        names: targetAdapters.join(", "),
+        count: runnableAdapters.length,
+        names: runnableAdapters.join(", "),
       }),
     ),
   );
 
-  for (const adapterName of targetAdapters) {
-    const adapterSpinner = ora(
-      t("commands.apply.running_adapter", { name: adapterName }),
-    ).start();
-    try {
-      const adapter = require(adapterName);
-      if (adapter.generate && typeof adapter.generate === "function") {
-        await adapter.generate(config, outputDir);
-        adapterSpinner.succeed(
-          pc.green(t("commands.apply.adapter_success", { name: adapterName })),
-        );
-      } else {
-        adapterSpinner.warn(
-          pc.yellow(
-            t("commands.apply.adapter_no_generate", { name: adapterName }),
-          ),
-        );
-      }
-    } catch (error: any) {
-      adapterSpinner.fail(
-        pc.red(
-          t("commands.apply.adapter_failed", {
-            name: adapterName,
-            message: error.message,
-          }),
-        ),
-      );
-      // Don't throw here to allow other adapters to run, but mark as failure?
-      process.exitCode = 1;
-    }
+  for (const adapterName of runnableAdapters) {
+    await runSingleAdapter(adapterName, config, outputDir);
   }
 }
 
 export const handler = async (argv: Arguments) => {
+  const runtimeLang =
+    typeof (argv as Arguments<{ lang?: string }>).lang === "string"
+      ? String((argv as Arguments<{ lang?: string }>).lang).trim()
+      : "";
   const requestedAdapters = parseRequestedAdapters(
     (argv as Arguments<{ adapter?: string[] }>).adapter,
   );
@@ -465,6 +561,9 @@ export const handler = async (argv: Arguments) => {
 
     try {
       const config = await loadConfig(); // user config from ai.config.js
+      if (runtimeLang) {
+        config.language = runtimeLang;
+      }
       logger.debug(pc.dim(t("commands.apply.loaded_config")));
 
       const finalConfig = await resolveFinalConfig(config);
