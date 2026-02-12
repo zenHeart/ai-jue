@@ -72,9 +72,25 @@ const resources = {
           ask_create_config: "Create ai.config.js? (Y/n) ",
           ask_preset: "Enter preset name (default: base): ",
           created_config: "Created ai.config.js",
-          ask_create_dir: "Create .ai directory structure? (Y/n) ",
+          ask_create_dir: "Create .ai directory structure? (y/N) ",
           created_dir:
             "Created .ai directory with AGENTS.md, rules/, commands/, skills/, agents/, hooks/, tools/ subdirectories.",
+          skip_create_dir:
+            "Skipped creating .ai directory. You can add it later when needed.",
+          skip_create_dir_auto:
+            "Skipped .ai scaffold in guided apply flow (progressive enhancement only).",
+          ask_install_preset:
+            "Preset package {{packageName}} is not installed. Install now? (Y/n) ",
+          installing_preset:
+            "Installing preset {{packageName}} via: {{command}}",
+          installed_preset:
+            "Installed preset package: {{packageName}}",
+          install_preset_failed:
+            "Failed to install preset package {{packageName}}. Please install it manually and rerun apply.",
+          skip_install_preset:
+            "Skipped installing preset package {{packageName}}. Apply may not load preset assets.",
+          preset_already_installed:
+            "Preset package already installed: {{packageName}}",
           dir_exists: ".ai directory already exists.",
         },
         check: {
@@ -173,9 +189,25 @@ const resources = {
           ask_create_config: "是否创建 ai.config.js？(Y/n) ",
           ask_preset: "请输入预设名称（默认: base）: ",
           created_config: "已创建 ai.config.js",
-          ask_create_dir: "是否创建 .ai 目录结构？(Y/n) ",
+          ask_create_dir: "是否创建 .ai 目录结构？(y/N) ",
           created_dir:
             "已创建 .ai 目录及 AGENTS.md、rules/、commands/、skills/、agents/、hooks/、tools/ 子目录。",
+          skip_create_dir:
+            "已跳过创建 .ai 目录。后续需要时可再添加。",
+          skip_create_dir_auto:
+            "在 apply 引导流程中已跳过 .ai 脚手架（仅作为渐进增强目录）。",
+          ask_install_preset:
+            "检测到预设包 {{packageName}} 未安装，是否现在安装？(Y/n) ",
+          installing_preset:
+            "正在安装预设 {{packageName}}，命令: {{command}}",
+          installed_preset:
+            "预设安装完成：{{packageName}}",
+          install_preset_failed:
+            "预设 {{packageName}} 安装失败，请手动安装后重新执行 apply。",
+          skip_install_preset:
+            "已跳过安装预设 {{packageName}}，apply 可能无法加载预设资产。",
+          preset_already_installed:
+            "预设已安装：{{packageName}}",
           dir_exists: ".ai 目录已存在。",
         },
         check: {

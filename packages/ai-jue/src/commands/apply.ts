@@ -233,7 +233,10 @@ async function ensureConfigReadyForApply(): Promise<boolean> {
     rl.close();
   }
 
-  await runInitFlow();
+  await runInitFlow({
+    promptForAiDir: false,
+    ensurePresetInstalled: true,
+  });
 
   if (!hasProjectConfig(cwd)) {
     logger.warn(pc.yellow(t("commands.apply.init_not_completed")));

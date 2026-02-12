@@ -73,6 +73,7 @@ npx jue apply --all
 ```
 
 On first run in a new project, if no `ai.config.js` / `jue.config.js` (or rc variants) is detected, `jue apply` starts an initialization flow first (similar to `eslint init`), then continues apply.
+This guided flow does not create an empty `.ai` scaffold by default; `.ai` is created later only for progressive local asset enhancement.
 
 Done! `ai-jue` generates tool files automatically:
 

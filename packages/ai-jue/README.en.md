@@ -79,6 +79,7 @@ npx jue create-preset <name>
 
 - On first run in a new project, if no `ai/jue` config file is detected, `jue apply` starts an initialization guide first.
 - After initialization, apply continues automatically to reduce first-time setup friction.
+- This guided flow does not create an empty `.ai` scaffold by default; `.ai` is created later only when progressive asset customization is needed.
 
 ## License
 
