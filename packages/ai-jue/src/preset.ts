@@ -136,7 +136,6 @@ async function loadCommands(config: MergedConfig, dirPath: string, userLanguage?
         commands[commandName] = {
           ...parsed.attributes,
           prompt: parsed.content,
-          content: parsed.content,
         };
       }),
   );
