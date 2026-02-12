@@ -36,6 +36,19 @@ describe('ai-jue-adapter-gemini', () => {
     expect(content).toContain('<!-- AI-JUE:START -->');
   });
 
+  it('should prefer context.global when gemini prompt is not provided', async () => {
+    const config = {
+      context: {
+        global: 'Global Context',
+      },
+    };
+
+    await generate(config, TEST_DIR);
+
+    const content = fs.readFileSync(path.join(TEST_DIR, 'GEMINI.md'), 'utf8');
+    expect(content).toContain('Global Context');
+  });
+
   it('should generate .gemini/settings.json with MCP, Commands, and Hooks', async () => {
     const config = {
       mcp: {

@@ -67,4 +67,22 @@ describe('ai-jue-adapter-claude', () => {
     expect(content).toContain('pre-push');
     expect(content).toContain('npm run lint');
   });
+
+  it('should render agents section with mapped skills', async () => {
+    const config = {
+      skills: {
+        review: { description: 'Review skill', content: 'Review guidance' },
+      },
+      agents: {
+        reviewer: { prompt: 'Review changes', skills: ['review'] },
+      },
+    };
+
+    await generate(config, TEST_DIR);
+
+    const content = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
+    expect(content).toContain('Agents');
+    expect(content).toContain('reviewer');
+    expect(content).toContain('Review skill');
+  });
 });

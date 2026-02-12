@@ -1,0 +1,128 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`adapter capability snapshot > matches canonical capability output snapshot 1`] = `
+{
+  "claude": "<!-- AI-JUE:START -->
+# Context & Rules
+
+Global context for snapshot
+
+## Slash Commands (Skills)
+
+/skill-review: Review skill
+  Prompt: Review skill content
+
+## Custom Commands
+
+/review: Review command
+  Prompt: Run review flow
+
+## Workflow Hooks
+
+- **pre-commit**: Please ensure to run \`npm test\`.
+## Agents
+
+### reviewer
+Review as agent
+
+- **review**: Review skill
+
+
+<!-- AI-JUE:END -->",
+  "copilot": "<!-- AI-JUE:START -->
+# Core Instructions (AGENTS)
+
+Global context for snapshot
+
+## common
+
+Common prompt block
+
+## Available Skills
+
+### review
+Review skill content
+
+## Commands
+
+You should recognize the following commands when triggered by natural language:
+
+### review
+**Description:** Review command
+**Prompt:** Run review flow
+
+## Workflow Note
+
+This project defines the following workflow hooks. Please remind the user to run them when appropriate:
+
+- **pre-commit**: \`npm test\`
+## Capability Notes
+
+- MCP servers are defined in project config. Treat them as external tool context and ask the user before assuming direct execution support.
+- Agent definitions are provided as role guidance. Apply their intent through instruction following rather than runtime agent orchestration.
+
+
+<!-- AI-JUE:END -->",
+  "cursor": "<!-- AI-JUE:START -->
+---
+description: ai-jue generated project rules
+alwaysApply: true
+---
+
+# Global Context & Agents
+
+Global context for snapshot
+
+## Prompt: common
+
+Common prompt block
+
+## Skills
+
+You have access to the following skills:
+
+### review
+Review skill content
+
+## Commands
+
+Follow these rules when the user uses specific triggers:
+
+### review
+**Triggers:** /review
+
+**Action:** Run review flow
+
+## Workflow Hooks
+
+Please follow these workflow rules:
+
+- **Pre-commit**: Before committing changes, please ensure you run: \`npm test\`
+
+<!-- AI-JUE:END -->",
+  "gemini": {
+    "agents": {
+      "reviewer": {
+        "prompt": "Review as agent",
+        "skills": [
+          "review",
+        ],
+      },
+    },
+    "customCommands": {
+      "review": "Run review flow",
+    },
+    "hooks": {
+      "pre-commit": "npm test",
+    },
+    "mcpServers": {
+      "sqlite": {
+        "args": [
+          "mcp-server-sqlite",
+        ],
+        "command": "uvx",
+      },
+    },
+  },
+}
+`;

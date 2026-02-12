@@ -36,6 +36,16 @@ describe('ai-jue-adapter-copilot', () => {
       },
       hooks: {
         'pre-commit': 'npm test'
+      },
+      mcp: {
+        servers: {
+          sqlite: { command: 'uvx' }
+        }
+      },
+      agents: {
+        reviewer: {
+          prompt: 'Review code'
+        }
       }
     };
 
@@ -51,6 +61,7 @@ describe('ai-jue-adapter-copilot', () => {
     expect(content).toContain('Fix bugs');
     expect(content).toContain('Fix it');
     expect(content).toContain('Workflow Note');
+    expect(content).toContain('Capability Notes');
     expect(content).toContain('pre-commit');
     expect(content).toContain('npm test');
     expect(content).toContain('<!-- AI-JUE:START -->');

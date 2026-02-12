@@ -48,6 +48,18 @@ export async function generate(config: any, outputDir: string): Promise<void> {
       }
   }
 
+  // 6. Degradation note for capabilities that Copilot instructions cannot execute directly
+  if (config.mcp || config.agents) {
+      instructionsContent += `## Capability Notes\n\n`;
+      if (config.mcp) {
+          instructionsContent += `- MCP servers are defined in project config. Treat them as external tool context and ask the user before assuming direct execution support.\n`;
+      }
+      if (config.agents) {
+          instructionsContent += `- Agent definitions are provided as role guidance. Apply their intent through instruction following rather than runtime agent orchestration.\n`;
+      }
+      instructionsContent += `\n`;
+  }
+
   if (instructionsContent.trim()) {
       generateMarkdownFile(path.join(outputDir, '.github', 'copilot-instructions.md'), instructionsContent);
   }
