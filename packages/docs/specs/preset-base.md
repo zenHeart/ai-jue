@@ -17,7 +17,7 @@
 packages/jue-preset-base/
 ├── prompts/
 │   ├── AGENTS.md            # [System Prompt] 全局元规则 (Meta-Rules)
-│   │                        # 对应: .cursorrules, CLAUDE.md, instructions.md
+│   │                        # 对应: Cursor Project Rules / CLAUDE.md / instructions.md
 │   │
 │   └── AGENTS.en.md         # [System Prompt] 英文版
 │
@@ -74,7 +74,6 @@ npx jue init
 
 1. **Cursor**:
     - `AGENTS.md` 被直接使用 (或链接到 Project Rules)。
-    - `.cursorrules` (Legacy) 仅作为兼容性后备，不再主动生成。
     - 可以在 Chat 中使用 `/explain`, `/refactor` 等命令。
 
 2. **Claude Code**:

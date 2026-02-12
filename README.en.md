@@ -10,7 +10,7 @@
 
 [English](README.en.md) | [简体中文](README.md)
 
-Standardize project's AI capabilities (Prompts, Skills, MCP Servers), automatically adapting to editors like Claude Code / Cursor / Gemini / Copilot.
+Standardize project AI capabilities (Prompts, Skills, MCP Servers), automatically adapting to Claude Code / Cursor / Gemini / Copilot.
 
 [**📖 Why the name ai-jue (AI 诀)?**](#why-the-name-ai-jue-ai-诀)
 
@@ -23,61 +23,29 @@ npx jue apply
 
 ---
 
-<!-- TABLE OF CONTENTS -->
-<details>
-<summary>📖 Table of Contents</summary>
-
-- [ai-jue](#ai-jue)
-  - [Why the name ai-jue (AI 诀)?](#why-the-name-ai-jue-ai-诀)
-  - [Why ai-jue?](#why-ai-jue)
-  - [Quick Start](#quick-start)
-    - [1. Installation](#1-installation)
-    - [2. Create Configuration](#2-create-configuration)
-    - [3. Generate Config Files](#3-generate-config-files)
-  - [Core Features](#core-features)
-    - [🎯 Multi-Preset Composition](#-multi-preset-composition)
-    - [📁 Local Asset Extension](#-local-asset-extension)
-    - [Plug MCP Server Distribution](#-mcp-server-distribution)
-    - [👀 Watch Mode](#-watch-mode)
-    - [🛡️ Intelligent Coexistence](#️-intelligent-coexistence)
-  - [Official Presets](#official-presets)
-  - [How it Works](#how-it-works)
-  - [CLI Commands](#cli-commands)
-  - [Creating Your Own Preset](#creating-your-own-preset)
-  - [Release Workflow](#release-workflow)
-  - [Roadmap](#roadmap)
-  - [Contributing](#contributing)
-  - [License](#license)
-
-</details>
-
----
-
 ## Why the name ai-jue (AI 诀)?
 
-**“诀” (jué)**, in Chinese culture, represents highly concentrated knowledge and extremely efficient operational guidance:
+**“诀” (jué)**, in Chinese culture, represents highly concentrated knowledge and efficient guidance:
 
-- **Mnemonic (口诀)**: Simplifying complex engineering instructions into something easy to remember and spread.
-- **Secret Recipe (秘诀)**: Unique AI interaction strategies accumulated by top developers in specific fields (like React, Rust).
-- **Knack (诀窍)**: The key assets that allow AI performance to jump from "mediocre" to "exceptional".
+- **Mnemonic (口诀)**: Simplifying complex engineering instructions into easy, reusable guidance.
+- **Secret Recipe (秘诀)**: AI collaboration strategies accumulated by top developers in a specific domain.
+- **Knack (诀窍)**: The key assets that move AI output from mediocre to excellent.
 
-Named **ai-jue**, it is more than just a configuration tool; it is an **"AI Experience Filter"**. It distills fragmented inspirations into structured "AI Secret Recipes (Presets)", allowing high-quality collaboration strategies to flow seamlessly across different projects.
+`ai-jue` is not just a config conversion tool. It acts as an **AI experience filter** that turns fragmented ideas into structured presets for repeatable, shareable collaboration quality.
 
 ---
 
 ## Why ai-jue?
 
-`ai-jue` was born to solve the core pain point in the AI-aided development era: the inability to effectively accumulate, reuse, and share developer experience.
-
 1. **Configuration Fragmentation**
-    - **Problem**: Every AI editor has its own independent config files (`.gemini/`, `CLAUDE.md`, `.cursor/rules/`, etc.). Maintaining these separately across projects is tedious and prone to synchronization issues.
-    - **Solution**: Provides a unified entry `ai.config.js`. Configure once, and generate config files for all editors automatically.
+   - **Problem**: Every AI editor has separate config surfaces (`.gemini/`, `CLAUDE.md`, `.cursor/rules/`, etc.). Maintaining them manually across projects is costly.
+   - **Solution**: Use one entry file `ai.config.js`; generate multi-tool configs automatically.
 
 2. **Experience Fragmentation**
-    - **Problem**: High-value experiences (good Prompts, Skills, context instructions) are mostly scattered in personal notes, making them hard to formalize or share with teams.
-    - **Solution**: The `.ai` directory creates a **self-reinforcing cycle**. Assets accumulated in a project naturally settle in the `.ai/` directory. Once mature, they can be packaged into an npm preset with a single `jue create-preset` command, drastically lowering the cost of turning "personal knacks" into "team standards".
+   - **Problem**: Valuable prompts/skills/context are often scattered in notes and hard to reuse.
+   - **Solution**: Use `.ai/` as a structured asset workspace. Once mature, package assets into npm presets via `jue create-preset`.
 
-**Summary: The mission of `ai-jue` is to standardize, engineer, and assetize high-value AI development capabilities, becoming the ESLint of the AI development field.**
+**Mission**: Make AI development capability standardized, engineered, and reusable - like ESLint for AI collaboration.
 
 ---
 
@@ -104,11 +72,11 @@ export default {
 npx jue apply
 ```
 
-Done! `ai-jue` will automatically generate config files for each editor based on your project's AI strategy:
+Done! `ai-jue` generates tool files automatically:
 
 ```
 ✓ CLAUDE.md                          — Claude Code
-✓ .cursor/rules/*.mdc                — Cursor
+✓ .cursor/rules/*.mdc                — Cursor (Project Rules)
 ✓ .gemini/settings.json              — Gemini CLI
 ✓ .github/copilot-instructions.md    — GitHub Copilot
 ```
@@ -116,6 +84,24 @@ Done! `ai-jue` will automatically generate config files for each editor based on
 ---
 
 ## Core Features
+
+### Minimal Knowledge Principle
+
+`ai-jue` reuses mainstream tool conventions instead of inventing new concepts:
+
+- `skills/`: skill assets
+- `AGENTS.md`: global system context and constraints
+- `commands/`: custom commands
+- `rules/`: project rules
+- `agents/`: custom agents (canonical term)
+- `hooks/`: lifecycle hooks
+- `tools/<tool>/`: tool-specific escape hatch config
+- `ai.config.js`: unified runtime/config entry
+- `.ai/`: local asset workspace for later preset publishing
+
+Terminology policy:
+
+- Canonical name is `agents`.
 
 ### 🎯 Multi-Preset Composition
 
@@ -127,8 +113,6 @@ export default {
 ```
 
 ### 📁 Local Asset Extension
-
-Add team-specific Prompts and Skills via the `.ai` directory:
 
 ```javascript
 // ai.config.js
@@ -163,18 +147,8 @@ npx jue apply --watch
 
 ### 🛡️ Intelligent Coexistence
 
-- **.md Files**: Updates only the blocks enclosed by `<!-- AI-JUE:START -->` and `<!-- AI-JUE:END -->`, preserving your manual edits.
-- **.json Files**: Deeply merges, adding or updating only the managed fields.
-
----
-
-## Official Presets
-
-| Preset | Description | Install |
-|------|------|------|
-| **jue-preset-base** | General best practices (Code Review, Git, Error Handling) | `npm i -D jue-preset-base` |
-| **jue-preset-react** | React Hooks, Component Design, Performance | `npm i -D jue-preset-react` |
-| **jue-preset-typescript** | Type Safety, Generics, Utility Types | `npm i -D jue-preset-typescript` |
+- `.md`: update only `<!-- AI-JUE:START -->` ... `<!-- AI-JUE:END -->` blocks.
+- `.json`: deep-merge managed fields without clobbering user fields.
 
 ---
 
@@ -184,13 +158,11 @@ npx jue apply --watch
 ai.config.js          →  Load Presets & Merge Config  →  Adapter Plugins Generate Files
 ┌──────────────┐       ┌───────────────────┐    ┌─────────────────────────┐
 │ preset: 'react'│ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md      │
-│ mcp: {...}    │      │  (Micro-kernel)    │    │ adapter-cursor → .cursor/rules/ │
+│ mcp: {...}    │      │  (Micro-kernel)    │    │ adapter-cursor → .cursor/rules/*.mdc │
 │ commands: {}  │      │  Merge & Route     │    │ adapter-gemini → settings.json  │
 └──────────────┘       └───────────────────┘    │ adapter-copilot→ instructions   │
                                                 └─────────────────────────────────┘
 ```
-
-> See [architecture.md](packages/docs/guide/architecture.md) for detailed architecture.
 
 ---
 
@@ -219,78 +191,19 @@ Generated preset structure:
 ```
 my-team-preset/
 ├── package.json
-├── prompts/
-│   └── agents.md        # General prompts
+├── AGENTS.md
 ├── skills/
-│   └── deploy.md        # Skill definitions
+├── commands/
+├── rules/
+├── agents/
+├── hooks/
 └── tools/
-    └── meta.json        # Tool configs (MCP, etc.)
+    ├── gemini/
+    └── cursor/
 ```
-
-After blooming it to npm, team members just need to:
-
-```bash
-npm install -D jue-preset-my-team
-# ai.config.js → preset: 'my-team'
-npx jue apply
-```
-
-> See [creating-a-preset.md](packages/docs/guide/creating-a-preset.md) for details.
-
----
-
-## Release Workflow
-
-This project uses a "Local Versioning & Tags → GitHub Actions Auto-Publish" model.
-
-```bash
-npm run release
-```
-
-This command automatically:
-
-1. Detects changed packages based on `git diff`.
-2. Interactively selects version strategies (patch/minor/major).
-3. Generates CHANGELOG, creates tags, and pushes them.
-
-After pushing, GitHub Actions triggers [release.yml](.github/workflows/release.yml), using npm Trusted Publisher (OIDC) to publish all changed packages in parallel.
-
----
-
-## Roadmap
-
-- [x] **v0.1** — MVP: `apply` command + Self-bootstrapping
-- [x] **v0.2** — `init` / `check` / `extends` / Official Presets
-- [x] **v1.0** — `create-preset` command + Comprehensive Docs
-- [x] **v2.0** — `--watch` mode + VS Code Extension
-- [ ] **Future** — Visual Config Tool, Advanced Config Language, More Integrations
-
-> See [TODO.md](TODO.md) for the full roadmap.
-
----
-
-## Contributing
-
-Contributions are welcome!
-
-1. Fork the repo.
-2. Create your feature branch (`git checkout -b feature/amazing-feature`).
-3. Commit your changes (`git commit -m 'feat: add amazing feature'`).
-4. Push to the branch (`git push origin feature/amazing-feature`).
-5. Open a Pull Request.
-
-- 🐛 [Report Issues](https://github.com/zenHeart/ai-jue/issues)
-- 💡 [Feature Requests](https://github.com/zenHeart/ai-jue/discussions)
-- 📦 [Create Presets](packages/docs/guide/creating-a-preset.md)
 
 ---
 
 ## License
 
 [MIT](LICENSE)
-
-<div align="center">
-
-**Defining the Engineering Paradigm of AI Development, Letting First-Class Experience Bridge the Gap Between Tools and Projects** 🚀
-
-</div>

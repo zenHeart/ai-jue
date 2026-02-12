@@ -24,7 +24,7 @@ Create ai.config.js? (Y/n) Y
 Enter preset name (default: base): base
 Created ai.config.js
 Create .ai directory structure? (Y/n) Y
-Created .ai directory with prompts/ and skills/ subdirectories.
+Created .ai directory with AGENTS.md, rules/, commands/, skills/, agents/, hooks/, tools/ subdirectories.
 ```
 
 ## 3. Applying Configuration
@@ -35,7 +35,7 @@ Run the `apply` command to generate AI tool configuration files based on your se
 npx jue apply
 ```
 
-`ai-jue` will read `ai.config.js`, load presets, and assets from the local `.ai` directory, and generate corresponding configuration files (e.g., `CLAUDE.md`, `.cursor/cli.json`).
+`ai-jue` will read `ai.config.js`, load presets, and assets from the local `.ai` directory, and generate corresponding configuration files (e.g., `CLAUDE.md`, `.cursor/rules/*.mdc`, `.gemini/settings.json`).
 
 ## 4. Common Commands
 

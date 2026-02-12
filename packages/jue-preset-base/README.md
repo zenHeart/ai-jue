@@ -47,7 +47,6 @@ npx ai-jue init
 # 选择 "base" 预设
 # ai-jue 会自动识别你的编辑器 (Cursor, VSCode+Copilot, Claude, etc.)
 # 并生成对应的配置文件 (如 AGENTS.md, .github/copilot-instructions.md)
-# 注意: .cursorrules 已标记为 Legacy，默认使用 AGENTS.md
 ```
 
 或者手动配置 `ai.config.js`:

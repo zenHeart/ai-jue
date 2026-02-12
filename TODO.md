@@ -5,15 +5,15 @@
 
 ## 实施策略与门禁（执行前必须满足）
 
-- [ ] **以终为始**：先完成用户侧使用文档与设计文档（README/docs）补充与修正。
-- [ ] **评审门禁**：文档先给你确认，通过后才进入代码实施阶段。
+- [x] **以终为始**：先完成用户侧使用文档与设计文档（README/docs）补充与修正。
+- [x] **评审门禁**：文档先给你确认，通过后才进入代码实施阶段。
 - [ ] **架构优先**：先设计后编码；复杂变更先输出设计方案。
 - [ ] **代码规约**：严格遵循 Clean Code + SOLID + KISS + DRY + YAGNI。
 - [ ] **错误处理**：覆盖异常路径与边界保护，避免静默失败。
 - [ ] **向后兼容**：默认兼容；若有破坏性变更，必须显式标注并给迁移说明。
 - [ ] **小步快跑**：每次改动保持最小、可独立验证、可回滚。
 
-> 当前状态（2026-02-12）：已提交第一轮文档修订草案（README + guide 设计文档），等待你确认后再进入实现阶段。
+> 当前状态（2026-02-12）：文档重构已通过审查并完成一次提交，下一阶段按 TODO 进入实现任务。
 
 ## 与历史计划的关联映射
 
@@ -37,7 +37,7 @@
 
 ## 认知纠偏与修复优先级（与 `_drafts/ai-jue.md` 对齐）
 
-> 统一术语：**`agents`** 为唯一正式名称；`subAgents` / `sub-agents` 视为历史别名，仅用于迁移兼容说明。
+> 统一术语：**`agents`** 为唯一正式名称；历史错误命名禁止继续使用。
 > 执行原则：**先基础核心修复，再文档纠偏，再实现增强，最后质量发布。**
 
 ### Stage 0（P0）基础核心修复 - 先执行
@@ -45,7 +45,13 @@
 - [ ] **Quick Start 主路径修复（对齐 README 最小承诺）**
   - [ ] 验证并修复 `npx jue apply` 在四适配器目标产物上的稳定生成。
   - [ ] 对齐 README 与实际产物路径命名（尤其 Cursor 相关产物），避免“文档可运行性”偏差。
+  - [ ] Cursor 规则主产物统一为 `.cursor/rules/*.mdc`（Project Rules），移除 `.cursorrules` 输出路径。
+  - [ ] 明确 Cursor 仅做格式转换：统一 `md + YAML frontmatter` 输入 -> 输出 `.mdc`，不重复实现规则能力逻辑。
   - [ ] 修复 `apply --watch` 监听可靠性：确保 `.ai/.jue/ai.config.js` 变化可稳定触发。
+- [ ] **配置语义冲突止血（过渡期）**
+  - [ ] 明确并固化：历史错误字段停止作为设计与实现输入。
+  - [ ] 统一单一规范输入：`AGENTS.md`（全局上下文）与 `agents`（代理能力），禁止双轨语义。
+  - [ ] `validate` 增加 fail-fast：检测到历史错误字段直接报错并给出修复指引。
 - [ ] 修复 `jue-preset-base` 资产加载协议：让 `commands/*/{index.json,prompt.md}` 与加载器协议一致。
 - [ ] 修复 `jue-preset-base` 发布元数据：`package.json.files` 与真实目录结构一致。
 - [ ] **`jue-preset-internal` 自举可运行修复**
@@ -56,30 +62,34 @@
 
 ### Stage 1（P1）文档认知纠偏 - 在核心修复后执行
 
-- [ ] 固化能力地图与目录约定（最小知识原则）：`skills/AGENTS.md/commands/rules/agents/hooks/tools/<tool>/ai.config.js/.ai`。
-- [ ] 使用文档修正（User-facing）：
-  - [ ] `REPO_ROOT/README.md`
-  - [ ] `REPO_ROOT/README.en.md`
-  - [ ] `REPO_ROOT/packages/ai-jue/README.md`
-  - [ ] `REPO_ROOT/packages/ai-jue/README.en.md`
-  - [ ] `REPO_ROOT/packages/jue-preset-base/README.md`
-  - [ ] `REPO_ROOT/packages/jue-preset-base/README.en.md`
-- [ ] 设计文档修正（Design/Spec）：
-  - [ ] `REPO_ROOT/packages/docs/guide/architecture.md`
-  - [ ] `REPO_ROOT/packages/docs/en/guide/architecture.md`
-  - [ ] `REPO_ROOT/packages/docs/guide/adapter-standardization.md`
-  - [ ] `REPO_ROOT/packages/docs/en/guide/adapter-standardization.md`
-  - [ ] `REPO_ROOT/packages/docs/guide/configuration-guide.md`
-  - [ ] `REPO_ROOT/packages/docs/en/guide/configuration-guide.md`
-  - [ ] `REPO_ROOT/packages/docs/guide/creating-a-preset.md`
-  - [ ] `REPO_ROOT/packages/docs/en/guide/creating-a-preset.md`
-- [ ] 清零文档认知错误：字段名、目录协议、能力边界、规划中能力标注、`.ai -> preset` 映射说明。
+- [x] 固化能力地图与目录约定（最小知识原则）：`skills/AGENTS.md/commands/rules/agents/hooks/tools/<tool>/ai.config.js/.ai`。
+- [x] 使用文档修正（User-facing）：
+  - [x] `REPO_ROOT/README.md`
+  - [x] `REPO_ROOT/README.en.md`
+  - [x] `REPO_ROOT/packages/ai-jue/README.md`
+  - [x] `REPO_ROOT/packages/ai-jue/README.en.md`
+  - [x] `REPO_ROOT/packages/jue-preset-base/README.md`
+  - [x] `REPO_ROOT/packages/jue-preset-base/README.en.md`
+- [x] 设计文档修正（Design/Spec）：
+  - [x] `REPO_ROOT/packages/docs/guide/architecture.md`
+  - [x] `REPO_ROOT/packages/docs/en/guide/architecture.md`
+  - [x] `REPO_ROOT/packages/docs/guide/adapter-standardization.md`
+  - [x] `REPO_ROOT/packages/docs/en/guide/adapter-standardization.md`
+  - [x] `REPO_ROOT/packages/docs/guide/configuration-guide.md`
+  - [x] `REPO_ROOT/packages/docs/en/guide/configuration-guide.md`
+  - [x] `REPO_ROOT/packages/docs/guide/creating-a-preset.md`
+  - [x] `REPO_ROOT/packages/docs/en/guide/creating-a-preset.md`
+- [x] 清零文档认知错误：字段名、目录协议、能力边界、规划中能力标注、`.ai -> preset` 映射说明。
+- [x] 文档字段口径收敛：
+  - [x] 在标准化文档中移除历史错误字段的正向描述，仅保留“禁止使用”说明。
+  - [x] 文档统一为单一规范字段：`AGENTS.md` + `agents`，不再保留“双字段并存”叙述。
+  - [x] 统一说明 `commands.*` / `agents.*` 仅是映射记法（命名空间表达），不是新增 schema 关键字。
 
-- [ ] **适配器能力地图文档纠偏（来自 `_drafts/ai-jue.md`）**
-  - [ ] 在标准化文档中明确 8 大能力映射（AGENTS.md / rules / commands / skills / mcp / hooks / agents / configuration）。
-  - [ ] 明确“主流工具能力差异 + 降级策略”与当前实现边界一致，不把愿景写成现状。
-  - [ ] 固化“最小知识原则”的适配器设计准则：优先沿用目标工具原生概念与文件布局。
-  - [ ] 更新能力矩阵中的术语：统一使用 `agents`，移除历史命名歧义。
+- [x] **适配器能力地图文档纠偏（来自 `_drafts/ai-jue.md`）**
+  - [x] 在标准化文档中明确 8 大能力映射（AGENTS.md / rules / commands / skills / mcp / hooks / agents / configuration）。
+  - [x] 明确“主流工具能力差异 + 降级策略”与当前实现边界一致，不把愿景写成现状。
+  - [x] 固化“最小知识原则”的适配器设计准则：优先沿用目标工具原生概念与文件布局。
+  - [x] 更新能力矩阵中的术语：统一使用 `agents`，移除历史命名歧义。
 
 - [ ] **`jue-preset-base` 规范化文档任务（来自 `_drafts/preset-base.md`）**
   - [ ] 在 base 规范文档中明确：`AGENTS.md` 是全局元规则入口，覆盖 Phase 1-5。
@@ -96,20 +106,25 @@
 ### Stage 2（P1）实现对齐增强 - 文档评审通过后执行
 
 - [ ] 按统一协议修正加载器：`skills/commands/rules/agents/hooks/tools` 与 `.ai` 同构。
-- [ ] 增加 markdown frontmatter 解析与统一映射层（跨适配器）。
+- [ ] 增加 markdown frontmatter 解析与统一映射层（跨适配器，`md + YAML frontmatter` 为统一源格式）。
+- [ ] **建立 normalize 标准化转换层（核心）**
+  - [ ] 新增统一内部模型（建议：`context/rules/commands/skills/agents/hooks/mcp/tools`）。
+  - [ ] 输入归一化：`AGENTS.md -> context.global`、canonical rules -> target rules（不再包含历史字段映射）。
+  - [ ] 适配器只消费规范模型，禁止直接读取历史错误字段。
+  - [ ] 错误处理：对冲突字段与歧义输入给出显式告警或失败策略（可配置）。
 - [ ] 增强 `validate` 语义校验：冲突字段、弃用字段、无效组合。
 - [ ] 适配器按“最小知识原则”落地：优先复用目标工具原生概念，不新增用户心智负担。
 - [ ] 建立适配器契约测试矩阵：同一输入在 Claude/Cursor/Gemini/Copilot 产出一致可预期。
 
 - [ ] **适配器优化实现（来自 `_drafts/ai-jue.md`）**
-  - [ ] Cursor：rules 输出升级为主流规则格式（含 frontmatter 元数据），并对 hooks/mcp 映射做一致性收口。
+  - [ ] Cursor：rules 仅做目标格式转换（统一 `md + YAML frontmatter` -> `.cursor/rules/*.mdc`），并对 hooks/mcp 映射做一致性收口。
   - [ ] Claude：完善 agents 与 hooks 的落地表达（在当前可用文件模型内先做稳定映射）。
   - [ ] Gemini：补齐 context 层级与 hooks 映射的稳定策略（基于 `.gemini/settings.json`）。
   - [ ] Copilot：明确命令/技能降级路径并优化 instructions 注入策略。
   - [ ] 跨适配器统一：同一能力在四工具输出行为可预测、可回归验证。
 
 - [ ] **`jue-preset-base` 落地任务（来自 `_drafts/preset-base.md`）**
-  - [ ] 将 base 的全局元规则稳定落地到 `prompts/AGENTS.md` 与 `prompts/AGENTS.en.md`，并由加载器稳定注入 `prompts.agents`。
+  - [ ] 将 base 的全局元规则稳定落地到 `prompts/AGENTS.md` 与 `prompts/AGENTS.en.md`，并由加载器注入统一 `context.global`（移除历史映射依赖）。
   - [ ] 校正 base 命令资产结构与加载器协议一致（避免“有内容但不生效”）。
   - [ ] 校验命令集合与文档一致（含 `/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`）。
   - [ ] 为 base 增加专项集成测试：验证命令与 AGENTS 可被四个适配器消费。
@@ -201,9 +216,9 @@
   - [x] 在 `ai.config.js` 中支持 `mcp` 配置。
   - [x] 在 `ai.config.js` 中支持 `commands` (标准化指令), `hooks` (生命周期), `agents` (子代理) 字段。
 - [x] **[适配器] Cursor 深度适配 (Reference Implementation)**
-  - [x] 实现 `.cursorrules` (Rules/Agents/Skills) 和 `.cursor/mcp.json` (MCP) 的基础生成。
+  - [x] 实现 `.cursorrules` (Rules/Agents/Skills, 现为 legacy) 和 `.cursor/mcp.json` (MCP) 的基础生成。
   - [x] **[Hook]** 实现 Hooks 转换：将 `hooks.pre-commit` 转换为 IDE 建议或脚本。
-  - [x] **[Command]** 实现 Commands 转换：将 `commands` 配置注入 `.cursorrules` 作为触发规则。
+  - [x] **[Command]** 实现 Commands 转换：将 `commands` 配置注入 `.cursorrules` 作为触发规则（legacy 路径）。
 - [x] **[适配器] Claude Code 深度适配**
   - [x] 实现 `CLAUDE.md` (Context/Skills) 生成。
   - [x] **[Command]** 升级 `adapter-claude`，将 `commands` 字段转换为 `CLAUDE.md` 中的 Slash Commands。
@@ -478,7 +493,7 @@
 ### 4. 适配器翻译支持 (Adapter i18n)
 
 - [x] **产物国际化**
-  - [x] 确保生成的 artifacts（如 `CLAUDE.md`, `.cursorrules`）中的自动生成注释支持双语。
+  - [x] 确保生成的 artifacts（如 `CLAUDE.md`, `.cursorrules` legacy）中的自动生成注释支持双语。
   - [x] 引入简单的模板替换机制。
 
 ### 5. 文档库翻译 (Docs Translation)

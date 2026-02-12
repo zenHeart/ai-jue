@@ -5,22 +5,27 @@
 - 微内核负责：加载配置、合并资产、执行校验、调度适配器
 - 适配器负责：把统一能力模型转换为目标工具产物
 
-## 1. 核心流程
+## 1. 用户消费路径（以终为始）
+
+1. 用户按规范组织 `.ai/` 与 `ai.config.js`
+2. 系统统一解析为规范能力模型
+3. 适配器仅做目标格式转换并输出文件
+
+## 2. 核心流程
 
 ```mermaid
 graph TD
     A[ai.config.js + .ai + presets] --> B[Core: load]
     B --> C[Core: merge]
     C --> D[Core: validate]
-    D --> E[Adapter: claude]
-    D --> F[Adapter: cursor]
-    D --> G[Adapter: gemini]
-    D --> H[Adapter: copilot]
+    D --> E[Core: normalize]
+    E --> F[Adapter: claude]
+    E --> G[Adapter: cursor]
+    E --> H[Adapter: gemini]
+    E --> I[Adapter: copilot]
 ```
 
-## 2. 统一能力模型
-
-核心模型统一为 8 类能力：
+## 3. 统一能力模型（唯一）
 
 - `AGENTS.md`（全局上下文）
 - `rules`
@@ -31,7 +36,7 @@ graph TD
 - `mcp`
 - `tools/<tool>`
 
-## 3. 目录协议
+## 4. 目录协议
 
 Preset 与 `.ai` 目录同构：
 
@@ -45,7 +50,7 @@ hooks/
 tools/
 ```
 
-## 4. 配置合并优先级
+## 5. 配置合并优先级
 
 默认优先级（低 -> 高）：
 
@@ -54,13 +59,13 @@ tools/
 3. `extends` 显式引入
 4. `ai.config.js` 直接配置
 
-## 5. 兼容与迁移策略
+## 6. 非规范输入策略
 
-- 规范字段：`agents`
-- 兼容别名：`subAgents`
-- 迁移策略：先提供双读兼容，再统一写入，再清理旧字段
+- 检测到非规范能力字段直接失败
+- 返回可执行修复建议
+- 不在适配器层做历史字段兼容
 
-## 6. 设计门禁（实施前）
+## 7. 设计门禁（实施前）
 
 复杂改动必须先完成：
 
@@ -71,6 +76,5 @@ tools/
 通过后再进入实现阶段，且遵循：
 
 - 架构优先
-- 向后兼容优先
 - 小步可验证
 - 全路径错误处理

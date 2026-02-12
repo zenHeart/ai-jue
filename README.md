@@ -35,6 +35,7 @@ npx jue apply
     - [2. 创建配置](#2-创建配置)
     - [3. 生成配置文件](#3-生成配置文件)
   - [核心功能](#核心功能)
+    - [🧭 最小知识原则（能力目录约定）](#-最小知识原则能力目录约定)
     - [🎯 多预设组合](#-多预设组合)
     - [📁 本地资产扩展](#-本地资产扩展)
     - [🔌 MCP Server 统一分发](#-mcp-server-统一分发)
@@ -108,12 +109,10 @@ npx jue apply
 
 ```
 ✓ CLAUDE.md                          — Claude Code
-✓ .cursorrules                       — Cursor
+✓ .cursor/rules/*.mdc                — Cursor (Project Rules)
 ✓ .gemini/settings.json              — Gemini CLI
 ✓ .github/copilot-instructions.md    — GitHub Copilot
 ```
-
-> 说明：当配置了代理能力（历史字段 `subAgents`）时，Cursor 还会生成 `.cursor/rules/*.md` 作为补充规则文件。
 
 ---
 
@@ -134,8 +133,8 @@ npx jue apply
 - `.ai/`：本地资产工作区，支持映射并发布为 preset
 
 术语说明：
+
 - 规范名称统一为 `agents`。
-- 历史字段 `subAgents` 目前仍兼容，后续会逐步迁移到 `agents`（保持向后兼容）。
 
 ### 🎯 多预设组合
 
@@ -204,7 +203,7 @@ npx jue apply --watch
 ai.config.js          →  加载预设 & 合并配置  →  适配器插件生成文件
 ┌──────────────┐       ┌───────────────────┐    ┌──────────────────────┐
 │ preset: 'react'│ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md    │
-│ mcp: {...}    │      │  (微内核)          │    │ adapter-cursor → .cursorrules │
+│ mcp: {...}    │      │  (微内核)          │    │ adapter-cursor → .cursor/rules/*.mdc │
 │ commands: {}  │      │  配置合并 & 路由    │    │ adapter-gemini → settings.json│
 └──────────────┘       └───────────────────┘    │ adapter-copilot→ instructions │
                                                  └──────────────────────────────┘

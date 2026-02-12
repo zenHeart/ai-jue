@@ -24,7 +24,7 @@ Create ai.config.js? (Y/n) Y
 Enter preset name (default: base): base
 Created ai.config.js
 Create .ai directory structure? (Y/n) Y
-Created .ai directory with prompts/ and skills/ subdirectories.
+Created .ai directory with AGENTS.md, rules/, commands/, skills/, agents/, hooks/, tools/ subdirectories.
 ```
 
 ## 3. 应用配置
@@ -35,7 +35,7 @@ Created .ai directory with prompts/ and skills/ subdirectories.
 npx jue apply
 ```
 
-`ai-jue` 会读取 `ai.config.js`、加载预设以及本地 `.ai` 目录中的资产，并生成相应的配置文件（如 `CLAUDE.md`, `.cursor/cli.json` 等）。
+`ai-jue` 会读取 `ai.config.js`、加载预设以及本地 `.ai` 目录中的资产，并生成相应的配置文件（如 `CLAUDE.md`, `.cursor/rules/*.mdc`, `.gemini/settings.json` 等）。
 
 ## 4. 常用命令
 

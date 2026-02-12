@@ -1,60 +1,52 @@
 # Creating a Preset
 
-The core of `ai-jue` is its reusable preset ecosystem. A preset is an independent npm package that encapsulates a series of reusable "capability assets".
+The core of `ai-jue` is a reusable preset ecosystem. A preset is an independent npm package that encapsulates reusable AI collaboration assets.
 
 ## Quick Creation
-
-Use the `create-preset` command to quickly generate a preset template:
 
 ```bash
 npx jue create-preset myteam
 ```
 
-This will create a directory named `jue-preset-myteam` containing the standard preset structure.
+This generates `jue-preset-myteam`.
 
-## Directory Structure
+## Recommended Directory Protocol
 
-Modern `ai-jue` presets are **Build-Free** collections of pure files. The CLI scans the file structure within the package directly.
+Follow the Minimal Knowledge Principle and align with mainstream tool conventions:
 
-```
+```text
 jue-preset-myteam/
 ├── package.json
 ├── README.md
-├── prompts/                    # Stores Prompts
-│   └── code-style/             # Prompt Name (Folder Name)
-│       ├── prompt.md           # Generic Content
-│       ├── prompt.zh-CN.md     # Chinese Content (Optional)
-│       └── META.json           # Metadata (Optional)
-└── skills/                     # Stores Skills
-    └── component-gen/          # Skill Name (Folder Name)
-        ├── prompt.md
-        └── META.json
+├── AGENTS.md
+├── skills/
+├── commands/
+├── rules/
+├── agents/
+├── hooks/
+└── tools/
+    ├── gemini/
+    └── cursor/
 ```
 
-### Structure Explanation
+Notes:
 
-1. **Capability as Directory**
-    Under `prompts` or `skills` directories, each specific capability must be an **independent directory**. The directory name is the capability ID.
+- `AGENTS.md`: global system context and hard constraints
+- `skills/`: skill assets
+- `commands/`: custom commands
+- `rules/`: project rules
+- `agents/`: custom agents
+- `hooks/`: lifecycle hooks
+- `tools/<tool>/`: tool-specific configuration
 
-2. **`META.json` (Optional)**
-    You can use `META.json` in the capability directory to define metadata:
+## Relation to `.ai`
 
-    ```json
-    {
-      "description": "Generates a React component",
-      "parameters": [...]
-    }
-    ```
+Preset structure is isomorphic to local `.ai/`, so teams can first accumulate assets in a project and then package them with minimal reshaping.
 
-3. **Multi-language Content**
-    Supports naming conventions like `prompt.md` (default), `prompt.zh-CN.md`, etc.
-
-## Publishing
-
-Once ready, publish directly to npm:
+## Publish
 
 ```bash
 npm publish
 ```
 
-No TypeScript compilation required, and no `index.ts` export file needed.
+Most presets are consumed directly as file assets without a build step.

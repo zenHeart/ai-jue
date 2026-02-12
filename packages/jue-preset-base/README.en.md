@@ -2,42 +2,53 @@
 
 <div align="center">
 
-**Base Preset for ai-jue: General best practices and engineering standards**
+**Core preset for ai-jue: Agentic SDLC meta-rules**
 
 [![NPM version](https://img.shields.io/npm/v/jue-preset-base.svg?style=flat)](https://www.npmjs.com/package/jue-preset-base)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
 [English](README.en.md) | [简体中文](README.md)
 
-Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
-
 </div>
 
----
+## Core Idea
 
-## Features
+`jue-preset-base` is not just a prompt bundle. It is a meta-rule layer for Agentic SDLC, aiming to reduce human review edits by enforcing quality constraints across the lifecycle.
 
-This preset provides a foundational set of AI engineering standards, including:
+Lifecycle focus:
 
-- **Code Review**: Standards for code quality and security reviews.
-- **Git Standards**: Conventional commit guidance and branch naming rules.
-- **Error Handling**: Common patterns for consistent error management.
-- **Project Structure**: Best practices for filing organization.
+1. Intent understanding
+2. Implementation quality
+3. Verification (tests/docs)
+4. Reviewability
+5. Feedback loop improvement
 
-## Installation
+## Quick Start
 
 ```bash
-npm install jue-preset-base
+npm install -D ai-jue jue-preset-base
 ```
 
-## Usage
-
-```javascript
+```js
 // ai.config.js
 export default {
-  preset: 'base'
+  presets: ['base']
 }
 ```
+
+```bash
+npx jue apply
+```
+
+## Capability Surface
+
+- `AGENTS.md` as global meta-rule entry
+- Command assets for `/explain`, `/refactor`, `/optimize`, `/test`, `/doc`, `/review`, `/security`
+- Compatible with downstream tool adapters through ai-jue transformation
+
+## Naming Note
+
+- Canonical term: `agents`
 
 ## License
 
