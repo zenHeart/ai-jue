@@ -8,3 +8,5 @@ cache
 /GEMINI.md
 /.gemini/
 .turbo
+**/.turbo/
+**/.turbo/turbo-build.log
