@@ -59,6 +59,22 @@ const ConfigSchema = z
   })
   .passthrough()
   .superRefine((config, ctx) => {
+    if (config.preset && Array.isArray(config.presets) && config.presets.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["preset"],
+        message: "Invalid combination: use either 'preset' or 'presets', not both.",
+      });
+    }
+
+    if (Array.isArray(config.presets) && config.presets.length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["presets"],
+        message: "Invalid combination: 'presets' must not be an empty array.",
+      });
+    }
+
     if (Object.prototype.hasOwnProperty.call(config, "subAgents")) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -79,6 +95,27 @@ const ConfigSchema = z
         path: ["prompts", "agents"],
         message: "Non-canonical field: use root AGENTS.md file for global context.",
       });
+    }
+
+    if (config.agents) {
+      for (const [agentName, agent] of Object.entries(config.agents)) {
+        if (agent.skills && agent.tools) {
+          const skillsSet = new Set(agent.skills);
+          const toolsSet = new Set(agent.tools);
+          const same =
+            skillsSet.size === toolsSet.size &&
+            [...skillsSet].every((item) => toolsSet.has(item));
+
+          if (!same) {
+            ctx.addIssue({
+              code: z.ZodIssueCode.custom,
+              path: ["agents", agentName],
+              message:
+                "Invalid combination: 'agents.<name>.tools' and 'agents.<name>.skills' conflict. Keep one canonical list or make them identical.",
+            });
+          }
+        }
+      }
     }
   });
 
