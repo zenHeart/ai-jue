@@ -1,4 +1,143 @@
-# ai-jue 项目实施路线图 (TODO)
+# 当前执行计划（与历史路线图关联）
+
+> 更新时间：2026-02-12
+> 说明：本节仅列出未完成事项；下方保留完整历史路线图（含已完成记录）。
+
+## 实施策略与门禁（执行前必须满足）
+
+- [ ] **以终为始**：先完成用户侧使用文档与设计文档（README/docs）补充与修正。
+- [ ] **评审门禁**：文档先给你确认，通过后才进入代码实施阶段。
+- [ ] **架构优先**：先设计后编码；复杂变更先输出设计方案。
+- [ ] **代码规约**：严格遵循 Clean Code + SOLID + KISS + DRY + YAGNI。
+- [ ] **错误处理**：覆盖异常路径与边界保护，避免静默失败。
+- [ ] **向后兼容**：默认兼容；若有破坏性变更，必须显式标注并给迁移说明。
+- [ ] **小步快跑**：每次改动保持最小、可独立验证、可回滚。
+
+> 当前状态（2026-02-12）：已提交第一轮文档修订草案（README + guide 设计文档），等待你确认后再进入实现阶段。
+
+## 与历史计划的关联映射
+
+- `P0`：对应历史中的 Phase 7「查漏补缺」与近期专项审查问题（契约不一致、watch 可靠性、preset-base 可加载性）。
+- `P1`：对应历史中的 Phase 1.5 / Phase 4（协议对齐、文档与实现一致性、验证能力增强）。
+- `P2`：对应历史中的 Phase 3.5 / Phase 5（质量门禁、发布前自动化、回归稳定性）。
+
+## 与 README 初衷对齐的验收标准（North Star）
+
+- [ ] **NS1 配置碎片化问题被真实解决**：
+  - [ ] 最小路径可跑通：`npm i -D ai-jue <preset> + ai.config.js + npx jue apply`。
+  - [ ] 一次配置可稳定生成四类主目标产物（Claude/Cursor/Gemini/Copilot）。
+  - [ ] `--watch` 变更同步稳定，满足“无感更新”。
+- [ ] **NS2 经验碎片化问题被真实解决**：
+  - [ ] `.ai` 目录资产可被加载、组合、覆盖，并可迁移为 preset。
+  - [ ] 用户不需要学习 ai-jue 独有新概念即可组织资产（最小知识原则）。
+  - [ ] base/internal 的能力边界清晰，复用与治理路径明确。
+- [ ] **NS3 文档-设计-实现一致**：
+  - [ ] README 承诺、docs 描述、代码行为三者一致。
+  - [ ] 能力边界（已支持/规划中）表达准确，不夸大现状。
+
+## 认知纠偏与修复优先级（与 `_drafts/ai-jue.md` 对齐）
+
+> 统一术语：**`agents`** 为唯一正式名称；`subAgents` / `sub-agents` 视为历史别名，仅用于迁移兼容说明。
+> 执行原则：**先基础核心修复，再文档纠偏，再实现增强，最后质量发布。**
+
+### Stage 0（P0）基础核心修复 - 先执行
+
+- [ ] **Quick Start 主路径修复（对齐 README 最小承诺）**
+  - [ ] 验证并修复 `npx jue apply` 在四适配器目标产物上的稳定生成。
+  - [ ] 对齐 README 与实际产物路径命名（尤其 Cursor 相关产物），避免“文档可运行性”偏差。
+  - [ ] 修复 `apply --watch` 监听可靠性：确保 `.ai/.jue/ai.config.js` 变化可稳定触发。
+- [ ] 修复 `jue-preset-base` 资产加载协议：让 `commands/*/{index.json,prompt.md}` 与加载器协议一致。
+- [ ] 修复 `jue-preset-base` 发布元数据：`package.json.files` 与真实目录结构一致。
+- [ ] **`jue-preset-internal` 自举可运行修复**
+  - [ ] 补齐项目自举入口（仓库自身可通过 preset 跑通 `jue apply` 的最小配置）。
+  - [ ] 修复 `jue-preset-internal/package.json` 的 `files` 声明与实际文件一致。
+  - [ ] 确保 internal 最小能力资产可被加载（至少 AGENTS + 一类可验证资产）。
+- [ ] 统一 `agents` 契约：解决 `agents.tools` 与适配器读取 `agents.skills` 的语义冲突（保留兼容迁移层）。
+
+### Stage 1（P1）文档认知纠偏 - 在核心修复后执行
+
+- [ ] 固化能力地图与目录约定（最小知识原则）：`skills/AGENTS.md/commands/rules/agents/hooks/tools/<tool>/ai.config.js/.ai`。
+- [ ] 使用文档修正（User-facing）：
+  - [ ] `REPO_ROOT/README.md`
+  - [ ] `REPO_ROOT/README.en.md`
+  - [ ] `REPO_ROOT/packages/ai-jue/README.md`
+  - [ ] `REPO_ROOT/packages/ai-jue/README.en.md`
+  - [ ] `REPO_ROOT/packages/jue-preset-base/README.md`
+  - [ ] `REPO_ROOT/packages/jue-preset-base/README.en.md`
+- [ ] 设计文档修正（Design/Spec）：
+  - [ ] `REPO_ROOT/packages/docs/guide/architecture.md`
+  - [ ] `REPO_ROOT/packages/docs/en/guide/architecture.md`
+  - [ ] `REPO_ROOT/packages/docs/guide/adapter-standardization.md`
+  - [ ] `REPO_ROOT/packages/docs/en/guide/adapter-standardization.md`
+  - [ ] `REPO_ROOT/packages/docs/guide/configuration-guide.md`
+  - [ ] `REPO_ROOT/packages/docs/en/guide/configuration-guide.md`
+  - [ ] `REPO_ROOT/packages/docs/guide/creating-a-preset.md`
+  - [ ] `REPO_ROOT/packages/docs/en/guide/creating-a-preset.md`
+- [ ] 清零文档认知错误：字段名、目录协议、能力边界、规划中能力标注、`.ai -> preset` 映射说明。
+
+- [ ] **适配器能力地图文档纠偏（来自 `_drafts/ai-jue.md`）**
+  - [ ] 在标准化文档中明确 8 大能力映射（AGENTS.md / rules / commands / skills / mcp / hooks / agents / configuration）。
+  - [ ] 明确“主流工具能力差异 + 降级策略”与当前实现边界一致，不把愿景写成现状。
+  - [ ] 固化“最小知识原则”的适配器设计准则：优先沿用目标工具原生概念与文件布局。
+  - [ ] 更新能力矩阵中的术语：统一使用 `agents`，移除历史命名歧义。
+
+- [ ] **`jue-preset-base` 规范化文档任务（来自 `_drafts/preset-base.md`）**
+  - [ ] 在 base 规范文档中明确：`AGENTS.md` 是全局元规则入口，覆盖 Phase 1-5。
+  - [ ] 在 base 文档中定义命令能力与 SDLC 阶段映射：`/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`。
+  - [ ] 补齐中英文文档对齐要求：`AGENTS.md` / `AGENTS.en.md` 语义一致。
+  - [ ] 明确迁移说明：从旧 `skills/*` 结构到当前目录协议的迁移路径与兼容期。
+  - [ ] 统一“Review 零修改”目标表述：作为 base 的质量目标，不写成当前实现事实。
+
+- [ ] **`jue-preset-internal` 规范文档任务**
+  - [ ] 明确 internal 与 base 的能力边界：internal 负责仓库治理，base 负责通用工程能力。
+  - [ ] 定义 internal 的最小目录协议：`AGENTS.md + commands/rules/hooks/tools`（按需启用）。
+  - [ ] 增加“自举运行说明”：仓库如何通过 internal 预设验证闭环。
+
+### Stage 2（P1）实现对齐增强 - 文档评审通过后执行
+
+- [ ] 按统一协议修正加载器：`skills/commands/rules/agents/hooks/tools` 与 `.ai` 同构。
+- [ ] 增加 markdown frontmatter 解析与统一映射层（跨适配器）。
+- [ ] 增强 `validate` 语义校验：冲突字段、弃用字段、无效组合。
+- [ ] 适配器按“最小知识原则”落地：优先复用目标工具原生概念，不新增用户心智负担。
+- [ ] 建立适配器契约测试矩阵：同一输入在 Claude/Cursor/Gemini/Copilot 产出一致可预期。
+
+- [ ] **适配器优化实现（来自 `_drafts/ai-jue.md`）**
+  - [ ] Cursor：rules 输出升级为主流规则格式（含 frontmatter 元数据），并对 hooks/mcp 映射做一致性收口。
+  - [ ] Claude：完善 agents 与 hooks 的落地表达（在当前可用文件模型内先做稳定映射）。
+  - [ ] Gemini：补齐 context 层级与 hooks 映射的稳定策略（基于 `.gemini/settings.json`）。
+  - [ ] Copilot：明确命令/技能降级路径并优化 instructions 注入策略。
+  - [ ] 跨适配器统一：同一能力在四工具输出行为可预测、可回归验证。
+
+- [ ] **`jue-preset-base` 落地任务（来自 `_drafts/preset-base.md`）**
+  - [ ] 将 base 的全局元规则稳定落地到 `prompts/AGENTS.md` 与 `prompts/AGENTS.en.md`，并由加载器稳定注入 `prompts.agents`。
+  - [ ] 校正 base 命令资产结构与加载器协议一致（避免“有内容但不生效”）。
+  - [ ] 校验命令集合与文档一致（含 `/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`）。
+  - [ ] 为 base 增加专项集成测试：验证命令与 AGENTS 可被四个适配器消费。
+  - [ ] 增加双语一致性检查：命令与 AGENTS 的中英文版本结构和语义一致。
+
+- [ ] **`jue-preset-internal` 落地任务**
+  - [ ] 将 internal 资产结构按统一协议落地，并确保 loader 可完整消费。
+  - [ ] 为 internal 增加自举回归测试：仓库级配置变更可触发并生成预期产物。
+  - [ ] 为 internal 增加文档/实现一致性检查（能力声明与实际资产一致）。
+
+### Stage 3（P2）质量与发布收敛
+
+- [ ] docs 示例可执行校验（`jue apply` smoke checks）接入 CI。
+- [ ] `jue-preset-base` 中英文一致性检查（AGENTS + commands）。
+- [ ] `v1.1.x` 发布门禁脚本（schema/tests/docs/changelog 一致性）。
+- [ ] 适配器能力矩阵自动校验（能力声明 -> 生成产物 -> 快照验证）接入 CI。
+- [ ] internal/base 双预设自举验证流水线（安装/加载/生成/回归）接入 CI。
+
+### 里程碑（本专项）
+
+- [ ] `N1`：Stage 0 完成，核心运行风险清零。
+- [ ] `N2`：Stage 1 完成，文档语义与能力地图一致。
+- [ ] `N3`：Stage 2 完成，代码协议与文档定义一致。
+- [ ] `N4`：Stage 3 完成，可执行修复版发布。
+
+---
+
+## 历史路线图（已完成记录保留）
 
 本文档基于“MVP 优先、配置自举、生态飞轮”的核心理念，对 `ai-jue` 项目的实施路径进行拆解。我们的目标是先用最小的代价验证核心闭环，然后快速利用工具自身实现经验沉淀，最终形成社区驱动的生态飞轮。
 
@@ -60,7 +199,7 @@
   - [x] 创建 `packages/docs/guide/adapter-standardization.md`，定义 7 大通用能力映射表及三层架构。
 - [x] **[核心] 升级配置 Schema (Core Layer)**
   - [x] 在 `ai.config.js` 中支持 `mcp` 配置。
-  - [x] 在 `ai.config.js` 中支持 `commands` (标准化指令), `hooks` (生命周期), `subAgents` (子代理) 字段。
+  - [x] 在 `ai.config.js` 中支持 `commands` (标准化指令), `hooks` (生命周期), `agents` (子代理) 字段。
 - [x] **[适配器] Cursor 深度适配 (Reference Implementation)**
   - [x] 实现 `.cursorrules` (Rules/Agents/Skills) 和 `.cursor/mcp.json` (MCP) 的基础生成。
   - [x] **[Hook]** 实现 Hooks 转换：将 `hooks.pre-commit` 转换为 IDE 建议或脚本。
@@ -167,7 +306,7 @@
 **目标：** 补全缺失文档，建立自动化流程，提升开发者体验。
 
 - [x] **文档补全 (Documentation)**
-  - [x] **配置指南**: 在 `configuration-guide.md` 中补充 `mcp`, `commands`, `hooks`, `subAgents` 的配置说明。
+  - [x] **配置指南**: 在 `configuration-guide.md` 中补充 `mcp`, `commands`, `hooks`, `agents` 的配置说明。
   - [x] **命令指南**: 在 `getting-started.md` 中补充 `check`, `validate`, `create-preset` 的使用说明。
   - [x] **API 文档**: 为 `ai-jue-core` 生成 API 参考文档 (TSDoc/Self-documenting)。
 
@@ -353,15 +492,15 @@
 
 **状态：** ✅ **已完成**
 
-**目标：** 填补当前实现与设计目标之间的差异，确保所有核心特性（Sub-Agents, MCP 完整支持）均已落地，并进一步打磨体验。
+**目标：** 填补当前实现与设计目标之间的差异，确保所有核心特性（Agents, MCP 完整支持）均已落地，并进一步打磨体验。
 
 ### 1. 核心特性补全 (Core Features Completion)
 
-- [x] **[Feature] Sub-Agents (子智能体) 支持**
-  - [x] **Core**: 确保 `subAgents` 配置能正确传递给适配器。
-  - [x] **Adapter-Cursor**: 将 `subAgents` 转换为 Cursor 的 Project Rules 或特定 Agent 上下文。
-  - [x] **Adapter-Gemini**: 映射 `subAgents` 到 `.gemini/settings.json` (如支持)。
-  - [x] **Adapter-Claude**: 探索如何在 `CLAUDE.md` 中有效表达子智能体逻辑。
+- [x] **[Feature] Agents (代理) 支持**
+  - [x] **Core**: 确保 `agents` 配置能正确传递给适配器。
+  - [x] **Adapter-Cursor**: 将 `agents` 转换为 Cursor 的 Project Rules 或特定 Agent 上下文。
+  - [x] **Adapter-Gemini**: 映射 `agents` 到 `.gemini/settings.json` (如支持)。
+  - [x] **Adapter-Claude**: 探索如何在 `CLAUDE.md` 中有效表达代理逻辑。
 
 - [x] **[Feature] Claude MCP 支持**
   - [x] **调研结果**: Claude Code 支持项目级配置及其 `.mcp.json` 文件（Project scope）。
@@ -374,4 +513,4 @@
   - [x] **目标**: 实现后台静默检查，仅在有更新时显示提示图标/文字。
 
 - [x] **[CLI] 交互优化**
-  - [x] `init` 命令增加对 MCP Servers 和 Sub-Agents 的引导配置。
+  - [x] `init` 命令增加对 MCP Servers 和 Agents 的引导配置。

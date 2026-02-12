@@ -108,14 +108,34 @@ npx jue apply
 
 ```
 ✓ CLAUDE.md                          — Claude Code
-✓ .cursor/rules/*.mdc                — Cursor
+✓ .cursorrules                       — Cursor
 ✓ .gemini/settings.json              — Gemini CLI
 ✓ .github/copilot-instructions.md    — GitHub Copilot
 ```
 
+> 说明：当配置了代理能力（历史字段 `subAgents`）时，Cursor 还会生成 `.cursor/rules/*.md` 作为补充规则文件。
+
 ---
 
 ## 核心功能
+
+### 🧭 最小知识原则（能力目录约定）
+
+`ai-jue` 的核心设计原则是：尽量复用主流 AI 工具已有习惯，不引入额外心智负担。能力目录采用如下约定：
+
+- `skills/`：技能资产（主流规范）
+- `AGENTS.md`：系统上下文与强约束（主流规范）
+- `commands/`：自定义命令（主流实践）
+- `rules/`：项目规则（主流实践）
+- `agents/`：自定义代理（规范名称）
+- `hooks/`：生命周期钩子（主流实践）
+- `tools/<tool>/`：工具特定配置逃生舱（如 `tools/gemini/`、`tools/cursor/`）
+- `ai.config.js`：ai-jue 统一配置入口（含 MCP/运行策略）
+- `.ai/`：本地资产工作区，支持映射并发布为 preset
+
+术语说明：
+- 规范名称统一为 `agents`。
+- 历史字段 `subAgents` 目前仍兼容，后续会逐步迁移到 `agents`（保持向后兼容）。
 
 ### 🎯 多预设组合
 
@@ -219,12 +239,15 @@ npx jue create-preset my-team-preset
 ```
 my-team-preset/
 ├── package.json
-├── prompts/
-│   └── agents.md        # 通用提示词
-├── skills/
-│   └── deploy.md        # 技能定义
+├── AGENTS.md            # 全局系统上下文/强约束
+├── skills/              # 技能资产
+├── commands/            # 自定义命令
+├── rules/               # 项目规则
+├── agents/              # 自定义代理
+├── hooks/               # 生命周期钩子
 └── tools/
-    └── meta.json        # 工具配置（MCP 等）
+    ├── gemini/
+    └── cursor/          # 工具特定配置（MCP 等）
 ```
 
 发布到 npm 后，团队成员只需：
