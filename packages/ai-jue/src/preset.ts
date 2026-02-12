@@ -2,10 +2,75 @@ import path from 'path';
 import fs from 'fs';
 import { MergedConfig } from './config';
 
+type FrontmatterResult = {
+  content: string;
+  attributes: Record<string, any>;
+};
+
 async function readJsonIfExists(filePath: string): Promise<any> {
   if (!fs.existsSync(filePath)) return {};
   const content = await fs.promises.readFile(filePath, 'utf8');
   return JSON.parse(content);
+}
+
+function parseYamlScalar(value: string): any {
+  const raw = value.trim();
+  if (raw === 'true') return true;
+  if (raw === 'false') return false;
+  if (/^-?\d+(\.\d+)?$/.test(raw)) return Number(raw);
+  if (
+    (raw.startsWith('"') && raw.endsWith('"')) ||
+    (raw.startsWith("'") && raw.endsWith("'"))
+  ) {
+    return raw.slice(1, -1);
+  }
+  return raw;
+}
+
+function parseSimpleYamlFrontmatter(yamlText: string): Record<string, any> {
+  const result: Record<string, any> = {};
+  const lines = yamlText.split('\n');
+
+  for (const line of lines) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#')) continue;
+    const separatorIndex = trimmed.indexOf(':');
+    if (separatorIndex <= 0) continue;
+
+    const key = trimmed.slice(0, separatorIndex).trim();
+    const value = trimmed.slice(separatorIndex + 1).trim();
+    if (!key) continue;
+
+    if (value.startsWith('[') && value.endsWith(']')) {
+      const arrayBody = value.slice(1, -1).trim();
+      result[key] = arrayBody
+        ? arrayBody.split(',').map((item) => parseYamlScalar(item))
+        : [];
+      continue;
+    }
+
+    result[key] = parseYamlScalar(value);
+  }
+
+  return result;
+}
+
+function parseMarkdownWithFrontmatter(raw: string): FrontmatterResult {
+  if (!raw.startsWith('---\n')) {
+    return { content: raw, attributes: {} };
+  }
+
+  const closingIndex = raw.indexOf('\n---\n', 4);
+  if (closingIndex === -1) {
+    return { content: raw, attributes: {} };
+  }
+
+  const yamlText = raw.slice(4, closingIndex);
+  const content = raw.slice(closingIndex + 5);
+  return {
+    content,
+    attributes: parseSimpleYamlFrontmatter(yamlText),
+  };
 }
 
 function findLocalizedFile(baseDir: string, fileNames: string[], userLanguage?: string): string | null {
@@ -45,9 +110,10 @@ async function loadNamedAssetDir(
         const contentPath = findLocalizedFile(assetDir, preferredFiles, userLanguage);
         if (!contentPath) return;
 
-        const content = await fs.promises.readFile(contentPath, 'utf8');
+        const rawContent = await fs.promises.readFile(contentPath, 'utf8');
+        const parsed = parseMarkdownWithFrontmatter(rawContent);
         const metadata = await readJsonIfExists(path.join(assetDir, 'META.json'));
-        config[section][assetName] = { ...metadata, content };
+        config[section][assetName] = { ...metadata, ...parsed.attributes, content: parsed.content };
       }),
   );
 }
@@ -67,11 +133,13 @@ async function loadCommands(config: MergedConfig, dirPath: string, userLanguage?
         const promptPath = findLocalizedFile(commandDir, ['prompt.md'], userLanguage);
         if (!promptPath) return;
 
-        const prompt = await fs.promises.readFile(promptPath, 'utf8');
+        const rawPrompt = await fs.promises.readFile(promptPath, 'utf8');
+        const parsed = parseMarkdownWithFrontmatter(rawPrompt);
         commands[commandName] = {
           ...meta,
-          prompt,
-          content: prompt,
+          ...parsed.attributes,
+          prompt: parsed.content,
+          content: parsed.content,
         };
       }),
   );
@@ -92,8 +160,9 @@ async function loadAgents(config: MergedConfig, dirPath: string, userLanguage?: 
         const promptPath = findLocalizedFile(agentDir, ['prompt.md', 'AGENTS.md'], userLanguage);
         if (!promptPath) return;
 
-        const prompt = await fs.promises.readFile(promptPath, 'utf8');
-        agents[agentName] = { ...meta, prompt, content: prompt };
+        const rawPrompt = await fs.promises.readFile(promptPath, 'utf8');
+        const parsed = parseMarkdownWithFrontmatter(rawPrompt);
+        agents[agentName] = { ...meta, ...parsed.attributes, prompt: parsed.content, content: parsed.content };
       }),
   );
 }

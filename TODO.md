@@ -105,8 +105,8 @@
 
 ### Stage 2（P1）实现对齐增强 - 文档评审通过后执行
 
-- [ ] 按统一协议修正加载器：`skills/commands/rules/agents/hooks/tools` 与 `.ai` 同构。
-- [ ] 增加 markdown frontmatter 解析与统一映射层（跨适配器，`md + YAML frontmatter` 为统一源格式）。
+- [x] 按统一协议修正加载器：`skills/commands/rules/agents/hooks/tools` 与 `.ai` 同构。
+- [x] 增加 markdown frontmatter 解析与统一映射层（跨适配器，`md + YAML frontmatter` 为统一源格式）。
 - [ ] **建立 normalize 标准化转换层（核心）**
   - [ ] 新增统一内部模型（建议：`context/rules/commands/skills/agents/hooks/mcp/tools`）。
   - [ ] 输入归一化：`AGENTS.md -> context.global`、canonical rules -> target rules（不再包含历史字段映射）。
