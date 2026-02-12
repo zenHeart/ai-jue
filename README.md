@@ -271,13 +271,34 @@ npx jue apply
 npm run release
 ```
 
-该命令自动完成：
+`npm run release` 现在会先触发 `prerelease` 钩子，自动执行：
+
+```bash
+npm run release-gate:v1.1
+```
+
+门禁检查包含：
+
+1. 全仓构建（`npm run build`）
+2. 核心配置测试（`packages/ai-jue/test/config.test.ts`）
+3. 文档构建（`npm run docs:build`）
+4. 包一致性检查（`check-consistency`）
+5. base 双语结构检查（`check-base-i18n`）
+6. base/internal 自举 smoke（`smoke-apply`）
+7. 发布必要文件检查（`release-note.md`、`packages/ai-jue/CHANGELOG.md`）
+
+门禁通过后，`release` 命令继续自动完成：
 
 1. 基于 `git diff` 检测有变更的包
 2. 交互式选择版本策略（patch/minor/major）
 3. 生成 CHANGELOG、创建 tag 并推送
 
-推送后 GitHub Actions 自动触发 [release.yml](.github/workflows/release.yml)，使用 npm Trusted Publisher (OIDC) 并行发布所有变更包。
+触发发布的关键条件：
+
+1. 合并/推送到 `main`
+2. 本次变更包含 `release-note.md`（见 [release.yml](.github/workflows/release.yml) 的 `on.push.paths`）
+
+满足条件后，GitHub Actions 自动执行 npm 发布（OIDC Trusted Publishing）。
 
 ---
 

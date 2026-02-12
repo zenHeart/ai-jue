@@ -204,6 +204,43 @@ my-team-preset/
     └── cursor/
 ```
 
+## Release Flow
+
+This repository uses a "local version/tag orchestration -> GitHub Actions publish" model.
+
+```bash
+npm run release
+```
+
+`npm run release` now triggers the `prerelease` hook first:
+
+```bash
+npm run release-gate:v1.1
+```
+
+The release gate checks:
+
+1. Workspace build (`npm run build`)
+2. Critical config test (`packages/ai-jue/test/config.test.ts`)
+3. Docs build (`npm run docs:build`)
+4. Package metadata consistency (`check-consistency`)
+5. Base preset i18n structure (`check-base-i18n`)
+6. Bootstrap smoke for base/internal (`smoke-apply`)
+7. Required release files (`release-note.md`, `packages/ai-jue/CHANGELOG.md`)
+
+After the gate passes, `release` continues to:
+
+1. Detect changed packages from git diff/tag history
+2. Let you choose versioning strategy (patch/minor/major)
+3. Generate changelog, create tags, and push
+
+Publish workflow is triggered when:
+
+1. Changes are pushed/merged into `main`
+2. The commit includes `release-note.md` changes (see `.github/workflows/release.yml`)
+
+Then GitHub Actions performs npm publish via OIDC trusted publishing.
+
 ---
 
 ## License

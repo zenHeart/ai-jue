@@ -19,9 +19,22 @@ function assertFile(filePath, message) {
   }
 }
 
+function ensureDocsBuildIdempotent() {
+  const maybeVueLink = path.resolve(
+    __dirname,
+    "../packages/docs/node_modules/vue",
+  );
+  try {
+    fs.rmSync(maybeVueLink, { recursive: true, force: true });
+  } catch (error) {
+    // Ignore non-existent path or other benign fs errors before docs build.
+  }
+}
+
 function main() {
   run("npm", ["run", "build"]);
   run("npm", ["test", "--", "packages/ai-jue/test/config.test.ts"]);
+  ensureDocsBuildIdempotent();
   run("npm", ["run", "docs:build"]);
   run("node", ["scripts/check-consistency.js"]);
   run("node", ["scripts/check-base-i18n.js"]);
