@@ -102,6 +102,23 @@ project root/
 - Use object config for explicit overrides (for example `tools.gemini`, `mcp.servers`)
 - Use `extends` for temporary or externalized assets
 
+### 3.4 Merging Multiple `AGENTS.md` Sources (Nested Presets)
+
+When multiple sources exist (for example nested presets, `.ai/AGENTS.md`, root `AGENTS.md`):
+
+- Use layered append semantics, not replacement
+- Order (low -> high):
+  1. `AGENTS.md` from preset dependency chain
+  2. `AGENTS.md` from current preset
+  3. `.ai/AGENTS.md`
+  4. root `AGENTS.md`
+  5. `context.global` in `ai.config.js` (if explicitly provided)
+
+Notes:
+
+- Later layers have higher priority and represent closer project/user intent
+- Structured capabilities (`rules/commands/...`) still follow object merge with later overrides
+
 ## 4. Field Summary
 
 - `preset` / `presets`: choose presets (`presets` wins when both exist)

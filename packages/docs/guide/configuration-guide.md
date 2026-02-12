@@ -101,6 +101,23 @@ export default {
 - 需要覆盖时用对象：如 `tools.gemini`、`mcp.servers`
 - 需要临时外链时用 `extends`
 
+### 3.4 多个 `AGENTS.md` 的合并（嵌套 preset）
+
+当存在多个来源（如 nested preset、`.ai/AGENTS.md`、根 `AGENTS.md`）时：
+
+- 采用分层追加，不做覆盖替换
+- 顺序（低 -> 高）：
+  1. preset 依赖链中的 `AGENTS.md`
+  2. 当前 preset 的 `AGENTS.md`
+  3. `.ai/AGENTS.md`
+  4. 根 `AGENTS.md`
+  5. `ai.config.js` 的 `context.global`（若显式提供）
+
+说明：
+
+- 越靠后越高优先级，表达更贴近当前项目与用户意图
+- `rules/commands/...` 仍是对象合并覆盖，不受此条影响
+
 ## 4. 字段说明
 
 - `preset` / `presets`：选择预设（同时存在时 `presets` 优先）

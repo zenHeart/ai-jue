@@ -114,6 +114,12 @@ export default {
 }
 ```
 
+`AGENTS.md` merge behavior under nested presets:
+
+- Layered append semantics (no replacement)
+- Order: dependency presets -> current preset -> `.ai/AGENTS.md` -> root `AGENTS.md` -> `ai.config.js context.global`
+- Structured capabilities (`rules/commands/...`) still use deep object merge where later values override earlier ones
+
 ### 📁 Local Asset Extension
 
 ```javascript

@@ -59,6 +59,21 @@ tools/
 3. `extends` 显式引入
 4. `ai.config.js` 直接配置
 
+### 5.1 `AGENTS.md` 特殊合并规则（嵌套 preset 场景）
+
+`AGENTS.md` 为文本型全局上下文，不采用“覆盖替换”，采用“分层追加”：
+
+1. 嵌套 preset 依赖链（先依赖、后当前 preset）
+2. `.ai/AGENTS.md`（若存在）
+3. 项目根 `AGENTS.md`（若存在）
+4. `ai.config.js` 中 `context.global`（若显式提供）
+
+规则：
+
+- 按上述顺序拼接为最终 `context.global`
+- 越靠后层级优先级越高（更贴近当前项目/用户意图）
+- 结构化能力（`rules/commands/skills/hooks/agents/mcp/tools`）仍采用对象深合并，后者覆盖前者
+
 ## 6. 非规范输入策略
 
 - 检测到非规范能力字段直接失败

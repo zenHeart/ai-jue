@@ -147,6 +147,12 @@ export default {
 }
 ```
 
+多层预设下的 `AGENTS.md` 合并规则：
+
+- 采用分层追加，不做覆盖替换
+- 顺序：依赖 preset -> 当前 preset -> `.ai/AGENTS.md` -> 根 `AGENTS.md` -> `ai.config.js.context.global`
+- 结构化能力（`rules/commands/...`）仍是对象深合并，后者覆盖前者
+
 ### 📁 本地资产扩展
 
 通过 `.ai` 目录添加团队自定义的 Prompt 和 Skills：

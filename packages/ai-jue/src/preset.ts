@@ -236,6 +236,23 @@ export async function loadPreset(presetName: string, userLanguage?: string): Pro
   return loadPresetRecursive(presetName, userLanguage, []);
 }
 
+function mergeConfigWithLayeredContext(
+  base: MergedConfig,
+  incoming: MergedConfig,
+): MergedConfig {
+  const baseContext = typeof base?.context?.global === 'string' ? base.context.global.trim() : '';
+  const incomingContext = typeof incoming?.context?.global === 'string' ? incoming.context.global.trim() : '';
+  const merged = deepMerge(base, incoming);
+  const layeredContext = [baseContext, incomingContext].filter(Boolean).join('\n\n');
+
+  if (layeredContext) {
+    merged.context = merged.context || {};
+    merged.context.global = layeredContext;
+  }
+
+  return merged;
+}
+
 function normalizePresetPackageName(presetName: string): string {
   if (presetName.startsWith('jue-preset-')) return presetName;
   return `jue-preset-${presetName}`;
@@ -279,11 +296,11 @@ async function loadPresetRecursive(
         userLanguage,
         nextStack,
       );
-      mergedConfig = deepMerge(mergedConfig, nestedPresetConfig);
+      mergedConfig = mergeConfigWithLayeredContext(mergedConfig, nestedPresetConfig);
     }
 
     const selfConfig = await loadAssetsFromDir(presetPath, userLanguage);
-    return deepMerge(mergedConfig, selfConfig);
+    return mergeConfigWithLayeredContext(mergedConfig, selfConfig);
   } catch (error: any) {
     console.error(`Error loading preset "${presetName}":`, error.message);
     return {};

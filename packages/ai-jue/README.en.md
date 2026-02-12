@@ -51,6 +51,7 @@ Typical outputs:
 - A preset can declare dependent presets via `ai.presets` (or `jue.presets`) in its own `package.json`.
 - Load order is dependencies first, then the current preset; current preset overrides on conflicts.
 - Example: `internal` depends on `base`, so users can keep `preset: "internal"` only.
+- `AGENTS.md` uses layered append semantics (not replacement): dependency presets -> current preset -> `.ai/AGENTS.md` -> root `AGENTS.md` -> `ai.config.js context.global`.
 
 ## CLI Commands
 

@@ -5,6 +5,24 @@ import path from 'path';
 import fs from 'fs';
 import { normalizeConfig } from './normalize';
 
+function mergeConfigWithLayeredContext(
+  base: MergedConfig,
+  incoming: MergedConfig,
+): MergedConfig {
+    const baseContext = typeof base?.context?.global === 'string' ? base.context.global.trim() : '';
+    const incomingContext =
+      typeof incoming?.context?.global === 'string' ? incoming.context.global.trim() : '';
+    const merged = deepMerge(base, incoming);
+    const layeredContext = [baseContext, incomingContext].filter(Boolean).join('\n\n');
+
+    if (layeredContext) {
+      merged.context = merged.context || {};
+      merged.context.global = layeredContext;
+    }
+
+    return merged;
+}
+
 async function loadExtendedAssets(extendsConfig: { [key: string]: string | string[] }, rootDir: string): Promise<MergedConfig> {
     const config: MergedConfig = {};
     await Promise.all(Object.entries(extendsConfig).map(async ([key, value]) => {
@@ -38,7 +56,7 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
     if (presets.length > 0) {
       for (const presetName of presets) {
          const presetConfig = await loadPreset(presetName, userConfig.language);
-         finalConfig = deepMerge(finalConfig, presetConfig);
+         finalConfig = mergeConfigWithLayeredContext(finalConfig, presetConfig);
       }
     }
 
@@ -47,28 +65,28 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
 
     if (fs.existsSync(localAiDir)) {
       const localAssets = await loadAssetsFromDir(localAiDir, userConfig.language);
-      finalConfig = deepMerge(finalConfig, localAssets);
+      finalConfig = mergeConfigWithLayeredContext(finalConfig, localAssets);
     } else if (fs.existsSync(localJueDir)) {
       const localAssets = await loadAssetsFromDir(localJueDir, userConfig.language);
-      finalConfig = deepMerge(finalConfig, localAssets);
+      finalConfig = mergeConfigWithLayeredContext(finalConfig, localAssets);
     }
 
     if (userConfig.extends) {
       const extendedAssets = await loadExtendedAssets(userConfig.extends, process.cwd());
-      finalConfig = deepMerge(finalConfig, extendedAssets);
+      finalConfig = mergeConfigWithLayeredContext(finalConfig, extendedAssets);
     }
 
     // Auto-inject root AGENTS.md when present to minimize config burden.
     const rootAgentsPath = path.join(process.cwd(), 'AGENTS.md');
     if (fs.existsSync(rootAgentsPath)) {
       const rootAgentsContent = await fs.promises.readFile(rootAgentsPath, 'utf8');
-      finalConfig = deepMerge(finalConfig, {
+      finalConfig = mergeConfigWithLayeredContext(finalConfig, {
         context: {
           global: rootAgentsContent,
         },
       });
     }
 
-    finalConfig = deepMerge(finalConfig, userConfig);
+    finalConfig = mergeConfigWithLayeredContext(finalConfig, userConfig);
     return normalizeConfig(finalConfig);
 }

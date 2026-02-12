@@ -51,6 +51,7 @@ npx jue apply
 - preset 可在自身 `package.json` 中通过 `ai.presets`（或 `jue.presets`）声明依赖 preset。
 - 加载顺序：先依赖、后自身；自身覆盖依赖同名资产。
 - 例如 `internal` 可声明依赖 `base`，用户只需配置 `preset: "internal"`。
+- `AGENTS.md` 采用分层追加而非覆盖：依赖 preset -> 当前 preset -> `.ai/AGENTS.md` -> 根 `AGENTS.md` -> `ai.config.js.context.global`。
 
 ## 常用命令
 

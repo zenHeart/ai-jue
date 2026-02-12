@@ -59,6 +59,21 @@ Default priority (low -> high):
 3. explicit `extends`
 4. direct `ai.config.js` overrides
 
+### 5.1 Special Merge Rule for `AGENTS.md` (Nested Preset Scenario)
+
+`AGENTS.md` is text-based global context, so it uses layered append semantics instead of replacement:
+
+1. Nested preset dependency chain (dependencies first, then current preset)
+2. `.ai/AGENTS.md` (if present)
+3. Root `AGENTS.md` (if present)
+4. `context.global` from `ai.config.js` (if explicitly provided)
+
+Rules:
+
+- Final `context.global` is assembled by concatenating layers in this order
+- Later layers have higher intent priority (closer to project/user intent)
+- Structured capabilities (`rules/commands/skills/hooks/agents/mcp/tools`) still use deep object merge where later values override earlier ones
+
 ## 6. Non-Canonical Input Policy
 
 - Fail fast on non-canonical capability fields
