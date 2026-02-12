@@ -11,6 +11,9 @@
     "docs:dev": "npm run docs:dev -w docs",
     "docs:build": "npm run docs:build -w docs",
     "check-consistency": "node scripts/check-consistency.js",
+    "check-base-i18n": "node scripts/check-base-i18n.js",
+    "smoke-apply": "node scripts/smoke-apply.js",
+    "release-gate:v1.1": "node scripts/release-gate-v1.1.js",
     "setup": "npm install && npm dedupe",
     "release": "node scripts/release.js",
     "publish": "node scripts/release.js"
