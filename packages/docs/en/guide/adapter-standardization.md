@@ -10,7 +10,7 @@ Users should only learn one canonical model:
 2. Organize assets in `.ai/` or presets
 3. Run `jue apply` to generate tool-specific outputs
 
-Users should not learn legacy fields or bridge concepts.
+Users should not learn non-canonical fields or bridge concepts.
 
 ## 2. Canonical Capability Model (Single Source)
 
@@ -47,7 +47,7 @@ Strict rules:
 ## 4. Adapter Responsibility Boundary
 
 - Adapters only convert canonical model -> target tool format
-- Adapters do not handle legacy field compatibility
+- Adapters only consume canonical fields
 - Non-canonical input is rejected in core `validate/normalize` (fail-fast)
 
 ## 5. Cursor mdc Conversion Constraint

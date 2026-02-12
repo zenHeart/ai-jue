@@ -1,12 +1,10 @@
 import { MergedConfig } from './config';
-import { logger } from './logger';
 
 function toObject(value: any): Record<string, any> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
 export function normalizeConfig(config: MergedConfig): MergedConfig {
-  const conflictPolicy = config.conflictPolicy === 'warn' ? 'warn' : 'error';
   const context = toObject(config.context);
   const prompts = toObject(config.prompts);
   const rules = toObject(config.rules);
@@ -51,27 +49,6 @@ export function normalizeConfig(config: MergedConfig): MergedConfig {
     const agent = toObject(rawAgent);
     if (!agent.prompt && typeof agent.content === 'string') {
       agent.prompt = agent.content;
-    }
-    if (!agent.skills && Array.isArray(agent.tools)) {
-      agent.skills = [...agent.tools];
-    }
-    if (!agent.tools && Array.isArray(agent.skills)) {
-      agent.tools = [...agent.skills];
-    }
-    if (Array.isArray(agent.skills) && Array.isArray(agent.tools)) {
-      const skillsSet = new Set(agent.skills);
-      const toolsSet = new Set(agent.tools);
-      const same =
-        skillsSet.size === toolsSet.size &&
-        [...skillsSet].every((item) => toolsSet.has(item));
-      if (!same) {
-        const message = `Agent "${name}" has conflicting skills/tools lists.`;
-        if (conflictPolicy === 'warn') {
-          logger.warn(message);
-        } else {
-          throw new Error(message);
-        }
-      }
     }
     agents[name] = agent;
   }

@@ -29,11 +29,6 @@ packages/jue-preset-base/
 └── package.json
 ```
 
-Current compatibility note:
-
-- During transition, `prompts/AGENTS.md` and `prompts/AGENTS.en.md` can still be loaded as fallback global context.
-- Canonical target for new presets is root-level `AGENTS.md` and `AGENTS.en.md`.
-
 ## 3. Core Capabilities
 
 ### 3.1 Global Meta-Rules
@@ -63,26 +58,7 @@ Current compatibility note:
 - Command directories must keep aligned metadata and prompt intent across languages.
 - Language variants should differ only in expression, not behavioral constraints.
 
-## 5. Migration from Legacy Skills Layout
-
-Migration target: `skills/*` -> `commands/*/{index.json,prompt.md}`
-
-Recommended mapping:
-
-- `skills/explain-code` -> `commands/explain`
-- `skills/refactor-code` -> `commands/refactor`
-- `skills/perf-optimize` -> `commands/optimize`
-- `skills/write-tests` -> `commands/test`
-- `skills/write-docs` -> `commands/doc`
-- `skills/code-review` -> `commands/review`
-- `skills/security-audit` -> `commands/security`
-
-Compatibility policy:
-
-- Legacy assets may be kept as read-only fallback during migration.
-- New feature development must only be added to canonical `commands/` layout.
-
-## 6. Quality Goal Statement
+## 5. Quality Goal Statement
 
 "Review 零修改" is a quality target for iterative improvement, not a guaranteed current state.
 Documentation and release notes must avoid presenting it as an already-achieved fact.

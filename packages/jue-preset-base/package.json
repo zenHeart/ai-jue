@@ -4,7 +4,8 @@
   "description": "Base preset for ai-jue, providing common best-practice skills.",
   "files": [
     "commands",
-    "prompts",
+    "AGENTS.md",
+    "AGENTS.en.md",
     "index.js",
     "README.md",
     "README.en.md",

@@ -121,11 +121,7 @@ ${cursorRulesContent}`;
       }
 
       // Agent Skills
-      const agentSkillRefs = Array.isArray(agent.skills)
-        ? agent.skills
-        : Array.isArray(agent.tools)
-          ? agent.tools
-          : [];
+      const agentSkillRefs = Array.isArray(agent.skills) ? agent.skills : [];
       if (agentSkillRefs.length > 0 && config.skills) {
         agentContent += `## ${t.skillsTitle}\n\n`;
         for (const skillKey of agentSkillRefs) {

@@ -70,7 +70,7 @@ export default {
 运行 `jue apply` 时，系统会按顺序自动处理：
 
 1. 读取 `preset/presets` 指向的预设资产
-2. 自动扫描本地 `.ai/`（若不存在再看 `.jue/`）
+2. 自动扫描本地 `.ai/`
 3. 合并 `extends` 显式引用文件
 4. 最后叠加 `ai.config.js` 里的对象配置
 

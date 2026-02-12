@@ -83,8 +83,8 @@ function findLocalizedFile(baseDir: string, fileNames: string[], userLanguage?: 
   }
 
   for (const fileName of fileNames) {
-    const fallback = path.join(baseDir, fileName);
-    if (fs.existsSync(fallback)) return fallback;
+    const defaultFile = path.join(baseDir, fileName);
+    if (fs.existsSync(defaultFile)) return defaultFile;
   }
 
   return null;
@@ -112,8 +112,7 @@ async function loadNamedAssetDir(
 
         const rawContent = await fs.promises.readFile(contentPath, 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawContent);
-        const metadata = await readJsonIfExists(path.join(assetDir, 'META.json'));
-        config[section][assetName] = { ...metadata, ...parsed.attributes, content: parsed.content };
+        config[section][assetName] = { ...parsed.attributes, content: parsed.content };
       }),
   );
 }
@@ -220,15 +219,6 @@ export async function loadAssetsFromDir(dirPath: string, userLanguage?: string):
   const topLevelAgentsFile = findLocalizedFile(dirPath, ['AGENTS.md'], userLanguage);
   if (topLevelAgentsFile) {
     config.context.global = await fs.promises.readFile(topLevelAgentsFile, 'utf8');
-  } else {
-    // Transitional support: allow prompts/AGENTS.md to serve as global context.
-    const promptsDir = path.join(dirPath, 'prompts');
-    if (fs.existsSync(promptsDir)) {
-      const promptAgents = findLocalizedFile(promptsDir, ['AGENTS.md'], userLanguage);
-      if (promptAgents) {
-        config.context.global = await fs.promises.readFile(promptAgents, 'utf8');
-      }
-    }
   }
 
   await Promise.all([
@@ -239,15 +229,6 @@ export async function loadAssetsFromDir(dirPath: string, userLanguage?: string):
     loadHooks(config, path.join(dirPath, 'hooks'), userLanguage),
     loadToolConfigs(config, path.join(dirPath, 'tools')),
   ]);
-
-  // Transitional support for legacy prompt buckets (tool-specific prompts).
-  await loadNamedAssetDir(
-    config,
-    path.join(dirPath, 'prompts'),
-    'prompts',
-    ['prompt.md', 'AGENTS.md'],
-    userLanguage,
-  );
 
   return config;
 }

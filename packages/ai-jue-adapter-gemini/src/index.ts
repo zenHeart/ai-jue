@@ -51,14 +51,9 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     if (!geminiConfig.agents) geminiConfig.agents = {};
     for (const [key, value] of Object.entries(config.agents)) {
       const agent = value as any;
-      const skillRefs = Array.isArray(agent.skills)
-        ? agent.skills
-        : Array.isArray(agent.tools)
-          ? agent.tools
-          : undefined;
       geminiConfig.agents[key] = {
         prompt: agent.prompt,
-        skills: skillRefs,
+        skills: Array.isArray(agent.skills) ? agent.skills : undefined,
       };
     }
   }

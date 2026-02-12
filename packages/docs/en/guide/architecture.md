@@ -63,7 +63,7 @@ Default priority (low -> high):
 
 - Fail fast on non-canonical capability fields
 - Return actionable repair guidance
-- Do not implement legacy-field compatibility in adapters
+- Do not implement non-canonical field handling in adapters
 
 ## 7. Design Gate (Before Implementation)
 

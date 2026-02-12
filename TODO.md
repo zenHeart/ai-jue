@@ -47,18 +47,18 @@
   - [x] 对齐 README 与实际产物路径命名（尤其 Cursor 相关产物），避免“文档可运行性”偏差。
   - [x] Cursor 规则主产物统一为 `.cursor/rules/*.mdc`（Project Rules），移除 `.cursorrules` 输出路径。
   - [x] 明确 Cursor 仅做格式转换：统一 `md + YAML frontmatter` 输入 -> 输出 `.mdc`，不重复实现规则能力逻辑。
-  - [x] 修复 `apply --watch` 监听可靠性：确保 `.ai/.jue/ai.config.js` 变化可稳定触发。
+  - [x] 修复 `apply --watch` 监听可靠性：确保 `.ai/ai.config.js` 变化可稳定触发。
 - [x] **配置语义冲突止血（过渡期）**
-  - [x] 明确并固化：历史错误字段停止作为设计与实现输入。
+  - [x] 明确并固化：仅使用规范字段作为设计与实现输入。
   - [x] 统一单一规范输入：`AGENTS.md`（全局上下文）与 `agents`（代理能力），禁止双轨语义。
-  - [x] `validate` 增加 fail-fast：检测到历史错误字段直接报错并给出修复指引。
+  - [x] `validate` 增加结构性校验：检测配置冲突与无效组合并直接报错。
 - [x] 修复 `jue-preset-base` 资产加载协议：让 `commands/*/{index.json,prompt.md}` 与加载器协议一致。
 - [x] 修复 `jue-preset-base` 发布元数据：`package.json.files` 与真实目录结构一致。
 - [x] **`jue-preset-internal` 自举可运行修复**
   - [x] 补齐项目自举入口（仓库自身可通过 preset 跑通 `jue apply` 的最小配置）。
   - [x] 修复 `jue-preset-internal/package.json` 的 `files` 声明与实际文件一致。
   - [x] 确保 internal 最小能力资产可被加载（至少 AGENTS + 一类可验证资产）。
-- [x] 统一 `agents` 契约：解决 `agents.tools` 与适配器读取 `agents.skills` 的语义冲突（保留兼容迁移层）。
+- [x] 统一 `agents` 契约：`agents.skills` 作为唯一技能引用字段。
 
 ### Stage 1（P1）文档认知纠偏 - 在核心修复后执行
 
@@ -81,7 +81,7 @@
   - [x] `REPO_ROOT/packages/docs/en/guide/creating-a-preset.md`
 - [x] 清零文档认知错误：字段名、目录协议、能力边界、规划中能力标注、`.ai -> preset` 映射说明。
 - [x] 文档字段口径收敛：
-  - [x] 在标准化文档中移除历史错误字段的正向描述，仅保留“禁止使用”说明。
+  - [x] 在标准化文档中移除非规范字段的正向描述，仅保留“禁止使用”说明。
   - [x] 文档统一为单一规范字段：`AGENTS.md` + `agents`，不再保留“双字段并存”叙述。
   - [x] 统一说明 `commands.*` / `agents.*` 仅是映射记法（命名空间表达），不是新增 schema 关键字。
 
@@ -95,7 +95,7 @@
   - [x] 在 base 规范文档中明确：`AGENTS.md` 是全局元规则入口，覆盖 Phase 1-5。
   - [x] 在 base 文档中定义命令能力与 SDLC 阶段映射：`/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`。
   - [x] 补齐中英文文档对齐要求：`AGENTS.md` / `AGENTS.en.md` 语义一致。
-  - [x] 明确迁移说明：从旧 `skills/*` 结构到当前目录协议的迁移路径与兼容期。
+  - [x] 明确目录协议：统一使用当前 `commands/*` 结构。
   - [x] 统一“Review 零修改”目标表述：作为 base 的质量目标，不写成当前实现事实。
 
 - [x] **`jue-preset-internal` 规范文档任务**
@@ -109,10 +109,11 @@
 - [x] 增加 markdown frontmatter 解析与统一映射层（跨适配器，`md + YAML frontmatter` 为统一源格式）。
 - [x] **建立 normalize 标准化转换层（核心）**
   - [x] 新增统一内部模型（建议：`context/rules/commands/skills/agents/hooks/mcp/tools`）。
-  - [x] 输入归一化：`AGENTS.md -> context.global`、canonical rules -> target rules（不再包含历史字段映射）。
-  - [x] 适配器只消费规范模型，禁止直接读取历史错误字段。
+  - [x] 输入归一化：`AGENTS.md -> context.global`、canonical rules -> target rules。
+  - [x] 适配器只消费规范模型。
   - [x] 错误处理：对冲突字段与歧义输入给出显式告警或失败策略（可配置）。
 - [x] 增强 `validate` 语义校验：冲突字段、弃用字段、无效组合。
+- [x] 剔除旧概念：`META.json`、`.jue`、`subAgents`、`agents.tools`，统一到规范目录与字段。
 - [ ] 适配器按“最小知识原则”落地：优先复用目标工具原生概念，不新增用户心智负担。
 - [x] 建立适配器契约测试矩阵：同一输入在 Claude/Cursor/Gemini/Copilot 产出一致可预期。
 
@@ -167,7 +168,7 @@
 - [x] **基础 CLI 框架搭建**
   - [x] 使用 `yargs` 搭建基础命令，包含 `apply` 命令。
 - [x] **配置文件读取**
-  - [x] 使用 `cosmiconfig` 实现对配置文件的读取，并支持 `ai.*` 和 `jue.*` 的兼容查找。
+  - [x] 使用 `cosmiconfig` 实现对配置文件的读取。
 - [x] **最简预设加载**
   - [x] 实现从 `node_modules` 中加载单个指定预设包的核心逻辑。
 - [x] **插件化架构与文件生成**
@@ -187,7 +188,7 @@
 
 **目标：** 让工具对单个用户足够好用，打通“使用预设”与“沉淀本地经验”的链路。
 
-- [x] **实现 `.ai` 目录作为本地资产工作区（并兼容 `.jue` 作为备选）**
+- [x] **实现 `.ai` 目录作为本地资产工作区**
   - [x] **[核心原则确立]** 已将预设结构重构为与本地 `.ai` 目录完全对齐的、无需构建的纯文件集合模式。
   - [x] `apply` 命令的核心加载逻辑已重构，以支持探测和加载这种新的、用户友好的结构。
 - [x] **支持多语言 (i18n) 资产**
@@ -216,9 +217,9 @@
   - [x] 在 `ai.config.js` 中支持 `mcp` 配置。
   - [x] 在 `ai.config.js` 中支持 `commands` (标准化指令), `hooks` (生命周期), `agents` (子代理) 字段。
 - [x] **[适配器] Cursor 深度适配 (Reference Implementation)**
-  - [x] 实现 `.cursorrules` (Rules/Agents/Skills, 现为 legacy) 和 `.cursor/mcp.json` (MCP) 的基础生成。
+  - [x] 实现 Cursor Rules 与 `.cursor/mcp.json` 的基础生成。
   - [x] **[Hook]** 实现 Hooks 转换：将 `hooks.pre-commit` 转换为 IDE 建议或脚本。
-  - [x] **[Command]** 实现 Commands 转换：将 `commands` 配置注入 `.cursorrules` 作为触发规则（legacy 路径）。
+  - [x] **[Command]** 实现 Commands 转换。
 - [x] **[适配器] Claude Code 深度适配**
   - [x] 实现 `CLAUDE.md` (Context/Skills) 生成。
   - [x] **[Command]** 升级 `adapter-claude`，将 `commands` 字段转换为 `CLAUDE.md` 中的 Slash Commands。
@@ -493,7 +494,7 @@
 ### 4. 适配器翻译支持 (Adapter i18n)
 
 - [x] **产物国际化**
-  - [x] 确保生成的 artifacts（如 `CLAUDE.md`, `.cursorrules` legacy）中的自动生成注释支持双语。
+  - [x] 确保生成的 artifacts（如 `CLAUDE.md`、Cursor Rules）中的自动生成注释支持双语。
   - [x] 引入简单的模板替换机制。
 
 ### 5. 文档库翻译 (Docs Translation)

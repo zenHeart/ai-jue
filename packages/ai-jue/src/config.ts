@@ -1,6 +1,5 @@
 import { cosmiconfig } from 'cosmiconfig';
 import { z } from 'zod';
-import pc from 'picocolors';
 import { logger } from './logger';
 
 const McpServerSchema = z.object({
@@ -26,7 +25,6 @@ const HookSchema = z.union([
 const AgentSchema = z.object({
   description: z.string().optional(),
   prompt: z.string(),
-  tools: z.array(z.string()).optional(),
   skills: z.array(z.string()).optional(),
 });
 
@@ -38,7 +36,6 @@ const ConfigSchema = z
       .record(z.string(), z.union([z.string(), z.array(z.string())]))
       .optional(),
     language: z.string().optional(),
-    conflictPolicy: z.enum(["error", "warn"]).optional(),
     mcp: z
       .object({
         servers: z.record(z.string(), McpServerSchema).optional(),
@@ -76,48 +73,6 @@ const ConfigSchema = z
       });
     }
 
-    if (Object.prototype.hasOwnProperty.call(config, "subAgents")) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["subAgents"],
-        message: "Non-canonical field: use 'agents' instead.",
-      });
-    }
-
-    const prompts = (config as any).prompts;
-    if (
-      prompts &&
-      typeof prompts === "object" &&
-      !Array.isArray(prompts) &&
-      Object.prototype.hasOwnProperty.call(prompts, "agents")
-    ) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        path: ["prompts", "agents"],
-        message: "Non-canonical field: use root AGENTS.md file for global context.",
-      });
-    }
-
-    if (config.agents) {
-      for (const [agentName, agent] of Object.entries(config.agents)) {
-        if (agent.skills && agent.tools) {
-          const skillsSet = new Set(agent.skills);
-          const toolsSet = new Set(agent.tools);
-          const same =
-            skillsSet.size === toolsSet.size &&
-            [...skillsSet].every((item) => toolsSet.has(item));
-
-          if (!same) {
-            ctx.addIssue({
-              code: z.ZodIssueCode.custom,
-              path: ["agents", agentName],
-              message:
-                "Invalid combination: 'agents.<name>.tools' and 'agents.<name>.skills' conflict. Keep one canonical list or make them identical.",
-            });
-          }
-        }
-      }
-    }
   });
 
 export type MergedConfig = z.infer<typeof ConfigSchema> & { [key: string]: any };
@@ -128,10 +83,6 @@ const explorer = cosmiconfig('ai', {
     'ai.config.json',
     '.airc.js',
     '.airc.json',
-    'jue.config.js',
-    'jue.config.json',
-    '.juerc.js',
-    '.juerc.json',
     'package.json'
   ],
 });

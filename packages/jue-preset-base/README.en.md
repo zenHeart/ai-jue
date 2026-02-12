@@ -46,11 +46,10 @@ npx jue apply
 - Command assets for `/explain`, `/refactor`, `/optimize`, `/test`, `/doc`, `/review`, `/security`
 - Compatible with downstream tool adapters through ai-jue transformation
 
-## Bilingual and Migration Notes
+## Bilingual Notes
 
 - Keep `AGENTS.md` and `AGENTS.en.md` semantically aligned.
 - Use canonical command layout: `commands/*/{index.json,prompt.md}`.
-- Treat legacy `skills/*` assets as migration fallback only; new capabilities must be added under `commands/`.
 
 ## Quality Target
 

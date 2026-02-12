@@ -4,7 +4,6 @@
   "description": "Internal preset for developing the ai-jue project itself.",
   "files": [
     "AGENTS.md",
-    "META.json",
     "commands"
   ],
   "keywords": [

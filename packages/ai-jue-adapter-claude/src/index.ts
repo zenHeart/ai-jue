@@ -80,11 +80,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     for (const [key, value] of Object.entries(config.agents)) {
       const agent = value as any;
       content += `### ${key}\n${agent.prompt || ""}\n\n`;
-      const agentSkillRefs = Array.isArray(agent.skills)
-        ? agent.skills
-        : Array.isArray(agent.tools)
-          ? agent.tools
-          : [];
+      const agentSkillRefs = Array.isArray(agent.skills) ? agent.skills : [];
       if (agentSkillRefs.length > 0 && config.skills) {
         for (const skillKey of agentSkillRefs) {
           const skill = config.skills[skillKey];

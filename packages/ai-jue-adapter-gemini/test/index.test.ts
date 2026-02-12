@@ -91,13 +91,13 @@ describe('ai-jue-adapter-gemini', () => {
     expect(content).toEqual({});
   });
 
-  it('should map legacy agents.tools to agents.skills output', async () => {
+  it('should write agents.skills to settings.json', async () => {
     await generate(
       {
         agents: {
           reviewer: {
             prompt: 'Review code',
-            tools: ['review-skill'],
+            skills: ['review-skill'],
           },
         },
       },

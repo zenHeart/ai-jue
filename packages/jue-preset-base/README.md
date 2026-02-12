@@ -79,11 +79,10 @@ module.exports = {
 - **Review 零修改是质量目标，不是现状承诺**: 我们追求让 AI 产出尽量减少人工返工。如果 AI 犯错，请指出违反的元规则，让它按规则自我修正。
 - **混合使用**: 推荐在本预设基础上，叠加技术栈预设 (如 `jue-preset-react`, `jue-preset-typescript`) 以获得更细粒度的最佳实践。
 
-## 🌐 双语对齐与迁移说明
+## 🌐 双语对齐说明
 
 - 全局上下文采用 `AGENTS.md`（中文）与 `AGENTS.en.md`（英文）双文件语义对齐。
 - 命令资产统一采用 `commands/*/{index.json,prompt.md}` 协议。
-- 旧 `skills/*` 结构仅作为迁移兼容，新增能力必须落在 `commands/`。
 
 ## License
 

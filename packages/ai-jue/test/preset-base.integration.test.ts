@@ -64,9 +64,8 @@ describe('jue-preset-base integration', () => {
 
   it('checks bilingual completeness of AGENTS and commands in base preset', () => {
     const baseDir = path.join(process.cwd(), 'packages', 'jue-preset-base');
-    const promptsDir = path.join(baseDir, 'prompts');
-    expect(fs.existsSync(path.join(promptsDir, 'AGENTS.md'))).toBe(true);
-    expect(fs.existsSync(path.join(promptsDir, 'AGENTS.en.md'))).toBe(true);
+    expect(fs.existsSync(path.join(baseDir, 'AGENTS.md'))).toBe(true);
+    expect(fs.existsSync(path.join(baseDir, 'AGENTS.en.md'))).toBe(true);
 
     const commandsDir = path.join(baseDir, 'commands');
     const commandNames = fs

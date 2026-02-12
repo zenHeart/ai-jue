@@ -5,8 +5,7 @@
   "files": [
     "prompts",
     "skills",
-    "index.js",
-    "META.json"
+    "index.js"
   ],
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 0",

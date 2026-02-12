@@ -70,7 +70,7 @@ export default {
 When you run `jue apply`, core processing order is:
 
 1. Load assets from configured presets
-2. Auto-scan local `.ai/` (fallback to `.jue/` if needed)
+2. Auto-scan local `.ai/`
 3. Merge files referenced by `extends`
 4. Apply object overrides from `ai.config.js`
 
@@ -102,7 +102,7 @@ Implication:
 
 - `preset` / `presets`: choose presets (`presets` wins when both exist)
 - `extends`: explicitly load external files and merge
-- `language`: i18n preference (language-first, default fallback)
+- `language`: i18n preference
 - `commands`: command definitions
 - `hooks`: hook definitions
 - `agents`: agent definitions

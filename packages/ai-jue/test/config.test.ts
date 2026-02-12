@@ -72,23 +72,4 @@ describe('loadConfig', () => {
         expect(process.exit).toHaveBeenCalledWith(1);
         expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Configuration validation failed'));
     });
-
-    it('should fail when agents.skills and agents.tools conflict', async () => {
-        searchMock.mockResolvedValue({
-            config: {
-                agents: {
-                    reviewer: {
-                        prompt: 'review',
-                        skills: ['a'],
-                        tools: ['b']
-                    }
-                }
-            }
-        });
-
-        await loadConfig();
-
-        expect(process.exit).toHaveBeenCalledWith(1);
-        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Configuration validation failed'));
-    });
 });
