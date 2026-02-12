@@ -114,7 +114,7 @@
   - [ ] 错误处理：对冲突字段与歧义输入给出显式告警或失败策略（可配置）。
 - [x] 增强 `validate` 语义校验：冲突字段、弃用字段、无效组合。
 - [ ] 适配器按“最小知识原则”落地：优先复用目标工具原生概念，不新增用户心智负担。
-- [ ] 建立适配器契约测试矩阵：同一输入在 Claude/Cursor/Gemini/Copilot 产出一致可预期。
+- [x] 建立适配器契约测试矩阵：同一输入在 Claude/Cursor/Gemini/Copilot 产出一致可预期。
 
 - [ ] **适配器优化实现（来自 `_drafts/ai-jue.md`）**
   - [ ] Cursor：rules 仅做目标格式转换（统一 `md + YAML frontmatter` -> `.cursor/rules/*.mdc`），并对 hooks/mcp 映射做一致性收口。
