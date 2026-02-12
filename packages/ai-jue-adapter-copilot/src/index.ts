@@ -1,6 +1,5 @@
 import path from 'path';
-import fs from 'fs';
-import { generateMarkdownFile } from 'ai-jue-core';
+import { generateMarkdownFile, generateJsonFile } from 'ai-jue-core';
 
 export async function generate(config: any, outputDir: string): Promise<void> {
   let instructionsContent = '';
@@ -17,6 +16,17 @@ export async function generate(config: any, outputDir: string): Promise<void> {
           if (key === 'agents') continue;
           const content = (value as any).content || value;
           instructionsContent += `## ${key}\n\n${content}\n\n`;
+      }
+  }
+
+  // 2.1 Degrade canonical rules to instruction sections
+  if (config.rules && typeof config.rules === 'object') {
+      instructionsContent += `## Rules (Degraded)\n\n`;
+      for (const [key, value] of Object.entries(config.rules)) {
+          const rule = value as any;
+          const body = typeof rule === 'string' ? rule : rule.content || '';
+          if (!String(body).trim()) continue;
+          instructionsContent += `### ${key}\n${String(body).trim()}\n\n`;
       }
   }
 
@@ -62,5 +72,10 @@ export async function generate(config: any, outputDir: string): Promise<void> {
 
   if (instructionsContent.trim()) {
       generateMarkdownFile(path.join(outputDir, '.github', 'copilot-instructions.md'), instructionsContent);
+  }
+
+  // tools.copilot passthrough -> .github/copilot-settings.json
+  if (config.tools?.copilot && typeof config.tools.copilot === 'object') {
+      generateJsonFile(path.join(outputDir, '.github', 'copilot-settings.json'), config.tools.copilot);
   }
 }

@@ -405,7 +405,7 @@ You are a senior code reviewer. Focus on:
 | 能力 | Claude Code | Cursor | Gemini CLI | GitHub Copilot | Codex | Trae | OpenCode | 备注 |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | **AGENTS.md** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 快速定义项目上下文的标准方式 |
-| **Rules** | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | 规范 AI 行为的指令集 (.cursorrules 等) |
+| **Rules** | ✅ | ✅ | ❌ | ✅ | ❌ | ✅ | ✅ | 规范 AI 行为的指令集 (.cursor/rules/agents.mdc 等) |
 | **SKILL** | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | ✅ | 自动化工作流与函数调用能力 |
 | **HOOKS** | ✅ | ✅ | ✅ | ✅ | ❌ | ❌ | ⚠️ | 拦截并介入生命周期事件 |
 | **Commands** | ✅ | ✅ | ✅ | ✅ | ✅ | ❌ | ✅  | 执行特定终端指令的封装能力 |

@@ -7,6 +7,11 @@ exports[`adapter capability snapshot > matches canonical capability output snaps
 
 Global context for snapshot
 
+## Rules
+
+### style
+Common prompt block
+
 ## Slash Commands (Skills)
 
 /skill-review: Review skill
@@ -29,13 +34,21 @@ Review as agent
 
 
 <!-- AI-JUE:END -->",
+  "claudeSettings": {
+    "permissions": {
+      "allow": [
+        "Read",
+      ],
+    },
+  },
   "copilot": "<!-- AI-JUE:START -->
 # Core Instructions (AGENTS)
 
 Global context for snapshot
 
-## common
+## Rules (Degraded)
 
+### style
 Common prompt block
 
 ## Available Skills
@@ -63,43 +76,42 @@ This project defines the following workflow hooks. Please remind the user to run
 
 
 <!-- AI-JUE:END -->",
-  "cursor": "<!-- AI-JUE:START -->
----
-description: ai-jue generated project rules
-alwaysApply: true
----
+  "copilotSettings": {
+    "codeReview": true,
+  },
+  "cursorCommand": "<!-- AI-JUE:START -->
+# /review
 
-# Global Context & Agents
+Review command
 
-Global context for snapshot
+## Action:
 
-## Prompt: common
+Run review flow
 
-Common prompt block
+## Triggers:
 
-## Skills
-
-You have access to the following skills:
-
-### review
-Review skill content
-
-## Commands
-
-Follow these rules when the user uses specific triggers:
-
-### review
-**Triggers:** /review
-
-**Action:** Run review flow
-
-## Workflow Hooks
-
-Please follow these workflow rules:
-
-- **Pre-commit**: Before committing changes, please ensure you run: \`npm test\`
+/review
 
 <!-- AI-JUE:END -->",
+  "cursorRuleStyle": "<!-- AI-JUE:START -->
+---
+description: Style rule
+alwaysApply: true
+---
+Common prompt block
+
+<!-- AI-JUE:END -->",
+  "cursorRules": "<!-- AI-JUE:START -->
+---
+description: ai-jue generated global context
+alwaysApply: true
+---
+Global context for snapshot
+
+<!-- AI-JUE:END -->",
+  "cursorSettings": {
+    "temperature": 0.3,
+  },
   "gemini": {
     "agents": {
       "reviewer": {
@@ -123,6 +135,16 @@ Please follow these workflow rules:
         "command": "uvx",
       },
     },
+    "temperature": 0.2,
   },
+  "geminiMd": "<!-- AI-JUE:START -->
+Global context for snapshot
+
+## Rules (Degraded)
+
+### style
+
+Common prompt block
+<!-- AI-JUE:END -->",
 }
 `;

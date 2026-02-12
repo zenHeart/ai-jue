@@ -31,76 +31,129 @@ const LOCALES: Record<string, any> = {
 };
 
 export async function generate(config: any, outputDir: string): Promise<void> {
-  const lang =
-    config.language === "zh" || config.language === "zh-CN" ? "zh" : "en";
+  const lang = config.language === "zh" || config.language === "zh-CN" ? "zh" : "en";
   const t = LOCALES[lang];
 
-  // 1. Generate Cursor Project Rules (.cursor/rules/*.mdc)
-  let cursorRulesContent = "";
+  // 1. AGENTS context -> .cursor/rules/agents.mdc
   const globalContext = config.context?.global;
-
-  // Inject AGENTS.md content first (Global Context)
-  if (globalContext) {
-    cursorRulesContent += `# ${t.agentsTitle}\n\n${globalContext}\n\n`;
-  }
-
-  // Add Prompts
-  if (config.prompts) {
-    for (const [key, value] of Object.entries(config.prompts)) {
-      if (key === "agents") continue;
-      const content = (value as any).content || value;
-      cursorRulesContent += `## ${t.promptTitle}: ${key}\n\n${content}\n\n`;
-    }
-  }
-
-  // Add Skills as natural language descriptions
-  if (config.skills) {
-    cursorRulesContent += `## ${t.skillsTitle}\n\n${t.skillsDesc}\n\n`;
-    for (const [key, value] of Object.entries(config.skills)) {
-      const skill = value as any;
-      cursorRulesContent += `### ${key}\n${skill.content || skill.prompt || ""}\n\n`;
-    }
-  }
-
-  // Add Commands as trigger rules
-  if (config.commands) {
-    cursorRulesContent += `## ${t.commandsTitle}\n\n${t.commandsDesc}\n\n`;
-    for (const [key, value] of Object.entries(config.commands)) {
-      const cmd = value as any;
-      const triggers = cmd.triggers ? cmd.triggers.join(", ") : `/${key}`;
-      cursorRulesContent += `### ${key}\n**${t.triggersLabel}** ${triggers}\n\n**${t.actionLabel}** ${cmd.prompt}\n\n`;
-    }
-  }
-
-  // Add Hooks suggestions
-  if (config.hooks) {
-    cursorRulesContent += `## ${t.hooksTitle}\n\n${t.hooksDesc}\n\n`;
-    for (const [key, value] of Object.entries(config.hooks)) {
-      const hookValue = value as any;
-      const script =
-        typeof hookValue === "string" ? hookValue : hookValue.script;
-      if (key === "pre-commit") {
-        cursorRulesContent += `- **Pre-commit**: ${t.preCommitPrefix} \`${script}\`\n`;
-      } else {
-        cursorRulesContent += `- **${key}**: \`${script}\`\n`;
-      }
-    }
-  }
-
-  if (cursorRulesContent.trim()) {
-    const mdcContent = `---
-description: ai-jue generated project rules
-alwaysApply: true
----
-
-${cursorRulesContent}`;
+  if (typeof globalContext === "string" && globalContext.trim()) {
+    const frontmatter = [
+      "---",
+      "description: ai-jue generated global context",
+      "alwaysApply: true",
+      "---",
+      "",
+    ].join("\n");
     generateMarkdownFile(
-      path.join(outputDir, ".cursor", "rules", "ai-jue.mdc"),
-      mdcContent,
+      path.join(outputDir, ".cursor", "rules", "agents.mdc"),
+      `${frontmatter}${globalContext.trim()}\n`,
     );
   }
 
-  // 2. Generate .cursor/mcp.json
+  // 2. Canonical rules -> .cursor/rules/*.mdc
+  if (config.rules && typeof config.rules === "object") {
+    for (const [ruleName, value] of Object.entries(config.rules)) {
+      const rule = value as any;
+      const content = typeof rule === "string" ? rule : (rule.content || "");
+      if (!content || !String(content).trim()) continue;
+
+      const description =
+        typeof rule.description === "string" && rule.description.trim()
+          ? rule.description.trim()
+          : `ai-jue generated rule: ${ruleName}`;
+      const alwaysApply =
+        typeof rule.alwaysApply === "boolean" ? rule.alwaysApply : true;
+      const globs = Array.isArray(rule.globs) ? rule.globs : undefined;
+
+      const frontmatter = [
+        "---",
+        `description: ${description}`,
+        `alwaysApply: ${alwaysApply}`,
+        ...(globs && globs.length > 0 ? [`globs: [${globs.map((g: string) => `"${g}"`).join(", ")}]`] : []),
+        "---",
+        "",
+      ].join("\n");
+
+      generateMarkdownFile(
+        path.join(outputDir, ".cursor", "rules", `${ruleName}.mdc`),
+        `${frontmatter}${String(content).trim()}\n`,
+      );
+    }
+  }
+
+  // 3. Commands -> .cursor/commands/*.md
+  if (config.commands && typeof config.commands === "object") {
+    for (const [name, value] of Object.entries(config.commands)) {
+      const cmd = value as any;
+      if (!cmd?.prompt) continue;
+      const triggers = Array.isArray(cmd.triggers) && cmd.triggers.length > 0
+        ? cmd.triggers.join(", ")
+        : `/${name}`;
+      const body = [
+        `# /${name}`,
+        "",
+        cmd.description ? String(cmd.description) : "",
+        "",
+        `## ${t.actionLabel}`,
+        "",
+        String(cmd.prompt),
+        "",
+        `## ${t.triggersLabel}`,
+        "",
+        triggers,
+        "",
+      ].join("\n");
+      generateMarkdownFile(path.join(outputDir, ".cursor", "commands", `${name}.md`), body);
+    }
+  }
+
+  // 4. Skills -> .cursor/skills/<name>/SKILL.md
+  if (config.skills && typeof config.skills === "object") {
+    for (const [name, value] of Object.entries(config.skills)) {
+      const skill = value as any;
+      const skillBody = [
+        `# ${name}`,
+        "",
+        skill.description ? String(skill.description) : t.skillsDesc,
+        "",
+        String(skill.content || skill.prompt || ""),
+        "",
+      ].join("\n");
+      generateMarkdownFile(path.join(outputDir, ".cursor", "skills", name, "SKILL.md"), skillBody);
+    }
+  }
+
+  // 5. Hooks -> .cursor/hooks.json
+  if (config.hooks && typeof config.hooks === "object") {
+    const hooksConfig: Record<string, any> = {};
+    for (const [key, value] of Object.entries(config.hooks)) {
+      const hookValue = value as any;
+      hooksConfig[key] = typeof hookValue === "string" ? hookValue : hookValue?.script;
+    }
+    generateJsonFile(path.join(outputDir, ".cursor", "hooks.json"), hooksConfig);
+  }
+
+  // 6. Agents -> .cursor/agents/*.md
+  if (config.agents && typeof config.agents === "object") {
+    for (const [name, value] of Object.entries(config.agents)) {
+      const agent = value as any;
+      const skillRefs = Array.isArray(agent.skills) ? agent.skills : [];
+      const agentDoc = [
+        `# ${name}`,
+        "",
+        agent.description ? String(agent.description) : "",
+        "",
+        String(agent.prompt || ""),
+        "",
+        skillRefs.length > 0 ? "## Skills" : "",
+        skillRefs.length > 0 ? skillRefs.map((s: string) => `- ${s}`).join("\n") : "",
+        "",
+      ].join("\n");
+      generateMarkdownFile(path.join(outputDir, ".cursor", "agents", `${name}.md`), agentDoc);
+    }
+  }
+
+  // 7. Generate .cursor/mcp.json
   if (config.mcp && config.mcp.servers) {
     const mcpConfig = {
       mcpServers: config.mcp.servers,
@@ -108,39 +161,8 @@ ${cursorRulesContent}`;
     generateJsonFile(path.join(outputDir, ".cursor", "mcp.json"), mcpConfig);
   }
 
-  // 3. Generate .cursor/rules for custom agents
-  if (config.agents) {
-    const rulesDir = path.join(outputDir, ".cursor", "rules");
-    for (const [key, value] of Object.entries(config.agents)) {
-      const agent = value as any;
-      let agentContent = "";
-
-      // Agent Prompt
-      if (agent.prompt || agent.content) {
-        agentContent += `# ${key}\n\n${agent.prompt || agent.content}\n\n`;
-      }
-
-      // Agent Skills
-      const agentSkillRefs = Array.isArray(agent.skills) ? agent.skills : [];
-      if (agentSkillRefs.length > 0 && config.skills) {
-        agentContent += `## ${t.skillsTitle}\n\n`;
-        for (const skillKey of agentSkillRefs) {
-          const skill = config.skills[skillKey];
-          if (skill) {
-            agentContent += `### ${skillKey}\n${skill.content || skill.prompt || ""}\n\n`;
-          }
-        }
-      }
-
-      if (agentContent.trim()) {
-        const agentRule = `---
-description: ${agent.description || `${key} agent rules`}
-alwaysApply: false
----
-
-${agentContent}`;
-        generateMarkdownFile(path.join(rulesDir, `${key}.mdc`), agentRule);
-      }
-    }
+  // 8. tools.cursor passthrough -> .cursor/settings.json
+  if (config.tools?.cursor && typeof config.tools.cursor === "object") {
+    generateJsonFile(path.join(outputDir, ".cursor", "settings.json"), config.tools.cursor);
   }
 }

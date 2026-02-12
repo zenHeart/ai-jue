@@ -58,6 +58,17 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
       finalConfig = deepMerge(finalConfig, extendedAssets);
     }
 
+    // Auto-inject root AGENTS.md when present to minimize config burden.
+    const rootAgentsPath = path.join(process.cwd(), 'AGENTS.md');
+    if (fs.existsSync(rootAgentsPath)) {
+      const rootAgentsContent = await fs.promises.readFile(rootAgentsPath, 'utf8');
+      finalConfig = deepMerge(finalConfig, {
+        context: {
+          global: rootAgentsContent,
+        },
+      });
+    }
+
     finalConfig = deepMerge(finalConfig, userConfig);
     return normalizeConfig(finalConfig);
 }

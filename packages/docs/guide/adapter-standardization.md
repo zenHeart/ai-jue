@@ -50,14 +50,45 @@
 - 适配器只消费规范字段
 - 非规范输入由 `validate/normalize` 在核心层 fail-fast
 
-## 5. Cursor mdc 转换约束
+## 5. 工具能力映射矩阵（当前实现）
 
-- 统一源格式：`md + YAML frontmatter`
-- Cursor 适配器仅在转换阶段输出 `.cursor/rules/*.mdc`
-- 规则语义在统一层定义，Cursor 不重复实现能力逻辑
+| 能力 | Claude | Cursor | Gemini | Copilot |
+| --- | --- | --- | --- | --- |
+| AGENTS/context | `CLAUDE.md` | `.cursor/rules/agents.mdc` | `GEMINI.md` | `.github/copilot-instructions.md` |
+| rules | 降级到 `CLAUDE.md` | `.cursor/rules/*.mdc` | 降级到 `GEMINI.md` | 降级到 `.github/copilot-instructions.md` |
+| commands | `CLAUDE.md` | `.cursor/commands/*.md` | `.gemini/settings.json.customCommands` | `.github/copilot-instructions.md` |
+| skills | `CLAUDE.md` | `.cursor/skills/*/SKILL.md` | 降级到 `GEMINI.md`（文本） | `.github/copilot-instructions.md` |
+| hooks | `CLAUDE.md`（说明） | `.cursor/hooks.json` | `.gemini/settings.json.hooks` | `.github/copilot-instructions.md`（说明） |
+| agents | `CLAUDE.md`（说明） | `.cursor/agents/*.md` | `.gemini/settings.json.agents` | `.github/copilot-instructions.md`（说明） |
+| mcp | `.mcp.json` | `.cursor/mcp.json` | `.gemini/settings.json.mcpServers` | `.github/copilot-instructions.md`（降级说明） |
+| `tools.<tool>` | 部分支持 | 部分支持 | `.gemini/settings.json` | 部分支持 |
 
-## 6. 失败策略（降低认知负担）
+说明：
+- “降级到文档”代表目标工具缺少等价结构化入口，适配器显式写入说明，不做静默忽略。
+- Cursor 当前是结构化落地最完整的参考实现。
+
+## 6. Cursor 转换约束
+
+- `AGENTS.md`（`context.global`）映射为 `.cursor/rules/agents.mdc`
+- `rules/*` 使用统一源格式 `md + YAML frontmatter`，转换为 `.cursor/rules/*.mdc`
+- 适配器仅负责格式落地，不在 Cursor 层重复定义规则语义
+
+## 7. 失败与降级策略（降低认知负担）
 
 检测到以下输入时直接失败并给修复建议：
 
 - 其他未纳入规范模型的能力字段
+
+对于目标工具不支持的能力：
+- 必须输出显式降级说明或映射到可消费文件
+- 不允许静默吞掉能力输入
+
+## 8. 验证用例索引（能力 -> 测试点）
+
+- Cursor 映射：`packages/ai-jue-adapter-cursor/test/index.test.ts`
+- Claude 映射：`packages/ai-jue-adapter-claude/test/index.test.ts`
+- Gemini 映射：`packages/ai-jue-adapter-gemini/test/index.test.ts`
+- Copilot 映射：`packages/ai-jue-adapter-copilot/test/index.test.ts`
+- 跨适配器矩阵：`packages/ai-jue/test/adapter-matrix.test.ts`
+- 能力快照：`packages/ai-jue/test/adapter-capability.snapshot.test.ts`
+- 自举 smoke：`scripts/smoke-apply.js`

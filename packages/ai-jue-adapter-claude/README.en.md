@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Adapter for Claude Code: Generating CLAUDE.md context and skills**
+**Adapter for Claude Code: CLAUDE.md + MCP + Claude settings**
 
 [![NPM version](https://img.shields.io/npm/v/ai-jue-adapter-claude.svg?style=flat)](https://www.npmjs.com/package/ai-jue-adapter-claude)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -17,11 +17,11 @@ Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Features
 
-This adapter transforms `ai-jue` configurations into `CLAUDE.md` format, supporting:
+This adapter maps canonical `ai-jue` capabilities into Claude outputs:
 
-- **Project Context**: Automatically mapping prompts to context sections.
-- **Skills**: Converting skills into tool-compatible descriptions.
-- **Slash Commands**: Mapping `commands` to slash commands in `CLAUDE.md`.
+- **Context/rules/commands/skills/hooks/agents** -> `CLAUDE.md` (`rules` are explicit degradation mapping).
+- **MCP**: `mcp.servers` -> `.mcp.json`.
+- **Tool config**: `tools.claude` -> `.claude/settings.json`.
 
 ## Installation
 

@@ -68,6 +68,23 @@ describe('ai-jue-adapter-claude', () => {
     expect(content).toContain('npm run lint');
   });
 
+  it('should degrade canonical rules into CLAUDE.md', async () => {
+    const config = {
+      rules: {
+        security: {
+          content: 'Never log secrets',
+        },
+      },
+    };
+
+    await generate(config, TEST_DIR);
+
+    const content = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
+    expect(content).toContain('Rules');
+    expect(content).toContain('security');
+    expect(content).toContain('Never log secrets');
+  });
+
   it('should render agents section with mapped skills', async () => {
     const config = {
       skills: {
@@ -84,5 +101,25 @@ describe('ai-jue-adapter-claude', () => {
     expect(content).toContain('Agents');
     expect(content).toContain('reviewer');
     expect(content).toContain('Review skill');
+  });
+
+  it('should map tools.claude to .claude/settings.json', async () => {
+    await generate(
+      {
+        tools: {
+          claude: {
+            permissions: {
+              allow: ['Read'],
+            },
+          },
+        },
+      },
+      TEST_DIR,
+    );
+
+    const settingsPath = path.join(TEST_DIR, '.claude', 'settings.json');
+    expect(fs.existsSync(settingsPath)).toBe(true);
+    const content = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    expect(content.permissions.allow).toEqual(['Read']);
   });
 });

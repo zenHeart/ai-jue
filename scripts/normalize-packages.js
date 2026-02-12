@@ -62,7 +62,25 @@ function updatePackageJson(pkgPath, type) {
                 pkg.types = 'dist/index.d.ts';
             }
         } else if (type === 'preset') {
-            pkg.files = ['prompts', 'skills', 'index.js', 'META.json'];
+            const presetRoot = path.resolve(process.cwd(), pkgPath);
+            const candidateFiles = [
+                'AGENTS.md',
+                'AGENTS.en.md',
+                'commands',
+                'rules',
+                'skills',
+                'agents',
+                'hooks',
+                'tools',
+                'prompts',
+                'index.js',
+                'README.md',
+                'README.en.md',
+                'CHANGELOG.md',
+            ];
+            pkg.files = candidateFiles.filter((entry) =>
+                fs.existsSync(path.join(presetRoot, entry))
+            );
             pkg.main = 'index.js';
             
             // Create dummy index.js if not exists

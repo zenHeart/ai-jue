@@ -27,7 +27,7 @@ const resources = {
           finished: "✨ Apply command finished.",
           failed: "Failed to apply configuration: {{message}}",
           watch_start:
-            "\n[WATCH] Watching for changes in ai.config.js and .ai directory...",
+            "\n[WATCH] Watching config files (ai/jue), AGENTS.md, and asset directories (.ai/.jue)...",
           watch_update: "\n[UPDATE] File change detected. Re-applying...",
           watch_stop: "\nStopping watch mode...",
         },
@@ -94,7 +94,7 @@ const resources = {
           loaded_config: "已加载用户配置。",
           finished: "✨ Apply 命令执行完毕。",
           failed: "应用配置失败: {{message}}",
-          watch_start: "\n[WATCH] 正在监听 ai.config.js 和 .ai 目录的变化...",
+          watch_start: "\n[WATCH] 正在监听配置文件（ai/jue）、AGENTS.md 与资产目录（.ai/.jue）变化...",
           watch_update: "\n[UPDATE] 检测到文件变化。正在重新应用...",
           watch_stop: "\n正在停止监听模式...",
         },

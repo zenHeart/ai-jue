@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Claude Code 适配器：生成 CLAUDE.md 上下文与技能**
+**Claude Code 适配器：生成 CLAUDE.md、MCP 与 Claude 配置**
 
 [![NPM version](https://img.shields.io/npm/v/ai-jue-adapter-claude.svg?style=flat)](https://www.npmjs.com/package/ai-jue-adapter-claude)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -17,11 +17,11 @@
 
 ## 功能描述
 
-该适配器将 `ai-jue` 配置转换为 `CLAUDE.md` 格式，支持：
+该适配器将 `ai-jue` 能力映射为 Claude 可消费产物，支持：
 
-- **项目上下文 (Context)**：自动将 Prompts 映射为上下文区块。
-- **技能 (Skills)**：将技能转换为工具兼容的描述。
-- **斜杠命令 (Commands)**：将 `commands` 字段转换为 `CLAUDE.md` 中的指令。
+- **上下文/规则/命令/技能/钩子/代理**：统一写入 `CLAUDE.md`（其中 `rules` 为显式降级映射）。
+- **MCP**：`mcp.servers` -> `.mcp.json`。
+- **工具配置**：`tools.claude` -> `.claude/settings.json`。
 
 ## 安装
 

@@ -50,14 +50,45 @@ Strict rules:
 - Adapters only consume canonical fields
 - Non-canonical input is rejected in core `validate/normalize` (fail-fast)
 
-## 5. Cursor mdc Conversion Constraint
+## 5. Capability Mapping Matrix (Current Implementation)
 
-- Canonical rule source: `md + YAML frontmatter`
-- Cursor adapter converts only at transformation time into `.cursor/rules/*.mdc`
-- Rule semantics stay in the unified layer; no duplicate logic in Cursor adapter
+| Capability | Claude | Cursor | Gemini | Copilot |
+| --- | --- | --- | --- | --- |
+| AGENTS/context | `CLAUDE.md` | `.cursor/rules/agents.mdc` | `GEMINI.md` | `.github/copilot-instructions.md` |
+| rules | degraded into `CLAUDE.md` | `.cursor/rules/*.mdc` | degraded into `GEMINI.md` | degraded into `.github/copilot-instructions.md` |
+| commands | `CLAUDE.md` | `.cursor/commands/*.md` | `.gemini/settings.json.customCommands` | `.github/copilot-instructions.md` |
+| skills | `CLAUDE.md` | `.cursor/skills/*/SKILL.md` | degraded into `GEMINI.md` (text) | `.github/copilot-instructions.md` |
+| hooks | `CLAUDE.md` (documentation) | `.cursor/hooks.json` | `.gemini/settings.json.hooks` | `.github/copilot-instructions.md` (documentation) |
+| agents | `CLAUDE.md` (documentation) | `.cursor/agents/*.md` | `.gemini/settings.json.agents` | `.github/copilot-instructions.md` (documentation) |
+| mcp | `.mcp.json` | `.cursor/mcp.json` | `.gemini/settings.json.mcpServers` | `.github/copilot-instructions.md` (degradation note) |
+| `tools.<tool>` | partial | partial | `.gemini/settings.json` | partial |
 
-## 6. Failure Policy (Reduce Cognitive Load)
+Notes:
+- “degraded into documentation” means no equivalent structured target exists; adapters must emit explicit fallback text.
+- Cursor is currently the most complete structured reference implementation.
+
+## 6. Cursor Conversion Constraint
+
+- `AGENTS.md` (`context.global`) maps to `.cursor/rules/agents.mdc`
+- `rules/*` use canonical `md + YAML frontmatter` and are converted to `.cursor/rules/*.mdc`
+- The adapter only performs format conversion; rule semantics remain in the unified layer
+
+## 7. Failure and Degradation Policy (Reduce Cognitive Load)
 
 Fail fast with repair guidance when detecting:
 
 - Any capability fields outside the canonical model
+
+For capabilities unsupported by the target tool:
+- adapters must emit explicit degradation output or mapped artifacts
+- silent dropping of capability input is not allowed
+
+## 8. Verification Index (Capability -> Test Point)
+
+- Cursor mapping: `packages/ai-jue-adapter-cursor/test/index.test.ts`
+- Claude mapping: `packages/ai-jue-adapter-claude/test/index.test.ts`
+- Gemini mapping: `packages/ai-jue-adapter-gemini/test/index.test.ts`
+- Copilot mapping: `packages/ai-jue-adapter-copilot/test/index.test.ts`
+- Cross-adapter matrix: `packages/ai-jue/test/adapter-matrix.test.ts`
+- Capability snapshot: `packages/ai-jue/test/adapter-capability.snapshot.test.ts`
+- Bootstrap smoke: `scripts/smoke-apply.js`

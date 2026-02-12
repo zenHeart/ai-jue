@@ -20,8 +20,8 @@ Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 This adapter transforms `ai-jue` configurations into GitHub Copilot format, supporting:
 
 - **Custom Instructions**: Generating `.github/copilot-instructions.md`.
-- **Graceful Downgrade**: Mapping Skills and Prompts to text-based instructions.
-- **Guidance**: Providing text-based hints for features Copilot doesn't natively support yet (like MCP).
+- **Explicit Degradation**: Mapping unsupported capabilities (`rules/mcp/agents`) into explicit textual guidance instead of silent drop.
+- **Tool Settings**: `tools.copilot` -> `.github/copilot-settings.json`.
 
 ## Installation
 

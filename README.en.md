@@ -76,7 +76,8 @@ Done! `ai-jue` generates tool files automatically:
 
 ```
 ✓ CLAUDE.md                          — Claude Code
-✓ .cursor/rules/*.mdc                — Cursor (Project Rules)
+✓ .cursor/rules/agents.mdc                       — Cursor (AGENTS context)
+✓ .cursor/rules/*.mdc                — Cursor (generated from rules/ when rules exist)
 ✓ .gemini/settings.json              — Gemini CLI
 ✓ .github/copilot-instructions.md    — GitHub Copilot
 ```
@@ -89,6 +90,7 @@ Done! `ai-jue` generates tool files automatically:
 
 `ai-jue` reuses mainstream tool conventions instead of inventing new concepts:
 
+- Root `AGENTS.md`: auto-injected as global context when present
 - `skills/`: skill assets
 - `AGENTS.md`: global system context and constraints
 - `commands/`: custom commands

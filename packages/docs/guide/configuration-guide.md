@@ -71,8 +71,9 @@ export default {
 
 1. 读取 `preset/presets` 指向的预设资产
 2. 自动扫描本地 `.ai/`（若不存在则扫描 `.jue/`）
-3. 合并 `extends` 显式引用文件
-4. 最后叠加 `ai.config.js` 里的对象配置
+3. 若项目根目录存在 `AGENTS.md`，自动注入为全局上下文
+4. 合并 `extends` 显式引用文件
+5. 最后叠加 `ai.config.js` 里的对象配置
 
 结论：
 - **不强依赖对象配置**，目录资产可直接生效
@@ -81,6 +82,9 @@ export default {
 ### 3.2 目录到能力的映射
 
 ```text
+项目根目录/
+└── AGENTS.md      -> 全局上下文（自动注入，零配置）
+
 .ai/
 ├── AGENTS.md      -> 全局上下文
 ├── rules/         -> 规则

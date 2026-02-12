@@ -36,6 +36,22 @@ describe('ai-jue-adapter-gemini', () => {
     expect(content).toContain('<!-- AI-JUE:START -->');
   });
 
+  it('should keep prompt priority over context.global', async () => {
+    const config = {
+      context: {
+        global: 'Global Context',
+      },
+      prompts: {
+        gemini: { content: 'Prompt Wins' },
+      },
+    };
+
+    await generate(config, TEST_DIR);
+
+    const content = fs.readFileSync(path.join(TEST_DIR, 'GEMINI.md'), 'utf8');
+    expect(content).toContain('Prompt Wins');
+  });
+
   it('should prefer context.global when gemini prompt is not provided', async () => {
     const config = {
       context: {
@@ -49,8 +65,29 @@ describe('ai-jue-adapter-gemini', () => {
     expect(content).toContain('Global Context');
   });
 
+  it('should degrade canonical rules into GEMINI.md', async () => {
+    const config = {
+      rules: {
+        style: {
+          content: 'Keep modules small',
+        },
+      },
+    };
+
+    await generate(config, TEST_DIR);
+    const content = fs.readFileSync(path.join(TEST_DIR, 'GEMINI.md'), 'utf8');
+    expect(content).toContain('Rules (Degraded)');
+    expect(content).toContain('style');
+    expect(content).toContain('Keep modules small');
+  });
+
   it('should generate .gemini/settings.json with MCP, Commands, and Hooks', async () => {
     const config = {
+      tools: {
+        gemini: {
+          temperature: 0.2,
+        },
+      },
       mcp: {
         servers: {
           testServer: { command: 'node', args: ['test.js'] }
@@ -73,6 +110,7 @@ describe('ai-jue-adapter-gemini', () => {
     expect(content.mcpServers.testServer.command).toBe('node');
     expect(content.customCommands.hello).toBe('Say hello');
     expect(content.hooks['post-build']).toBe('notify');
+    expect(content.temperature).toBe(0.2);
   });
 
   it('should deep merge existing JSON settings', async () => {

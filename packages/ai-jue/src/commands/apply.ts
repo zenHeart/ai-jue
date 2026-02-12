@@ -105,12 +105,19 @@ async function runAdapters(config: MergedConfig, outputDir: string) {
 export const handler = async (argv: Arguments) => {
   const runApply = async () => {
     logger.info(pc.bold(pc.blue(t("commands.apply.running"))));
-    try {
-      // Need to clear require cache for ai.config.js to support reloading
-      const configPath = path.join(process.cwd(), "ai.config.js");
-      delete require.cache[require.resolve(configPath)];
-    } catch (e) {
-      // Ignore if file not found or not cached
+    const configEntries = [
+      "ai.config.js",
+      "jue.config.js",
+      ".airc.js",
+      ".juerc.js",
+    ];
+    for (const entry of configEntries) {
+      try {
+        const configPath = path.join(process.cwd(), entry);
+        delete require.cache[require.resolve(configPath)];
+      } catch (e) {
+        // Ignore if file not found or not cached
+      }
     }
 
     try {
@@ -136,6 +143,14 @@ export const handler = async (argv: Arguments) => {
 
     const watchPaths = [
       path.join(process.cwd(), "ai.config.js"),
+      path.join(process.cwd(), "ai.config.json"),
+      path.join(process.cwd(), ".airc.js"),
+      path.join(process.cwd(), ".airc.json"),
+      path.join(process.cwd(), "jue.config.js"),
+      path.join(process.cwd(), "jue.config.json"),
+      path.join(process.cwd(), ".juerc.js"),
+      path.join(process.cwd(), ".juerc.json"),
+      path.join(process.cwd(), "AGENTS.md"),
       path.join(process.cwd(), ".ai"),
       path.join(process.cwd(), ".jue"),
     ];

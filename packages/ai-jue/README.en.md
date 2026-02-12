@@ -28,12 +28,14 @@ npx jue apply
 Typical outputs:
 
 - `CLAUDE.md`
+- `.cursor/rules/agents.mdc`
 - `.cursor/rules/*.mdc`
 - `.gemini/settings.json`
 - `.github/copilot-instructions.md`
 
 ## Directory & Concepts (Minimal Knowledge Principle)
 
+- Root `AGENTS.md`: auto-injected as global context when present
 - `AGENTS.md`: global system context
 - `skills/`: skill assets
 - `commands/`: command assets

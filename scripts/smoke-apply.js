@@ -37,10 +37,17 @@ function runApplySmoke(preset) {
   const requiredOutputs = [
     "CLAUDE.md",
     "GEMINI.md",
-    path.join(".cursor", "rules", "ai-jue.mdc"),
+    ".cursor/rules/agents.mdc",
     path.join(".gemini", "settings.json"),
     path.join(".github", "copilot-instructions.md"),
   ];
+
+  if (preset === "base") {
+    requiredOutputs.push(path.join(".cursor", "commands", "explain.md"));
+  }
+  if (preset === "internal") {
+    requiredOutputs.push(path.join(".cursor", "commands", "repo-governance.md"));
+  }
 
   const missing = requiredOutputs.filter((file) => !fs.existsSync(path.join(tmpDir, file)));
   if (missing.length > 0) {

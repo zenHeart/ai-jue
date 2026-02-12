@@ -3,6 +3,42 @@
 > 更新时间：2026-02-12
 > 说明：本节仅列出未完成事项；下方保留完整历史路线图（含已完成记录）。
 
+## 待审计划（本轮：工具能力映射校准）
+
+> 目标：以 `_drafts/ai-jue.md` 为映射基线，逐工具核对并修正能力转换；先完成文档与计划审查，你确认后再执行代码改造。
+
+- [x] **A0 审查门禁（先审后改）**
+  - [x] 先完成文档与计划审查，再进入实现阶段。
+  - [x] 形成“能力 -> 工具输出 -> 降级策略 -> 测试点”的统一清单并回写 docs。
+- [x] **A1 AGENTS.md 单一语义固化（跨工具）**
+  - [x] 固化规则：项目根目录 `AGENTS.md` 存在即自动注入，不新增配置负担。
+  - [x] 清理历史/错误概念残留（命名、路径、兼容叙述），避免二义性。
+- [x] **A2 Cursor 能力映射复核与收敛（P0）**
+  - [x] AGENTS/context -> `.cursor/rules/agents.mdc`（统一 mdc 路径，不引入历史产物名）。
+  - [x] `rules/*` -> `.cursor/rules/*.mdc`（frontmatter 保留 description/alwaysApply/globs）。
+  - [x] `commands/*` -> `.cursor/commands/*.md`，`skills/*` -> `.cursor/skills/*/SKILL.md`。
+  - [x] `hooks` -> `.cursor/hooks.json`，`mcp.servers` -> `.cursor/mcp.json`，`agents` -> `.cursor/agents/*.md`。
+  - [x] 回归验证：base/internal 自举 smoke + Cursor 适配器契约测试。
+- [x] **A3 Claude 能力映射补齐（P0）**
+  - [x] AGENTS/context、commands、skills、hooks、agents、mcp 的输出契约逐项核对。
+  - [x] 明确 `rules` 在 Claude 的落地策略：显式降级到 `CLAUDE.md`。
+  - [x] 补充缺失测试：rules 与 hooks 的行为断言，避免静默忽略。
+- [x] **A4 Gemini 能力映射补齐（P0）**
+  - [x] AGENTS/context -> `GEMINI.md` 注入策略核对（与 prompts 优先级一致）。
+  - [x] `commands/hooks/mcp/agents/tools.gemini` -> `.gemini/settings.json` 的映射校验。
+  - [x] 明确 `rules` 能力策略：显式降级写入 `GEMINI.md`。
+- [x] **A5 Copilot 能力映射补齐（P0）**
+  - [x] AGENTS/context、commands、skills、hooks 的注入边界核对。
+  - [x] `mcp/agents/rules` 的降级说明标准化（统一文案+行为，不夸大支持度）。
+  - [x] 文档声明与实现一致化，避免“文档支持但实现仅提示”偏差。
+- [x] **A6 统一降级策略与失败策略（P1）**
+  - [x] 以 `_drafts/ai-jue.md` 为基线，输出四工具“支持/降级/不支持”矩阵。
+  - [x] 对不支持能力统一显式降级提示策略，不允许静默吞掉能力。
+- [x] **A7 验证与门禁（P1）**
+  - [x] 新增跨适配器能力契约测试：同一输入覆盖 8 类能力并断言目标产物。
+  - [x] 扩展 smoke：base/internal 必跑 + 关键产物路径断言 + 快照回归。
+  - [x] CI 门禁收口：适配器矩阵测试、smoke、docs 一致性检查全部必过。
+
 ## 实施策略与门禁（执行前必须满足）
 
 - [x] **以终为始**：先完成用户侧使用文档与设计文档（README/docs）补充与修正。
@@ -46,7 +82,7 @@
   - [x] 验证并修复 `npx jue apply` 在四适配器目标产物上的稳定生成。
   - [x] 对齐 README 与实际产物路径命名（尤其 Cursor 相关产物），避免“文档可运行性”偏差。
   - [x] 保持双命名入口：`ai.config.*`/`.ai` 优先，`jue.config.*`/`.jue` 次优先支持。
-  - [x] Cursor 规则主产物统一为 `.cursor/rules/*.mdc`（Project Rules），移除 `.cursorrules` 输出路径。
+  - [x] Cursor 输出分层：`AGENTS/context` -> `.cursor/rules/agents.mdc`，`rules/*` -> `.cursor/rules/*.mdc`（仅规则做 mdc 转换）。
   - [x] 明确 Cursor 仅做格式转换：统一 `md + YAML frontmatter` 输入 -> 输出 `.mdc`，不重复实现规则能力逻辑。
   - [x] 修复 `apply --watch` 监听可靠性：确保 `.ai/.jue/ai.config.js/jue.config.js` 变化可稳定触发。
 - [x] **配置语义冲突止血（过渡期）**

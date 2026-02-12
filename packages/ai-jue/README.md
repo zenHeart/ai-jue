@@ -28,12 +28,14 @@ npx jue apply
 默认可生成：
 
 - `CLAUDE.md`
+- `.cursor/rules/agents.mdc`
 - `.cursor/rules/*.mdc`
 - `.gemini/settings.json`
 - `.github/copilot-instructions.md`
 
 ## 目录与概念（最小知识原则）
 
+- 项目根目录 `AGENTS.md`：存在即自动注入全局上下文
 - `AGENTS.md`：全局上下文
 - `skills/`：技能资产
 - `commands/`：命令资产

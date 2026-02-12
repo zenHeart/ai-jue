@@ -26,8 +26,11 @@ describe('adapter capability snapshot', () => {
   it('matches canonical capability output snapshot', async () => {
     const config = {
       context: { global: 'Global context for snapshot' },
-      prompts: {
-        common: { content: 'Common prompt block' },
+      rules: {
+        style: {
+          description: 'Style rule',
+          content: 'Common prompt block',
+        },
       },
       skills: {
         review: { content: 'Review skill content', description: 'Review skill' },
@@ -43,6 +46,12 @@ describe('adapter capability snapshot', () => {
           sqlite: { command: 'uvx', args: ['mcp-server-sqlite'] },
         },
       },
+      tools: {
+        claude: { permissions: { allow: ['Read'] } },
+        cursor: { temperature: 0.3 },
+        gemini: { temperature: 0.2 },
+        copilot: { codeReview: true },
+      },
       agents: {
         reviewer: { prompt: 'Review as agent', skills: ['review'] },
       },
@@ -57,9 +66,21 @@ describe('adapter capability snapshot', () => {
 
     const snapshotPayload = {
       claude: fs.readFileSync(path.join(outDir, 'CLAUDE.md'), 'utf8'),
-      cursor: fs.readFileSync(path.join(outDir, '.cursor', 'rules', 'ai-jue.mdc'), 'utf8'),
+      cursorRules: fs.readFileSync(path.join(outDir, '.cursor/rules/agents.mdc'), 'utf8'),
+      cursorRuleStyle: fs.readFileSync(path.join(outDir, '.cursor', 'rules', 'style.mdc'), 'utf8'),
+      cursorCommand: fs.readFileSync(path.join(outDir, '.cursor', 'commands', 'review.md'), 'utf8'),
+      cursorSettings: JSON.parse(
+        fs.readFileSync(path.join(outDir, '.cursor', 'settings.json'), 'utf8'),
+      ),
+      claudeSettings: JSON.parse(
+        fs.readFileSync(path.join(outDir, '.claude', 'settings.json'), 'utf8'),
+      ),
+      geminiMd: fs.readFileSync(path.join(outDir, 'GEMINI.md'), 'utf8'),
       gemini: JSON.parse(fs.readFileSync(path.join(outDir, '.gemini', 'settings.json'), 'utf8')),
       copilot: fs.readFileSync(path.join(outDir, '.github', 'copilot-instructions.md'), 'utf8'),
+      copilotSettings: JSON.parse(
+        fs.readFileSync(path.join(outDir, '.github', 'copilot-settings.json'), 'utf8'),
+      ),
     };
 
     expect(snapshotPayload).toMatchSnapshot();

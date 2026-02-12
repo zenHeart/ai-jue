@@ -35,7 +35,7 @@ Run the `apply` command to generate AI tool configuration files based on your se
 npx jue apply
 ```
 
-`ai-jue` will read `ai.config.js`, load presets, and assets from the local `.ai` directory, and generate corresponding configuration files (e.g., `CLAUDE.md`, `.cursor/rules/*.mdc`, `.gemini/settings.json`).
+`ai-jue` will read `ai.config.js`, load presets and local `.ai` assets; if root `AGENTS.md` exists, it is auto-injected as global context, then generate target files (for example `CLAUDE.md`, `.cursor/rules/agents.mdc`, `.cursor/rules/*.mdc`, `.gemini/settings.json`).
 
 ## 4. Common Commands
 

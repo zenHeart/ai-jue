@@ -20,8 +20,8 @@
 该适配器将 `ai-jue` 配置转换为 GitHub Copilot 格式，支持：
 
 - **自定义指令**：生成 `.github/copilot-instructions.md`。
-- **平滑降级 (Downgrade)**：将 Skills 和 Prompts 映射为纯文本指令。
-- **功能引导**：针对 Copilot 尚未原生支持的能力（如 MCP），提供文本形式的操作指引。
+- **平滑降级 (Downgrade)**：将 `rules/mcp/agents` 等能力显式降级为文本指令，避免静默忽略。
+- **工具配置**：`tools.copilot` -> `.github/copilot-settings.json`。
 
 ## 安装
 

@@ -20,19 +20,51 @@ describe('ai-jue-adapter-cursor', () => {
     }
   });
 
-  it('should generate .cursor/rules/ai-jue.mdc with prompts, skills, commands, and hooks', async () => {
+  it('should map AGENTS context to .cursor/rules/agents.mdc', async () => {
     const config = {
       context: {
         global: 'Global Agent Context'
-      },
-      prompts: {
-        style: { content: 'Coding Style' }
+      }
+    };
+
+    await generate(config, TEST_DIR);
+
+    const rulesPath = path.join(TEST_DIR, '.cursor/rules/agents.mdc');
+    expect(fs.existsSync(rulesPath)).toBe(true);
+    const content = fs.readFileSync(rulesPath, 'utf8');
+    expect(content).toContain('Global Agent Context');
+  });
+
+  it('should map canonical rules to .cursor/rules/*.mdc', async () => {
+    const config = {
+      rules: {
+        style: {
+          description: 'Style rule',
+          alwaysApply: true,
+          globs: ['src/**/*.ts'],
+          content: 'Use strict types'
+        }
+      }
+    };
+
+    await generate(config, TEST_DIR);
+
+    const rulesPath = path.join(TEST_DIR, '.cursor', 'rules', 'style.mdc');
+    expect(fs.existsSync(rulesPath)).toBe(true);
+    const content = fs.readFileSync(rulesPath, 'utf8');
+    expect(content).toContain('description: Style rule');
+    expect(content).toContain('alwaysApply: true');
+    expect(content).toContain('globs: ["src/**/*.ts"]');
+    expect(content).toContain('Use strict types');
+  });
+
+  it('should map commands/skills/hooks to cursor-native locations', async () => {
+    const config = {
+      commands: {
+        test: { triggers: ['/test'], prompt: 'Run tests' }
       },
       skills: {
         debug: { content: 'Debug Skill' }
-      },
-      commands: {
-        test: { triggers: ['/test'], prompt: 'Run tests' }
       },
       hooks: {
         'pre-commit': 'npm test'
@@ -40,17 +72,9 @@ describe('ai-jue-adapter-cursor', () => {
     };
 
     await generate(config, TEST_DIR);
-
-    const rulesPath = path.join(TEST_DIR, '.cursor', 'rules', 'ai-jue.mdc');
-    expect(fs.existsSync(rulesPath)).toBe(true);
-    const content = fs.readFileSync(rulesPath, 'utf8');
-
-    expect(content).toContain('Global Agent Context');
-    expect(content).toContain('Coding Style');
-    expect(content).toContain('Debug Skill');
-    expect(content).toContain('Run tests');
-    expect(content).toContain('npm test');
-    expect(content).toContain('<!-- AI-JUE:START -->');
+    expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'commands', 'test.md'))).toBe(true);
+    expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'skills', 'debug', 'SKILL.md'))).toBe(true);
+    expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'hooks.json'))).toBe(true);
   });
 
   it('should generate .cursor/mcp.json when mcp config is present', async () => {
@@ -74,19 +98,37 @@ describe('ai-jue-adapter-cursor', () => {
     expect(content.mcpServers.sqlite.command).toBe('uvx');
   });
 
-  it('should preserve user content outside of the managed block in .cursor/rules/ai-jue.mdc', async () => {
-    const rulesPath = path.join(TEST_DIR, '.cursor', 'rules', 'ai-jue.mdc');
+  it('should map tools.cursor to .cursor/settings.json', async () => {
+    await generate(
+      {
+        tools: {
+          cursor: {
+            temperature: 0.1,
+          },
+        },
+      },
+      TEST_DIR,
+    );
+
+    const settingsPath = path.join(TEST_DIR, '.cursor', 'settings.json');
+    expect(fs.existsSync(settingsPath)).toBe(true);
+    const content = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    expect(content.temperature).toBe(0.1);
+  });
+
+  it('should preserve user content outside of the managed block in .cursor/rules/agents.mdc', async () => {
+    const rulesPath = path.join(TEST_DIR, '.cursor/rules/agents.mdc');
     const userContent = 'User Custom Content';
     
     // Initial run
-    await generate({ prompts: { test: 'initial' } }, TEST_DIR);
+    await generate({ context: { global: 'initial' } }, TEST_DIR);
     
     // Simulate user appending content
     const initialContent = fs.readFileSync(rulesPath, 'utf8');
     fs.writeFileSync(rulesPath, initialContent + '\n' + userContent);
 
     // Second run
-    await generate({ prompts: { test: 'updated' } }, TEST_DIR);
+    await generate({ context: { global: 'updated' } }, TEST_DIR);
 
     const finalContent = fs.readFileSync(rulesPath, 'utf8');
     expect(finalContent).toContain('updated');

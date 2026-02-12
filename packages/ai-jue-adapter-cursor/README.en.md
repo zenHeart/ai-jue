@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Adapter for Cursor: Generating .cursor/rules and MCP configurations**
+**Adapter for Cursor: capability mapping to native Cursor artifacts**
 
 [![NPM version](https://img.shields.io/npm/v/ai-jue-adapter-cursor.svg?style=flat)](https://www.npmjs.com/package/ai-jue-adapter-cursor)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -17,11 +17,14 @@ Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
 ## Features
 
-This adapter transforms `ai-jue` configurations into Cursor-native formats, supporting:
+This adapter maps canonical `ai-jue` capabilities into Cursor-native outputs:
 
-- **Project Rules**: Generating `.cursor/rules/*.mdc` files from prompts and skills.
-- **MCP Servers**: Mapping `mcp` configurations to `.cursor/mcp.json`.
-- **Command Injection**: Injecting standardized `commands` into rule descriptions.
+- **Global Context**: `AGENTS.md/context.global` -> `.cursor/rules/agents.mdc`
+- **Project Rules**: `rules/*` -> `.cursor/rules/*.mdc`
+- **Commands**: `commands/*` -> `.cursor/commands/*.md`
+- **Skills**: `skills/*` -> `.cursor/skills/*/SKILL.md`
+- **Hooks**: `hooks/*` -> `.cursor/hooks.json`
+- **MCP Servers**: `mcp.servers` -> `.cursor/mcp.json`
 
 ## Installation
 

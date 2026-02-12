@@ -28,6 +28,9 @@ describe('ai-jue-adapter-copilot', () => {
       prompts: {
         style: { content: 'Code Style' }
       },
+      rules: {
+        security: { content: 'Never commit secrets' }
+      },
       skills: {
         refactor: { content: 'Refactor Skill' }
       },
@@ -46,6 +49,11 @@ describe('ai-jue-adapter-copilot', () => {
         reviewer: {
           prompt: 'Review code'
         }
+      },
+      tools: {
+        copilot: {
+          codeReview: true
+        }
       }
     };
 
@@ -57,6 +65,8 @@ describe('ai-jue-adapter-copilot', () => {
 
     expect(content).toContain('Core Instructions');
     expect(content).toContain('Code Style');
+    expect(content).toContain('Rules (Degraded)');
+    expect(content).toContain('Never commit secrets');
     expect(content).toContain('Refactor Skill');
     expect(content).toContain('Fix bugs');
     expect(content).toContain('Fix it');
@@ -65,5 +75,10 @@ describe('ai-jue-adapter-copilot', () => {
     expect(content).toContain('pre-commit');
     expect(content).toContain('npm test');
     expect(content).toContain('<!-- AI-JUE:START -->');
+
+    const settings = JSON.parse(
+      fs.readFileSync(path.join(TEST_DIR, '.github', 'copilot-settings.json'), 'utf8'),
+    );
+    expect(settings.codeReview).toBe(true);
   });
 });

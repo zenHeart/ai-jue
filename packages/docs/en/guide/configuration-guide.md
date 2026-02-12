@@ -71,8 +71,9 @@ When you run `jue apply`, core processing order is:
 
 1. Load assets from configured presets
 2. Auto-scan local `.ai/` (if absent, scan `.jue/`)
-3. Merge files referenced by `extends`
-4. Apply object overrides from `ai.config.js`
+3. If root `AGENTS.md` exists, auto-inject it as global context
+4. Merge files referenced by `extends`
+5. Apply object overrides from `ai.config.js`
 
 Implication:
 - **Object config is not mandatory** for core usage
@@ -82,6 +83,9 @@ Implication:
 ### 3.2 Directory-to-Capability Mapping
 
 ```text
+project root/
+└── AGENTS.md      -> global context (auto-injected, zero extra config)
+
 .ai/
 ├── AGENTS.md      -> global context
 ├── rules/         -> rules

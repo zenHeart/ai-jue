@@ -55,7 +55,7 @@ describe('jue-preset-base integration', () => {
     ]);
 
     expect(fs.existsSync(path.join(outDir, 'CLAUDE.md'))).toBe(true);
-    expect(fs.existsSync(path.join(outDir, '.cursor', 'rules', 'ai-jue.mdc'))).toBe(true);
+    expect(fs.existsSync(path.join(outDir, '.cursor/rules/agents.mdc'))).toBe(true);
     expect(fs.existsSync(path.join(outDir, 'GEMINI.md'))).toBe(true);
     expect(fs.existsSync(path.join(outDir, '.github', 'copilot-instructions.md'))).toBe(
       true,

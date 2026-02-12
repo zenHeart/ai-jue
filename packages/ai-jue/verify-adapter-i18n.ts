@@ -8,8 +8,10 @@ const OUTPUT_DIR_EN = path.join(__dirname, "test-output", "en");
 
 const MOCK_CONFIG = {
   language: "zh",
+  context: {
+    global: "Global Context Content",
+  },
   prompts: {
-    agents: { content: "Global Context Content" },
     claude: { content: "Claude Specific Content" },
   },
   skills: {
@@ -51,11 +53,8 @@ async function testAdapterI18n() {
     "自定义指令",
     "工作流钩子",
   ]);
-  verifyFileContent(path.join(OUTPUT_DIR_ZH, ".cursorrules"), [
-    "全局上下文与智能体",
-    "技能 (Skills)",
-    "指令 (Commands)",
-    "工作流钩子",
+  verifyFileContent(path.join(OUTPUT_DIR_ZH, ".cursor/rules/agents.mdc"), [
+    "Global Context Content",
   ]);
 
   // 2. Test English Output
@@ -69,11 +68,8 @@ async function testAdapterI18n() {
     "Custom Commands",
     "Workflow Hooks",
   ]);
-  verifyFileContent(path.join(OUTPUT_DIR_EN, ".cursorrules"), [
-    "Global Context & Agents",
-    "Skills",
-    "Commands",
-    "Workflow Hooks",
+  verifyFileContent(path.join(OUTPUT_DIR_EN, ".cursor/rules/agents.mdc"), [
+    "Global Context Content",
   ]);
 
   console.log("✅ All Adapter I18N verifications passed!");

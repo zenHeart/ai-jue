@@ -109,7 +109,8 @@ npx jue apply
 
 ```
 ✓ CLAUDE.md                          — Claude Code
-✓ .cursor/rules/*.mdc                — Cursor (Project Rules)
+✓ .cursor/rules/agents.mdc                       — Cursor (AGENTS 上下文)
+✓ .cursor/rules/*.mdc                — Cursor (Rules 转换产物，存在 rules/ 时生成)
 ✓ .gemini/settings.json              — Gemini CLI
 ✓ .github/copilot-instructions.md    — GitHub Copilot
 ```
@@ -122,6 +123,7 @@ npx jue apply
 
 `ai-jue` 的核心设计原则是：尽量复用主流 AI 工具已有习惯，不引入额外心智负担。能力目录采用如下约定：
 
+- 项目根目录 `AGENTS.md`：存在即自动注入全局上下文（零额外配置）
 - `skills/`：技能资产（主流规范）
 - `AGENTS.md`：系统上下文与强约束（主流规范）
 - `commands/`：自定义命令（主流实践）

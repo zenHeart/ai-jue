@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**Cursor 适配器：生成 .cursor/rules 与 MCP 配置**
+**Cursor 适配器：按 Cursor 机制生成规则、命令、技能与配置**
 
 [![NPM version](https://img.shields.io/npm/v/ai-jue-adapter-cursor.svg?style=flat)](https://www.npmjs.com/package/ai-jue-adapter-cursor)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -17,11 +17,14 @@
 
 ## 功能描述
 
-该适配器将 `ai-jue` 配置转换为 Cursor 原生格式，支持：
+该适配器将 `ai-jue` 规范能力转换为 Cursor 原生输出，支持：
 
-- **项目规则 (Project Rules)**：从 Prompts 和 Skills 生成 `.cursor/rules/*.mdc` 文件。
-- **MCP 服务**：将 `mcp` 配置映射到 `.cursor/mcp.json`。
-- **指令注入**：将标准化 `commands` 注入规则描述，引导 AI 调用。
+- **全局上下文**：`AGENTS.md/context.global` -> `.cursor/rules/agents.mdc`
+- **项目规则**：`rules/*` -> `.cursor/rules/*.mdc`
+- **命令**：`commands/*` -> `.cursor/commands/*.md`
+- **技能**：`skills/*` -> `.cursor/skills/*/SKILL.md`
+- **钩子**：`hooks/*` -> `.cursor/hooks.json`
+- **MCP 服务**：`mcp.servers` -> `.cursor/mcp.json`
 
 ## 安装
 

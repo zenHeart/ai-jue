@@ -1,5 +1,4 @@
 import path from "path";
-import fs from "fs";
 import { generateMarkdownFile, generateJsonFile } from "ai-jue-core";
 
 const LOCALES: Record<string, any> = {
@@ -39,6 +38,18 @@ export async function generate(config: any, outputDir: string): Promise<void> {
   // 2. Add specific Claude prompt
   if (config.prompts?.claude?.content) {
     content += `\n${config.prompts.claude.content}\n\n`;
+  }
+
+  // 2.1 Degrade canonical rules into CLAUDE.md when no dedicated rules directory is emitted
+  if (config.rules && typeof config.rules === "object") {
+    const rulesTitle = lang === "zh" ? "规则 (Rules)" : "Rules";
+    content += `## ${rulesTitle}\n\n`;
+    for (const [key, value] of Object.entries(config.rules)) {
+      const rule = value as any;
+      const ruleContent = typeof rule === "string" ? rule : rule.content || "";
+      if (!String(ruleContent).trim()) continue;
+      content += `### ${key}\n${String(ruleContent).trim()}\n\n`;
+    }
   }
 
   // 3. Convert Skills to Slash Commands
@@ -104,5 +115,13 @@ export async function generate(config: any, outputDir: string): Promise<void> {
       mcpServers: config.mcp.servers,
     };
     generateJsonFile(path.join(outputDir, ".mcp.json"), mcpConfig);
+  }
+
+  // 7. tools.claude passthrough -> .claude/settings.json
+  if (config.tools?.claude && typeof config.tools.claude === "object") {
+    generateJsonFile(
+      path.join(outputDir, ".claude", "settings.json"),
+      config.tools.claude,
+    );
   }
 }

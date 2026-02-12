@@ -4,15 +4,32 @@ import { generateMarkdownFile, generateJsonFile, deepMerge } from "ai-jue-core";
 export async function generate(config: any, outputDir: string): Promise<void> {
   const promptEntries = config.prompts ? Object.values(config.prompts) : [];
   const firstPrompt = promptEntries.length > 0 ? (promptEntries[0] as any) : null;
-  // Generate GEMINI.md
-  const prompt =
-    config.prompts?.gemini ||
-    (config.context?.global ? { content: config.context.global } : null) ||
-    firstPrompt;
-  if (prompt && prompt.content) {
-    // Changed from prompt.prompt
+  // Generate GEMINI.md from prompt/context and degraded rules
+  const prompt = config.prompts?.gemini || firstPrompt;
+  const sections: string[] = [];
+  if (prompt?.content) {
+    sections.push(String(prompt.content).trim());
+  } else if (config.context?.global) {
+    sections.push(String(config.context.global).trim());
+  }
+
+  if (config.rules && typeof config.rules === "object") {
+    const rulesLines: string[] = ["## Rules (Degraded)"];
+    for (const [key, value] of Object.entries(config.rules)) {
+      const rule = value as any;
+      const body = typeof rule === "string" ? rule : rule.content || "";
+      if (!String(body).trim()) continue;
+      rulesLines.push(`### ${key}`);
+      rulesLines.push(String(body).trim());
+    }
+    if (rulesLines.length > 1) {
+      sections.push(rulesLines.join("\n\n"));
+    }
+  }
+
+  if (sections.length > 0) {
     const mdFilePath = path.join(outputDir, "GEMINI.md");
-    generateMarkdownFile(mdFilePath, prompt.content);
+    generateMarkdownFile(mdFilePath, sections.join("\n\n"));
   }
 
   // Generate .gemini/settings.json
