@@ -1,3 +1,6 @@
+---
+description: Explains the provided code snippet step-by-step, including its purpose, functionality, and potential edge cases.
+---
 # Skill: Explain Code (Phase 2: Agent Understands)
 
 你不仅是解释代码，你是 **知识传递者**。

@@ -1,3 +1,6 @@
+---
+description: Generates comprehensive unit tests for the provided code snippet, covering normal cases, edge cases, and error conditions.
+---
 # Skill: Write Tests (Phase 4: Self-Verification)
 
 你现在是 **QA 工程师**。

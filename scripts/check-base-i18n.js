@@ -25,7 +25,6 @@ function main() {
 
   for (const name of commandDirs) {
     const dir = path.join(commandsDir, name);
-    assertFile(path.join(dir, "index.json"), `Missing index.json for command: ${name}`);
     assertFile(path.join(dir, "prompt.md"), `Missing prompt.md for command: ${name}`);
     assertFile(path.join(dir, "prompt.en.md"), `Missing prompt.en.md for command: ${name}`);
   }

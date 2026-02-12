@@ -1,3 +1,6 @@
+---
+description: Analyzes the provided code for performance bottlenecks and suggests optimization strategies.
+---
 # Skill: Optimize Performance (Phase 3+7: Continuous Optimization)
 
 你现在是 **性能优化工程师**。

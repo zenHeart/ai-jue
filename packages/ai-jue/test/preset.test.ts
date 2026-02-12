@@ -17,15 +17,17 @@ describe('loadAssetsFromDir', () => {
     expect(config.context?.global).toContain('Global Context');
   });
 
-  it('loads commands from commands/*/{index.json,prompt.md}', async () => {
+  it('loads commands from commands/*/prompt.md frontmatter', async () => {
     const dir = makeTempDir();
     const commandDir = path.join(dir, 'commands', 'review');
     fs.mkdirSync(commandDir, { recursive: true });
     fs.writeFileSync(
-      path.join(commandDir, 'index.json'),
-      JSON.stringify({ description: 'Review code' }),
+      path.join(commandDir, 'prompt.md'),
+      `---
+description: Review code
+---
+Review prompt`,
     );
-    fs.writeFileSync(path.join(commandDir, 'prompt.md'), 'Review prompt');
 
     const config = await loadAssetsFromDir(dir, 'en');
     expect(config.commands?.review?.description).toBe('Review code');
@@ -36,10 +38,6 @@ describe('loadAssetsFromDir', () => {
     const dir = makeTempDir();
     const commandDir = path.join(dir, 'commands', 'refactor');
     fs.mkdirSync(commandDir, { recursive: true });
-    fs.writeFileSync(
-      path.join(commandDir, 'index.json'),
-      JSON.stringify({ description: 'Old description', triggers: ['/old'] }),
-    );
     fs.writeFileSync(
       path.join(commandDir, 'prompt.md'),
       `---

@@ -128,14 +128,12 @@ async function loadCommands(config: MergedConfig, dirPath: string, userLanguage?
       .map(async (entry) => {
         const commandName = entry.name;
         const commandDir = path.join(dirPath, commandName);
-        const meta = await readJsonIfExists(path.join(commandDir, 'index.json'));
         const promptPath = findLocalizedFile(commandDir, ['prompt.md'], userLanguage);
         if (!promptPath) return;
 
         const rawPrompt = await fs.promises.readFile(promptPath, 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawPrompt);
         commands[commandName] = {
-          ...meta,
           ...parsed.attributes,
           prompt: parsed.content,
           content: parsed.content,

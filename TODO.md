@@ -39,6 +39,53 @@
   - [x] 扩展 smoke：base/internal 必跑 + 关键产物路径断言 + 快照回归。
   - [x] CI 门禁收口：适配器矩阵测试、smoke、docs 一致性检查全部必过。
 
+## 待执行计划（本轮：base/internal 闭环）
+
+> 目标：先解决“最核心痛点能力”，不追求大而全；先形成可持续迭代的最小闭环，再逐步扩展。
+> 执行门禁：先完成本节文档与计划，待你审核通过后再进入实现。
+
+- [x] **B0 场景优先级冻结（先定义边界）**
+  - [x] 明确本轮只覆盖最核心场景：用户意图识别、新项目启动、已有项目开发与重构、仓库级治理与扩展开发。
+  - [x] 明确“不做项”清单（暂不覆盖的次要能力），避免范围膨胀。
+  - [x] 固化用户命令接口为 7 个核心命令：`jue:impl`、`jue:fix`、`jue:rev`、`jue:ref`、`jue:exp`、`jue:test`、`jue:doc`。
+- [x] **B1 `jue-preset-base` 用户场景闭环（文档先行）**
+  - [x] 重构 `REPO_ROOT/packages/jue-preset-base/README.md`：按“用户场景”组织而不是仅能力罗列。
+  - [x] 场景 1：意图识别（需求澄清/约束确认/边界澄清）的使用路径与验收标准。
+  - [x] 场景 2：新项目启动（初始化、规则落地、基础命令）的最小操作路径。
+  - [x] 场景 3：已有项目开发与重构（变更前分析 -> 实施 -> 验证 -> 复盘）的标准流程。
+  - [x] 在 README 中明确命令与场景映射：`jue:impl`、`jue:fix`、`jue:rev`、`jue:ref`、`jue:exp`、`jue:test`、`jue:doc`。
+  - [x] 联网核对主流 Agentic 工作流资料，补齐命令集合设计依据与参考链接。
+- [x] **B1.5 `jue-preset-base` 命令资产落地（实现准备）**
+  - [x] 明确用户接口与现有资产目录映射：`jue:exp -> commands/explain`、`jue:ref -> commands/refactor`、`jue:rev -> commands/review`、`jue:test -> commands/test`、`jue:doc -> commands/doc`。
+  - [x] 补齐缺口命令资产：新增 `jue:impl`、`jue:fix` 对应目录与 prompt（中英文）。
+  - [x] 明确本轮取舍：`optimize/security` 作为后续扩展能力，不作为当前 7 个核心用户接口暴露项。
+- [x] **B1.6 Conventional Commits 对齐层（不增加用户负担）**
+  - [x] 保持用户接口不变：`jue:impl/fix/rev/ref/exp/test/doc`，不强制改名为 commit type。
+  - [x] 增加映射规则：`impl->feat`、`fix->fix`、`ref->refactor`、`test->test`、`doc->docs`、`rev->chore(有改动时)`、`exp->docs(产出文档时)`。
+  - [x] 约定命令输出包含建议提交格式：`<type>(<scope>): <description>`，破坏性变更用 `!` / `BREAKING CHANGE:`。
+- [x] **B1.7 Commands frontmatter 单一协议收敛（移除 `index.json`）**
+  - [x] `commands/*` 元数据统一收敛到 `prompt.md/prompt.en.md` 顶部 YAML frontmatter（`description`、`triggers`）。
+  - [x] 加载器去除 `commands/*/index.json` 依赖，仅消费 Markdown + frontmatter。
+  - [x] 更新脚手架、测试与校验脚本，取消对 `commands/*/index.json` 的必需约束。
+  - [x] 更新 base/spec/TODO 文档协议描述，确保“用户文档-设计文档-实现”一致。
+- [ ] **B2 `jue-preset-internal` 闭环文档补齐（文档先行）**
+  - [ ] 新增 `REPO_ROOT/packages/jue-preset-internal/README.md`，定义 internal 的目标、边界、使用方式。
+  - [ ] 在 internal README 明确“在 base 之上”补充能力：adapter 开发、preset 开发、能力扩展、仓库治理。
+  - [ ] 清理 `REPO_ROOT/packages/jue-preset-internal/AGENTS.md` 历史概念，统一到当前规范术语与架构。
+  - [ ] 给出“吃自己狗粮”操作手册：本仓如何用 internal 驱动持续迭代。
+- [ ] **B3 internal 最小能力面定义（先定义后实现）**
+  - [ ] 固化 internal 最小资产集合（在现有 AGENTS + commands 基础上，明确是否补 rules/hooks/tools 的最小样例）。
+  - [ ] 定义 internal 对应的核心痛点清单：适配器新增、preset 扩展、文档一致性、回归门禁。
+  - [ ] 输出“能力 -> 资产路径 -> 预期产物 -> 验证点”映射表。
+- [ ] **B4 实施阶段计划（待审核后执行）**
+  - [ ] base/internal 文档审核通过后，再进入最小实现改造。
+  - [ ] 实施顺序：先 internal 自举能力，再 base 场景落地，再统一验证。
+  - [ ] 每一步都要求可独立验证与可回滚。
+- [ ] **B5 闭环验收门禁（待审核后执行）**
+  - [ ] base/internal 的场景化 smoke 验证（不仅校验文件存在，还校验场景行为）。
+  - [ ] 适配器矩阵回归 + docs 一致性回归。
+  - [ ] 通过后再进入下一轮“能力扩展”迭代。
+
 ## 实施策略与门禁（执行前必须满足）
 
 - [x] **以终为始**：先完成用户侧使用文档与设计文档（README/docs）补充与修正。
@@ -89,7 +136,7 @@
   - [x] 明确并固化：仅使用规范字段作为设计与实现输入。
   - [x] 统一单一规范输入：`AGENTS.md`（全局上下文）与 `agents`（代理能力），禁止双轨语义。
   - [x] `validate` 增加结构性校验：检测配置冲突与无效组合并直接报错。
-- [x] 修复 `jue-preset-base` 资产加载协议：让 `commands/*/{index.json,prompt.md}` 与加载器协议一致。
+- [x] 修复 `jue-preset-base` 资产加载协议：让 `commands/*/{prompt.md,prompt.en.md}`（frontmatter 承载元数据）与加载器协议一致。
 - [x] 修复 `jue-preset-base` 发布元数据：`package.json.files` 与真实目录结构一致。
 - [x] **`jue-preset-internal` 自举可运行修复**
   - [x] 补齐项目自举入口（仓库自身可通过 preset 跑通 `jue apply` 的最小配置）。
@@ -130,7 +177,7 @@
 
 - [x] **`jue-preset-base` 规范化文档任务（来自 `_drafts/preset-base.md`）**
   - [x] 在 base 规范文档中明确：`AGENTS.md` 是全局元规则入口，覆盖 Phase 1-5。
-  - [x] 在 base 文档中定义命令能力与 SDLC 阶段映射：`/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`。
+  - [x] 在 base 文档中定义命令能力与 SDLC 阶段映射（历史资产层：`explain/refactor/optimize/test/doc/review/security`）。
   - [x] 补齐中英文文档对齐要求：`AGENTS.md` / `AGENTS.en.md` 语义一致。
   - [x] 明确目录协议：统一使用当前 `commands/*` 结构。
   - [x] 统一“Review 零修改”目标表述：作为 base 的质量目标，不写成当前实现事实。
@@ -164,7 +211,7 @@
 - [x] **`jue-preset-base` 落地任务（来自 `_drafts/preset-base.md`）**
   - [x] 将 base 的全局元规则稳定落地到 `AGENTS.md` 与 `AGENTS.en.md`，并由加载器注入统一 `context.global`。
   - [x] 校正 base 命令资产结构与加载器协议一致（避免“有内容但不生效”）。
-  - [x] 校验命令集合与文档一致（含 `/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`）。
+  - [x] 校验命令集合与文档一致（历史资产层：`explain/refactor/optimize/test/doc/review/security`）。
   - [x] 为 base 增加专项集成测试：验证命令与 AGENTS 可被四个适配器消费。
   - [x] 增加双语一致性检查：命令与 AGENTS 的中英文版本结构和语义一致。
 

@@ -1,3 +1,6 @@
+---
+description: Performs a comprehensive code review focusing on logic, maintainability, performance, security, and testability.
+---
 # Skill: Code Review (Phase 5: Human Review Simulation)
 
 You are now the **Principal Engineer** of the team.

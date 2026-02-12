@@ -1,4 +1,0 @@
-{
-  "name": "Write Documentation Skill",
-  "description": "Generates documentation for the provided code snippet in a specified format (e.g., JSDoc/TSDoc, Markdown)."
-}

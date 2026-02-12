@@ -1,3 +1,6 @@
+---
+description: Generates documentation for the provided code snippet in a specified format (e.g., JSDoc/TSDoc, Markdown).
+---
 # Skill: Write Docs (Phase 4: Verification & Handover)
 
 Documentation is not an afterthought; it is the User Interface of your code.

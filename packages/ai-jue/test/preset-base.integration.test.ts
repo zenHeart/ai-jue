@@ -8,14 +8,14 @@ import { generate as generateCursor } from '../../ai-jue-adapter-cursor/src/inde
 import { generate as generateGemini } from '../../ai-jue-adapter-gemini/src/index';
 import { generate as generateCopilot } from '../../ai-jue-adapter-copilot/src/index';
 
-const REQUIRED_COMMANDS = [
+const CORE_COMMANDS = [
+  'impl',
+  'fix',
   'explain',
   'refactor',
-  'optimize',
+  'review',
   'test',
   'doc',
-  'review',
-  'security',
 ];
 
 describe('jue-preset-base integration', () => {
@@ -38,7 +38,7 @@ describe('jue-preset-base integration', () => {
     const config = await resolveFinalConfig({ preset: 'base', language: 'en' } as any);
 
     expect(config.context?.global).toBeTruthy();
-    for (const command of REQUIRED_COMMANDS) {
+    for (const command of CORE_COMMANDS) {
       expect(config.commands?.[command]).toBeDefined();
       expect(config.commands?.[command]?.prompt).toBeTruthy();
     }
@@ -77,7 +77,6 @@ describe('jue-preset-base integration', () => {
       const commandDir = path.join(commandsDir, name);
       expect(fs.existsSync(path.join(commandDir, 'prompt.md'))).toBe(true);
       expect(fs.existsSync(path.join(commandDir, 'prompt.en.md'))).toBe(true);
-      expect(fs.existsSync(path.join(commandDir, 'index.json'))).toBe(true);
     }
   });
 });

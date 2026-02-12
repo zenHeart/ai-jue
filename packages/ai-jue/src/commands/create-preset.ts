@@ -42,18 +42,11 @@ export const handler = async (argv: Arguments) => {
   const sampleCommandDir = path.join(targetDir, "commands", "example");
   fs.mkdirSync(sampleCommandDir);
   fs.writeFileSync(
-    path.join(sampleCommandDir, "index.json"),
-    JSON.stringify(
-      {
-        description: "Example command",
-      },
-      null,
-      2,
-    ),
-  );
-  fs.writeFileSync(
     path.join(sampleCommandDir, "prompt.md"),
-    "Run the example command workflow.",
+    `---
+description: Example command
+---
+Run the example command workflow.`,
   );
 
   const packageJson = {

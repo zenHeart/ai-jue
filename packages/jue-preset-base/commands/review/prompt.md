@@ -1,3 +1,6 @@
+---
+description: Performs a comprehensive code review focusing on logic, maintainability, performance, security, and testability.
+---
 # Skill: Code Review (Phase 5: Human Review Simulation)
 
 你现在是团队中的 **Principal Engineer**。

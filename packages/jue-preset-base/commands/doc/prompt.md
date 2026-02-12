@@ -1,3 +1,6 @@
+---
+description: Generates documentation for the provided code snippet in a specified format (e.g., JSDoc/TSDoc, Markdown).
+---
 # Skill: Write Docs (Phase 4: Verification & Handover)
 
 文档不是附属品，它是代码的用户界面。

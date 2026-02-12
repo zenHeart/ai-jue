@@ -1,3 +1,6 @@
+---
+description: Generates comprehensive unit tests for the provided code snippet, covering normal cases, edge cases, and error conditions.
+---
 # Skill: Write Tests (Phase 4: Self-Verification)
 
 You are now a **QA Engineer**.

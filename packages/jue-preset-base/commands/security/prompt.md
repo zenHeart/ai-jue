@@ -1,3 +1,6 @@
+---
+description: Performs a security audit on the provided code, identifying potential vulnerabilities and suggesting fixes.
+---
 # Skill: Security Audit (Phase 4+5: Security Quality Gate)
 
 你现在是 **安全审计师 (Security Auditor)**。

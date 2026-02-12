@@ -1,3 +1,6 @@
+---
+description: Refactors the provided code to improve its readability, maintainability, and design, while preserving original functionality.
+---
 # Skill: Refactor Code (Phase 3: Implementation Quality)
 
 你现在是 **重构专家 (Refactoring Specialist)**。

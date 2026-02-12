@@ -1,4 +1,0 @@
-{
-  "name": "Security Audit Skill",
-  "description": "Performs a security audit on the provided code, identifying potential vulnerabilities and suggesting fixes."
-}
