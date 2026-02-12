@@ -1,6 +1,6 @@
 # `ai.config.js` Configuration Guide
 
-`ai.config.js` is the unified entry for `ai-jue`. The design goal is minimal cognitive load: users declare intent once, and the system auto-discovers assets and performs adapter conversions.
+`ai.config.js` is the unified entry for `ai-jue` (and `jue.config.js` is also supported; `ai.config.js` has priority). The design goal is minimal cognitive load: users declare intent once, and the system auto-discovers assets and performs adapter conversions.
 
 ## 1. Minimal Working Config
 
@@ -42,7 +42,7 @@ export default {
     reviewer: {
       description: 'Focused reviewer agent',
       prompt: 'You are a strict code review agent',
-      tools: ['git', 'test']
+      skills: ['review']
     }
   },
 
@@ -70,7 +70,7 @@ export default {
 When you run `jue apply`, core processing order is:
 
 1. Load assets from configured presets
-2. Auto-scan local `.ai/`
+2. Auto-scan local `.ai/` (if absent, scan `.jue/`)
 3. Merge files referenced by `extends`
 4. Apply object overrides from `ai.config.js`
 

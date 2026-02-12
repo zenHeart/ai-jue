@@ -83,6 +83,10 @@ const explorer = cosmiconfig('ai', {
     'ai.config.json',
     '.airc.js',
     '.airc.json',
+    'jue.config.js',
+    'jue.config.json',
+    '.juerc.js',
+    '.juerc.json',
     'package.json'
   ],
 });

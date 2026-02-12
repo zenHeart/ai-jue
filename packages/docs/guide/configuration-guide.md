@@ -1,6 +1,6 @@
 # `ai.config.js` 配置指南
 
-`ai.config.js` 是 `ai-jue` 的统一入口配置。核心目标是：用户用最少概念完成配置，系统自动完成目录发现、资产挂载和适配转换。
+`ai.config.js` 是 `ai-jue` 的统一入口配置（同样支持 `jue.config.js`，优先读取 `ai.config.js`）。核心目标是：用户用最少概念完成配置，系统自动完成目录发现、资产挂载和适配转换。
 
 ## 1. 最小可运行配置
 
@@ -42,7 +42,7 @@ export default {
     reviewer: {
       description: '专注审查',
       prompt: '你是严格的代码审查代理',
-      tools: ['git', 'test']
+      skills: ['review']
     }
   },
 
@@ -70,7 +70,7 @@ export default {
 运行 `jue apply` 时，系统会按顺序自动处理：
 
 1. 读取 `preset/presets` 指向的预设资产
-2. 自动扫描本地 `.ai/`
+2. 自动扫描本地 `.ai/`（若不存在则扫描 `.jue/`）
 3. 合并 `extends` 显式引用文件
 4. 最后叠加 `ai.config.js` 里的对象配置
 

@@ -45,9 +45,10 @@
 - [x] **Quick Start 主路径修复（对齐 README 最小承诺）**
   - [x] 验证并修复 `npx jue apply` 在四适配器目标产物上的稳定生成。
   - [x] 对齐 README 与实际产物路径命名（尤其 Cursor 相关产物），避免“文档可运行性”偏差。
+  - [x] 保持双命名入口：`ai.config.*`/`.ai` 优先，`jue.config.*`/`.jue` 次优先支持。
   - [x] Cursor 规则主产物统一为 `.cursor/rules/*.mdc`（Project Rules），移除 `.cursorrules` 输出路径。
   - [x] 明确 Cursor 仅做格式转换：统一 `md + YAML frontmatter` 输入 -> 输出 `.mdc`，不重复实现规则能力逻辑。
-  - [x] 修复 `apply --watch` 监听可靠性：确保 `.ai/ai.config.js` 变化可稳定触发。
+  - [x] 修复 `apply --watch` 监听可靠性：确保 `.ai/.jue/ai.config.js/jue.config.js` 变化可稳定触发。
 - [x] **配置语义冲突止血（过渡期）**
   - [x] 明确并固化：仅使用规范字段作为设计与实现输入。
   - [x] 统一单一规范输入：`AGENTS.md`（全局上下文）与 `agents`（代理能力），禁止双轨语义。
@@ -113,7 +114,7 @@
   - [x] 适配器只消费规范模型。
   - [x] 错误处理：对冲突字段与歧义输入给出显式告警或失败策略（可配置）。
 - [x] 增强 `validate` 语义校验：冲突字段、弃用字段、无效组合。
-- [x] 剔除旧概念：`META.json`、`.jue`、`subAgents`、`agents.tools`，统一到规范目录与字段。
+- [x] 剔除旧概念：`META.json`、`subAgents`、`agents.tools`，统一到规范目录与字段。
 - [ ] 适配器按“最小知识原则”落地：优先复用目标工具原生概念，不新增用户心智负担。
 - [x] 建立适配器契约测试矩阵：同一输入在 Claude/Cursor/Gemini/Copilot 产出一致可预期。
 

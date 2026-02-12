@@ -137,6 +137,7 @@ export const handler = async (argv: Arguments) => {
     const watchPaths = [
       path.join(process.cwd(), "ai.config.js"),
       path.join(process.cwd(), ".ai"),
+      path.join(process.cwd(), ".jue"),
     ];
 
     const watcher = chokidar.watch(watchPaths, {

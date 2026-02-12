@@ -43,9 +43,13 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
     }
 
     const localAiDir = path.join(process.cwd(), '.ai');
+    const localJueDir = path.join(process.cwd(), '.jue');
 
     if (fs.existsSync(localAiDir)) {
       const localAssets = await loadAssetsFromDir(localAiDir, userConfig.language);
+      finalConfig = deepMerge(finalConfig, localAssets);
+    } else if (fs.existsSync(localJueDir)) {
+      const localAssets = await loadAssetsFromDir(localJueDir, userConfig.language);
       finalConfig = deepMerge(finalConfig, localAssets);
     }
 
