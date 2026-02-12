@@ -20,10 +20,21 @@ const resources = {
           running: "\n🚀 Running apply command...",
           finding_adapters: "Finding adapters...",
           no_adapters: "No adapters found. No files will be generated.",
+          no_adapter_detected:
+            "No adapter footprint detected in current project.",
           no_adapter_selected:
-            "No adapters selected and no adapter footprint detected. Use --adapter to choose adapters, or --all/-a to run all.",
+            "No adapters selected. Use --adapter to choose adapters, or --all/-a to run all.",
           auto_detected_adapters:
             "No explicit adapter selected. Auto-detected {{count}} adapter(s): {{names}}",
+          manual_selected_adapters:
+            "Manually selected {{count}} adapter(s): {{names}}",
+          manual_selection_intro:
+            "No local tool footprint found. Please select adapters to run:",
+          manual_selection_hint:
+            "Enter numbers or adapter names separated by commas (for example: 1,3 or cursor,gemini). Enter \"all\" to select all.",
+          manual_selection_prompt: "Adapter selection>",
+          manual_selection_unavailable:
+            "Interactive adapter selection is unavailable in non-interactive mode.",
           found_adapters: "Found {{count}} adapter(s): {{names}}",
           unknown_adapters:
             "Unknown adapter(s): {{unknown}}. Available adapters: {{available}}",
@@ -98,10 +109,21 @@ const resources = {
           running: "\n🚀 正在运行 apply 命令...",
           finding_adapters: "正在查找适配器...",
           no_adapters: "未找到适配器。将不会生成任何文件。",
+          no_adapter_detected:
+            "当前项目未检测到适配器环境痕迹。",
           no_adapter_selected:
-            "未选择适配器且未检测到适配器痕迹。请使用 --adapter 指定，或使用 --all/-a 执行全部。",
+            "未选择适配器。请使用 --adapter 指定，或使用 --all/-a 执行全部。",
           auto_detected_adapters:
             "未显式指定适配器，已自动识别 {{count}} 个适配器: {{names}}",
+          manual_selected_adapters:
+            "已手动选择 {{count}} 个适配器: {{names}}",
+          manual_selection_intro:
+            "未发现本地工具环境痕迹，请手动选择要执行的适配器：",
+          manual_selection_hint:
+            "请输入编号或适配器名称，多个用逗号分隔（例如：1,3 或 cursor,gemini）。输入 all 表示全部。",
+          manual_selection_prompt: "适配器选择>",
+          manual_selection_unavailable:
+            "当前为非交互模式，无法手动选择适配器。",
           found_adapters: "找到 {{count}} 个适配器: {{names}}",
           unknown_adapters:
             "存在未知适配器: {{unknown}}。可用适配器: {{available}}",

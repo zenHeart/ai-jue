@@ -70,6 +70,7 @@ npx jue create-preset <name>
 ## apply 适配器选择规则
 
 - `jue apply`：自动识别当前目录中的工具痕迹，执行匹配适配器
+- 若未检测到任何工具痕迹，进入交互式手动选择适配器
 - `jue apply --adapter ...`：只执行显式指定的适配器
 - `jue apply -a` / `jue apply --all`：执行全部已发现适配器
 - 当未传参且未识别到工具痕迹时，不会盲目执行全部适配器，会提示用户显式选择

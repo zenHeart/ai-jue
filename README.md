@@ -15,7 +15,7 @@
 [**📖 为什么叫 ai-jue (AI 诀)？**](#为什么叫-ai-jue-ai-诀)
 
 ```bash
-npm install -D ai-jue jue-preset-react
+npm install -D ai-jue jue-preset-base
 npx jue apply
 ```
 

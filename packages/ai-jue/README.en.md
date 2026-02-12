@@ -70,6 +70,7 @@ npx jue create-preset <name>
 ## Adapter Selection Rules for `apply`
 
 - `jue apply`: auto-detect adapters from tool footprints in the current project
+- If no footprint is detected, it enters interactive adapter selection
 - `jue apply --adapter ...`: run only explicitly selected adapters
 - `jue apply -a` / `jue apply --all`: run all discovered adapters
 - If no adapter is passed and no footprint is detected, it will not run all adapters implicitly; it prompts for explicit selection

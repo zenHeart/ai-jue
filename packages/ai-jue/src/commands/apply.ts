@@ -7,6 +7,7 @@ import { resolveFinalConfig } from "../resolver";
 import * as glob from "glob";
 import pc from "picocolors";
 import ora from "ora";
+import { createInterface } from "readline/promises";
 import { logger } from "../logger";
 import { t } from "../i18n";
 
@@ -84,6 +85,74 @@ function autoDetectAdapters(
   });
 }
 
+function toAdapterShortName(adapterName: string): string {
+  const prefix = "ai-jue-adapter-";
+  return adapterName.startsWith(prefix)
+    ? adapterName.slice(prefix.length)
+    : adapterName;
+}
+
+function parseManualSelection(
+  raw: string,
+  discoveredAdapters: string[],
+): string[] {
+  const input = raw.trim();
+  if (!input) return [];
+  if (input.toLowerCase() === "all") return discoveredAdapters;
+
+  const picked = input
+    .split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
+
+  const resolved = picked
+    .map((token) => {
+      if (/^\d+$/.test(token)) {
+        const idx = Number(token) - 1;
+        return discoveredAdapters[idx];
+      }
+      const normalized = token.toLowerCase();
+      return (
+        ADAPTER_ALIAS_MAP[normalized] ||
+        discoveredAdapters.find((name) => name === token || toAdapterShortName(name) === normalized)
+      );
+    })
+    .filter((item): item is string => Boolean(item));
+
+  return [...new Set(resolved)];
+}
+
+async function promptManualAdapterSelection(
+  discoveredAdapters: string[],
+): Promise<string[]> {
+  if (!process.stdin.isTTY || !process.stdout.isTTY) {
+    logger.warn(pc.yellow(t("commands.apply.manual_selection_unavailable")));
+    return [];
+  }
+
+  logger.info(pc.cyan(t("commands.apply.manual_selection_intro")));
+  discoveredAdapters.forEach((adapter, index) => {
+    logger.log(
+      `  ${index + 1}. ${toAdapterShortName(adapter)} (${adapter})`,
+    );
+  });
+  logger.log(pc.dim(t("commands.apply.manual_selection_hint")));
+
+  const rl = createInterface({
+    input: process.stdin,
+    output: process.stdout,
+  });
+
+  try {
+    const answer = await rl.question(
+      `${t("commands.apply.manual_selection_prompt")} `,
+    );
+    return parseManualSelection(answer, discoveredAdapters);
+  } finally {
+    rl.close();
+  }
+}
+
 async function findAdapters(): Promise<string[]> {
   const rootDir = process.cwd();
   const options = { cwd: rootDir, realpath: true as const };
@@ -131,18 +200,34 @@ async function runAdapters(
     if (options.requestedAdapters.length === 0) {
       const detected = autoDetectAdapters(discoveredAdapters, process.cwd());
       if (detected.length === 0) {
-        spinner.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
-        return;
+        spinner.warn(pc.yellow(t("commands.apply.no_adapter_detected")));
+        const manualSelected = await promptManualAdapterSelection(
+          discoveredAdapters,
+        );
+        if (manualSelected.length === 0) {
+          logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
+          return;
+        }
+        targetAdapters = manualSelected;
+        logger.info(
+          pc.cyan(
+            t("commands.apply.manual_selected_adapters", {
+              count: manualSelected.length,
+              names: manualSelected.join(", "),
+            }),
+          ),
+        );
+      } else {
+        targetAdapters = detected;
+        logger.info(
+          pc.cyan(
+            t("commands.apply.auto_detected_adapters", {
+              count: detected.length,
+              names: detected.join(", "),
+            }),
+          ),
+        );
       }
-      targetAdapters = detected;
-      logger.info(
-        pc.cyan(
-          t("commands.apply.auto_detected_adapters", {
-            count: detected.length,
-            names: detected.join(", "),
-          }),
-        ),
-      );
     } else {
       const unknown = options.requestedAdapters.filter(
         (name) => !discoveredAdapters.includes(name),
