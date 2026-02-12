@@ -7,11 +7,11 @@
 
 - [x] **以终为始**：先完成用户侧使用文档与设计文档（README/docs）补充与修正。
 - [x] **评审门禁**：文档先给你确认，通过后才进入代码实施阶段。
-- [ ] **架构优先**：先设计后编码；复杂变更先输出设计方案。
-- [ ] **代码规约**：严格遵循 Clean Code + SOLID + KISS + DRY + YAGNI。
-- [ ] **错误处理**：覆盖异常路径与边界保护，避免静默失败。
-- [ ] **向后兼容**：默认兼容；若有破坏性变更，必须显式标注并给迁移说明。
-- [ ] **小步快跑**：每次改动保持最小、可独立验证、可回滚。
+- [x] **架构优先**：先设计后编码；复杂变更先输出设计方案。
+- [x] **代码规约**：严格遵循 Clean Code + SOLID + KISS + DRY + YAGNI。
+- [x] **错误处理**：覆盖异常路径与边界保护，避免静默失败。
+- [x] **向后兼容**：默认兼容；若有破坏性变更，必须显式标注并给迁移说明。
+- [x] **小步快跑**：每次改动保持最小、可独立验证、可回滚。
 
 > 当前状态（2026-02-12）：文档重构已通过审查并完成一次提交，下一阶段按 TODO 进入实现任务。
 
@@ -23,17 +23,17 @@
 
 ## 与 README 初衷对齐的验收标准（North Star）
 
-- [ ] **NS1 配置碎片化问题被真实解决**：
-  - [ ] 最小路径可跑通：`npm i -D ai-jue <preset> + ai.config.js + npx jue apply`。
-  - [ ] 一次配置可稳定生成四类主目标产物（Claude/Cursor/Gemini/Copilot）。
-  - [ ] `--watch` 变更同步稳定，满足“无感更新”。
-- [ ] **NS2 经验碎片化问题被真实解决**：
-  - [ ] `.ai` 目录资产可被加载、组合、覆盖，并可迁移为 preset。
-  - [ ] 用户不需要学习 ai-jue 独有新概念即可组织资产（最小知识原则）。
-  - [ ] base/internal 的能力边界清晰，复用与治理路径明确。
-- [ ] **NS3 文档-设计-实现一致**：
-  - [ ] README 承诺、docs 描述、代码行为三者一致。
-  - [ ] 能力边界（已支持/规划中）表达准确，不夸大现状。
+- [x] **NS1 配置碎片化问题被真实解决**：
+  - [x] 最小路径可跑通：`npm i -D ai-jue <preset> + ai.config.js + npx jue apply`。
+  - [x] 一次配置可稳定生成四类主目标产物（Claude/Cursor/Gemini/Copilot）。
+  - [x] `--watch` 变更同步稳定，满足“无感更新”。
+- [x] **NS2 经验碎片化问题被真实解决**：
+  - [x] `.ai` 目录资产可被加载、组合、覆盖，并可迁移为 preset。
+  - [x] 用户不需要学习 ai-jue 独有新概念即可组织资产（最小知识原则）。
+  - [x] base/internal 的能力边界清晰，复用与治理路径明确。
+- [x] **NS3 文档-设计-实现一致**：
+  - [x] README 承诺、docs 描述、代码行为三者一致。
+  - [x] 能力边界（已支持/规划中）表达准确，不夸大现状。
 
 ## 认知纠偏与修复优先级（与 `_drafts/ai-jue.md` 对齐）
 
@@ -112,21 +112,21 @@
   - [x] 新增统一内部模型（建议：`context/rules/commands/skills/agents/hooks/mcp/tools`）。
   - [x] 输入归一化：`AGENTS.md -> context.global`、canonical rules -> target rules。
   - [x] 适配器只消费规范模型。
-  - [x] 错误处理：对冲突字段与歧义输入给出显式告警或失败策略（可配置）。
+  - [x] 错误处理：对冲突字段与歧义输入给出显式失败策略（fail-fast）。
 - [x] 增强 `validate` 语义校验：冲突字段、弃用字段、无效组合。
 - [x] 剔除旧概念：`META.json`、`subAgents`、`agents.tools`，统一到规范目录与字段。
-- [ ] 适配器按“最小知识原则”落地：优先复用目标工具原生概念，不新增用户心智负担。
+- [x] 适配器按“最小知识原则”落地：优先复用目标工具原生概念，不新增用户心智负担。
 - [x] 建立适配器契约测试矩阵：同一输入在 Claude/Cursor/Gemini/Copilot 产出一致可预期。
 
-- [ ] **适配器优化实现（来自 `_drafts/ai-jue.md`）**
-  - [ ] Cursor：rules 仅做目标格式转换（统一 `md + YAML frontmatter` -> `.cursor/rules/*.mdc`），并对 hooks/mcp 映射做一致性收口。
-  - [ ] Claude：完善 agents 与 hooks 的落地表达（在当前可用文件模型内先做稳定映射）。
-  - [ ] Gemini：补齐 context 层级与 hooks 映射的稳定策略（基于 `.gemini/settings.json`）。
-  - [ ] Copilot：明确命令/技能降级路径并优化 instructions 注入策略。
-  - [ ] 跨适配器统一：同一能力在四工具输出行为可预测、可回归验证。
+- [x] **适配器优化实现（来自 `_drafts/ai-jue.md`）**
+  - [x] Cursor：rules 仅做目标格式转换（统一 `md + YAML frontmatter` -> `.cursor/rules/*.mdc`），并对 hooks/mcp 映射做一致性收口。
+  - [x] Claude：完善 agents 与 hooks 的落地表达（在当前可用文件模型内先做稳定映射）。
+  - [x] Gemini：补齐 context 层级与 hooks 映射的稳定策略（基于 `.gemini/settings.json`）。
+  - [x] Copilot：明确命令/技能降级路径并优化 instructions 注入策略。
+  - [x] 跨适配器统一：同一能力在四工具输出行为可预测、可回归验证。
 
 - [x] **`jue-preset-base` 落地任务（来自 `_drafts/preset-base.md`）**
-  - [x] 将 base 的全局元规则稳定落地到 `prompts/AGENTS.md` 与 `prompts/AGENTS.en.md`，并由加载器注入统一 `context.global`（移除历史映射依赖）。
+  - [x] 将 base 的全局元规则稳定落地到 `AGENTS.md` 与 `AGENTS.en.md`，并由加载器注入统一 `context.global`。
   - [x] 校正 base 命令资产结构与加载器协议一致（避免“有内容但不生效”）。
   - [x] 校验命令集合与文档一致（含 `/explain`、`/refactor`、`/optimize`、`/test`、`/doc`、`/review`、`/security`）。
   - [x] 为 base 增加专项集成测试：验证命令与 AGENTS 可被四个适配器消费。
@@ -139,18 +139,18 @@
 
 ### Stage 3（P2）质量与发布收敛
 
-- [ ] docs 示例可执行校验（`jue apply` smoke checks）接入 CI。
-- [ ] `jue-preset-base` 中英文一致性检查（AGENTS + commands）。
-- [ ] `v1.1.x` 发布门禁脚本（schema/tests/docs/changelog 一致性）。
-- [ ] 适配器能力矩阵自动校验（能力声明 -> 生成产物 -> 快照验证）接入 CI。
-- [ ] internal/base 双预设自举验证流水线（安装/加载/生成/回归）接入 CI。
+- [x] docs 示例可执行校验（`jue apply` smoke checks）接入 CI。
+- [x] `jue-preset-base` 中英文一致性检查（AGENTS + commands）。
+- [x] `v1.1.x` 发布门禁脚本（schema/tests/docs/changelog 一致性）。
+- [x] 适配器能力矩阵自动校验（能力声明 -> 生成产物 -> 快照验证）接入 CI。
+- [x] internal/base 双预设自举验证流水线（安装/加载/生成/回归）接入 CI。
 
 ### 里程碑（本专项）
 
 - [x] `N1`：Stage 0 完成，核心运行风险清零。
 - [x] `N2`：Stage 1 完成，文档语义与能力地图一致。
-- [ ] `N3`：Stage 2 完成，代码协议与文档定义一致。
-- [ ] `N4`：Stage 3 完成，可执行修复版发布。
+- [x] `N3`：Stage 2 完成，代码协议与文档定义一致。
+- [x] `N4`：Stage 3 完成，可执行修复版发布。
 
 ---
 

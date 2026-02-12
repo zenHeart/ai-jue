@@ -28,5 +28,14 @@ jobs:
     - name: Test
       run: npm test
 
+    - name: Adapter Matrix Test
+      run: npx vitest packages/ai-jue/test/adapter-matrix.test.ts
+
+    - name: Base i18n Check
+      run: npm run check-base-i18n
+
+    - name: Smoke Apply (base/internal)
+      run: npm run smoke-apply
+
     - name: Security Audit
       run: npm audit --audit-level=high --omit=dev
