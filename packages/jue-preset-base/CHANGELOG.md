@@ -1,3 +1,14 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-base@v1.0.9...jue-preset-base@1.0.0) (2026-02-12)
+
+
+### Bug Fixes
+
+* refactor ([ba8592e](https://github.com/zenHeart/ai-jue/commit/ba8592eb9a17ce5b313fdc32f7a9aa17db8944f2))
+* 优化 preset-base ([c471f77](https://github.com/zenHeart/ai-jue/commit/c471f77e989a68c9a8d4f986f157b4f375aaab43))
+* 完成国际化任务 ([61bbcb6](https://github.com/zenHeart/ai-jue/commit/61bbcb6f3c69e77ff803af35938755d37b5632ff))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-base@v1.0.8...jue-preset-base@1.0.0) (2026-02-10)
 
 

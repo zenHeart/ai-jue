@@ -1,3 +1,7 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-gemini@v1.0.10...ai-jue-adapter-gemini@1.0.0) (2026-02-12)
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-gemini@v1.0.9...ai-jue-adapter-gemini@1.0.0) (2026-02-10)
 
 

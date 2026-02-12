@@ -1,3 +1,12 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-typescript@v1.0.9...jue-preset-typescript@1.0.0) (2026-02-12)
+
+
+### Bug Fixes
+
+* 完成国际化任务 ([61bbcb6](https://github.com/zenHeart/ai-jue/commit/61bbcb6f3c69e77ff803af35938755d37b5632ff))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/jue-preset-typescript@v1.0.8...jue-preset-typescript@1.0.0) (2026-02-10)
 
 

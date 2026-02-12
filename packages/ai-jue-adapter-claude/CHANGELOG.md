@@ -1,3 +1,7 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v1.0.11...ai-jue-adapter-claude@1.0.0) (2026-02-12)
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v1.0.10...ai-jue-adapter-claude@1.0.0) (2026-02-10)
 
 

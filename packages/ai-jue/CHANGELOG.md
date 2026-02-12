@@ -1,3 +1,12 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.0.14...ai-jue@1.0.0) (2026-02-12)
+
+
+### Bug Fixes
+
+* **commands:** remove unsupported content field in loader ([224f38a](https://github.com/zenHeart/ai-jue/commit/224f38a8b0c141884c35380c33a1b864f87b81bf))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.0.13...ai-jue@1.0.0) (2026-02-10)
 
 
