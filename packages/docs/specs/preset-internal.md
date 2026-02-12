@@ -29,6 +29,8 @@ jue-preset-internal/
 
 Additional assets can be added only when there is clear repository governance value.
 
+Command metadata must be defined in `commands/*/prompt.md` YAML frontmatter (for example `description`, `triggers`), without `index.json`.
+
 ## 3. Self-Bootstrap Runbook
 
 The repository must be able to bootstrap itself through internal preset:

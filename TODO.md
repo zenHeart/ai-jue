@@ -68,15 +68,15 @@
   - [x] 加载器去除 `commands/*/index.json` 依赖，仅消费 Markdown + frontmatter。
   - [x] 更新脚手架、测试与校验脚本，取消对 `commands/*/index.json` 的必需约束。
   - [x] 更新 base/spec/TODO 文档协议描述，确保“用户文档-设计文档-实现”一致。
-- [ ] **B2 `jue-preset-internal` 闭环文档补齐（文档先行）**
-  - [ ] 新增 `REPO_ROOT/packages/jue-preset-internal/README.md`，定义 internal 的目标、边界、使用方式。
-  - [ ] 在 internal README 明确“在 base 之上”补充能力：adapter 开发、preset 开发、能力扩展、仓库治理。
-  - [ ] 清理 `REPO_ROOT/packages/jue-preset-internal/AGENTS.md` 历史概念，统一到当前规范术语与架构。
-  - [ ] 给出“吃自己狗粮”操作手册：本仓如何用 internal 驱动持续迭代。
-- [ ] **B3 internal 最小能力面定义（先定义后实现）**
-  - [ ] 固化 internal 最小资产集合（在现有 AGENTS + commands 基础上，明确是否补 rules/hooks/tools 的最小样例）。
-  - [ ] 定义 internal 对应的核心痛点清单：适配器新增、preset 扩展、文档一致性、回归门禁。
-  - [ ] 输出“能力 -> 资产路径 -> 预期产物 -> 验证点”映射表。
+- [x] **B2 `jue-preset-internal` 闭环文档补齐（文档先行）**
+  - [x] 新增 `REPO_ROOT/packages/jue-preset-internal/README.md`，定义 internal 的目标、边界、使用方式。
+  - [x] 在 internal README 明确“在 base 之上”补充能力：adapter 开发、preset 开发、能力扩展、仓库治理。
+  - [x] 清理 `REPO_ROOT/packages/jue-preset-internal/AGENTS.md` 历史概念，统一到当前规范术语与架构。
+  - [x] 给出“吃自己狗粮”操作手册：本仓如何用 internal 驱动持续迭代。
+- [x] **B3 internal 最小能力面定义（先定义后实现）**
+  - [x] 固化 internal 最小资产集合（在现有 AGENTS + commands 基础上，明确是否补 rules/hooks/tools 的最小样例）。
+  - [x] 定义 internal 对应的核心痛点清单：适配器新增、preset 扩展、文档一致性、回归门禁。
+  - [x] 输出“能力 -> 资产路径 -> 预期产物 -> 验证点”映射表。
 - [ ] **B4 实施阶段计划（待审核后执行）**
   - [ ] base/internal 文档审核通过后，再进入最小实现改造。
   - [ ] 实施顺序：先 internal 自举能力，再 base 场景落地，再统一验证。
