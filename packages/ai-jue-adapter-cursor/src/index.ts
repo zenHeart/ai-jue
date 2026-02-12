@@ -1,5 +1,4 @@
 import path from "path";
-import fs from "fs";
 import { generateMarkdownFile, generateJsonFile } from "ai-jue-core";
 
 const LOCALES: Record<string, any> = {
@@ -36,7 +35,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     config.language === "zh" || config.language === "zh-CN" ? "zh" : "en";
   const t = LOCALES[lang];
 
-  // 1. Generate .cursorrules
+  // 1. Generate Cursor Project Rules (.cursor/rules/*.mdc)
   let cursorRulesContent = "";
 
   // Inject AGENTS.md content first (Global Context)
@@ -88,9 +87,15 @@ export async function generate(config: any, outputDir: string): Promise<void> {
   }
 
   if (cursorRulesContent.trim()) {
+    const mdcContent = `---
+description: ai-jue generated project rules
+alwaysApply: true
+---
+
+${cursorRulesContent}`;
     generateMarkdownFile(
-      path.join(outputDir, ".cursorrules"),
-      cursorRulesContent,
+      path.join(outputDir, ".cursor", "rules", "ai-jue.mdc"),
+      mdcContent,
     );
   }
 
@@ -102,20 +107,20 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     generateJsonFile(path.join(outputDir, ".cursor", "mcp.json"), mcpConfig);
   }
 
-  // 3. Generate .cursor/rules (Sub-Agents as individual rules)
-  if (config.subAgents) {
+  // 3. Generate .cursor/rules for custom agents
+  if (config.agents) {
     const rulesDir = path.join(outputDir, ".cursor", "rules");
-    for (const [key, value] of Object.entries(config.subAgents)) {
+    for (const [key, value] of Object.entries(config.agents)) {
       const agent = value as any;
       let agentContent = "";
 
       // Agent Prompt
-      if (agent.prompt) {
-        agentContent += `# ${key}\n\n${agent.prompt}\n\n`;
+      if (agent.prompt || agent.content) {
+        agentContent += `# ${key}\n\n${agent.prompt || agent.content}\n\n`;
       }
 
       // Agent Skills
-      if (agent.skills && Array.isArray(agent.skills) && config.skills) {
+      if (Array.isArray(agent.skills) && config.skills) {
         agentContent += `## ${t.skillsTitle}\n\n`;
         for (const skillKey of agent.skills) {
           const skill = config.skills[skillKey];
@@ -126,7 +131,13 @@ export async function generate(config: any, outputDir: string): Promise<void> {
       }
 
       if (agentContent.trim()) {
-        generateMarkdownFile(path.join(rulesDir, `${key}.md`), agentContent);
+        const agentRule = `---
+description: ${agent.description || `${key} agent rules`}
+alwaysApply: false
+---
+
+${agentContent}`;
+        generateMarkdownFile(path.join(rulesDir, `${key}.mdc`), agentRule);
       }
     }
   }

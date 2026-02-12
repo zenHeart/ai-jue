@@ -23,26 +23,56 @@ const HookSchema = z.union([
     })
 ]);
 
-const SubAgentSchema = z.object({
+const AgentSchema = z.object({
   description: z.string().optional(),
   prompt: z.string(),
   tools: z.array(z.string()).optional(),
+  skills: z.array(z.string()).optional(),
 });
 
-const ConfigSchema = z.object({
-  preset: z.string().optional(),
-  presets: z.array(z.string()).optional(),
-  extends: z.record(z.string(), z.union([z.string(), z.array(z.string())])).optional(),
-  language: z.string().optional(),
-  mcp: z.object({
-      servers: z.record(z.string(), McpServerSchema).optional()
-  }).optional(),
-  commands: z.record(z.string(), CommandSchema).optional(),
-  hooks: z.record(z.string(), HookSchema).optional(),
-  subAgents: z.record(z.string(), SubAgentSchema).optional(),
-  tools: z.record(z.string(), z.any()).optional(),
-  // Allow other properties for flexibility, but validate core ones
-}).passthrough();
+const ConfigSchema = z
+  .object({
+    preset: z.string().optional(),
+    presets: z.array(z.string()).optional(),
+    extends: z
+      .record(z.string(), z.union([z.string(), z.array(z.string())]))
+      .optional(),
+    language: z.string().optional(),
+    mcp: z
+      .object({
+        servers: z.record(z.string(), McpServerSchema).optional(),
+      })
+      .optional(),
+    commands: z.record(z.string(), CommandSchema).optional(),
+    hooks: z.record(z.string(), HookSchema).optional(),
+    agents: z.record(z.string(), AgentSchema).optional(),
+    tools: z.record(z.string(), z.any()).optional(),
+    // Allow other properties for flexibility, but validate core ones
+  })
+  .passthrough()
+  .superRefine((config, ctx) => {
+    if (Object.prototype.hasOwnProperty.call(config, "subAgents")) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["subAgents"],
+        message: "Non-canonical field: use 'agents' instead.",
+      });
+    }
+
+    const prompts = (config as any).prompts;
+    if (
+      prompts &&
+      typeof prompts === "object" &&
+      !Array.isArray(prompts) &&
+      Object.prototype.hasOwnProperty.call(prompts, "agents")
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ["prompts", "agents"],
+        message: "Non-canonical field: use root AGENTS.md file for global context.",
+      });
+    }
+  });
 
 export type MergedConfig = z.infer<typeof ConfigSchema> & { [key: string]: any };
 

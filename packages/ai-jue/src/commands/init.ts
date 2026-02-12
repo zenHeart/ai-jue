@@ -60,12 +60,12 @@ module.exports = {
     }
   },
 
-  // Sub-Agents configuration
-  subAgents: {
+  // Agents configuration
+  agents: {
     // Example: Specialized Agent
     // "test-expert": {
-    //   prompt: "You are a specialized agent for writing unit tests.",
-    //   skills: ["unit-testing"]
+      //   prompt: "You are a specialized agent for writing unit tests.",
+      //   skills: ["unit-testing"]
     // }
   }
 };\n`;
@@ -78,8 +78,13 @@ module.exports = {
     const answer = await askQuestion(t("commands.init.ask_create_dir"));
     if (answer.toLowerCase() !== "n") {
       fs.mkdirSync(aiDir);
-      fs.mkdirSync(path.join(aiDir, "prompts"));
+      fs.writeFileSync(path.join(aiDir, "AGENTS.md"), "# Project AI context\n");
+      fs.mkdirSync(path.join(aiDir, "rules"));
+      fs.mkdirSync(path.join(aiDir, "commands"));
       fs.mkdirSync(path.join(aiDir, "skills"));
+      fs.mkdirSync(path.join(aiDir, "agents"));
+      fs.mkdirSync(path.join(aiDir, "hooks"));
+      fs.mkdirSync(path.join(aiDir, "tools"));
       logger.success(t("commands.init.created_dir"));
     }
   } else {

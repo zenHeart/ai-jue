@@ -141,7 +141,6 @@ export const handler = async (argv: Arguments) => {
     ];
 
     const watcher = chokidar.watch(watchPaths, {
-      ignored: /(^|[\/\\])\../, // ignore dotfiles
       persistent: true,
       ignoreInitial: true,
     });

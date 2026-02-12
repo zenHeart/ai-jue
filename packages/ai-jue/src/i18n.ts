@@ -40,7 +40,7 @@ const resources = {
           created_config: "Created ai.config.js",
           ask_create_dir: "Create .ai directory structure? (Y/n) ",
           created_dir:
-            "Created .ai directory with prompts/ and skills/ subdirectories.",
+            "Created .ai directory with AGENTS.md, rules/, commands/, skills/, agents/, hooks/, tools/ subdirectories.",
           dir_exists: ".ai directory already exists.",
         },
         check: {
@@ -106,7 +106,8 @@ const resources = {
           ask_preset: "请输入预设名称（默认: base）: ",
           created_config: "已创建 ai.config.js",
           ask_create_dir: "是否创建 .ai 目录结构？(Y/n) ",
-          created_dir: "已创建 .ai 目录及 prompts/ 和 skills/ 子目录。",
+          created_dir:
+            "已创建 .ai 目录及 AGENTS.md、rules/、commands/、skills/、agents/、hooks/、tools/ 子目录。",
           dir_exists: ".ai 目录已存在。",
         },
         check: {

@@ -45,13 +45,13 @@
 - [ ] **Quick Start 主路径修复（对齐 README 最小承诺）**
   - [ ] 验证并修复 `npx jue apply` 在四适配器目标产物上的稳定生成。
   - [ ] 对齐 README 与实际产物路径命名（尤其 Cursor 相关产物），避免“文档可运行性”偏差。
-  - [ ] Cursor 规则主产物统一为 `.cursor/rules/*.mdc`（Project Rules），移除 `.cursorrules` 输出路径。
-  - [ ] 明确 Cursor 仅做格式转换：统一 `md + YAML frontmatter` 输入 -> 输出 `.mdc`，不重复实现规则能力逻辑。
-  - [ ] 修复 `apply --watch` 监听可靠性：确保 `.ai/.jue/ai.config.js` 变化可稳定触发。
+  - [x] Cursor 规则主产物统一为 `.cursor/rules/*.mdc`（Project Rules），移除 `.cursorrules` 输出路径。
+  - [x] 明确 Cursor 仅做格式转换：统一 `md + YAML frontmatter` 输入 -> 输出 `.mdc`，不重复实现规则能力逻辑。
+  - [x] 修复 `apply --watch` 监听可靠性：确保 `.ai/.jue/ai.config.js` 变化可稳定触发。
 - [ ] **配置语义冲突止血（过渡期）**
-  - [ ] 明确并固化：历史错误字段停止作为设计与实现输入。
+  - [x] 明确并固化：历史错误字段停止作为设计与实现输入。
   - [ ] 统一单一规范输入：`AGENTS.md`（全局上下文）与 `agents`（代理能力），禁止双轨语义。
-  - [ ] `validate` 增加 fail-fast：检测到历史错误字段直接报错并给出修复指引。
+  - [x] `validate` 增加 fail-fast：检测到历史错误字段直接报错并给出修复指引。
 - [ ] 修复 `jue-preset-base` 资产加载协议：让 `commands/*/{index.json,prompt.md}` 与加载器协议一致。
 - [ ] 修复 `jue-preset-base` 发布元数据：`package.json.files` 与真实目录结构一致。
 - [ ] **`jue-preset-internal` 自举可运行修复**

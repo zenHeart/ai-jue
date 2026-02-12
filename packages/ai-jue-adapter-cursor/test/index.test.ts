@@ -20,7 +20,7 @@ describe('ai-jue-adapter-cursor', () => {
     }
   });
 
-  it('should generate .cursorrules with prompts, skills, commands, and hooks', async () => {
+  it('should generate .cursor/rules/ai-jue.mdc with prompts, skills, commands, and hooks', async () => {
     const config = {
       prompts: {
         agents: { content: 'Global Agent Context' },
@@ -39,7 +39,7 @@ describe('ai-jue-adapter-cursor', () => {
 
     await generate(config, TEST_DIR);
 
-    const rulesPath = path.join(TEST_DIR, '.cursorrules');
+    const rulesPath = path.join(TEST_DIR, '.cursor', 'rules', 'ai-jue.mdc');
     expect(fs.existsSync(rulesPath)).toBe(true);
     const content = fs.readFileSync(rulesPath, 'utf8');
 
@@ -72,8 +72,8 @@ describe('ai-jue-adapter-cursor', () => {
     expect(content.mcpServers.sqlite.command).toBe('uvx');
   });
 
-  it('should preserve user content outside of the managed block in .cursorrules', async () => {
-    const rulesPath = path.join(TEST_DIR, '.cursorrules');
+  it('should preserve user content outside of the managed block in .cursor/rules/ai-jue.mdc', async () => {
+    const rulesPath = path.join(TEST_DIR, '.cursor', 'rules', 'ai-jue.mdc');
     const userContent = 'User Custom Content';
     
     // Initial run
