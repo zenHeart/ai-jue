@@ -30,6 +30,7 @@ describe('jue-preset-internal bootstrap integration', () => {
     expect(config.context?.global).toBeTruthy();
     expect(config.commands?.['repo-governance']?.prompt).toBeTruthy();
     expect(config.commands?.impl?.prompt).toBeTruthy();
+    expect(config.skills?.['adapter-creator']?.content).toBeTruthy();
   });
 
   it('consumes internal preset across all adapters for self-bootstrap outputs', async () => {
@@ -57,8 +58,15 @@ describe('jue-preset-internal bootstrap integration', () => {
       'repo-governance',
       'prompt.md',
     );
+    const skillPath = path.join(
+      internalDir,
+      'skills',
+      'adapter-creator',
+      'SKILL.md',
+    );
 
     expect(fs.existsSync(agentsPath)).toBe(true);
     expect(fs.existsSync(commandPath)).toBe(true);
+    expect(fs.existsSync(skillPath)).toBe(true);
   });
 });

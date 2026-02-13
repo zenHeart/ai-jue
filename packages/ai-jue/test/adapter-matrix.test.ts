@@ -79,6 +79,10 @@ describe('adapter contract matrix', () => {
     const gemini = JSON.parse(
       fs.readFileSync(path.join(TEST_DIR, '.gemini', 'settings.json'), 'utf8'),
     );
+    const geminiCommand = fs.readFileSync(
+      path.join(TEST_DIR, '.gemini', 'commands', 'test.toml'),
+      'utf8',
+    );
     const copilot = fs.readFileSync(
       path.join(TEST_DIR, '.github', 'copilot-instructions.md'),
       'utf8',
@@ -98,7 +102,8 @@ describe('adapter contract matrix', () => {
     expect(copilot).toContain('Global context');
     expect(copilot).toContain('Rules (Degraded)');
     expect(copilot).toContain('Use strict typing');
-    expect(gemini.customCommands.test).toBe('Run test suite');
+    expect(geminiCommand).toContain('description = "Run tests"');
+    expect(geminiCommand).toContain('Run test suite');
     expect(gemini.hooks['pre-commit']).toBe('npm test');
     expect(gemini.mcpServers.sqlite.command).toBe('uvx');
     expect(gemini.temperature).toBe(0.2);

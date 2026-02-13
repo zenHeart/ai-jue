@@ -1,5 +1,53 @@
 import path from "path";
+import fs from "fs";
 import { generateMarkdownFile, generateJsonFile, deepMerge } from "ai-jue-core";
+
+function toTomlBasicString(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
+}
+
+function toTomlMultilineString(value: string): string {
+  return value.replace(/"""/g, '\\"\\"\\"');
+}
+
+function toCommandSegments(commandName: string): string[] {
+  return commandName
+    .split(/[:/\\]+/)
+    .map((segment) => segment.trim())
+    .filter(Boolean)
+    .map((segment) => segment.replace(/[^a-zA-Z0-9._-]/g, "-"));
+}
+
+function writeGeminiCommandFile(
+  outputDir: string,
+  commandName: string,
+  command: { prompt?: string; description?: string },
+): void {
+  if (typeof command.prompt !== "string" || !command.prompt.trim()) return;
+
+  const segments = toCommandSegments(commandName);
+  if (segments.length === 0) return;
+
+  const filePath = path.join(
+    outputDir,
+    ".gemini",
+    "commands",
+    ...segments.slice(0, -1),
+    `${segments[segments.length - 1]}.toml`,
+  );
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
+  const lines: string[] = [];
+  if (typeof command.description === "string" && command.description.trim()) {
+    lines.push(`description = "${toTomlBasicString(command.description.trim())}"`);
+  }
+  lines.push("prompt = \"\"\"");
+  lines.push(toTomlMultilineString(command.prompt.trim()));
+  lines.push("\"\"\"");
+  lines.push("");
+
+  fs.writeFileSync(filePath, lines.join("\n"), "utf8");
+}
 
 export async function generate(config: any, outputDir: string): Promise<void> {
   const promptEntries = config.prompts ? Object.values(config.prompts) : [];
@@ -53,11 +101,14 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     );
   }
 
-  // Inject Custom Commands
-  if (config.commands) {
-    if (!geminiConfig.customCommands) geminiConfig.customCommands = {};
+  // Inject Custom Commands as Gemini TOML files: .gemini/commands/**/*.toml
+  if (config.commands && typeof config.commands === "object") {
     for (const [key, value] of Object.entries(config.commands)) {
-      geminiConfig.customCommands[key] = (value as any).prompt;
+      const cmd = value as any;
+      writeGeminiCommandFile(outputDir, key, {
+        description: typeof cmd?.description === "string" ? cmd.description : undefined,
+        prompt: typeof cmd?.prompt === "string" ? cmd.prompt : undefined,
+      });
     }
   }
 

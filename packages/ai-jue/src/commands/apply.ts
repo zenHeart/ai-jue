@@ -29,6 +29,11 @@ export const builder: CommandBuilder = (yargs) => {
       array: true,
       description: t("commands.apply.adapter_describe"),
     })
+    .option("adpater", {
+      type: "string",
+      array: true,
+      description: "",
+    })
     .option("all", {
       alias: "a",
       type: "boolean",
@@ -411,6 +416,19 @@ async function runAdapters(
   if (availableAdapters.length === 0) {
     spinner.warn(pc.yellow(t("commands.apply.no_adapters")));
     if (!options.all && options.requestedAdapters.length === 0) {
+      const footprintDetected = autoDetectAdapters(KNOWN_ADAPTERS, process.cwd());
+      if (footprintDetected.length > 0) {
+        logger.info(
+          pc.cyan(
+            t("commands.apply.auto_detected_adapters", {
+              count: footprintDetected.length,
+              names: footprintDetected.join(", "),
+            }),
+          ),
+        );
+        await runAdapterList(footprintDetected, config, outputDir);
+        return;
+      }
       const manualSelected = await promptManualAdapterSelection(KNOWN_ADAPTERS);
       if (manualSelected.length === 0) {
         logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
@@ -528,12 +546,19 @@ export const handler = async (argv: Arguments) => {
     typeof (argv as Arguments<{ lang?: string }>).lang === "string"
       ? String((argv as Arguments<{ lang?: string }>).lang).trim()
       : "";
+  const typoAdapters = parseRequestedAdapters(
+    (argv as Arguments<{ adpater?: string[] }>).adpater,
+  );
+  if (typoAdapters.length > 0) {
+    logger.warn(pc.yellow(t("commands.apply.adapter_typo_option")));
+  }
   const requestedAdapters = parseRequestedAdapters(
     (argv as Arguments<{ adapter?: string[] }>).adapter,
   );
+  const mergedRequestedAdapters = [...new Set([...requestedAdapters, ...typoAdapters])];
   const applyOptions = {
     all: Boolean((argv as Arguments<{ all?: boolean }>).all),
-    requestedAdapters,
+    requestedAdapters: mergedRequestedAdapters,
   };
 
   const runApply = async () => {

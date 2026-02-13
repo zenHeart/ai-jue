@@ -22,6 +22,9 @@ internal 的非目标：
 ```text
 packages/jue-preset-internal/
 ├── AGENTS.md
+├── skills/
+│   └── adapter-creator/
+│       └── SKILL.md
 └── commands/
     └── repo-governance/
         └── prompt.md
@@ -47,6 +50,7 @@ packages/jue-preset-internal/
 | --- | --- | --- | --- |
 | 全局上下文约束 | `AGENTS.md` | 适配器目标文件中的全局规则注入 | `packages/ai-jue/test/preset-internal.integration.test.ts` |
 | 仓库治理命令 | `commands/repo-governance/prompt.md` | 各工具命令/指令区域可消费的 command 内容 | `packages/ai-jue/test/preset-internal.integration.test.ts` |
+| 适配器创建技能 | `skills/adapter-creator/SKILL.md` | 先生成 adapter 能力转换文档，再驱动实现 | `packages/ai-jue/test/preset-internal.integration.test.ts` |
 | 自举可运行 | 根配置引用 `preset: "internal"` | `npx jue apply` 生成四类工具产物 | `scripts/smoke-apply.js` 与集成测试 |
 
 ## 5. 吃自己狗粮运行手册

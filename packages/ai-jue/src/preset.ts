@@ -221,7 +221,7 @@ export async function loadAssetsFromDir(dirPath: string, userLanguage?: string):
 
   await Promise.all([
     loadNamedAssetDir(config, path.join(dirPath, 'rules'), 'rules', ['prompt.md', 'AGENTS.md'], userLanguage),
-    loadNamedAssetDir(config, path.join(dirPath, 'skills'), 'skills', ['prompt.md', 'AGENTS.md'], userLanguage),
+    loadNamedAssetDir(config, path.join(dirPath, 'skills'), 'skills', ['SKILL.md'], userLanguage),
     loadAgents(config, path.join(dirPath, 'agents'), userLanguage),
     loadCommands(config, path.join(dirPath, 'commands'), userLanguage),
     loadHooks(config, path.join(dirPath, 'hooks'), userLanguage),

@@ -117,9 +117,6 @@ Common prompt block
         ],
       },
     },
-    "customCommands": {
-      "review": "Run review flow",
-    },
     "hooks": {
       "pre-commit": "npm test",
     },
@@ -133,6 +130,11 @@ Common prompt block
     },
     "temperature": 0.2,
   },
+  "geminiCommandReview": "description = "Review command"
+prompt = """
+Run review flow
+"""
+",
   "geminiMd": "<!-- AI-JUE:START -->
 @AGENTS.md
 

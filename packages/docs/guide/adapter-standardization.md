@@ -56,7 +56,7 @@
 | --- | --- | --- | --- | --- |
 | AGENTS.md | `CLAUDE.md`（引用 `@AGENTS.md`） | 根目录 `AGENTS.md`（Cursor 原生消费） | `GEMINI.md`（引用 `@AGENTS.md`） | `.github/copilot-instructions.md` |
 | rules | 降级到 `CLAUDE.md` | `.cursor/rules/*.mdc` | 降级到 `GEMINI.md` | 降级到 `.github/copilot-instructions.md` |
-| commands | `CLAUDE.md` | `.cursor/commands/*.md` | `.gemini/settings.json.customCommands` | `.github/copilot-instructions.md` |
+| commands | `CLAUDE.md` | `.cursor/commands/*.md` | `.gemini/commands/**/*.toml` | `.github/copilot-instructions.md` |
 | skills | `CLAUDE.md` | `.cursor/skills/*/SKILL.md` | 降级到 `GEMINI.md`（文本） | `.github/copilot-instructions.md` |
 | hooks | `CLAUDE.md`（说明） | `.cursor/hooks.json` | `.gemini/settings.json.hooks` | `.github/copilot-instructions.md`（说明） |
 | agents | `CLAUDE.md`（说明） | `.cursor/agents/*.md` | `.gemini/settings.json.agents` | `.github/copilot-instructions.md`（说明） |

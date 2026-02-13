@@ -84,7 +84,7 @@ describe('ai-jue-adapter-gemini', () => {
     expect(content).toContain('Keep modules small');
   });
 
-  it('should generate .gemini/settings.json with MCP, Commands, and Hooks', async () => {
+  it('should generate .gemini/settings.json with MCP and hooks', async () => {
     const config = {
       tools: {
         gemini: {
@@ -95,9 +95,6 @@ describe('ai-jue-adapter-gemini', () => {
         servers: {
           testServer: { command: 'node', args: ['test.js'] }
         }
-      },
-      commands: {
-        hello: { prompt: 'Say hello' }
       },
       hooks: {
         'post-build': 'notify'
@@ -111,9 +108,39 @@ describe('ai-jue-adapter-gemini', () => {
     const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
 
     expect(content.mcpServers.testServer.command).toBe('node');
-    expect(content.customCommands.hello).toBe('Say hello');
     expect(content.hooks['post-build']).toBe('notify');
     expect(content.temperature).toBe(0.2);
+  });
+
+  it('should generate Gemini custom command TOML files with YAML metadata mapping', async () => {
+    await generate(
+      {
+        commands: {
+          explain: {
+            description: 'Explain code with context',
+            prompt: 'Analyze this module and explain tradeoffs.',
+          },
+          'git:commit': {
+            description: 'Create commit message',
+            prompt: 'Generate a conventional commit message.',
+          },
+        },
+      },
+      TEST_DIR,
+    );
+
+    const explainPath = path.join(TEST_DIR, '.gemini', 'commands', 'explain.toml');
+    expect(fs.existsSync(explainPath)).toBe(true);
+    const explainContent = fs.readFileSync(explainPath, 'utf8');
+    expect(explainContent).toContain('description = "Explain code with context"');
+    expect(explainContent).toContain('prompt = """');
+    expect(explainContent).toContain('Analyze this module and explain tradeoffs.');
+
+    const nestedPath = path.join(TEST_DIR, '.gemini', 'commands', 'git', 'commit.toml');
+    expect(fs.existsSync(nestedPath)).toBe(true);
+    const nestedContent = fs.readFileSync(nestedPath, 'utf8');
+    expect(nestedContent).toContain('description = "Create commit message"');
+    expect(nestedContent).toContain('Generate a conventional commit message.');
   });
 
   it('should deep merge existing JSON settings', async () => {
@@ -123,9 +150,11 @@ describe('ai-jue-adapter-gemini', () => {
     fs.writeFileSync(filePath, JSON.stringify({ existing: true, nested: { a: 1 } }));
 
     const config = {
-      commands: {
-        new: { prompt: 'new' }
-      }
+      tools: {
+        gemini: {
+          newField: true,
+        },
+      },
     };
 
     await generate(config, TEST_DIR);
@@ -133,7 +162,7 @@ describe('ai-jue-adapter-gemini', () => {
     const content = JSON.parse(fs.readFileSync(filePath, 'utf8'));
     expect(content.existing).toBe(true);
     expect(content.nested.a).toBe(1);
-    expect(content.customCommands.new).toBe('new');
+    expect(content.newField).toBe(true);
   });
 
   it('should generate empty settings.json when no gemini options are configured', async () => {

@@ -56,7 +56,7 @@ Strict rules:
 | --- | --- | --- | --- | --- |
 | AGENTS.md | `CLAUDE.md` (references `@AGENTS.md`) | root `AGENTS.md` (Cursor native) | `GEMINI.md` (references `@AGENTS.md`) | `.github/copilot-instructions.md` |
 | rules | degraded into `CLAUDE.md` | `.cursor/rules/*.mdc` | degraded into `GEMINI.md` | degraded into `.github/copilot-instructions.md` |
-| commands | `CLAUDE.md` | `.cursor/commands/*.md` | `.gemini/settings.json.customCommands` | `.github/copilot-instructions.md` |
+| commands | `CLAUDE.md` | `.cursor/commands/*.md` | `.gemini/commands/**/*.toml` | `.github/copilot-instructions.md` |
 | skills | `CLAUDE.md` | `.cursor/skills/*/SKILL.md` | degraded into `GEMINI.md` (text) | `.github/copilot-instructions.md` |
 | hooks | `CLAUDE.md` (documentation) | `.cursor/hooks.json` | `.gemini/settings.json.hooks` | `.github/copilot-instructions.md` (documentation) |
 | agents | `CLAUDE.md` (documentation) | `.cursor/agents/*.md` | `.gemini/settings.json.agents` | `.github/copilot-instructions.md` (documentation) |

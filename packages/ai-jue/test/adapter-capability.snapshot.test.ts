@@ -77,6 +77,10 @@ describe('adapter capability snapshot', () => {
       ),
       geminiMd: fs.readFileSync(path.join(outDir, 'GEMINI.md'), 'utf8'),
       gemini: JSON.parse(fs.readFileSync(path.join(outDir, '.gemini', 'settings.json'), 'utf8')),
+      geminiCommandReview: fs.readFileSync(
+        path.join(outDir, '.gemini', 'commands', 'review.toml'),
+        'utf8',
+      ),
       copilot: fs.readFileSync(path.join(outDir, '.github', 'copilot-instructions.md'), 'utf8'),
       copilotSettings: JSON.parse(
         fs.readFileSync(path.join(outDir, '.github', 'copilot-settings.json'), 'utf8'),

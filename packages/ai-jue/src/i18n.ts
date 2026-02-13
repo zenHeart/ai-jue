@@ -17,6 +17,8 @@ const resources = {
           watch_describe: "Watch for changes and re-apply automatically",
           adapter_describe:
             "Specify adapters to run (repeatable or comma-separated), e.g. --adapter cursor --adapter gemini",
+          adapter_typo_option:
+            "Detected --adpater option typo. Treated as --adapter.",
           all_describe: "Run all discovered adapters (-a)",
           running: "\n🚀 Running apply command...",
           no_config_detected:
@@ -143,6 +145,8 @@ const resources = {
           watch_describe: "监听文件变化并自动重新应用",
           adapter_describe:
             "指定要执行的适配器（可重复或逗号分隔），例如 --adapter cursor --adapter gemini",
+          adapter_typo_option:
+            "检测到 --adpater 参数拼写错误，已按 --adapter 处理。",
           all_describe: "执行全部已发现的适配器（-a）",
           running: "\n🚀 正在运行 apply 命令...",
           no_config_detected:

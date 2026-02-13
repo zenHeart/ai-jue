@@ -53,4 +53,29 @@ Refactor body`,
     expect(config.commands?.refactor?.prompt).toContain('Refactor body');
     expect(config.commands?.refactor?.prompt).not.toContain('description:');
   });
+
+  it('loads skills from skills/*/SKILL.md frontmatter', async () => {
+    const dir = makeTempDir();
+    const skillDir = path.join(dir, 'skills', 'adapter-creator');
+    fs.mkdirSync(skillDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(skillDir, 'SKILL.md'),
+      `---
+name: adapter-creator
+description: Build adapter spec and implementation plan
+---
+# Adapter Creator
+
+Create adapter docs first, then implementation.`,
+    );
+
+    const config = await loadAssetsFromDir(dir, 'en');
+    expect(config.skills?.['adapter-creator']?.name).toBe('adapter-creator');
+    expect(config.skills?.['adapter-creator']?.description).toBe(
+      'Build adapter spec and implementation plan',
+    );
+    expect(config.skills?.['adapter-creator']?.content).toContain(
+      'Create adapter docs first',
+    );
+  });
 });
