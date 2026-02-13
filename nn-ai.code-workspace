@@ -1,0 +1,14 @@
+{
+  "folders": [
+	{
+		"path": "../../../ls/nn-ai"
+	},
+	{
+		"path": "../../../github/cc-plugin"
+	},
+	{
+		"path": "."
+	}
+],
+  "settings": {}
+}

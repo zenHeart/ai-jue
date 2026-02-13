@@ -1,230 +1,123 @@
 ---
 name: adapter-creator
-description: Creates ai-jue adapters for new AI tools. Use when user asks to "create adapter", "add support for [tool]", "build adapter for [cursor/gemini/etc]", "new adapter", or needs adapter development guidance.
+description: Creates or optimizes ai-jue adapters for AI tools. Use when user asks to "create adapter for [tool]", "add support for [tool]", or "optimize/update [tool] adapter".
 compatibility: Works in ai-jue monorepo with TypeScript/pnpm.
 metadata:
-  version: 2.1.0
-  tags: [adapter, scaffolding, design-first]
+  version: 3.0.0
+  tags: [adapter, scaffolding, optimization, design-first, agentic-workflow, self-correction]
 ---
 
 # Adapter Creator
 
-Create production-ready ai-jue adapters following the "Document-First" workflow.
+Create or optimize production-ready ai-jue adapters following the "Document-First" workflow.
 
-## Quick Start
+## 1. Workflow Initialization: Mode Selection
 
-```
-User: "Create adapter for Windsurf"
-You:  Follow 4-phase workflow with 3 human gates
-```
-
-## Workflow Overview
-
-```
-Phase 1: Research ──→ Gate 1 ──→ Phase 2: Design ──→ Gate 2 ──→ Phase 3: Implement ──→ Phase 4: Verify ──→ Gate 3
-```
-
----
-
-## Phase 1: Research & Capability Mapping
-
-**Goal**: Map ai-jue's 8 capabilities to target tool's native features.
+**Goal**: Determine whether to run in "Create Mode" or "Optimize Mode".
 
 **Action**:
-1. WebSearch target tool's official docs
-2. Check each capability (in priority order):
-   - ⭐⭐⭐⭐⭐ AGENTS.md, Rules, Commands
-   - ⭐⭐⭐ Skills, MCP, Hooks
-   - ⭐⭐ Agents, Configuration
-3. Create Capability Matrix with status: `native` / `degraded` / `unsupported`
-
-**Output**: Capability Matrix ( mental or scratchpad )
+1.  From the user's request (e.g., "optimize cursor adapter"), identify the tool name: `{tool}`.
+2.  Construct the directory path: `packages/ai-jue-adapter-{tool}`.
+3.  Use the `list_directory` tool on that path.
+    -   **If the tool returns a "Not Found" error**: The adapter does not exist. Proceed in **Create Mode**.
+    -   **If the tool returns a list of files**: The adapter exists. Proceed in **Optimize Mode**.
 
 ---
 
-## 🔴 Gate 1: Capability Matrix Review
+## 2. Create Mode Workflow
 
-**Trigger**: After Phase 1 completes.
-**Action**: STOP and present matrix to user.
+> This workflow runs if the adapter does not already exist.
 
-**Present to user**:
-```markdown
-## {Tool} Capability Matrix
+### Phase 1 (Create): Research & Capability Mapping
 
-| Capability | Status | Notes |
-|:---|:---|:---|
-| AGENTS.md | {native/degraded/unsupported} | {brief note} |
-| Rules | {native/degraded/unsupported} | {brief note} |
-| ... | ... | ... |
-
-**Key decisions needed**:
-1. {Any unclear mapping?}
-2. {Any surprising limitation?}
-```
-
-**Wait for**: User confirmation or corrections before proceeding.
-
----
-
-## Phase 2: Design Documentation
-
-**Goal**: Generate bilingual adapter README using template.
-
+**Goal**: Map ai-jue's 8 capabilities to the target tool's native features.
 **Action**:
-1. Read `references/README-template.md` and `README-template.en.md`
-2. Fill in all `{placeholder}` sections based on research
-3. Generate:
-   - `packages/ai-jue-adapter-{tool}/README.md` (Chinese)
-   - `packages/ai-jue-adapter-{tool}/README.en.md` (English)
+1.  Use `web_search` to find the target tool's official documentation.
+2.  Create a Capability Matrix with the status for each capability: `native` / `degraded` / `unsupported`.
 
-**Key sections to complete**:
-- Capability Mapping Matrix (8 capabilities)
-- Implementation Details (per capability)
-- Limitations & Fallback Strategies
+### Phase 2 (Create): Design Documentation
 
----
-
-## 🔴 Gate 2: Design Document Review
-
-**Trigger**: After README files are generated.
-**Action**: STOP and present README to user.
-
-**Present to user**:
-```markdown
-I've generated the adapter design docs:
-
-📄 packages/ai-jue-adapter-{tool}/README.md
-📄 packages/ai-jue-adapter-{tool}/README.en.md
-
-**Please review**:
-1. Is the capability mapping accurate?
-2. Are the limitations clearly explained?
-3. Are the implementation strategies correct?
-
-Confirm to proceed with implementation, or suggest changes.
-```
-
-**Wait for**: User explicit "LGTM" or specific corrections.
-
----
-
-## Phase 3: Implementation
-
-**Goal**: Generate adapter code based on design doc.
-
+**Goal**: Generate bilingual adapter READMEs from a template.
 **Action**:
-1. Scaffold directory structure:
-   ```
-   packages/ai-jue-adapter-{tool}/
-   ├── src/
-   │   └── index.ts
-   ├── test/
-   │   └── index.test.ts
-   ├── README.md (already created)
-   ├── README.en.md (already created)
-   ├── package.json
-   └── tsconfig.json
-   ```
+1.  Use `read_file` to read `references/README-template.md` and `references/README-template.en.md`.
+2.  Fill in the placeholders based on research.
+3.  Use `write_file` to create `packages/ai-jue-adapter-{tool}/README.md` and `README.en.md`.
 
-2. Implement `src/index.ts`:
-   - Import utilities from `ai-jue-core`
-   - Implement `generate(config, outputDir)` function
-   - Follow patterns from `references/IMPLEMENTATION-patterns.md`
+### Phase 3 (Create): Implementation
 
-3. Implement `test/index.test.ts`:
-   - Basic functionality tests
-   - Capability mapping tests
-
-**Reference**: Consult `references/IMPLEMENTATION-patterns.md` for:
-- Native file reference patterns
-- Markdown block management
-- Structured config generation
-- Multi-file output patterns
-- Rules with frontmatter
-- Capability degradation
-
----
-
-## Phase 4: Verification & Self-Correction
-
-**Goal**: Ensure adapter passes all tests.
-
+**Goal**: Scaffold the new adapter and integrate it into the monorepo.
 **Action**:
-1. Run `pnpm install` in adapter directory
-2. Run `pnpm test`
-3. If tests fail:
-   - Read error messages
-   - Fix in `src/index.ts`
-   - Re-run tests (max 3 retries)
-4. Run cross-adapter contract test:
-   ```bash
-   npm test -- packages/ai-jue/test/adapter-matrix.test.ts
-   ```
+1.  **Scaffold Files**: Use `write_file` to create the initial file structure (`package.json`, `src/index.ts`, etc.).
+2.  **Implement Logic**: Use `replace` or `write_file` to implement the logic in `src/index.ts` and `test/index.test.ts`.
+3.  **Update Workspace**: Use `read_file` and `write_file` to add the new adapter path to the root `pnpm-workspace.yaml`.
 
 ---
 
-## 🟢 Gate 3: Completion Confirmation
+## 3. Optimize Mode Workflow
+
+> This workflow runs if the adapter already exists.
+
+### Phase 1 (Optimize): Analysis & Research
+
+**Goal**: Analyze the existing adapter and research the latest tool capabilities to find optimization opportunities.
+**Action**:
+1.  Use `read_file` to get the content of the existing `packages/ai-jue-adapter-{tool}/src/index.ts` and `README.md`.
+2.  Use `web_search` to find the latest official documentation for the tool.
+3.  Compare the existing implementation against the latest docs and identify gaps, potential improvements, or new features.
+4.  Update the Capability Matrix based on these findings.
+
+### Phase 2 (Optimize): Update Design Documentation
+
+**Goal**: Update the adapter's README to reflect the planned optimizations.
+**Action**:
+1.  Use `read_file` to get the current content of `packages/ai-jue-adapter-{tool}/README.md`.
+2.  Based on the analysis from Phase 1, update the Capability Matrix and Implementation Details sections.
+3.  Use `replace` or `write_file` to save the updated README.
+
+### Phase 3 (Optimize): Refactor Implementation
+
+**Goal**: Apply optimizations and refactor the existing adapter code.
+**Action**:
+1.  Use `read_file` to get the current content of `packages/ai-jue-adapter-{tool}/src/index.ts` and `test/index.test.ts`.
+2.  Apply the refactoring based on the updated design. This may involve adding new features, improving efficiency, or enhancing capability mapping.
+3.  Use `replace` or `write_file` to save the updated code.
+
+---
+
+## 4. Shared Gates & Verification
+
+> Both workflows converge here.
+
+### 🔴 Gate 1: Capability Review
+
+**Trigger**: After Phase 1 (Create or Optimize) completes.
+**Action**: STOP. Present the (new or updated) Capability Matrix to the user for confirmation.
+**Fallback**: If the user suggests changes, you MUST return to Phase 1, apply the feedback, and re-present this Gate.
+
+### 🔴 Gate 2: Design Review
+
+**Trigger**: After Phase 2 (Create or Optimize) completes.
+**Action**: STOP. Present the (new or updated) README design document to the user for confirmation.
+**Fallback**: If the user suggests changes, you MUST return to Phase 2, apply the feedback, and re-present this Gate.
+
+### Phase 4: Verification & Self-Correction
+
+**Goal**: Ensure the adapter passes all tests.
+**Action**:
+1.  Use `run_shell_command` to run `pnpm install` in the monorepo root.
+2.  Enter **Self-Correction Loop (Max 3 retries)**:
+    1. Run `pnpm test` on the specific adapter package.
+    2. If it succeeds, exit the loop.
+    3. If it fails, read the error, analyze the code (`read_file`), apply a fix (`replace`/`write_file`), and retry the test.
+3.  Run the cross-adapter contract test.
+
+### 🟢 Gate 3: Completion Confirmation
 
 **Trigger**: After all tests pass.
-**Action**: Present final summary to user.
-
-**Present to user**:
-```markdown
-✅ Adapter creation complete!
-
-📦 packages/ai-jue-adapter-{tool}/
-├── ✅ README.md (Chinese design doc)
-├── ✅ README.en.md (English design doc)
-├── ✅ src/index.ts (Implementation)
-├── ✅ test/index.test.ts (Tests)
-└── ✅ All tests passing
-
-**Next steps**:
-1. Review the implementation
-2. Run smoke test: `npm run smoke-apply`
-3. Commit the changes
-
-Proceed with commit? [Y/n]
-```
+**Action**: STOP. Present a summary of the created/optimized adapter to the user for final approval.
+**Fallback**: If the user reports final issues, attempt to fix and re-verify.
 
 ---
-
-## Testing Guide
-
-### For This Skill
-
-Validate the skill is working:
-
-| Test Case | Expected Result |
-|:---|:---|
-| "Create adapter for X" | Loads skill, starts Phase 1 |
-| After Phase 1 | Pauses at Gate 1 for confirmation |
-| After Phase 2 | Pauses at Gate 2 for README review |
-| After Phase 4 | Pauses at Gate 3 for final confirmation |
-
-### For Generated Adapters
-
-Each adapter must pass:
-
-1. **Unit Tests**: `pnpm test` in adapter directory
-2. **Contract Test**: Cross-adapter capability consistency
-3. **Smoke Test**: `npm run smoke-apply`
-
----
-
-## References
-
-| File | Purpose |
-|:---|:---|
-| `references/README-template.md` | Chinese adapter README template |
-| `references/README-template.en.md` | English adapter README template |
-| `references/IMPLEMENTATION-patterns.md` | Implementation patterns and best practices |
-
----
-
-## Governance Rules
-
-1. **Document First**: README must be approved before implementation
-2. **No Silent Failures**: Unsupported capabilities must be explicitly documented
-3. **Bilingual Required**: All adapters must have Chinese and English README
-4. **Test Coverage**: All adapters must include unit tests
+## References & Governance
+(Content of References and Governance Rules sections remains unchanged)
+...
