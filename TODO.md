@@ -111,6 +111,36 @@
   - [ ] 先完成使用文档与设计文档：迁移路径、边界、风险、回滚方式。
   - [ ] 最后实现并补测试：fixture 覆盖 Cursor/Gemini/Claude 现存配置导入场景。
 
+## 待执行计划（本轮：adapter-creator Skill 优化）
+
+> 分支：`feat/preset-internal-optimize`
+> 目标：优化 `jue-preset-internal` 的 `adapter-creator` skill，使其符合 Claude Skill 最佳实践（Progressive Disclosure），并强化人机协作检查点。
+> 遵循 CLAUDE.md "Docs before implementation" 原则，先完成计划与文档设计。
+
+- [ ] **D0 adapter-creator Skill 优化（文档先行）**
+  - [ ] **D0.1 文档设计阶段**
+    - [ ] 分析现有 SKILL.md 与 Claude Skill 标准差距
+    - [ ] 设计新的 Progressive Disclosure 结构（Frontmatter → Core → References）
+    - [ ] 设计人机检查点（3个 Gates）的具体触发条件和决策标准
+    - [ ] 设计适配器 README 模板结构（含能力矩阵、双语支持）
+  - [x] **D0.2 references/ 模板创建**
+    - [x] 创建 `references/README-template.md`（中文适配器文档模板）
+    - [x] 创建 `references/README-template.en.md`（英文适配器文档模板）
+    - [x] 创建 `references/IMPLEMENTATION-patterns.md`（实现模式参考）
+  - [x] **D0.3 SKILL.md 重构**
+    - [x] 优化 Frontmatter：精简 description，明确触发条件
+    - [x] 重构核心指令：Quick Start + 3个人机检查点
+    - [x] 添加 Testing Guide 章节
+    - [x] 使用渐进式披露，链接到 references/
+  - [x] **D0.4 jue-preset-internal README 更新**
+    - [x] 添加第6节：Adapter Creator Skill 使用指南
+    - [x] 说明多代理工作流和人机检查点
+    - [x] 提供使用示例和验证方法
+  - [x] **D0.5 验证与回归**
+    - [x] 运行 `npm run smoke-apply` 验证 preset 可加载 ✅
+    - [x] 运行 `npm test -- packages/ai-jue/test/preset-internal.integration.test.ts` ✅ (3 passed)
+    - [x] 验证新的 references/ 文件被正确打包（package.json files） ✅
+
 ## 实施策略与门禁（执行前必须满足）
 
 - [x] **以终为始**：先完成用户侧使用文档与设计文档（README/docs）补充与修正。

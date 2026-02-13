@@ -1,176 +1,230 @@
 ---
 name: adapter-creator
-description: Autonomous agentic skill to research, design, implement, and validate a new AI tool adapter for ai-jue. Follows "Document-First" and "Minimal Knowledge" principles with self-correcting verification loops.
-compatibility: Works in repos that use ai-jue adapter standards (monorepo/turbo).
+description: Creates ai-jue adapters for new AI tools. Use when user asks to "create adapter", "add support for [tool]", "build adapter for [cursor/gemini/etc]", "new adapter", or needs adapter development guidance.
+compatibility: Works in ai-jue monorepo with TypeScript/pnpm.
 metadata:
-  owner: ai-jue-internal
-  version: 2.0.0
-  tags: [agentic, autonomous, adapter, system-design]
+  version: 2.1.0
+  tags: [adapter, scaffolding, design-first]
 ---
-# Adapter Creator Skill (Agentic V2)
 
-You are the **Adapter Architect Agent**. Your goal is to autonomously onboard new AI tools into the `ai-jue` ecosystem by strictly following a **Research -> Design -> Implement -> Verify** loop.
+# Adapter Creator
 
-## 🧠 Agentic Cognitive Model (Claude Best Practices)
+Create production-ready ai-jue adapters following the "Document-First" workflow.
 
-1.  **Intent Decoding**: First, understand *which* tool needs adapting and *why*.
-2.  **Active Research**: Don't guess. Use `WebSearch` to find official docs. Use `Read` to understand existing `ai-jue` interfaces.
-3.  **Structured Thinking**: Before generating any file, output a `<thinking>` block analyzing the gap between `ai-jue` capabilities and the target tool's native features.
-4.  **Fail-Fast Verification**: Assume your first code draft will fail. Plan verification steps (unit tests, snapshots) *before* writing implementation code.
-5.  **Human-in-the-Loop**: You are autonomous but must synchronize at critical gates (Design Approval).
+## Quick Start
 
-## 📋 Input Schema
+```
+User: "Create adapter for Windsurf"
+You:  Follow 4-phase workflow with 3 human gates
+```
 
-The user must provide (or you must extract/ask for):
-1.  **Target Tool Name** (e.g., "Cursor", "Windsurf").
-2.  **Official Documentation Entry** (URL or key concepts).
-3.  **Scope** (New adapter vs. Update existing).
+## Workflow Overview
 
-## 🔄 Execution Workflow
+```
+Phase 1: Research ──→ Gate 1 ──→ Phase 2: Design ──→ Gate 2 ──→ Phase 3: Implement ──→ Phase 4: Verify ──→ Gate 3
+```
 
-### Phase 0: Audit & Gap Analysis (For Existing Adapters)
-- **Trigger**: When scope is "Update existing" or "Check consistency".
-- **Action**:
-    1.  Read existing implementation (`packages/ai-jue-adapter-<tool>/src/index.ts`).
-    2.  Read existing design (`packages/docs/guide/adapters/<tool>-adapter.md`).
-    3.  **Active Research**: Search for "latest <tool> documentation" to check for deprecated features or new capabilities.
-    4.  **Verification**: Run `pnpm test filter=ai-jue-adapter-<tool>` to establish baseline.
-- **Output**: A "Gap Analysis Report" identifying:
-    - Deprecated native features used in code.
-    - New native features missing from code.
-    - Inconsistencies between Docs and Code.
+---
 
-### Phase 1: Discovery & Mapping (Research)
-- **Action**: Use `WebSearch` to find official documentation. You MUST strictly follow the **Priority Order** below to map capabilities:
+## Phase 1: Research & Capability Mapping
 
-#### 1. Core Capabilities (Mandatory)
-- **1.1 AGENTS.md** (⭐⭐⭐⭐⭐):
-    - *Goal*: Project-level context injection.
-    - *Search*: "how to add project context", "system prompt file", "rules file".
-    - *Check*: Does it support root file? Auto-load? Nesting?
-- **1.2 Rules** (⭐⭐⭐⭐⭐):
-    - *Goal*: Path-specific fine-grained control.
-    - *Search*: "folder specific rules", ".cursorrules equivalent", "ignore files".
-    - *Check*: Supports frontmatter? Globs? Always apply?
-- **1.3 Commands** (⭐⭐⭐):
-    - *Goal*: User shortcuts (/cmd).
-    - *Search*: "slash commands", "custom prompts", "shortcuts".
-    - *Check*: Supports arguments? System prompt trigger?
+**Goal**: Map ai-jue's 8 capabilities to target tool's native features.
 
-#### 2. Automation & Extension (High Value)
-- **1.4 SKILL** (⭐⭐⭐):
-    - *Goal*: Reusable automation units.
-    - *Search*: "custom skills", "tool creation", "function calling".
-    - *Check*: Permission scope? Auto-trigger?
-- **1.5 MCP** (⭐⭐⭐):
-    - *Goal*: External integration protocol.
-    - *Search*: "MCP support", "model context protocol".
-    - *Check*: Native support vs Plugin? Config format?
-- **1.6 HOOKS** (⭐⭐⭐):
-    - *Goal*: Event-driven automation.
-    - *Search*: "pre-command hooks", "event listeners", "lifecycle events".
-    - *Check*: PreToolUse? SessionStart?
+**Action**:
+1. WebSearch target tool's official docs
+2. Check each capability (in priority order):
+   - ⭐⭐⭐⭐⭐ AGENTS.md, Rules, Commands
+   - ⭐⭐⭐ Skills, MCP, Hooks
+   - ⭐⭐ Agents, Configuration
+3. Create Capability Matrix with status: `native` / `degraded` / `unsupported`
 
-#### 3. Advanced Configuration (Optional)
-- **1.7 Agents** (⭐⭐):
-    - *Goal*: Specialized sub-agents.
-    - *Search*: "sub-agents", "custom assistants", "expert mode".
-- **1.8 Configuration** (⭐⭐):
-    - *Goal*: Global settings.
-    - *Search*: "settings.json", "config file", "permissions".
+**Output**: Capability Matrix ( mental or scratchpad )
 
-- **Output**: A "Capability Mapping Matrix" (Mental or Scratchpad).
-    - `native`: Tool supports this 1:1.
-    - `degraded`: Tool supports this partially (define limitation).
-    - `unsupported`: Tool does not support this (define fallback).
+---
 
-### Phase 2: Design & Consensus (Documentation)
-- **Action**: Create/Update `packages/docs/guide/adapters/<tool>-adapter.md`.
-- **Constraint**: Use the **Standard Capability Template** below.
-- **Gate**: **STOP and ask user to confirm the design document.**
+## 🔴 Gate 1: Capability Matrix Review
 
-### Phase 3: Implementation (Coding)
-- **Action**:
-    1.  Scaffold `packages/ai-jue-adapter-<tool>/` (if new).
-    2.  Implement/Refactor `src/index.ts` (The Adapter).
-    3.  Implement/Update `test/index.test.ts` (The Verification).
-- **Constraint**: 
-    - **NO** internal concepts. Use *only* target tool's native configuration files (e.g., `.cursorrules`, `settings.json`).
-    - **Strict** type safety.
+**Trigger**: After Phase 1 completes.
+**Action**: STOP and present matrix to user.
 
-### Phase 4: Self-Correction (Verification)
-- **Action**:
-    1.  Run `pnpm install`.
-    2.  Run `pnpm test filter=ai-jue-adapter-<tool>`.
-    3.  Run `pnpm run check-consistency`.
-- **Loop**:
-    - IF success: Commit and notify user.
-    - IF fail: Read error -> Analyze root cause -> Fix code -> Retry (Max 3 attempts).
-
-## 📝 Output Templates
-
-### Design Document Template (`guide/adapters/<tool>.md`)
-
+**Present to user**:
 ```markdown
-# <Tool> Adapter Design
+## {Tool} Capability Matrix
 
-## Capability Matrix
+| Capability | Status | Notes |
+|:---|:---|:---|
+| AGENTS.md | {native/degraded/unsupported} | {brief note} |
+| Rules | {native/degraded/unsupported} | {brief note} |
+| ... | ... | ... |
 
-| Priority | Capability | <Tool> Native Feature | Status | User Config Note | Implementation Strategy |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| ⭐⭐⭐⭐⭐ | **AGENTS.md** | e.g. `.cursor/rules` | Native | Place in root, auto-loaded | Map to native global rule |
-| ⭐⭐⭐⭐⭐ | **Rules** | e.g. `.mdc` | Native | Supports `globs` frontmatter | 1:1 file mapping |
-| ⭐⭐⭐ | **Commands** | N/A | Degraded | Use SKILL instead or System Prompt | Inject `/cmd` instructions in system prompt |
-| ⭐⭐⭐ | **SKILL** | e.g. `skills/` | Native | Requires `allowed-tools` list | Generate skill files |
-| ⭐⭐⭐ | **MCP** | `mcpServers` | Native | Edit `config.json` | Generate JSON config |
-| ⭐⭐⭐ | **HOOKS** | N/A | Unsupported| **Manual Trigger Required** | Warn user in docs |
-| ⭐⭐ | **Agents** | N/A | Unsupported| N/A | Skip |
-| ⭐⭐ | **Configuration**| `settings.json` | Native | Global config | Update settings file |
-
-## Implementation Details
-
-### 1. AGENTS.md (Project Context)
-- **Compatibility**: [Fully Compatible / Partial / Incompatible]
-- **Strategy**: <Explain how to inject global context>
-- **User Action**: <What user needs to do? e.g. "Enable Context in Settings">
-
-### 2. Rules (Fine-grained Control)
-- **Compatibility**: ...
-- **Mapping**:
-  - `globs` -> <Native Field>
-  - `alwaysApply` -> <Native Field>
-
-### 3. Commands & Skills
-- ...
-
-## Limitations & Fallbacks
-- **Critical**: <List blocking limitations>
-- **Workarounds**: <List manual workarounds for unsupported features>
+**Key decisions needed**:
+1. {Any unclear mapping?}
+2. {Any surprising limitation?}
 ```
 
-### Implementation Template (`src/index.ts`)
+**Wait for**: User confirmation or corrections before proceeding.
 
-```typescript
-import { Adapter, AdapterContext } from '@ai-jue/core';
+---
 
-export const <tool>Adapter: Adapter = {
-  name: '<tool>',
-  
-  // Capability: Rules
-  async resolveRules(ctx: AdapterContext) {
-    // 1. Read ai-jue rules
-    // 2. Transform to <tool> native format
-    // 3. Return file operations
-  },
-  
-  // Capability: Commands
-  // ...
-};
+## Phase 2: Design Documentation
+
+**Goal**: Generate bilingual adapter README using template.
+
+**Action**:
+1. Read `references/README-template.md` and `README-template.en.md`
+2. Fill in all `{placeholder}` sections based on research
+3. Generate:
+   - `packages/ai-jue-adapter-{tool}/README.md` (Chinese)
+   - `packages/ai-jue-adapter-{tool}/README.en.md` (English)
+
+**Key sections to complete**:
+- Capability Mapping Matrix (8 capabilities)
+- Implementation Details (per capability)
+- Limitations & Fallback Strategies
+
+---
+
+## 🔴 Gate 2: Design Document Review
+
+**Trigger**: After README files are generated.
+**Action**: STOP and present README to user.
+
+**Present to user**:
+```markdown
+I've generated the adapter design docs:
+
+📄 packages/ai-jue-adapter-{tool}/README.md
+📄 packages/ai-jue-adapter-{tool}/README.en.md
+
+**Please review**:
+1. Is the capability mapping accurate?
+2. Are the limitations clearly explained?
+3. Are the implementation strategies correct?
+
+Confirm to proceed with implementation, or suggest changes.
 ```
 
-## 🛡️ Governance Rules (Non-Negotiable)
+**Wait for**: User explicit "LGTM" or specific corrections.
 
-1.  **Provenance**: Every line of code must be traceable to a URL in the official docs.
-2.  **No Silent Failures**: If a capability is `unsupported`, the adapter MUST throw a visible warning or error, not silently ignore it.
-3.  **Isolation**: The adapter MUST NOT depend on other adapters.
+---
 
+## Phase 3: Implementation
+
+**Goal**: Generate adapter code based on design doc.
+
+**Action**:
+1. Scaffold directory structure:
+   ```
+   packages/ai-jue-adapter-{tool}/
+   ├── src/
+   │   └── index.ts
+   ├── test/
+   │   └── index.test.ts
+   ├── README.md (already created)
+   ├── README.en.md (already created)
+   ├── package.json
+   └── tsconfig.json
+   ```
+
+2. Implement `src/index.ts`:
+   - Import utilities from `ai-jue-core`
+   - Implement `generate(config, outputDir)` function
+   - Follow patterns from `references/IMPLEMENTATION-patterns.md`
+
+3. Implement `test/index.test.ts`:
+   - Basic functionality tests
+   - Capability mapping tests
+
+**Reference**: Consult `references/IMPLEMENTATION-patterns.md` for:
+- Native file reference patterns
+- Markdown block management
+- Structured config generation
+- Multi-file output patterns
+- Rules with frontmatter
+- Capability degradation
+
+---
+
+## Phase 4: Verification & Self-Correction
+
+**Goal**: Ensure adapter passes all tests.
+
+**Action**:
+1. Run `pnpm install` in adapter directory
+2. Run `pnpm test`
+3. If tests fail:
+   - Read error messages
+   - Fix in `src/index.ts`
+   - Re-run tests (max 3 retries)
+4. Run cross-adapter contract test:
+   ```bash
+   npm test -- packages/ai-jue/test/adapter-matrix.test.ts
+   ```
+
+---
+
+## 🟢 Gate 3: Completion Confirmation
+
+**Trigger**: After all tests pass.
+**Action**: Present final summary to user.
+
+**Present to user**:
+```markdown
+✅ Adapter creation complete!
+
+📦 packages/ai-jue-adapter-{tool}/
+├── ✅ README.md (Chinese design doc)
+├── ✅ README.en.md (English design doc)
+├── ✅ src/index.ts (Implementation)
+├── ✅ test/index.test.ts (Tests)
+└── ✅ All tests passing
+
+**Next steps**:
+1. Review the implementation
+2. Run smoke test: `npm run smoke-apply`
+3. Commit the changes
+
+Proceed with commit? [Y/n]
+```
+
+---
+
+## Testing Guide
+
+### For This Skill
+
+Validate the skill is working:
+
+| Test Case | Expected Result |
+|:---|:---|
+| "Create adapter for X" | Loads skill, starts Phase 1 |
+| After Phase 1 | Pauses at Gate 1 for confirmation |
+| After Phase 2 | Pauses at Gate 2 for README review |
+| After Phase 4 | Pauses at Gate 3 for final confirmation |
+
+### For Generated Adapters
+
+Each adapter must pass:
+
+1. **Unit Tests**: `pnpm test` in adapter directory
+2. **Contract Test**: Cross-adapter capability consistency
+3. **Smoke Test**: `npm run smoke-apply`
+
+---
+
+## References
+
+| File | Purpose |
+|:---|:---|
+| `references/README-template.md` | Chinese adapter README template |
+| `references/README-template.en.md` | English adapter README template |
+| `references/IMPLEMENTATION-patterns.md` | Implementation patterns and best practices |
+
+---
+
+## Governance Rules
+
+1. **Document First**: README must be approved before implementation
+2. **No Silent Failures**: Unsupported capabilities must be explicitly documented
+3. **Bilingual Required**: All adapters must have Chinese and English README
+4. **Test Coverage**: All adapters must include unit tests
