@@ -70,6 +70,18 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
       const localAssets = await loadAssetsFromDir(localJueDir, userConfig.language);
       finalConfig = mergeConfigWithLayeredContext(finalConfig, localAssets);
     }
+    
+    // Explicitly load root AGENTS.md from process.cwd() - MOVED THIS BLOCK
+    const rootAgentsFile = path.join(process.cwd(), 'AGENTS.md');
+    if (fs.existsSync(rootAgentsFile)) {
+        const rootAgentsContent = await fs.promises.readFile(rootAgentsFile, 'utf8');
+        const rootConfig: MergedConfig = {
+            context: {
+                global: rootAgentsContent
+            }
+        };
+        finalConfig = mergeConfigWithLayeredContext(finalConfig, rootConfig);
+    }
 
     if (userConfig.extends) {
       const extendedAssets = await loadExtendedAssets(userConfig.extends, process.cwd());

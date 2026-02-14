@@ -1,5 +1,6 @@
 import path from 'path';
 import fs from 'fs';
+import * as yaml from 'js-yaml'; // Import js-yaml
 import { MergedConfig } from './config';
 import { deepMerge } from 'ai-jue-core';
 
@@ -14,46 +15,14 @@ async function readJsonIfExists(filePath: string): Promise<any> {
   return JSON.parse(content);
 }
 
-function parseYamlScalar(value: string): any {
-  const raw = value.trim();
-  if (raw === 'true') return true;
-  if (raw === 'false') return false;
-  if (/^-?\d+(\.\d+)?$/.test(raw)) return Number(raw);
-  if (
-    (raw.startsWith('"') && raw.endsWith('"')) ||
-    (raw.startsWith("'") && raw.endsWith("'"))
-  ) {
-    return raw.slice(1, -1);
+// Replaced parseSimpleYamlFrontmatter with a robust YAML parser using js-yaml
+function parseYamlFrontmatter(yamlText: string): Record<string, any> {
+  try {
+    return (yaml.load(yamlText) as Record<string, any>) || {};
+  } catch (error) {
+    console.error('Error parsing YAML frontmatter:', error);
+    return {};
   }
-  return raw;
-}
-
-function parseSimpleYamlFrontmatter(yamlText: string): Record<string, any> {
-  const result: Record<string, any> = {};
-  const lines = yamlText.split('\n');
-
-  for (const line of lines) {
-    const trimmed = line.trim();
-    if (!trimmed || trimmed.startsWith('#')) continue;
-    const separatorIndex = trimmed.indexOf(':');
-    if (separatorIndex <= 0) continue;
-
-    const key = trimmed.slice(0, separatorIndex).trim();
-    const value = trimmed.slice(separatorIndex + 1).trim();
-    if (!key) continue;
-
-    if (value.startsWith('[') && value.endsWith(']')) {
-      const arrayBody = value.slice(1, -1).trim();
-      result[key] = arrayBody
-        ? arrayBody.split(',').map((item) => parseYamlScalar(item))
-        : [];
-      continue;
-    }
-
-    result[key] = parseYamlScalar(value);
-  }
-
-  return result;
 }
 
 function parseMarkdownWithFrontmatter(raw: string): FrontmatterResult {
@@ -70,7 +39,7 @@ function parseMarkdownWithFrontmatter(raw: string): FrontmatterResult {
   const content = raw.slice(closingIndex + 5);
   return {
     content,
-    attributes: parseSimpleYamlFrontmatter(yamlText),
+    attributes: parseYamlFrontmatter(yamlText), // Use the new yaml parser
   };
 }
 

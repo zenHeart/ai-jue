@@ -10,8 +10,8 @@ function toTomlMultilineString(value: string): string {
   return value.replace(/"""/g, '\\"\\"\\"');
 }
 
-function toCommandSegments(commandName: string): string[] {
-  return commandName
+function toCommandSegments(name: string): string[] {
+  return name
     .split(/[:/\\]+/)
     .map((segment) => segment.trim())
     .filter(Boolean)
@@ -48,6 +48,69 @@ function writeGeminiCommandFile(
 
   fs.writeFileSync(filePath, lines.join("\n"), "utf8");
 }
+
+// New function to write Gemini skill files
+function writeGeminiSkillFile(
+  outputDir: string,
+  skillName: string,
+  skill: { name: string; description: string; content: string; metadata?: Record<string, any>; [key: string]: any },
+): void {
+  if (!skill.name || !skill.description) return; // name and description are required
+
+  const segments = toCommandSegments(skillName);
+  if (segments.length === 0) return;
+
+  // Corrected filePath construction
+  const filePath = path.join(
+    outputDir,
+    ".gemini",
+    "skills",
+    segments[0], // Use the first segment as the directory name
+    `SKILL.toml`, // Name the file SKILL.toml
+  );
+  fs.mkdirSync(path.dirname(filePath), { recursive: true });
+
+  const lines: string[] = [];
+  lines.push(`name = "${toTomlBasicString(skill.name)}"`);
+  lines.push(`description = "${toTomlBasicString(skill.description)}"`);
+
+  // Add optional fields
+  if (skill.license) {
+    lines.push(`license = "${toTomlBasicString(skill.license)}"`);
+  }
+  if (skill.compatibility) {
+    lines.push(`compatibility = "${toTomlBasicString(skill.compatibility)}"`);
+  }
+  if (skill["allowed-tools"]) {
+    lines.push(`allowed-tools = "${toTomlBasicString(skill["allowed-tools"])}"`);
+  }
+  if (skill["auto-apply"] !== undefined) {
+    lines.push(`auto-apply = ${skill["auto-apply"]}`);
+  }
+
+  // Add metadata as a TOML table
+  if (skill.metadata && typeof skill.metadata === 'object') {
+    lines.push(`[metadata]`);
+    for (const [metaKey, metaValue] of Object.entries(skill.metadata)) {
+      if (typeof metaValue === 'string') {
+        lines.push(`${metaKey} = "${toTomlBasicString(metaValue)}"`);
+      } else if (typeof metaValue === 'number' || typeof metaValue === 'boolean') {
+        lines.push(`${metaKey} = ${metaValue}`);
+      } else if (Array.isArray(metaValue)) {
+        lines.push(`${metaKey} = [${metaValue.map(v => typeof v === 'string' ? `"${toTomlBasicString(v)}"` : v).join(', ')}]`);
+      }
+    }
+  }
+
+  // Add the content as prompt, similar to commands
+  lines.push("prompt = \"\"\"");
+  lines.push(toTomlMultilineString(skill.content.trim()));
+  lines.push("\"\"\"");
+  lines.push("");
+
+  fs.writeFileSync(filePath, lines.join("\n"), "utf8");
+}
+
 
 export async function generate(config: any, outputDir: string): Promise<void> {
   const promptEntries = config.prompts ? Object.values(config.prompts) : [];
@@ -109,6 +172,14 @@ export async function generate(config: any, outputDir: string): Promise<void> {
         description: typeof cmd?.description === "string" ? cmd.description : undefined,
         prompt: typeof cmd?.prompt === "string" ? cmd.prompt : undefined,
       });
+    }
+  }
+
+  // Inject Skills as Gemini TOML files: .gemini/skills/**/*.toml
+  if (config.skills && typeof config.skills === "object") {
+    for (const [key, value] of Object.entries(config.skills)) {
+      const skill = value as any;
+      writeGeminiSkillFile(outputDir, key, skill);
     }
   }
 

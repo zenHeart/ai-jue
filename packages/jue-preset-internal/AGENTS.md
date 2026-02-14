@@ -34,3 +34,15 @@
 - 规范目录：`AGENTS.md`、`commands/`、`rules/`、`hooks/`、`tools/`（按需启用）。
 - `commands` 元数据统一写入 `prompt.md` YAML frontmatter。
 - 不使用历史冗余概念与中间字段。
+
+---
+
+# Debugging Lessons Learned (2026-02-14)
+
+During a recent debugging session to fix skill mapping for Gemini tools, several critical lessons were learned regarding the `ai-jue` development environment:
+
+-   **Debugging `console.log` and `fs.writeFile` is unreliable**: The CLI's output suppression (`ora`) and the sandboxed execution environment's file access restrictions often prevent `console.log` statements from appearing and `fs.writeFile` from reliably creating accessible debug files.
+-   **Reliable Inspection of Generated Files**: The most reliable way to inspect generated file content, especially within ignored directories (e.g., `.gemini/`), is to use `run_shell_command` with `cat`.
+-   **Brittleness of `replace` for Multi-line Changes**: The `replace` tool proved brittle for multi-line code modifications within this project, often failing due to subtle whitespace or content differences. Overwriting the entire relevant code block or file with `write_file` is a more robust approach for such changes.
+-   **Silent Error Swallowing**: The `ai-jue` framework has a robust error-capturing mechanism that can silently swallow errors thrown from within adapters or certain modules, making debugging via `throw new Error()` ineffective in some contexts.
+-   **Importance of TypeScript Type Definitions**: When introducing new JavaScript libraries into a TypeScript project, installing corresponding TypeScript type definitions (e.g., `@types/js-yaml`) is essential to prevent build failures and maintain type safety.
