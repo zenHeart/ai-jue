@@ -15,6 +15,23 @@ async function readJsonIfExists(filePath: string): Promise<any> {
   return JSON.parse(content);
 }
 
+// Helper to load all files in a subdirectory as a key-value pair (filename -> content)
+async function loadAssetSubdir(dirPath: string): Promise<Record<string, string>> {
+  const result: Record<string, string> = {};
+  if (!fs.existsSync(dirPath)) return result;
+
+  const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  await Promise.all(
+    entries
+      .filter((entry) => entry.isFile())
+      .map(async (entry) => {
+        const filePath = path.join(dirPath, entry.name);
+        result[entry.name] = await fs.promises.readFile(filePath, 'utf8');
+      }),
+  );
+  return result;
+}
+
 // Replaced parseSimpleYamlFrontmatter with a robust YAML parser using js-yaml
 function parseYamlFrontmatter(yamlText: string): Record<string, any> {
   try {
@@ -82,7 +99,21 @@ async function loadNamedAssetDir(
 
         const rawContent = await fs.promises.readFile(contentPath, 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawContent);
-        config[section][assetName] = { ...parsed.attributes, content: parsed.content };
+        
+        // Load subdirectories if they exist (common for Agent Skills)
+        const [references, scripts, assets] = await Promise.all([
+          loadAssetSubdir(path.join(assetDir, 'references')),
+          loadAssetSubdir(path.join(assetDir, 'scripts')),
+          loadAssetSubdir(path.join(assetDir, 'assets')),
+        ]);
+
+        config[section][assetName] = { 
+          ...parsed.attributes, 
+          content: parsed.content,
+          references: Object.keys(references).length > 0 ? references : undefined,
+          scripts: Object.keys(scripts).length > 0 ? scripts : undefined,
+          assets: Object.keys(assets).length > 0 ? assets : undefined,
+        };
       }),
   );
 }
