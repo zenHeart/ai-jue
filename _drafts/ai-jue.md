@@ -91,7 +91,7 @@ alwaysApply: false
 | Gemini CLI | [Project context](https://geminicli.com/docs/core/context/) | 不支持独立 Rules 系统 | 应使用 GEMINI.md 的层级加载实现类似功能 |
 | GitHub Copilot | [Custom Instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | 支持路径特定指令（*.instructions.md），采用 `applyTo` 配置 | 原生支持，需在 .github 目录 |
 | Codex | ❌ 不支持 | N/A | 应使用 [Custom Instructions](https://developers.openai.com/codex/guides/agents-md#customize-fallback-filenames) |
-| Trae | [Rules](https://docs.trae.ai/ide/rules?_lang=en) | 目录 `.trae/rules/`，类似 Cursor 采用 `alwaysApply`、`description`、`globs` 配置 | 原生支持 |
+| Trae | [Rules](https://docs.trae.ai/ide/rules?_lang=en) | 目录 `.trae/rules/`，采用 `alwaysApply`、`description`、`globs` 配置 | 原生支持 |
 | OpenCode | [Custom Instructions](https://opencode.ai/docs/rules/#custom-instructions) | 自定义配置 | 原生支持 |
 
 ### 1.3 Commands（⭐⭐⭐ 高优先级）

@@ -67,7 +67,7 @@ describe('adapter capability snapshot', () => {
     const snapshotPayload = {
       agents: fs.readFileSync(path.join(outDir, 'AGENTS.md'), 'utf8'),
       claude: fs.readFileSync(path.join(outDir, 'CLAUDE.md'), 'utf8'),
-      cursorRuleStyle: fs.readFileSync(path.join(outDir, '.cursor', 'rules', 'style.mdc'), 'utf8'),
+      cursorProjectRuleStyle: fs.readFileSync(path.join(outDir, '.cursor', 'rules', 'style.mdc'), 'utf8'),
       cursorCommand: fs.readFileSync(path.join(outDir, '.cursor', 'commands', 'review.md'), 'utf8'),
       cursorSettings: JSON.parse(
         fs.readFileSync(path.join(outDir, '.cursor', 'settings.json'), 'utf8'),

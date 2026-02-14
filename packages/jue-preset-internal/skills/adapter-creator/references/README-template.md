@@ -21,16 +21,18 @@
 
 ## 能力映射矩阵
 
-| 优先级 | ai-jue 能力 | {Tool} 原生特性 | 支持状态 | 用户配置说明 | 实现策略 |
+> **开发者注意**：下表中的“{Tool} 原生特性”一列，**必须**包含指向该特性官方文档的 Markdown 链接。例如：`[Project Rules](https://docs.tool.com/rules)`。如果不支持，请填写 "无"。
+
+| 优先级 | ai-jue 能力 | {Tool} 原生特性 (必须包含文档链接) | 支持状态 | 用户配置说明 | 实现策略 |
 |:---|:---|:---|:---|:---|:---|
-| ⭐⭐⭐⭐⭐ | **AGENTS.md** | {描述 Tool 的全局上下文机制} | {Native/Degraded/Unsupported} | {用户需要做什么} | {如何映射} |
-| ⭐⭐⭐⭐⭐ | **Rules** | {描述 Tool 的规则机制} | {Native/Degraded/Unsupported} | {是否支持 globs/alwaysApply} | {如何映射} |
-| ⭐⭐⭐ | **Commands** | {描述 Tool 的命令机制} | {Native/Degraded/Unsupported} | {如何使用} | {如何映射} |
-| ⭐⭐⭐ | **Skills** | {描述 Tool 的技能机制} | {Native/Degraded/Unsupported} | {如何使用} | {如何映射} |
-| ⭐⭐⭐ | **MCP** | {描述 Tool 的 MCP 支持} | {Native/Degraded/Unsupported} | {配置方式} | {如何映射} |
-| ⭐⭐⭐ | **Hooks** | {描述 Tool 的钩子机制} | {Native/Degraded/Unsupported} | {如何使用} | {如何映射} |
-| ⭐⭐ | **Agents** | {描述 Tool 的代理机制} | {Native/Degraded/Unsupported} | {如何使用} | {如何映射} |
-| ⭐⭐ | **Configuration** | {描述 Tool 的全局配置} | {Native/Degraded/Unsupported} | {配置方式} | {如何映射} |
+| ⭐⭐⭐⭐⭐ | **AGENTS.md** | {描述并链接全局上下文机制} | {Native/Degraded/Unsupported} | {用户需要做什么} | {如何映射} |
+| ⭐⭐⭐⭐⭐ | **Rules** | {描述并链接规则机制} | {Native/Degraded/Unsupported} | {是否支持 globs/alwaysApply} | {如何映射} |
+| ⭐⭐⭐ | **Commands** | {描述并链接命令机制} | {Native/Degraded/Unsupported} | {如何使用} | {如何映射} |
+| ⭐⭐⭐ | **Skills** | {描述并链接技能机制} | {Native/Degraded/Unsupported} | {如何使用} | {如何映射} |
+| ⭐⭐⭐ | **MCP** | {描述并链接 MCP 支持} | {Native/Degraded/Unsupported} | {配置方式} | {如何映射} |
+| ⭐⭐⭐ | **Hooks** | {描述并链接钩子机制} | {Native/Degraded/Unsupported} | {如何使用} | {如何映射} |
+| ⭐⭐ | **Agents** | {描述并链接代理机制} | {Native/Degraded/Unsupported} | {如何使用} | {如何映射} |
+| ⭐⭐ | **Configuration** | {描述并链接全局配置} | {Native/Degraded/Unsupported} | {配置方式} | {如何映射} |
 
 ## 详细实现说明
 
@@ -41,7 +43,7 @@
 - **用户操作**：{用户需要做什么，如"在项目根目录放置 AGENTS.md"}
 - **技术细节**：{实现层面的具体说明}
 
-### 2. Rules（路径特定规则）
+### 2. Rules（路径特定规则 / Project Rules）
 
 - **兼容性**：{Fully Compatible / Partial / Incompatible}
 - **映射策略**：
@@ -49,6 +51,7 @@
   - `alwaysApply` → {Tool 的对应字段}
   - `description` → {Tool 的对应字段}
 - **文件输出**：{输出路径和格式，如 `.cursor/rules/*.mdc`}
+- **注意**：这是现代的规则机制，用于取代过时的全局指令文件。
 
 ### 3. Commands（自定义命令）
 

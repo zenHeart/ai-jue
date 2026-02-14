@@ -1,4 +1,3 @@
-
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import fs from 'fs';
@@ -191,5 +190,45 @@ describe('ai-jue-adapter-gemini', () => {
       fs.readFileSync(path.join(TEST_DIR, '.gemini', 'settings.json'), 'utf8'),
     );
     expect(content.agents.reviewer.skills).toEqual(['review-skill']);
+  });
+
+  it('should generate Agent Skills directories with SKILL.md and assets', async () => {
+    const config = {
+      skills: {
+        'test-skill': {
+          name: 'test-skill',
+          description: 'A test skill',
+          content: 'Skill instructions',
+          metadata: { version: '1.0.0' },
+          references: {
+            'REF.md': 'Reference content'
+          },
+          assets: {
+            'image.png': 'Fake image data'
+          }
+        }
+      }
+    };
+
+    await generate(config, TEST_DIR);
+
+    const skillDir = path.join(TEST_DIR, '.gemini', 'skills', 'test-skill');
+    expect(fs.existsSync(skillDir)).toBe(true);
+
+    const skillMdPath = path.join(skillDir, 'SKILL.md');
+    expect(fs.existsSync(skillMdPath)).toBe(true);
+    const skillMdContent = fs.readFileSync(skillMdPath, 'utf8');
+    expect(skillMdContent).toContain('name: test-skill');
+    expect(skillMdContent).toContain('description: A test skill');
+    expect(skillMdContent).toContain('version: 1.0.0');
+    expect(skillMdContent).toContain('Skill instructions');
+
+    const refPath = path.join(skillDir, 'references', 'REF.md');
+    expect(fs.existsSync(refPath)).toBe(true);
+    expect(fs.readFileSync(refPath, 'utf8')).toBe('Reference content');
+
+    const assetPath = path.join(skillDir, 'assets', 'image.png');
+    expect(fs.existsSync(assetPath)).toBe(true);
+    expect(fs.readFileSync(assetPath, 'utf8')).toBe('Fake image data');
   });
 });

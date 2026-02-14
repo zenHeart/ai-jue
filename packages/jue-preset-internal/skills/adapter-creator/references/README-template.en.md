@@ -21,16 +21,18 @@ This adapter converts `ai-jue` standardized capabilities into {Tool} native conf
 
 ## Capability Mapping Matrix
 
-| Priority | ai-jue Capability | {Tool} Native Feature | Status | User Config Note | Implementation Strategy |
+> **Developer Note**: In the "{Tool} Native Feature" column below, you **MUST** include a Markdown link to the official documentation for that feature. Example: `[Project Rules](https://docs.tool.com/rules)`. If unsupported, write "None".
+
+| Priority | ai-jue Capability | {Tool} Native Feature (Must Link to Docs) | Status | User Config Note | Implementation Strategy |
 |:---|:---|:---|:---|:---|:---|
-| ⭐⭐⭐⭐⭐ | **AGENTS.md** | {Describe Tool's global context mechanism} | {Native/Degraded/Unsupported} | {What user needs to do} | {How to map} |
-| ⭐⭐⭐⭐⭐ | **Rules** | {Describe Tool's rules mechanism} | {Native/Degraded/Unsupported} | {Support for globs/alwaysApply} | {How to map} |
-| ⭐⭐⭐ | **Commands** | {Describe Tool's commands mechanism} | {Native/Degraded/Unsupported} | {How to use} | {How to map} |
-| ⭐⭐⭐ | **Skills** | {Describe Tool's skills mechanism} | {Native/Degraded/Unsupported} | {How to use} | {How to map} |
-| ⭐⭐⭐ | **MCP** | {Describe Tool's MCP support} | {Native/Degraded/Unsupported} | {Config method} | {How to map} |
-| ⭐⭐⭐ | **Hooks** | {Describe Tool's hooks mechanism} | {Native/Degraded/Unsupported} | {How to use} | {How to map} |
-| ⭐⭐ | **Agents** | {Describe Tool's agents mechanism} | {Native/Degraded/Unsupported} | {How to use} | {How to map} |
-| ⭐⭐ | **Configuration** | {Describe Tool's global config} | {Native/Degraded/Unsupported} | {Config method} | {How to map} |
+| ⭐⭐⭐⭐⭐ | **AGENTS.md** | {Describe & Link global context mechanism} | {Native/Degraded/Unsupported} | {What user needs to do} | {How to map} |
+| ⭐⭐⭐⭐⭐ | **Rules** | {Describe & Link rules mechanism} | {Native/Degraded/Unsupported} | {Support for globs/alwaysApply} | {How to map} |
+| ⭐⭐⭐ | **Commands** | {Describe & Link commands mechanism} | {Native/Degraded/Unsupported} | {How to use} | {How to map} |
+| ⭐⭐⭐ | **Skills** | {Describe & Link skills mechanism} | {Native/Degraded/Unsupported} | {How to use} | {How to map} |
+| ⭐⭐⭐ | **MCP** | {Describe & Link MCP support} | {Native/Degraded/Unsupported} | {Config method} | {How to map} |
+| ⭐⭐⭐ | **Hooks** | {Describe & Link hooks mechanism} | {Native/Degraded/Unsupported} | {How to use} | {How to map} |
+| ⭐⭐ | **Agents** | {Describe & Link agents mechanism} | {Native/Degraded/Unsupported} | {How to use} | {How to map} |
+| ⭐⭐ | **Configuration** | {Describe & Link global config} | {Native/Degraded/Unsupported} | {Config method} | {How to map} |
 
 ## Implementation Details
 
@@ -41,7 +43,7 @@ This adapter converts `ai-jue` standardized capabilities into {Tool} native conf
 - **User Action**: {What user needs to do, e.g., "Place AGENTS.md in project root"}
 - **Technical Details**: {Implementation specifics}
 
-### 2. Rules (Path-specific Rules)
+### 2. Rules (Path-specific Rules / Project Rules)
 
 - **Compatibility**: {Fully Compatible / Partial / Incompatible}
 - **Mapping Strategy**:
@@ -49,6 +51,7 @@ This adapter converts `ai-jue` standardized capabilities into {Tool} native conf
   - `alwaysApply` → {Tool's equivalent field}
   - `description` → {Tool's equivalent field}
 - **Output Files**: {Output path and format, e.g., `.cursor/rules/*.mdc`}
+- **Note**: This is the modern rule mechanism replacing outdated global instruction files.
 
 ### 3. Commands (Custom Commands)
 

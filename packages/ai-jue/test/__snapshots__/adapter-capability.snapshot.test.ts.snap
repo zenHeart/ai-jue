@@ -97,7 +97,7 @@ Run review flow
 /review
 
 <!-- AI-JUE:END -->",
-  "cursorRuleStyle": "<!-- AI-JUE:START -->
+  "cursorProjectRuleStyle": "<!-- AI-JUE:START -->
 ---
 description: Style rule
 alwaysApply: true

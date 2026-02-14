@@ -1,8 +1,10 @@
 # Adapter Implementation Patterns
 
-Implementation reference for ai-jue adapter developers.
+Use these patterns to implement standard adapter functionality. Copy and adapt the snippets below.
 
-## Basic Adapter Structure
+## 1. Standard Adapter Entry Point
+
+Every adapter must export a `generate` function.
 
 ```typescript
 import { generateMarkdownFile, generateJsonFile, deepMerge } from 'ai-jue-core';
@@ -10,250 +12,136 @@ import * as fs from 'fs';
 import * as path from 'path';
 
 export async function generate(config: any, outputDir: string): Promise<void> {
-  // Main adapter implementation
+  // 1. Process Global Context (AGENTS.md)
+  await handleContext(config, outputDir);
+
+  // 2. Process Configuration & Prompts
+  await handleConfiguration(config, outputDir);
+
+  // 3. Process Rules
+  await handleRules(config, outputDir);
+
+  // 4. Process Skills (Standard Agent Skills)
+  await handleSkills(config, outputDir);
+
+  // 5. Process Commands
+  await handleCommands(config, outputDir);
+
+  // 6. Process MCP, Hooks, Agents (if supported)
+  await handleToolSpecifics(config, outputDir);
 }
 ```
 
-## Common Implementation Patterns
+## 2. Handling AGENTS.md (Context)
 
-### Pattern 1: Native File Reference (Recommended)
-
-For tools that support native `AGENTS.md` consumption:
+**Pattern A: Native Reference (Preferred)**
+Use this when the tool can refer to a file in the project root.
 
 ```typescript
-// AGENTS.md handling - reference instead of copy
+async function handleContext(config: any, outputDir: string) {
+  const globalContext = config.context?.global?.trim();
+  if (globalContext) {
+    // Generate the physical AGENTS.md file
+    await generateMarkdownFile(path.join(outputDir, 'AGENTS.md'), `${globalContext}\n`);
+  }
+}
+```
+
+**Pattern B: Content Injection**
+Use this when the tool requires context inside a specific prompt file.
+
+```typescript
+// In handleConfiguration or similar
+const sections = [];
 if (config.context?.global) {
-  // Tool reads AGENTS.md directly from project root
-  // No file generation needed, just ensure reference in generated config
+  sections.push(`<!-- Context from AGENTS.md -->\n${config.context.global}`);
+}
+// ... add other sections
+```
+
+## 3. Handling Rules
+
+**Pattern A: Degradation to Markdown (Common)**
+Most tools don't support granular file-glob rules natively. Degrade them into the system prompt.
+
+```typescript
+async function handleRules(config: any, outputDir: string) {
+  if (!config.rules) return;
+
+  const rulesContent = Object.entries(config.rules)
+    .map(([name, rule]: [string, any]) => {
+      const content = typeof rule === 'string' ? rule : rule.content;
+      return `### Rule: ${name}\n${content}`;
+    })
+    .join('\n\n');
+
+  if (rulesContent) {
+    // Append to system prompt file (e.g., GEMINI.md or CLAUDE.md)
+    // Implementation depends on how you construct that file
+  }
 }
 ```
 
-Examples: Cursor (native), Claude (via `@AGENTS.md` reference)
-
-### Pattern 2: Markdown Block Management
-
-For tools that need content injection with managed blocks:
+**Pattern B: Native Rule Files (e.g., Cursor)**
 
 ```typescript
-import { generateMarkdownFile } from 'ai-jue-core';
-
-// Generate {TOOL}.md with managed block
-await generateMarkdownFile(
-  path.join(outputDir, '{TOOL}.md'),
-  `<!-- AI-JUE:START -->\n${content}\n<!-- AI-JUE:END -->`,
-  { marker: 'AI-JUE' }
-);
+// See ai-jue-adapter-cursor for implementation of .cursor/rules/*.mdc generation
 ```
 
-Examples: Claude (CLAUDE.md), Gemini (GEMINI.md), Copilot (copilot-instructions.md)
+## 4. Handling Skills (Standard Agent Skills)
 
-### Pattern 3: Structured Config Generation
-
-For tools using JSON/YAML configuration:
-
-```typescript
-import { generateJsonFile, deepMerge } from 'ai-jue-core';
-
-const config = {
-  // Native tool config structure
-  rules: transformRules(aiJueConfig.rules),
-  commands: transformCommands(aiJueConfig.commands),
-};
-
-await generateJsonFile(
-  path.join(outputDir, '.{tool}', 'settings.json'),
-  config
-);
-```
-
-Examples: Cursor (mcp.json, hooks.json), Gemini (settings.json)
-
-### Pattern 4: Multi-file Output with Directory Structure
-
-For tools that need hierarchical file organization:
+**Pattern: Directory-based Generation (Standard)**
+This is the standard implementation for tools supporting Agent Skills.
 
 ```typescript
-// Commands with nested paths
-type CommandConfig = {
-  description?: string;
-  prompt: string;
-};
+import * as yaml from 'js-yaml'; // Ensure js-yaml is installed
 
-function writeCommandFile(
-  outputDir: string,
-  commandName: string,
-  command: CommandConfig
-): void {
-  // Parse nested command names: "git:commit" -> ["git", "commit"]
-  const segments = commandName
-    .split(/[:/\\]+/)
-    .map(s => s.trim())
-    .filter(Boolean);
-  
-  const filePath = path.join(
-    outputDir,
-    '.{tool}',
-    'commands',
-    ...segments.slice(0, -1),
-    `${segments[segments.length - 1]}.{ext}`
-  );
-  
-  fs.mkdirSync(path.dirname(filePath), { recursive: true });
-  fs.writeFileSync(filePath, serializeCommand(command), 'utf8');
-}
-```
+async function handleSkills(config: any, outputDir: string) {
+  if (!config.skills) return;
 
-Examples: Gemini (commands/**/*.toml)
+  for (const [skillName, skill] of Object.entries(config.skills)) {
+    const skillDir = path.join(outputDir, '.{tool}/skills', skillName);
+    fs.mkdirSync(skillDir, { recursive: true });
 
-### Pattern 5: Rules with Frontmatter
-
-For tools supporting rules with metadata:
-
-```typescript
-type Rule = {
-  description?: string;
-  globs?: string[];
-  alwaysApply?: boolean;
-  content: string;
-};
-
-function transformRuleToMdc(rule: Rule): string {
-  const frontmatter = [
-    '---',
-    rule.description && `description: ${rule.description}`,
-    rule.globs?.length && `globs: ${JSON.stringify(rule.globs)}`,
-    rule.alwaysApply && `alwaysApply: true`,
-    '---',
-  ].filter(Boolean).join('\n');
-  
-  return `${frontmatter}\n\n${rule.content}`;
-}
-```
-
-Examples: Cursor (.cursor/rules/*.mdc)
-
-### Pattern 6: Capability Degradation (Explicit)
-
-When a tool doesn't support a capability, degrade explicitly:
-
-```typescript
-// HOOKS degradation example
-if (config.hooks) {
-  // Tool doesn't support hooks natively
-  // Option 1: Write to documentation
-  degradedCapabilities.push({
-    capability: 'hooks',
-    reason: '{Tool} does not support lifecycle hooks',
-    workaround: 'Use external CI/CD or git hooks manually'
-  });
-  
-  // Option 2: Throw warning
-  console.warn('[ai-jue-adapter-{tool}] Hooks are not supported by {Tool}. '
-    + 'Please configure manually via {alternative method}.');
-}
-```
-
-## Testing Patterns
-
-### Basic Test Structure
-
-```typescript
-import { describe, it, expect, beforeEach, afterEach } from 'vitest';
-import * as fs from 'fs';
-import * as path from 'path';
-import { generate } from '../src/index';
-
-describe('ai-jue-adapter-{tool}', () => {
-  const TEST_DIR = path.join(__dirname, 'test-output');
-  
-  beforeEach(() => {
-    fs.mkdirSync(TEST_DIR, { recursive: true });
-  });
-  
-  afterEach(() => {
-    fs.rmSync(TEST_DIR, { recursive: true, force: true });
-  });
-  
-  it('should generate {tool} config with basic capabilities', async () => {
-    const config = {
-      rules: { /* ... */ },
-      commands: { /* ... */ },
+    // 1. Generate SKILL.md with Frontmatter
+    const frontmatter = {
+      name: skill.name || skillName,
+      description: skill.description,
+      metadata: skill.metadata,
+      // ... map other fields
     };
-    
-    await generate(config, TEST_DIR);
-    
-    // Assertions
-    expect(fs.existsSync(path.join(TEST_DIR, '.{tool}', 'settings.json'))).toBe(true);
-  });
-});
-```
+    const content = `---\n${yaml.dump(frontmatter)}---\n\n${skill.content}`;
+    fs.writeFileSync(path.join(skillDir, 'SKILL.md'), content);
 
-### Contract Test (Cross-Adapter)
-
-Ensure your adapter follows the same contract as others:
-
-```typescript
-// Verify all adapters produce consistent output structure
-it('should support all 8 capabilities', async () => {
-  const config = createFullCapabilityConfig();
-  await generate(config, TEST_DIR);
-  
-  // Assert expected files exist
-  // Assert expected content structure
-});
-```
-
-## Best Practices
-
-### 1. Minimal Knowledge Principle
-
-- Use target tool's native configuration files
-- Don't introduce ai-jue-specific concepts in output
-- Follow target tool's conventions and naming
-
-### 2. No Silent Failures
-
-```typescript
-// Bad - silently ignore
-if (capability.supported) { /* handle */ }
-
-// Good - explicit handling
-if (!capability.supported) {
-  throw new Error(`Capability ${capability.name} not supported by {Tool}`);
-  // OR
-  console.warn(`Warning: ${capability.name} degraded to documentation`);
+    // 2. Copy Assets (references, scripts, etc.)
+    // Assuming 'skill' object contains populated 'references', 'scripts' maps
+    // See ai-jue-adapter-gemini for full asset copying logic
+  }
 }
 ```
 
-### 3. Backward Compatibility
+## 5. Handling Commands
+
+**Pattern: Structured Command Files**
 
 ```typescript
-// Preserve existing user configuration
-await generateJsonFile(
-  filePath,
-  newConfig,
-  { mergeStrategy: 'deep' } // Deep merge with existing
-);
+async function handleCommands(config: any, outputDir: string) {
+  if (!config.commands) return;
+
+  for (const [cmdName, cmd] of Object.entries(config.commands)) {
+    // Flatten "git:commit" -> "git-commit" or nested folders depending on tool
+    // Generate tool-specific format (JSON/TOML)
+  }
+}
 ```
 
-### 4. File Organization
+## 6. Testing Contract
 
+Ensure your `test/index.test.ts` verifies all 8 capabilities.
+
+```typescript
+it('should generate AGENTS.md for context', async () => { /* ... */ });
+it('should degrade rules correctly', async () => { /* ... */ });
+it('should generate skills with proper structure', async () => { /* ... */ });
+// ... etc
 ```
-ai-jue-adapter-{tool}/
-├── src/
-│   └── index.ts          # Main generate() function
-├── test/
-│   └── index.test.ts     # Unit tests
-├── README.md             # User documentation (Chinese)
-├── README.en.md          # User documentation (English)
-├── package.json
-└── tsconfig.json
-```
-
-## Common Pitfalls
-
-1. **Don't copy AGENTS.md content** - Reference it instead
-2. **Don't assume all capabilities are supported** - Check and degrade explicitly
-3. **Don't use internal ai-jue field names in output** - Map to native names
-4. **Don't forget i18n** - Support language configuration
-5. **Don't skip tests** - Include unit tests and contract tests
