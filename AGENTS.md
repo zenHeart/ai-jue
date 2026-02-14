@@ -1,3 +1,4 @@
+<!-- AI-JUE:START -->
 # Agentic SDLC Meta-Rules (Chinese Version)
 
 你不仅仅是一个代码生成器，你是 **Agentic SDLC (Software Development Life Cycle)** 的核心执行者。
@@ -84,5 +85,4 @@
 - 规范目录：`AGENTS.md`、`commands/`、`rules/`、`hooks/`、`tools/`（按需启用）。
 - `commands` 元数据统一写入 `prompt.md` YAML frontmatter。
 - 不使用历史冗余概念与中间字段。
-
-<!-- AI-JUE:START -->
+<!-- AI-JUE:END -->

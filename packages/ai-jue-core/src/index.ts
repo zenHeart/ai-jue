@@ -25,21 +25,33 @@ export function deepMerge(target: any, source: any) {
 export function generateMarkdownFile(filePath: string, content: string) {
     const startTag = '<!-- AI-JUE:START -->';
     const endTag = '<!-- AI-JUE:END -->';
-    const managedContent = `${startTag}\n${content}\n${endTag}`;
+    
+    // Strip existing markers from incoming content to avoid nesting
+    const escapedStart = startTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const escapedEnd = endTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const managedBlockPattern = new RegExp(`${escapedStart}[\\s\\S]*?${escapedEnd}\\n?`, 'g');
+    const orphanTagPattern = new RegExp(`^\\s*(?:${escapedStart}|${escapedEnd})\\s*$`, 'gm');
+    
+    const cleanContent = content
+        .replace(managedBlockPattern, '')
+        .replace(orphanTagPattern, '')
+        .trim();
+
+    const managedContent = `${startTag}\n${cleanContent}\n${endTag}`;
 
     let finalContent = managedContent;
 
     if (fs.existsSync(filePath)) {
         const existingContent = fs.readFileSync(filePath, 'utf8');
-        const escapedStart = startTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const escapedEnd = endTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const managedBlockPattern = new RegExp(`${escapedStart}[\\s\\S]*?${escapedEnd}\\n?`, 'g');
-        const orphanTagPattern = new RegExp(`^\\s*(?:${escapedStart}|${escapedEnd})\\s*$`, 'gm');
         const userContent = existingContent
           .replace(managedBlockPattern, '')
           .replace(orphanTagPattern, '')
           .trim();
         finalContent = userContent ? `${userContent}\n\n${managedContent}` : managedContent;
+
+        if (existingContent.trim() === finalContent.trim()) {
+            return;
+        }
     } else {
         // Create directory if not exists
         const dir = path.dirname(filePath);
@@ -60,8 +72,13 @@ export function generateJsonFile(filePath: string, content: any) {
 
     if (fs.existsSync(filePath)) {
         try {
-            const existingContent = JSON.parse(fs.readFileSync(filePath, 'utf8'));
+            const existingRaw = fs.readFileSync(filePath, 'utf8');
+            const existingContent = JSON.parse(existingRaw);
             finalContent = deepMerge(existingContent, content);
+            
+            if (existingRaw.trim() === JSON.stringify(finalContent, null, 2).trim()) {
+                return;
+            }
         } catch (e) {
             console.warn(`[ai-jue-core] Warning: Failed to parse existing JSON file ${filePath}. Overwriting with new content.`);
         }
