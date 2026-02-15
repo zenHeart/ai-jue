@@ -91,8 +91,10 @@ describe('adapter contract matrix', () => {
       fs.readFileSync(path.join(TEST_DIR, '.github', 'copilot-settings.json'), 'utf8'),
     );
 
+    const claudeRule = fs.readFileSync(path.join(TEST_DIR, '.claude', 'rules', 'style.md'), 'utf8');
+
     expect(claude).toContain('@AGENTS.md');
-    expect(claude).toContain('Use strict typing');
+    expect(claudeRule).toContain('Use strict typing');
     expect(agentsMd).toContain('Global context');
     expect(cursorStyleRule).toContain('Use strict typing');
     expect(cursorSettings.temperature).toBe(0.3);

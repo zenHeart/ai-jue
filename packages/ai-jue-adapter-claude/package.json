@@ -7,7 +7,11 @@
     "build": "tsc"
   },
   "dependencies": {
-    "ai-jue-core": "*"
+    "ai-jue-core": "*",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9"
   },
   "author": "AI-Jue Team <contact@ai-jue.dev>",
   "license": "MIT",

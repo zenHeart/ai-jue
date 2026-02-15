@@ -6,36 +6,22 @@ exports[`adapter capability snapshot > matches canonical capability output snaps
 Global context for snapshot
 <!-- AI-JUE:END -->",
   "claude": "<!-- AI-JUE:START -->
-# Context & Rules
-
 @AGENTS.md
-
-## Rules
-
-### style
-Common prompt block
-
-## Slash Commands (Skills)
-
-/skill-review: Review skill
-  Prompt: Review skill content
-
-## Custom Commands
-
-/review: Review command
-  Prompt: Run review flow
-
-## Workflow Hooks
-
-- **pre-commit**: Please ensure to run \`npm test\`.
-## Agents
-
-### reviewer
-Review as agent
-
-- **review**: Review skill
 <!-- AI-JUE:END -->",
   "claudeSettings": {
+    "hooks": {
+      "pre-commit": "npm test",
+    },
+    "mcp": {
+      "servers": {
+        "sqlite": {
+          "args": [
+            "mcp-server-sqlite",
+          ],
+          "command": "uvx",
+        },
+      },
+    },
     "permissions": {
       "allow": [
         "Read",

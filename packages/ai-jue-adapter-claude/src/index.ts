@@ -1,128 +1,142 @@
 import path from "path";
-import { generateMarkdownFile, generateJsonFile } from "ai-jue-core";
+import fs from "fs";
+import * as yaml from "js-yaml";
+import { generateMarkdownFile, generateJsonFile, deepMerge } from "ai-jue-core";
 
-const LOCALES: Record<string, any> = {
-  zh: {
-    contextTitle: "上下文与规则",
-    skillsTitle: "技能指令 (Skills)",
-    commandsTitle: "自定义指令",
-    hooksTitle: "工作流钩子",
-    skillDescDefault: "执行技能",
-    commandDescDefault: "执行指令",
-    hookPrefix: "请确保在继续之前执行",
-  },
-  en: {
-    contextTitle: "Context & Rules",
-    skillsTitle: "Slash Commands (Skills)",
-    commandsTitle: "Custom Commands",
-    hooksTitle: "Workflow Hooks",
-    skillDescDefault: "Execute skill",
-    commandDescDefault: "Execute command",
-    hookPrefix: "Please ensure to run",
-  },
-};
+/**
+ * Claude Code Adapter (Native Implementation)
+ * Maps ai-jue capabilities to .claude/ directory, CLAUDE.md, and .mcp.json
+ */
 
 export async function generate(config: any, outputDir: string): Promise<void> {
-  const lang =
-    config.language === "zh" || config.language === "zh-CN" ? "zh" : "en";
-  const t = LOCALES[lang];
+  const claudeDir = path.join(outputDir, ".claude");
 
-  let content = "";
-  const globalContext = config.context?.global;
+  // Helper for clean YAML dump (prevents >- for simple strings)
+  const safeDump = (obj: any) => yaml.dump(obj, { lineWidth: -1, noRefs: true }).trim();
 
-  // 1. Inject AGENTS.md content first (Global Context)
+  // 1. Handle Global Context (AGENTS.md)
+  const globalContext = config.context?.global?.trim();
   if (globalContext) {
-    generateMarkdownFile(path.join(outputDir, "AGENTS.md"), `${String(globalContext).trim()}\n`);
-    content += `# ${t.contextTitle}\n\n@AGENTS.md\n\n`;
+    generateMarkdownFile(path.join(outputDir, "AGENTS.md"), `${globalContext}\n`);
   }
 
-  // 2. Add specific Claude prompt
+  // 2. Handle System Prompt (CLAUDE.md)
+  let mainPrompt = "";
+  if (globalContext) {
+    mainPrompt += "@AGENTS.md\n\n";
+  }
   if (config.prompts?.claude?.content) {
-    content += `\n${config.prompts.claude.content}\n\n`;
+    mainPrompt += `${config.prompts.claude.content}\n`;
+  }
+  if (mainPrompt.trim()) {
+    generateMarkdownFile(path.join(outputDir, "CLAUDE.md"), mainPrompt);
   }
 
-  // 2.1 Degrade canonical rules into CLAUDE.md when no dedicated rules directory is emitted
-  if (config.rules && typeof config.rules === "object") {
-    const rulesTitle = lang === "zh" ? "规则 (Rules)" : "Rules";
-    content += `## ${rulesTitle}\n\n`;
-    for (const [key, value] of Object.entries(config.rules)) {
-      const rule = value as any;
-      const ruleContent = typeof rule === "string" ? rule : rule.content || "";
-      if (!String(ruleContent).trim()) continue;
-      content += `### ${key}\n${String(ruleContent).trim()}\n\n`;
-    }
-  }
+  // 3. Handle Modular Rules (Native)
+  if (config.rules && Object.keys(config.rules).length > 0) {
+    let hasValidRules = false;
+    for (const [ruleName, rule] of Object.entries(config.rules)) {
+      const r = rule as any;
+      const content = typeof r === "string" ? r : r.content || "";
+      if (!content.trim()) continue;
 
-  // 3. Convert Skills to Slash Commands
-  if (config.skills) {
-    content += `## ${t.skillsTitle}\n\n`;
-    for (const [key, value] of Object.entries(config.skills)) {
-      const skill = value as any;
-      // Claude Code format: /command - description
-      content += `/skill-${key}: ${skill.description || t.skillDescDefault}\n`;
-      content += `  Prompt: ${skill.content || skill.prompt || ""}\n\n`;
-    }
-  }
-
-  // 4. Convert Commands to Slash Commands
-  if (config.commands) {
-    content += `## ${t.commandsTitle}\n\n`;
-    for (const [key, value] of Object.entries(config.commands)) {
-      const cmd = value as any;
-      content += `/${key}: ${cmd.description || t.commandDescDefault}\n`;
-      content += `  Prompt: ${cmd.prompt}\n\n`;
-    }
-  }
-
-  // 5. Hooks Documentation
-  if (config.hooks) {
-    content += `## ${t.hooksTitle}\n\n`;
-    for (const [key, value] of Object.entries(config.hooks)) {
-      const hookValue = value as any;
-      const script =
-        typeof hookValue === "string" ? hookValue : hookValue.script;
-      content += `- **${key}**: ${t.hookPrefix} \`${script}\`.\n`;
-    }
-  }
-
-  // 6. Agents Documentation
-  if (config.agents) {
-    const agentsTitle = lang === "zh" ? "代理 (Agents)" : "Agents";
-    content += `## ${agentsTitle}\n\n`;
-    for (const [key, value] of Object.entries(config.agents)) {
-      const agent = value as any;
-      content += `### ${key}\n${agent.prompt || ""}\n\n`;
-      const agentSkillRefs = Array.isArray(agent.skills) ? agent.skills : [];
-      if (agentSkillRefs.length > 0 && config.skills) {
-        for (const skillKey of agentSkillRefs) {
-          const skill = config.skills[skillKey];
-          if (skill) {
-            content += `- **${skillKey}**: ${skill.description || ""}\n`;
-          }
-        }
-        content += "\n";
+      if (!hasValidRules) {
+        if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
+        const rulesDir = path.join(claudeDir, "rules");
+        if (!fs.existsSync(rulesDir)) fs.mkdirSync(rulesDir, { recursive: true });
+        hasValidRules = true;
       }
+
+      const frontmatter: any = { id: ruleName };
+      if (r.description) frontmatter.description = r.description;
+      if (r.globs) frontmatter.paths = r.globs;
+      
+      const fileContent = `---\n${safeDump(frontmatter)}\n---\n\n${content}`;
+      fs.writeFileSync(path.join(claudeDir, "rules", `${ruleName}.md`), fileContent, "utf8");
     }
   }
 
-  if (content.trim()) {
-    const filePath = path.join(outputDir, "CLAUDE.md");
-    generateMarkdownFile(filePath, content);
+  // 4. Handle Agent Skills (Native) - Reusable complex capabilities
+  if (config.skills && Object.keys(config.skills).length > 0) {
+    let hasValidSkills = false;
+    for (const [skillName, skill] of Object.entries(config.skills)) {
+      const s = skill as any;
+      if (!s.description || !s.content) continue;
+
+      if (!hasValidSkills) {
+        if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
+        const skillsDir = path.join(claudeDir, "skills");
+        if (!fs.existsSync(skillsDir)) fs.mkdirSync(skillsDir, { recursive: true });
+        hasValidSkills = true;
+      }
+
+      const skillPath = path.join(claudeDir, "skills", skillName);
+      if (!fs.existsSync(skillPath)) fs.mkdirSync(skillPath, { recursive: true });
+
+      const frontmatter: any = {
+        name: s.name || skillName,
+        description: s.description,
+      };
+      if (s.metadata) frontmatter.metadata = s.metadata;
+      if (s["allowed-tools"]) frontmatter["allowed-tools"] = s["allowed-tools"];
+
+      const fileContent = `---\n${safeDump(frontmatter)}\n---\n\n${s.content || ""}`;
+      fs.writeFileSync(path.join(skillPath, "SKILL.md"), fileContent, "utf8");
+
+      const writeSubdir = (dirName: string, files?: Record<string, string>) => {
+        if (!files) return;
+        const subPath = path.join(skillPath, dirName);
+        if (!fs.existsSync(subPath)) fs.mkdirSync(subPath, { recursive: true });
+        for (const [filename, content] of Object.entries(files)) {
+          fs.writeFileSync(path.join(subPath, filename), content, "utf8");
+        }
+      };
+      writeSubdir("references", s.references);
+      writeSubdir("scripts", s.scripts);
+      writeSubdir("assets", s.assets);
+    }
   }
 
-  // 2. Generate .mcp.json (Claude Code Project Scope)
-  if (config.mcp && config.mcp.servers) {
+  // 5. Handle Commands (Custom Slash Commands) - Clean prompt mappings
+  if (config.commands && Object.keys(config.commands).length > 0) {
+    let hasValidCommands = false;
+    for (const [cmdName, cmd] of Object.entries(config.commands)) {
+      const c = cmd as any;
+      if (!c.prompt) continue;
+
+      if (!hasValidCommands) {
+        if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
+        const commandsDir = path.join(claudeDir, "commands");
+        if (!fs.existsSync(commandsDir)) fs.mkdirSync(commandsDir, { recursive: true });
+        hasValidCommands = true;
+      }
+
+      const frontmatter = {
+        name: cmdName,
+        description: c.description || `Command: ${cmdName}`,
+      };
+      const fileContent = `---\n${safeDump(frontmatter)}\n---\n\n${c.prompt || ""}`;
+      // In Claude Code, custom commands can be defined as .md files in the commands directory
+      fs.writeFileSync(path.join(claudeDir, "commands", `${cmdName}.md`), fileContent, "utf8");
+    }
+  }
+
+  // 6. Handle MCP Servers (Native .mcp.json)
+  if (config.mcp?.servers && Object.keys(config.mcp.servers).length > 0) {
     const mcpConfig = {
       mcpServers: config.mcp.servers,
     };
     generateJsonFile(path.join(outputDir, ".mcp.json"), mcpConfig);
   }
 
-  // 7. tools.claude passthrough -> .claude/settings.json
-  if (config.tools?.claude && typeof config.tools.claude === "object") {
-    generateJsonFile(
-      path.join(outputDir, ".claude", "settings.json"),
-      config.tools.claude,
-    );
+  // 7. Handle Settings & Hooks (.claude/settings.json)
+  let settings = config.tools?.claude || {};
+  if (config.hooks && Object.keys(config.hooks).length > 0) {
+    settings.hooks = deepMerge(settings.hooks || {}, config.hooks);
+  }
+
+  if (Object.keys(settings).length > 0) {
+    if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
+    generateJsonFile(path.join(claudeDir, "settings.json"), settings);
   }
 }
