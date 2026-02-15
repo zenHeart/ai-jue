@@ -75,6 +75,9 @@ describe('adapter capability snapshot', () => {
       claudeSettings: JSON.parse(
         fs.readFileSync(path.join(outDir, '.claude', 'settings.json'), 'utf8'),
       ),
+      claudeMcp: JSON.parse(
+        fs.readFileSync(path.join(outDir, '.mcp.json'), 'utf8'),
+      ),
       geminiMd: fs.readFileSync(path.join(outDir, 'GEMINI.md'), 'utf8'),
       gemini: JSON.parse(fs.readFileSync(path.join(outDir, '.gemini', 'settings.json'), 'utf8')),
       geminiCommandReview: fs.readFileSync(

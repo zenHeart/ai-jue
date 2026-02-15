@@ -8,19 +8,28 @@ Global context for snapshot
   "claude": "<!-- AI-JUE:START -->
 @AGENTS.md
 <!-- AI-JUE:END -->",
+  "claudeMcp": {
+    "mcpServers": {
+      "sqlite": {
+        "args": [
+          "mcp-server-sqlite",
+        ],
+        "command": "uvx",
+      },
+    },
+  },
   "claudeSettings": {
     "hooks": {
-      "pre-commit": "npm test",
-    },
-    "mcp": {
-      "servers": {
-        "sqlite": {
-          "args": [
-            "mcp-server-sqlite",
+      "pre-commit": [
+        {
+          "hooks": [
+            {
+              "command": "npm test",
+              "type": "command",
+            },
           ],
-          "command": "uvx",
         },
-      },
+      ],
     },
     "permissions": {
       "allow": [
