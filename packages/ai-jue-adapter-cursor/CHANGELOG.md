@@ -1,3 +1,12 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.1.0...ai-jue-adapter-cursor@1.0.0) (2026-02-15)
+
+
+### Bug Fixes
+
+* apply adapter install and runtime lang override ([2b52aee](https://github.com/zenHeart/ai-jue/commit/2b52aeecdce8f43c1b7d6fd906347afaf19aaf97))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.0.11...ai-jue-adapter-cursor@1.0.0) (2026-02-12)
 
 

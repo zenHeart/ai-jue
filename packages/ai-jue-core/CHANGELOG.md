@@ -1,3 +1,14 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.1.0...ai-jue-core@1.0.0) (2026-02-15)
+
+
+### Bug Fixes
+
+* apply adapter install and runtime lang override ([2b52aee](https://github.com/zenHeart/ai-jue/commit/2b52aeecdce8f43c1b7d6fd906347afaf19aaf97))
+* normalize AGENTS managed block generation ([5ce16c6](https://github.com/zenHeart/ai-jue/commit/5ce16c6912feb33a020f924bbadee6d822fe7228))
+* 修复错误 ([4085133](https://github.com/zenHeart/ai-jue/commit/408513359efdd2da6c8f13d2bb00446fc3cd314e))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.0.14...ai-jue-core@1.0.0) (2026-02-12)
 
 

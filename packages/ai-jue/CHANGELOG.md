@@ -1,3 +1,21 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.1.1...ai-jue@1.0.0) (2026-02-15)
+
+
+### Bug Fixes
+
+* add draft ([f765a72](https://github.com/zenHeart/ai-jue/commit/f765a72225891c9fce901686918db25280d00449))
+* apply adapter install and runtime lang override ([2b52aee](https://github.com/zenHeart/ai-jue/commit/2b52aeecdce8f43c1b7d6fd906347afaf19aaf97))
+
+
+### Features
+
+* **claude:** command-skill separation and lazy creation pattern ([5454f5c](https://github.com/zenHeart/ai-jue/commit/5454f5ca034b16142e4e13f34dc8909589975a5d))
+* Gemini adapter TOML commands, CLI typo tolerance, skills loading fix ([2e712a5](https://github.com/zenHeart/ai-jue/commit/2e712a5f918f24b8918f2fec148995b683920912))
+* **gemini:** fix skill mapping and standard-compliant skill generation ([65fdfa8](https://github.com/zenHeart/ai-jue/commit/65fdfa8af9956cecc47bb69df23582349af990dc))
+* **gemini:** precision documentation and skill-creator optimization ([5f51d79](https://github.com/zenHeart/ai-jue/commit/5f51d79b8553a63aa5ae86053a70eb7a21560da1))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.1.0...ai-jue@1.0.0) (2026-02-12)
 
 

@@ -1,3 +1,17 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v1.1.0...ai-jue-adapter-claude@1.0.0) (2026-02-15)
+
+
+### Bug Fixes
+
+* 支持 claude ([a6ce7e2](https://github.com/zenHeart/ai-jue/commit/a6ce7e2b178e2872f74925bfa584ec7b7068ba96))
+
+
+### Features
+
+* **claude:** command-skill separation and lazy creation pattern ([5454f5c](https://github.com/zenHeart/ai-jue/commit/5454f5ca034b16142e4e13f34dc8909589975a5d))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v1.0.11...ai-jue-adapter-claude@1.0.0) (2026-02-12)
 
 
