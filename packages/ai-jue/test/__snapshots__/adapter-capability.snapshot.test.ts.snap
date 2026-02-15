@@ -4,7 +4,6 @@ exports[`adapter capability snapshot > matches canonical capability output snaps
 {
   "agents": "<!-- AI-JUE:START -->
 Global context for snapshot
-
 <!-- AI-JUE:END -->",
   "claude": "<!-- AI-JUE:START -->
 # Context & Rules
@@ -35,8 +34,6 @@ Common prompt block
 Review as agent
 
 - **review**: Review skill
-
-
 <!-- AI-JUE:END -->",
   "claudeSettings": {
     "permissions": {
@@ -77,8 +74,6 @@ This project defines the following workflow hooks. Please remind the user to run
 
 - MCP servers are defined in project config. Treat them as external tool context and ask the user before assuming direct execution support.
 - Agent definitions are provided as role guidance. Apply their intent through instruction following rather than runtime agent orchestration.
-
-
 <!-- AI-JUE:END -->",
   "copilotSettings": {
     "codeReview": true,
@@ -95,7 +90,6 @@ Run review flow
 ## Triggers:
 
 /review
-
 <!-- AI-JUE:END -->",
   "cursorProjectRuleStyle": "<!-- AI-JUE:START -->
 ---
@@ -103,7 +97,6 @@ description: Style rule
 alwaysApply: true
 ---
 Common prompt block
-
 <!-- AI-JUE:END -->",
   "cursorSettings": {
     "temperature": 0.3,

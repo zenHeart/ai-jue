@@ -3,108 +3,75 @@ name: adapter-creator
 description: Creates or optimizes ai-jue adapters for AI tools. Use when user asks to "create adapter for [tool]", "add support for [tool]", or "optimize/update [tool] adapter".
 compatibility: Works in ai-jue monorepo with TypeScript/pnpm.
 metadata:
-  version: 4.0.0
-  tags: [adapter, scaffolding, optimization, design-first, agentic-workflow, self-correction]
+  version: 4.3.0
+  tags: [adapter, scaffolding, optimization, design-first, agentic-workflow, self-correction, anti-hallucination, collaborative-verification]
 ---
 
 # Adapter Creator
 
-A workflow for building production-ready `ai-jue` adapters. This skill focuses on **solving the integration problem** between `ai-jue`'s standard capabilities and a target tool's native features.
+A workflow for building production-ready `ai-jue` adapters. This skill ensures **high-precision integration** based on verified official documentation.
 
 ## 1. Problem Definition & Mode Selection
 
-**Context**: You need to bridge `ai-jue` (standard config) and a Tool (native config).
 **Action**:
-1.  Identify the target tool name `{tool}` from the request.
-2.  Check if `packages/ai-jue-adapter-{tool}` exists using `list_directory`.
-    -   **Missing?** -> **Create Mode**: You are building from scratch.
-    -   **Exists?** -> **Optimize Mode**: You are improving an existing integration.
+1.  Identify target `{tool}`.
+2.  Check if `packages/ai-jue-adapter-{tool}` exists.
+    -   **Missing?** -> **Create Mode**.
+    -   **Exists?** -> **Optimize Mode**.
 
 ---
 
-## 2. Create Mode: The "Research-First" Workflow
+## 2. Phase 1: High-Precision Research (Collaborative)
 
-> **Goal**: Build a complete adapter that maps ALL 8 ai-jue capabilities.
+**Goal**: Obtain 100% accurate documentation URLs for all capabilities.
 
-### Step 1: Deep Research (The Foundation)
-**Why**: You cannot map what you don't understand.
-**Action**:
-1.  Use `web_search` to find the **official documentation** for the target tool.
-2.  **Mandatory**: Find the specific documentation URL for EACH of these features:
-    *   Context / Global Instructions (AGENTS.md)
-    *   Project Rules (Path-specific instructions)
-    *   Custom Slash Commands
-    *   Agent Skills / Reusable workflows
-    *   MCP (Model Context Protocol) Support
-    *   Lifecycle Hooks (scripts)
-    *   Agent Personas
-    *   Configuration / Settings files
-3.  **Output**: Keep these URLs ready for Step 2.
+### Step 1: Automated Discovery
+1.  Use `web_search` and `web_fetch` to find the official documentation.
+2.  **Mandatory Verification**: Every candidate URL MUST be checked using `curl -I` or a script to ensure 200 OK.
 
-### Step 2: Design by Contract (The Template)
-**Why**: We enforce consistency across all adapters via templates.
-**Action**:
-1.  Read `references/README-template.md` and `references/README-template.en.md`.
-2.  **Strictly fill in the templates**.
-    *   **CRITICAL**: In the "Capability Mapping Matrix", you **MUST** insert the documentation links found in Step 1.
-    *   Do not remove sections. If a feature is unsupported, mark it "Unsupported" but keep the row.
-3.  Write the files to `packages/ai-jue-adapter-{tool}/README.md` (and .en.md).
-
-### Step 3: Scaffolding & Implementation
-**Why**: Turn the design into code.
-**Action**:
-1.  Create `package.json` (use `ai-jue-adapter-gemini/package.json` as a reference).
-2.  Create `tsconfig.json`.
-3.  Create `src/index.ts`. Use patterns from `references/IMPLEMENTATION-patterns.md`.
-    *   Implement the `generate` function.
-    *   Ensure all 8 capabilities defined in the README are handled (either natively or degraded).
-
-### Step 4: Verification
-**Action**:
-1.  Create `test/index.test.ts`. Use the testing patterns from `references/IMPLEMENTATION-patterns.md`.
-2.  Run `npm run build`.
-3.  Run `npm test`.
+### Step 2: Precision Check & User Collaboration
+1.  **Analyze Precision**: Does the URL point to the *exact* feature (e.g., `/docs/cli/gemini-md`) or just a general category (e.g., `/docs/`)?
+2.  **Mandatory Collaboration**: If you cannot find a precise, verified URL for any of the 8 core capabilities:
+    *   **STOP**.
+    *   List the capabilities with missing/vague links.
+    *   **Ask the user to provide the exact URLs**.
+    *   Do NOT proceed to implementation with vague or hallucinated links.
 
 ---
 
-## 3. Optimize Mode: The "Gap-Analysis" Workflow
+## 3. Phase 2: Documentation-Driven Design
 
-> **Goal**: Bring an existing adapter up to the latest v4.0.0 standard.
-
-### Step 1: Gap Analysis
 **Action**:
-1.  Read the existing `README.md`.
-2.  Compare the "Capability Matrix" against the standard 8 capabilities in `references/README-template.md`.
-3.  Identify missing capabilities, missing documentation links, or outdated formats.
-
-### Step 2: Documentation Refresh
-**Action**:
-1.  Re-generate `README.md` and `README.en.md` using the **latest templates**.
-2.  Fill in any missing documentation links (use `web_search` if needed).
-3.  Ensure the "Implementation Details" section accurately reflects the code (or planned code).
-
-### Step 3: Code Refactoring
-**Action**:
-1.  Update `src/index.ts` to match the new README design.
-2.  Ensure strict adherence to `references/IMPLEMENTATION-patterns.md` (e.g., proper AGENTS.md handling).
+1.  Read `references/README-template.md`.
+2.  Fill in the **Capability Mapping Matrix** using ONLY verified, precise URLs.
+3.  **Strict Constraint**: If a capability is unsupported by the tool, mark it "Unsupported" and do NOT provide a link.
+4.  Write the READMEs.
 
 ---
 
-## 4. Quality Gates (Self-Correction)
+## 4. Phase 3: Implementation Based on Verified Docs
 
-**Gate 1: The Documentation Link Check**
-*   **Check**: Does the `README.md` Capability Matrix contain valid URLs for all native features?
-*   **Correction**: If links are missing, search again. Do not hallucinate links.
+**Action**:
+1.  Examine the *content* of the verified URLs (use `web_fetch`).
+2.  Implement the conversion logic in `src/index.ts` based **strictly** on the documentation found at those URLs.
+3.  Ensure terminology in code matches the tool's official documentation.
 
-**Gate 2: The 8-Capability Check**
-*   **Check**: Does the adapter handle ALL 8 capabilities (Agents, Rules, Skills, Commands, Hooks, MCP, Context, Config)?
-*   **Correction**: If any are missing from `src/index.ts`, implement a degradation strategy (e.g., write to system prompt).
+---
 
-**Gate 3: The Smoke Test**
-*   **Check**: Run `npx jue apply --adapter {tool}`. Does it crash? Are files generated?
-*   **Correction**: Fix bugs until it passes.
+## 5. Quality Gates (The "Anti-Hallucination" Gates)
+
+**Gate 1: The Precision Audit**
+*   **Check**: Are all links in `README.md` precise (pointing to the specific feature page)?
+*   **Check**: Are all links verified 200 OK?
+*   **Correction**: If links point to index pages or general categories, retry discovery or ask the user.
+
+**Gate 2: Documentation-Code Alignment**
+*   **Check**: Does the mapping logic in `index.ts` match the technical details described in the verified URLs?
+
+**Gate 3: Smoke Test**
+*   Run `npx jue apply --adapter {tool}`.
 
 ---
 ## References
-*   `references/README-template.md`: The single source of truth for adapter documentation.
-*   `references/IMPLEMENTATION-patterns.md`: Copy-pasteable code blocks for standard tasks.
+*   `references/README-template.md`: Single source of truth for adapter docs.
+*   `references/IMPLEMENTATION-patterns.md`: Code patterns.
