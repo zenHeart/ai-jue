@@ -11,3 +11,4 @@ cache
 .turbo
 **/.turbo/
 **/.turbo/turbo-build.log
+.claude

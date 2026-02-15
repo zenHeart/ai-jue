@@ -47,42 +47,122 @@
 
 - **兼容性**：Fully Compatible
 - **映射策略**：
-  - `globs` → 映射至规则文件的 `paths` 配置
+  - `globs` → 映射至规则文件的 `paths` 配置（支持数组和字符串）
   - `alwaysApply` → 映射至 `auto-apply` 元数据
 - **文件输出**：输出至 `.claude/rules/*.md`。
+- **高级配置**：通过 YAML frontmatter 中的 `claude:` 命名空间配置工具特定选项
 
 ### 3. Commands（自定义命令）
 
 - **兼容性**：Fully Compatible
-- **映射策略**：Claude Code 将 Commands 与 Skills 合并。`commands/` 下的内容会被转换为 `.claude/skills/` 下的简化技能文件。
+- **映射策略**：Claude Code 将 Commands 与 Skills 合并。`commands/` 下的内容会被转换为 `.claude/skills/` 下的 SKILL.md（而非过时的 `.claude/commands/`）。
 - **使用方式**：用户使用 `/command-name` 调用。
+- **默认行为**：
+  - `disable-model-invocation: true`（命令默认不由 Claude 自动调用）
+  - `user-invocable: true`（用户可通过 `/` 菜单调用）
+- **Frontmatter 配置**：支持通过 `claude:` 命名空间配置高级选项
+
+```yaml
+---
+description: Deploy to production
+claude:
+  argument-hint: '[environment]'
+  model: sonnet
+  allowed-tools: [Bash, Read, Write]
+---
+```
 
 ### 4. Skills（可复用技能）
 
 - **兼容性**：Fully Compatible
 - **映射策略**：生成完全符合 [Agent Skills](https://agentskills.io/specification) 规范的目录，包含 `SKILL.md` 及其关联的 `scripts/`、`references/`。
+- **默认行为**：
+  - `disable-model-invocation: false`（技能可由 Claude 根据上下文自动加载）
+- **支持的 Frontmatter 字段**（通过 `claude:` 命名空间）：
+  - `argument-hint`: 参数提示
+  - `disable-model-invocation`: 是否禁止自动调用
+  - `user-invocable`: 是否显示在 `/` 菜单
+  - `allowed-tools`: 允许使用的工具
+  - `model`: 使用的模型 (sonnet/opus/haiku)
+  - `context`: 运行上下文 (fork 表示在 subagent 中运行)
+  - `agent`: subagent 类型 (Explore/Plan/general-purpose)
 
-### 5. MCP（外部工具集成）
+### 5. Agents（子代理）
 
 - **兼容性**：Fully Compatible
-- **文件路径**：输出至根目录下的 `.mcp.json`。
-- **配置格式**：直接映射至顶层的 `mcpServers` 对象。
+- **映射策略**：`agents/` 目录下的内容映射至 `.claude/agents/*.md`。
+- **支持的 Frontmatter 字段**（通过 `claude:` 命名空间）：
+  - `description`: 代理描述（必须）
+  - `tools`: 允许的工具白名单
+  - `disallowedTools`: 禁止的工具黑名单
+  - `model`: 模型 (sonnet/opus/haiku/inherit)
+  - `permissionMode`: 权限模式
+  - `maxTurns`: 最大轮数
+  - `skills`: 预加载的技能
+  - `mcpServers`: MCP 服务器配置
+  - `memory`: 持久化记忆 (user/project/local)
+  - `hooks`: 生命周期钩子
 
-### 6. Hooks（生命周期钩子）
+```yaml
+---
+name: code-reviewer
+description: Reviews code for quality
+claude:
+  tools: [Read, Grep, Glob, Bash]
+  model: sonnet
+  memory: user
+---
+```
+
+### 6. MCP（外部工具集成）
+
+- **兼容性**：Fully Compatible
+- **文件路径**：输出至根目录下的 `.mcp.json`（project scope）。
+- **配置格式**：直接映射至顶层的 `mcpServers` 对象。
+- **Scope 支持**：
+  - `project`: `.mcp.json`（默认，团队共享）
+  - `user`: 需通过 `claude mcp add --scope user` 配置
+  - `local`: 需通过 `claude mcp add --scope local` 配置
+
+```javascript
+// ai.config.js
+mcp: {
+  servers: {
+    'my-db': {
+      command: 'npx',
+      args: ['@myteam/mcp-server-db'],
+      scope: 'project'  // 'local' | 'project' | 'user'
+    }
+  }
+}
+```
+
+### 7. Hooks（生命周期钩子）
 
 - **兼容性**：Fully Compatible
 - **映射路径**：注入 `.claude/settings.json` 的 `hooks` 字段。
-- **支持的事件**：支持 `PreToolUse`, `PostToolUse`, `SessionStart`, `Notification` 等。
+- **支持的事件**：`PreToolUse`, `PostToolUse`, `SessionStart`, `Notification`, `SubagentStart`, `SubagentStop` 等。
+- **配置格式**：支持简单字符串、对象或完整嵌套结构
 
-### 7. Agents（子代理）
+```yaml
+# 简化语法
+hooks:
+  PostToolUse: './scripts/lint.sh'
 
-- **兼容性**：Fully Compatible
-- **映射策略**：每个子代理生成独立的配置文件，支持自定义工具集和模型。
+# 完整语法
+hooks:
+  PreToolUse:
+    matcher: 'Bash'
+    script: './scripts/validate.sh'
+    async: true
+    timeout: 120
+```
 
 ### 8. Configuration（全局配置）
 
 - **兼容性**：Fully Compatible
 - **映射策略**：合并 `tools.claude` 的所有设置至 `.claude/settings.json`。
+- **工具特定配置**：如需无法通过 frontmatter 表达的配置，可使用 `tools/claude/` 逃生舱
 
 ## 安装
 

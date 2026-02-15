@@ -1,17 +1,18 @@
 ---
 name: adapter-creator
 description: Creates or optimizes ai-jue adapters for AI tools. Use when user asks to "create adapter for [tool]", "add support for [tool]", or "optimize/update [tool] adapter".
-metadata:
-  version: 4.3.0
-  tags:
-    - adapter
-    - scaffolding
-    - optimization
-    - design-first
-    - agentic-workflow
-    - self-correction
-    - anti-hallucination
-    - collaborative-verification
+disable-model-invocation: false
+user-invocable: true
+version: 4.3.0
+tags:
+  - adapter
+  - scaffolding
+  - optimization
+  - design-first
+  - agentic-workflow
+  - self-correction
+  - anti-hallucination
+  - collaborative-verification
 ---
 
 
