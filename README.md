@@ -87,7 +87,7 @@ npx jue apply
 ### 1. 安装
 
 ```bash
-npm install -D ai-jue jue-preset-react
+npm install -D ai-jue jue-preset-base
 ```
 
 ### 2. 创建配置
@@ -95,7 +95,7 @@ npm install -D ai-jue jue-preset-react
 ```javascript
 // ai.config.js
 export default {
-  preset: 'react'
+  preset: 'base'
 }
 ```
 
@@ -146,7 +146,7 @@ npx jue apply --all
 ```javascript
 // ai.config.js
 export default {
-  presets: ['base', 'react', 'typescript']
+  presets: ['base', 'my-team-preset']
 }
 ```
 
@@ -163,7 +163,7 @@ export default {
 ```javascript
 // ai.config.js
 export default {
-  preset: 'react',
+  preset: 'base',
   extends: {
     prompts: './prompts/custom-rules.md',
     skills: ['./skills/deploy.md']
@@ -176,7 +176,7 @@ export default {
 ```javascript
 // ai.config.js
 export default {
-  preset: 'react',
+  preset: 'base',
   mcp: {
     servers: {
       'my-db': { command: 'npx', args: ['@myteam/mcp-server-db'] }
@@ -203,8 +203,6 @@ npx jue apply --all --watch
 | 预设 | 描述 | 安装 |
 |------|------|------|
 | **jue-preset-base** | 通用最佳实践（代码审查、Git 规范、错误处理） | `npm i -D jue-preset-base` |
-| **jue-preset-react** | React Hooks、组件设计、性能优化 | `npm i -D jue-preset-react` |
-| **jue-preset-typescript** | 类型安全、泛型技巧、工具类型 | `npm i -D jue-preset-typescript` |
 
 ---
 
@@ -213,7 +211,7 @@ npx jue apply --all --watch
 ```
 ai.config.js          →  加载预设 & 合并配置  →  适配器插件生成文件
 ┌──────────────┐       ┌───────────────────┐    ┌──────────────────────┐
-│ preset: 'react'│ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md    │
+│ preset: 'base' │ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md    │
 │ mcp: {...}    │      │  (微内核)          │    │ adapter-cursor → .cursor/rules/*.mdc │
 │ commands: {}  │      │  配置合并 & 路由    │    │ adapter-gemini → settings.json│
 └──────────────┘       └───────────────────┘    │ adapter-copilot→ instructions │

@@ -15,7 +15,7 @@ Standardize project AI capabilities (Prompts, Skills, MCP Servers), automaticall
 [**📖 Why the name ai-jue (AI 诀)?**](#why-the-name-ai-jue-ai-诀)
 
 ```bash
-npm install -D ai-jue jue-preset-react
+npm install -D ai-jue jue-preset-base
 npx jue apply --all
 ```
 
@@ -54,7 +54,7 @@ npx jue apply --all
 ### 1. Installation
 
 ```bash
-npm install -D ai-jue jue-preset-react
+npm install -D ai-jue jue-preset-base
 ```
 
 ### 2. Create Configuration
@@ -62,7 +62,7 @@ npm install -D ai-jue jue-preset-react
 ```javascript
 // ai.config.js
 export default {
-  preset: 'react'
+  preset: 'base'
 }
 ```
 
@@ -113,7 +113,7 @@ Terminology policy:
 ```javascript
 // ai.config.js
 export default {
-  presets: ['base', 'react', 'typescript']
+  presets: ['base', 'my-team-preset']
 }
 ```
 
@@ -128,7 +128,7 @@ export default {
 ```javascript
 // ai.config.js
 export default {
-  preset: 'react',
+  preset: 'base',
   extends: {
     prompts: './prompts/custom-rules.md',
     skills: ['./skills/deploy.md']
@@ -141,7 +141,7 @@ export default {
 ```javascript
 // ai.config.js
 export default {
-  preset: 'react',
+  preset: 'base',
   mcp: {
     servers: {
       'my-db': { command: 'npx', args: ['@myteam/mcp-server-db'] }
@@ -168,7 +168,7 @@ npx jue apply --all --watch
 ```
 ai.config.js          →  Load Presets & Merge Config  →  Adapter Plugins Generate Files
 ┌──────────────┐       ┌───────────────────┐    ┌─────────────────────────┐
-│ preset: 'react'│ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md      │
+│ preset: 'base' │ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md      │
 │ mcp: {...}    │      │  (Micro-kernel)    │    │ adapter-cursor → .cursor/rules/*.mdc │
 │ commands: {}  │      │  Merge & Route     │    │ adapter-gemini → settings.json  │
 └──────────────┘       └───────────────────┘    │ adapter-copilot→ instructions   │

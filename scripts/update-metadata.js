@@ -10,8 +10,7 @@ const packages = [
   'ai-jue-adapter-cursor',
   'ai-jue-adapter-gemini',
   'jue-preset-base',
-  'jue-preset-react',
-  'jue-preset-typescript'
+  'jue-preset-internal'
 ];
 
 const repoUrl = 'git+https://github.com/zenHeart/ai-jue.git';

@@ -18,5 +18,17 @@
   ],
   "author": "",
   "license": "ISC",
-  "private": true
+  "private": true,
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenHeart/ai-jue.git",
+    "directory": "packages/jue-preset-internal"
+  },
+  "homepage": "https://github.com/zenHeart/ai-jue/tree/main/packages/jue-preset-internal#readme",
+  "bugs": {
+    "url": "https://github.com/zenHeart/ai-jue/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
 }

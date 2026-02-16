@@ -42,23 +42,6 @@ async function verify() {
     "explain-code",
     'As a "Code Explanation Expert"',
   );
-
-  // Check React Preset (English by default, should load generic prompt.md)
-  const presetReactDir = path.resolve(__dirname, "../jue-preset-react");
-  console.log(`Loading assets from: ${presetReactDir}`);
-  const configReact = await loadAssetsFromDir(presetReactDir, "en");
-  checkPrompt(configReact, "prompts", "react", "You are an expert in React");
-
-  // Check TypeScript Preset (English by default, should load generic prompt.md)
-  const presetTsDir = path.resolve(__dirname, "../jue-preset-typescript");
-  console.log(`Loading assets from: ${presetTsDir}`);
-  const configTs = await loadAssetsFromDir(presetTsDir, "en");
-  checkPrompt(
-    configTs,
-    "prompts",
-    "typescript",
-    "You are an expert in TypeScript",
-  );
 }
 
 verify().catch(console.error);

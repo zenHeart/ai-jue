@@ -27,9 +27,7 @@ const codePackages = [
 ];
 
 const presetPackages = [
-    'packages/jue-preset-base',
-    'packages/jue-preset-react',
-    'packages/jue-preset-typescript'
+    'packages/jue-preset-base'
 ];
 
 const privatePackages = [

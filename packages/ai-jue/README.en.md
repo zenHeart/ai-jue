@@ -21,7 +21,7 @@
 ## Minimal Usage
 
 ```bash
-npm install -D ai-jue jue-preset-react
+npm install -D ai-jue jue-preset-base
 npx jue apply
 ```
 
