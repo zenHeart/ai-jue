@@ -1,3 +1,12 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.2.0...ai-jue-adapter-cursor@1.0.0) (2026-02-16)
+
+
+### Bug Fixes
+
+* add draft ([9fcb1eb](https://github.com/zenHeart/ai-jue/commit/9fcb1eb4bf41e08bc6bee12b39dfd59f68bfabe1))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.1.0...ai-jue-adapter-cursor@1.0.0) (2026-02-15)
 
 

@@ -1,3 +1,17 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-copilot@v1.1.0...ai-jue-adapter-copilot@1.0.0) (2026-02-16)
+
+
+### Bug Fixes
+
+* add draft ([9fcb1eb](https://github.com/zenHeart/ai-jue/commit/9fcb1eb4bf41e08bc6bee12b39dfd59f68bfabe1))
+
+
+### Features
+
+* implement 'jue format' command and enhance Copilot adapter ([1932176](https://github.com/zenHeart/ai-jue/commit/1932176d7d306b80f595aee4641cf46f1f49e43b))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-copilot@v1.0.9...ai-jue-adapter-copilot@1.0.0) (2026-02-12)
 
 

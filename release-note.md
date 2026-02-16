@@ -1,7 +1,5 @@
-# Release 2026-02-15T14:43:34.142Z
+# Release 2026-02-16T01:26:06.080Z
 
-- ai-jue-core@v1.2.0
-- ai-jue@v1.2.0
-- ai-jue-adapter-claude@v1.2.0
-- ai-jue-adapter-cursor@v1.2.0
-- ai-jue-adapter-gemini@v1.2.0
+- ai-jue@v1.3.0
+- ai-jue-adapter-copilot@v1.3.0
+- ai-jue-adapter-cursor@v1.3.0
