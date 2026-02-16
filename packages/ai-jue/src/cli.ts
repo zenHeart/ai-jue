@@ -37,6 +37,12 @@ import {
   describe as listDescribe,
   command as listCommandStr,
 } from "./commands/list";
+import {
+  handler as formatHandler,
+  builder as formatBuilder,
+  describe as formatDescribe,
+  command as formatCommandStr,
+} from "./commands/format";
 import { logger, LogLevel } from "./logger";
 import { initI18n, t } from "./i18n";
 import { loadConfig } from "./config";
@@ -122,6 +128,12 @@ async function main() {
       t("commands.list.describe"),
       listBuilder as any,
       listHandler,
+    )
+    .command(
+      formatCommandStr,
+      t("commands.format.describe", { defaultValue: "Migrate AI tool configs to .ai directory" }),
+      formatBuilder as any,
+      formatHandler,
     )
     .demandCommand(
       1,

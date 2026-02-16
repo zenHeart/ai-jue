@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**GitHub Copilot 适配器：将 ai-jue 配置转换为 Copilot 指令格式**
+**GitHub Copilot 适配器：将 ai-jue 配置转换为 Copilot 原生格式**
 
 [![NPM version](https://img.shields.io/npm/v/ai-jue-adapter-copilot.svg?style=flat)](https://www.npmjs.com/package/ai-jue-adapter-copilot)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -17,21 +17,21 @@
 
 ## 功能概述
 
-该适配器将 `ai-jue` 规范能力转换为 GitHub Copilot 原生格式。由于 Copilot 的配置系统相对简单，本适配器采用**降级策略**，将结构化能力转换为文本指令，确保所有配置都被显式处理而非静默忽略。
+该适配器将 `ai-jue` 规范能力转换为 GitHub Copilot 原生配置格式。由于 Copilot 的配置系统相对简单，本适配器采用**降级策略**，将结构化能力转换为文本指令，确保所有配置都被显式处理而非静默忽略。
 
 ## 能力映射矩阵
 
-> **开发者注意**：Copilot 的配置能力有限，部分特性需要降级为文本说明。
+> **开发者注意**：下表中的"Copilot 原生特性"一列包含了指向该特性官方文档的 **已验证** 的 Markdown 链接。
 
 | 优先级 | ai-jue 能力 | Copilot 原生特性 | 支持状态 | 用户配置说明 | 实现策略 |
 |:---|:---|:---|:---|:---|:---|
-| ⭐⭐⭐⭐⭐ | **AGENTS.md** | [Copilot Instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | 🟢 Native | 生成 `.github/copilot-instructions.md` | 转换为指令文件头部 |
-| ⭐⭐⭐⭐⭐ | **Rules** | 无原生规则系统 | 🟡 Degraded | 写入指令文件 | 作为 Markdown 章节降级输出 |
-| ⭐⭐⭐ | **Commands** | 无原生命令系统 | 🟡 Degraded | 写入指令文件 | 作为指令文档的一部分 |
+| ⭐⭐⭐⭐⭐ | **AGENTS.md** | [Repository Instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | 🟢 Native | 生成 `.github/copilot-instructions.md` | 转换为指令文件头部 |
+| ⭐⭐⭐⭐⭐ | **Rules** | [Path-specific Instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | 🟡 Degraded | 降级为路径特定指令 | 作为 `.github/instructions/*.instructions.md` 输出 |
+| ⭐⭐⭐ | **Commands** | [Prompt Files](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | 🟡 Degraded | 转换为 prompt files | 输出到 `.github/prompts/` |
 | ⭐⭐⭐ | **Skills** | 无原生技能系统 | 🟡 Degraded | 写入指令文件 | 作为指令文档的一部分 |
-| ⭐⭐⭐ | **MCP** | 无原生 MCP 支持 | 🟡 Degraded | 添加能力说明 | 在指令中提示用户手动配置 |
+| ⭐⭐⭐ | **MCP** | [MCP Configuration](https://docs.github.com/en/copilot/customizing-copilot) | 🟡 Degraded | 添加能力说明 | 在指令中提示用户手动配置 |
 | ⭐⭐⭐ | **Hooks** | 无原生钩子系统 | 🟡 Degraded | 添加工作流提示 | 在指令中提醒用户执行 |
-| ⭐⭐ | **Agents** | 无原生代理系统 | 🟡 Degraded | 作为角色指导 | 将代理定义转为角色说明 |
+| ⭐⭐ | **Agents** | [Agent Instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | 🟡 Degraded | 作为角色指导 | 将代理定义转为 AGENTS.md |
 | ⭐⭐ | **Configuration** | [Copilot Settings](https://docs.github.com/en/copilot/customizing-copilot) | 🟢 Native | `.github/copilot-settings.json` | 直接透传配置 |
 
 ## 详细实现说明
@@ -43,30 +43,40 @@
 - **用户操作**：无需额外操作，Copilot 会自动读取 `.github/copilot-instructions.md`
 - **技术细节**：作为指令文件的第一部分内容输出
 
-### 2. Rules（规则）
+### 2. Rules（项目规则）
 
-- **兼容性**：Incompatible (Degraded)
-- **映射策略**：所有规则合并为 Markdown 块写入 `copilot-instructions.md` 的 "Rules (Degraded)" 章节
+- **兼容性**：Partial (Degraded)
+- **映射策略**：
+  - 支持 `globs` → `applyTo` frontmatter 字段
+  - 输出为 `.github/instructions/{name}.instructions.md`
 - **限制**：
-  - ❌ 不支持路径特定规则 (globs)
-  - ❌ 不支持自动应用 (alwaysApply)
-- **用户影响**：规则变为全局生效，无法针对特定文件类型自动切换
+  - 无原生 globs/alwaysApply 支持，通过 frontmatter 模拟
+- **文件输出**：`.github/instructions/{ruleName}.instructions.md`
+- **格式示例**：
+
+```yaml
+---
+applyTo: "src/**/*.ts"
+---
+
+Use strict typing. Avoid `any`.
+```
 
 ### 3. Commands（自定义命令）
 
-- **兼容性**：Incompatible (Degraded)
-- **映射策略**：转换为指令文档中的 "Commands" 章节
-- **使用方式**：Copilot 会在对话中识别命令关键词，但无原生 `/command` 支持
+- **兼容性**：Partial (Degraded)
+- **映射策略**：转换为 `.github/prompts/{name}.prompt.md` 格式
+- **使用方式**：Copilot 会在对话中识别命令关键词
 - **格式示例**：
 
 ```markdown
-## Commands
+---
+applyTo: "**/*"
+---
 
-You should recognize the following commands when triggered by natural language:
+# Explain Code
 
-### explain
-**Description:** Explain selected code
-**Prompt:** Analyze this code and explain...
+Analyze this code and explain...
 ```
 
 ### 4. Skills（可复用技能）
@@ -104,8 +114,10 @@ This project defines the following workflow hooks. Please remind the user to run
 
 ### 7. Agents（子代理）
 
-- **兼容性**：Incompatible (Degraded)
-- **映射策略**：作为角色指导写入指令文档
+- **兼容性**：Partial (Degraded)
+- **映射策略**：
+  - 生成 `.github/instructions/{agent}.instructions.md` 文件
+  - 或作为角色指导写入主指令文档
 - **用户影响**：用户需通过自然语言提示 Copilot 采用特定角色
 
 ### 8. Configuration（全局配置）
@@ -118,7 +130,7 @@ This project defines the following workflow hooks. Please remind the user to run
 
 ### 关键限制
 
-1. **无结构化配置**：Copilot 不支持规则、命令、技能的配置文件化
+1. **无结构化配置**：Copilot 不支持原生的 Rules、Commands、Skills 配置文件化
 2. **无 MCP 原生支持**：需在编辑器设置中手动配置 MCP 服务器
 3. **无生命周期钩子**：无法自动触发工作流脚本
 4. **无子代理系统**：无法切换不同 AI 角色
@@ -127,12 +139,12 @@ This project defines the following workflow hooks. Please remind the user to run
 
 | ai-jue 能力 | 降级方式 | 用户影响 |
 |:---|:---|:---|
-| Rules | 写入 `copilot-instructions.md` | 规则全局生效，无路径特定触发 |
-| Commands | 写入指令文档 | 需通过自然语言触发，无 `/command` 快捷方式 |
-| Skills | 写入指令文档 | 内容转换为文本，依赖 Copilot 理解 |
+| Rules | `.github/instructions/*.instructions.md` | 通过 `applyTo` frontmatter 模拟路径特定规则 |
+| Commands | `.github/prompts/*.prompt.md` | 转换为 prompt files，通过自然语言触发 |
+| Skills | 写入 `copilot-instructions.md` | 内容转换为文本，依赖 Copilot 理解 |
 | MCP | 添加说明文字 | 需手动在编辑器中配置 |
 | Hooks | 添加提醒文字 | 需手动执行，无自动触发 |
-| Agents | 转换为角色描述 | 需通过提示词引导 |
+| Agents | `.github/instructions/*.instructions.md` | 需通过提示词引导 |
 
 ### 手动替代方案
 
@@ -177,6 +189,7 @@ npm test -- packages/ai-jue-adapter-copilot/test/index.test.ts
 
 - [ai-jue 主项目](https://github.com/zenHeart/ai-jue)
 - [GitHub Copilot 官方文档](https://docs.github.com/en/copilot)
+- [Adding custom instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot)
 
 ## License
 

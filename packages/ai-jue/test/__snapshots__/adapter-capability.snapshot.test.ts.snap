@@ -38,11 +38,11 @@ Global context for snapshot
     },
   },
   "copilot": "<!-- AI-JUE:START -->
-# Core Instructions (AGENTS)
+# Core Instructions
 
 Global context for snapshot
 
-## Rules (Degraded)
+## Rules
 
 ### style
 Common prompt block
@@ -50,25 +50,19 @@ Common prompt block
 ## Available Skills
 
 ### review
+Review skill
+
 Review skill content
 
-## Commands
-
-You should recognize the following commands when triggered by natural language:
-
-### review
-**Description:** Review command
-**Prompt:** Run review flow
-
-## Workflow Note
+## Workflow Hooks
 
 This project defines the following workflow hooks. Please remind the user to run them when appropriate:
 
 - **pre-commit**: \`npm test\`
+
 ## Capability Notes
 
-- MCP servers are defined in project config. Treat them as external tool context and ask the user before assuming direct execution support.
-- Agent definitions are provided as role guidance. Apply their intent through instruction following rather than runtime agent orchestration.
+- **MCP servers** are defined in project config. Treat them as external tool context and ask the user before assuming direct execution support. Configure them manually in your IDE settings.
 <!-- AI-JUE:END -->",
   "copilotSettings": {
     "codeReview": true,

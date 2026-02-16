@@ -102,7 +102,7 @@ describe('adapter contract matrix', () => {
     expect(geminiMd).toContain('Rules (Degraded)');
     expect(geminiMd).toContain('Use strict typing');
     expect(copilot).toContain('Global context');
-    expect(copilot).toContain('Rules (Degraded)');
+    expect(copilot).toContain('## Rules');
     expect(copilot).toContain('Use strict typing');
     expect(geminiCommand).toContain('description = "Run tests"');
     expect(geminiCommand).toContain('Run test suite');

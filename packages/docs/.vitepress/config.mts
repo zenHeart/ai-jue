@@ -20,6 +20,7 @@ export default withMermaid(
               items: [
                 { text: "什么是 ai-jue?", link: "/guide/what-is-ai-jue" },
                 { text: "快速上手", link: "/guide/getting-started" },
+                { text: "配置规整", link: "/guide/format" },
                 { text: "配置指南", link: "/guide/configuration-guide" },
                 { text: "官方预设", link: "/guide/presets" },
               ],
@@ -55,6 +56,7 @@ export default withMermaid(
               items: [
                 { text: "What is ai-jue?", link: "/en/guide/what-is-ai-jue" },
                 { text: "Getting Started", link: "/en/guide/getting-started" },
+                { text: "Configuration Normalization", link: "/en/guide/format" },
                 {
                   text: "Configuration Guide",
                   link: "/en/guide/configuration-guide",

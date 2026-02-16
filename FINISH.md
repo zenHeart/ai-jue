@@ -1,7 +1,82 @@
 # 已完成任务
 
-> 更新时间：2026-02-13
+> 更新时间：2026-02-16
 > 本文件归档所有在 `TODO.md` 中已完成的事项。
+
+---
+
+## 2026-02-16 归档（jue format 核心能力扩展完成）
+
+### P2: 核心能力扩展 - `jue format`
+
+- [x] **C1: 设计阶段**
+  - [x] C1.1 用户文档: `jue format` 使用文档
+  - [x] C1.2 设计文档: 迁移路径、边界、风险、回滚方式
+  - [x] C1.3 冲突策略: 来源优先级、重复去重、人工确认标记
+- [x] **C2: 实现阶段**
+  - [x] C2.1 命令注册: `packages/ai-jue/src/commands/format.ts`
+  - [x] C2.2 探测器: 检测 `.cursor/.gemini/.claude/.github/.trae/.opencode` 痕迹
+  - [x] C2.3 迁移引擎: 转换配置到 `.ai/` 目录结构
+  - [x] C2.4 dry-run 模式: 生成迁移计划报告
+  - [x] C2.5 --write 模式: 执行实际迁移
+  - [x] C2.6 冲突处理: 优先级与去重逻辑
+- [x] **C3: 验证阶段**
+  - [x] C3.1 单元测试: 探测器、迁移引擎 (7 tests passed)
+  - [x] C3.2 集成测试: 覆盖 Cursor/Gemini/Claude/Copilot/Trae/OpenCode
+  - [x] C3.3 回归测试: smoke-apply 通过
+  - [x] C3.4 契约测试: 适配器矩阵通过
+
+---
+
+## 2026-02-15 归档（适配器对齐优化完成）
+
+### P0: 修复 Gemini 适配器技能生成
+
+- [x] **G1: 实现 `ai-jue-adapter-gemini` 的技能生成逻辑**
+  - [x] G1.1 遍历 `config.skills`
+  - [x] G1.2 为每个技能创建目录
+  - [x] G1.3 生成 `SKILL.md`
+- [x] **G2: 验证 Gemini 技能生成**
+  - [x] G2.1 单元测试
+  - [x] G2.2 集成测试
+  - [x] G2.3 端到端验证
+
+### P1: 适配器对齐与优化
+
+- [x] **E1: 对齐 `ai-jue-adapter-cursor`**
+  - [x] Phase 1: 调研 Cursor 最新能力
+  - [x] Phase 2: 刷新 README.md
+  - [x] Phase 3: 重构代码
+  - [x] Phase 4: 验证（15 测试）
+
+- [x] **E2: 对齐 `ai-jue-adapter-claude`**（基础对齐）
+  - [x] Phase 1-4: 功能完整，9 测试通过
+
+- [x] **E3: 对齐 `ai-jue-adapter-gemini`**（基础对齐）
+  - [x] Phase 1-4: 技能生成已优化，10 测试通过
+
+- [x] **E4: 对齐 `ai-jue-adapter-copilot`**
+  - [x] Phase 1: 调研 Copilot 最新能力
+  - [x] Phase 2: 刷新 README.md
+  - [x] Phase 3: 重构代码
+  - [x] Phase 4: 验证（8 测试）
+
+### 修复与同步
+
+- [x] F1: 修复版本一致性（Copilot 1.1.0 → 1.2.0）
+- [x] F2: 增强 Cursor 适配器文档
+- [x] F3: 增强 Copilot 适配器文档
+- [x] F4: 验证测试覆盖（73 个测试通过）
+
+### adapter-creator 技能升级
+
+- [x] D1: 指令精确性与工具调用增强
+- [x] D2: 自我修正与错误处理循环
+- [x] D3: 产物与元数据自动化
+- [x] D4: 最终验证与文档对齐
+- [x] D5: 新增"优化现有适配器"模式
+
+---
 
 ## 待审计划（本轮：工具能力映射校准）
 
