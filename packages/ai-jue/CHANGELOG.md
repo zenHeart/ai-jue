@@ -1,3 +1,12 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.3.0...ai-jue@1.0.0) (2026-02-16)
+
+
+### Bug Fixes
+
+* 完成修改 ([959dc2f](https://github.com/zenHeart/ai-jue/commit/959dc2f5583a7016fdbe951fff04c3011cc70c8e))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.2.0...ai-jue@1.0.0) (2026-02-16)
 
 
