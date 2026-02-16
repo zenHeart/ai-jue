@@ -5,6 +5,16 @@ import path from 'path';
 import fs from 'fs';
 import { normalizeConfig } from './normalize';
 
+/**
+ * Merges two configurations while ensuring the global context (AGENTS.md content)
+ * is appended layer by layer instead of being overwritten.
+ * 
+ * Merge order for context: base -> incoming
+ * 
+ * @param base - The existing configuration
+ * @param incoming - The new configuration to merge
+ * @returns A new MergedConfig with combined context and deep-merged properties
+ */
 function mergeConfigWithLayeredContext(
   base: MergedConfig,
   incoming: MergedConfig,
@@ -23,6 +33,13 @@ function mergeConfigWithLayeredContext(
     return merged;
 }
 
+/**
+ * Loads external asset files defined in the 'extends' property of ai.config.js.
+ * 
+ * @param extendsConfig - Map of categories to file paths
+ * @param rootDir - Root directory for resolving relative paths
+ * @returns A partial MergedConfig containing the loaded assets
+ */
 async function loadExtendedAssets(extendsConfig: { [key: string]: string | string[] }, rootDir: string): Promise<MergedConfig> {
     const config: MergedConfig = {};
     await Promise.all(Object.entries(extendsConfig).map(async ([key, value]) => {
@@ -43,6 +60,20 @@ async function loadExtendedAssets(extendsConfig: { [key: string]: string | strin
     return config;
 }
 
+/**
+ * Resolves the final configuration by aggregating all sources in the following priority:
+ * 1. Base/Dependency Presets
+ * 2. Current Preset
+ * 3. Local .ai/ directory assets
+ * 4. Project root AGENTS.md
+ * 5. Extended assets (from 'extends' property)
+ * 6. Explicit user configuration in ai.config.js
+ * 
+ * Finally, the configuration is normalized via normalizeConfig.
+ * 
+ * @param userConfig - The initial configuration loaded from ai.config.js
+ * @returns The fully resolved and layered configuration
+ */
 export async function resolveFinalConfig(userConfig: MergedConfig): Promise<MergedConfig> {
     let finalConfig: MergedConfig = { };
 

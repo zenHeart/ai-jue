@@ -4,6 +4,19 @@ function toObject(value: any): Record<string, any> {
   return value && typeof value === 'object' && !Array.isArray(value) ? value : {};
 }
 
+/**
+ * Standardizes the configuration object to ensure consistent property access
+ * across different adapters and commands.
+ * 
+ * Key transformations:
+ * - Ensures all major asset categories (rules, commands, etc.) are objects.
+ * - Maps 'content' field to 'prompt' for commands and agents if prompt is missing.
+ * - Flattens hook objects to their script strings.
+ * - Guarantees context.global is a string.
+ * 
+ * @param config - The raw merged configuration
+ * @returns A standardized configuration object
+ */
 export function normalizeConfig(config: MergedConfig): MergedConfig {
   const context = toObject(config.context);
   const prompts = toObject(config.prompts);

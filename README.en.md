@@ -189,6 +189,7 @@ npx jue apply --all --watch  # Watch and re-apply with explicit adapters
 npx jue check             # Check if presets have new versions
 npx jue validate          # Validate configuration legality
 npx jue list              # List all loaded presets and assets
+npx jue format            # Normalize existing tool configs (.cursor/.gemini etc) to .ai/
 npx jue create-preset <n> # Create a new preset project structure
 ```
 

@@ -5,6 +5,7 @@ import pc from "picocolors";
 import ora from "ora";
 import { logger } from "../logger";
 import { t } from "../i18n";
+import { TOOL_PATTERNS } from "./format-rules";
 
 export const command = "format";
 export const describe = t("commands.format.describe", {
@@ -27,71 +28,6 @@ export const builder: CommandBuilder = (yargs) => {
       }),
       default: false,
     });
-};
-
-/**
- * Tool configuration detection patterns
- * Maps tool directories/files to their respective adapters
- */
-const TOOL_PATTERNS: Record<string, { adapter: string; files: string[] }> = {
-  cursor: {
-    adapter: "ai-jue-adapter-cursor",
-    files: [
-      ".cursor/rules/*.mdc",
-      ".cursor/commands/*.md",
-      ".cursor/skills/*/SKILL.md",
-      ".cursor/hooks.json",
-      ".cursor/mcp.json",
-      ".cursor/agents/*.md",
-      ".cursor/settings.json",
-      "AGENTS.md",
-    ],
-  },
-  gemini: {
-    adapter: "ai-jue-adapter-gemini",
-    files: [
-      ".gemini/settings.json",
-      ".gemini/commands/**/*.toml",
-      ".gemini/skills/*/SKILL.md",
-      "GEMINI.md",
-      "AGENTS.md",
-    ],
-  },
-  claude: {
-    adapter: "ai-jue-adapter-claude",
-    files: [
-      ".claude/rules/*.md",
-      ".claude/skills/*/SKILL.md",
-      ".claude/commands/*.md",
-      ".claude/agents/*.md",
-      ".claude/settings.json",
-      "CLAUDE.md",
-      ".mcp.json",
-      "AGENTS.md",
-    ],
-  },
-  copilot: {
-    adapter: "ai-jue-adapter-copilot",
-    files: [
-      ".github/copilot-instructions.md",
-      ".github/copilot-settings.json",
-      ".github/instructions/*.instructions.md",
-      ".github/prompts/*.prompt.md",
-    ],
-  },
-  trae: {
-    adapter: "ai-jue-adapter-claude", // Trae is Claude-based
-    files: [
-      ".trae/rules/*.md",
-      ".trae/skills/*/SKILL.md",
-      ".trae/config.json",
-      ".trae/agents/*.md",
-    ],
-  },
-  opencode: {
-    adapter: "ai-jue-adapter-claude", // OpenCode is also often Claude-compatible
-    files: [".opencode/config.json", ".opencode/plugin/*.ts"],
-  },
 };
 
 /**
