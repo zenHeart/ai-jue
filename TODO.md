@@ -1,7 +1,8 @@
 # 当前执行计划
 
-> 更新时间：2026-02-13
+> 更新时间：2026-02-15
 > 核心目标：完成适配器对齐优化，并为后续核心能力扩展做准备。
+> 项目状态：**E1 (Cursor 适配器) 已完成，所有 66 个测试通过**
 
 ## P0: 修复 Gemini 适配器技能生成 (高优)
 
@@ -20,8 +21,30 @@
 
 > **说明**: 此任务旨在通过我们刚刚完成的 `adapter-creator` 的“优化模式”来对齐所有现有适配器，确保它们的设计、实现和文档质量达到最新标准。
 
-- [ ] **E1: 对齐 `ai-jue-adapter-cursor`**
-  - [ ] **Phase 1 (Research)**: 重新调研 Cursor 最新能力，更新能力矩阵。
+- [x] **E1: 对齐 `ai-jue-adapter-cursor`** ✅ **已完成 (2026-02-15)**
+  - [x] **Phase 1 (Research)**: 重新调研 Cursor 最新能力，更新能力矩阵。
+    - 调研文档: https://cursor.com/en-US/docs
+    - 发现新增能力: Ignore Files (`.cursorignore`, `.cursorindexingignore`)
+    - 发现 MCP 扩展字段: `env`, `disabled`, `autoApprove`
+    - 发现 Hooks 完整事件: `sessionStart`, `preToolUse`, `postTool`, `postInlineCompletion`
+  - [x] **Phase 2 (Design)**: 根据调研结果刷新 `README.md` 与 `README.en.md`。
+    - 添加 9 项能力映射矩阵（新增 Ignore Files）
+    - 更新 MCP 文档，包含所有字段
+    - 更新 Hooks 文档，包含所有事件类型
+  - [x] **Phase 3 (Implement)**: 重构 `src/index.ts` 代码以对齐最新设计。
+    - 新增 `generateIgnoreFiles()` 函数支持 `.cursorignore` 和 `.cursorindexingignore`
+    - 增强 `generateMcpConfig()` 支持 `env`, `disabled`, `autoApprove`
+    - 增强 `generateHooks()` 支持复杂对象格式（matcher, async, timeout）
+    - 代码模块化：拆分为独立函数（generateRules, generateCommands, generateSkills, generateAgents）
+    - 从 `tools.cursor` 读取 ignore 配置
+  - [x] **Phase 4 (Verify)**: 确保所有单元测试、契约测试和 Smoke Test 通过。
+    - 测试数量: 7 → 15 个
+    - 新增测试: Ignore Files (3), Advanced Hooks (2), Agents (2), Settings Exclusion (1)
+    - 所有 66 个测试通过
+    - smoke-apply 通过
+
+- [ ] **E2: 对齐 `ai-jue-adapter-claude`**
+  - [ ] **Phase 1 (Research)**: 重新调研 Claude 最新能力，更新能力矩阵。
   - [ ] **Phase 2 (Design)**: 根据调研结果刷新 `README.md` 与 `README.en.md`。
   - [ ] **Phase 3 (Implement)**: 重构 `src/index.ts` 代码以对齐最新设计。
   - [ ] **Phase 4 (Verify)**: 确保所有单元测试、契约测试和 Smoke Test 通过。
@@ -53,6 +76,29 @@
   - [ ] **原则**: 保持最小认知负担：不新增概念，仍以 `.ai` 目录和 YAML frontmatter 协议为核心。
   - [ ] **文档**: 先完成使用文档与设计文档，明确迁移路径、边界、风险、回滚方式。
   - [ ] **实现**: 最后实现并补测试，fixture 覆盖 Cursor/Gemini/Claude 现存配置导入场景。
+
+## 已完成的修复与同步 (2026-02-15)
+
+在深入分析项目状态后，已完成以下修复确保代码与文档完全一致：
+
+- [x] **F1: 修复版本一致性**
+  - [x] 将 `ai-jue-adapter-copilot` 版本从 1.1.0 更新到 1.2.0，与其他适配器保持一致
+
+- [x] **F2: 增强 Cursor 适配器文档**
+  - [x] 添加详细的能力映射矩阵（8 项能力）
+  - [x] 补充实现说明和配置示例
+  - [x] 与 README-template.md 模板对齐
+
+- [x] **F3: 增强 Copilot 适配器文档**
+  - [x] 添加详细的能力映射矩阵（标明降级策略）
+  - [x] 补充降级处理汇总表
+  - [x] 添加手动替代方案说明
+  - [x] 与 README-template.md 模板对齐
+
+- [x] **F4: 验证测试覆盖**
+  - [x] 所有 58 个测试通过
+  - [x] smoke-apply 自举测试通过
+  - [x] 适配器契约测试通过
 
 ## 实施策略与门禁（执行前必须满足）
 

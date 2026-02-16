@@ -2,7 +2,7 @@
 
 <div align="center">
 
-**GitHub Copilot 适配器：生成 .github/copilot-instructions.md**
+**GitHub Copilot 适配器：将 ai-jue 配置转换为 Copilot 指令格式**
 
 [![NPM version](https://img.shields.io/npm/v/ai-jue-adapter-copilot.svg?style=flat)](https://www.npmjs.com/package/ai-jue-adapter-copilot)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
@@ -15,13 +15,132 @@
 
 ---
 
-## 功能描述
+## 功能概述
 
-该适配器将 `ai-jue` 配置转换为 GitHub Copilot 格式，支持：
+该适配器将 `ai-jue` 规范能力转换为 GitHub Copilot 原生格式。由于 Copilot 的配置系统相对简单，本适配器采用**降级策略**，将结构化能力转换为文本指令，确保所有配置都被显式处理而非静默忽略。
 
-- **自定义指令**：生成 `.github/copilot-instructions.md`。
-- **平滑降级 (Downgrade)**：将 `rules/mcp/agents` 等能力显式降级为文本指令，避免静默忽略。
-- **工具配置**：`tools.copilot` -> `.github/copilot-settings.json`。
+## 能力映射矩阵
+
+> **开发者注意**：Copilot 的配置能力有限，部分特性需要降级为文本说明。
+
+| 优先级 | ai-jue 能力 | Copilot 原生特性 | 支持状态 | 用户配置说明 | 实现策略 |
+|:---|:---|:---|:---|:---|:---|
+| ⭐⭐⭐⭐⭐ | **AGENTS.md** | [Copilot Instructions](https://docs.github.com/en/copilot/customizing-copilot/adding-custom-instructions-for-github-copilot) | 🟢 Native | 生成 `.github/copilot-instructions.md` | 转换为指令文件头部 |
+| ⭐⭐⭐⭐⭐ | **Rules** | 无原生规则系统 | 🟡 Degraded | 写入指令文件 | 作为 Markdown 章节降级输出 |
+| ⭐⭐⭐ | **Commands** | 无原生命令系统 | 🟡 Degraded | 写入指令文件 | 作为指令文档的一部分 |
+| ⭐⭐⭐ | **Skills** | 无原生技能系统 | 🟡 Degraded | 写入指令文件 | 作为指令文档的一部分 |
+| ⭐⭐⭐ | **MCP** | 无原生 MCP 支持 | 🟡 Degraded | 添加能力说明 | 在指令中提示用户手动配置 |
+| ⭐⭐⭐ | **Hooks** | 无原生钩子系统 | 🟡 Degraded | 添加工作流提示 | 在指令中提醒用户执行 |
+| ⭐⭐ | **Agents** | 无原生代理系统 | 🟡 Degraded | 作为角色指导 | 将代理定义转为角色说明 |
+| ⭐⭐ | **Configuration** | [Copilot Settings](https://docs.github.com/en/copilot/customizing-copilot) | 🟢 Native | `.github/copilot-settings.json` | 直接透传配置 |
+
+## 详细实现说明
+
+### 1. AGENTS.md（全局上下文）
+
+- **兼容性**：Fully Compatible
+- **映射策略**：`config.context.global` 内容作为 `copilot-instructions.md` 的核心指令部分
+- **用户操作**：无需额外操作，Copilot 会自动读取 `.github/copilot-instructions.md`
+- **技术细节**：作为指令文件的第一部分内容输出
+
+### 2. Rules（规则）
+
+- **兼容性**：Incompatible (Degraded)
+- **映射策略**：所有规则合并为 Markdown 块写入 `copilot-instructions.md` 的 "Rules (Degraded)" 章节
+- **限制**：
+  - ❌ 不支持路径特定规则 (globs)
+  - ❌ 不支持自动应用 (alwaysApply)
+- **用户影响**：规则变为全局生效，无法针对特定文件类型自动切换
+
+### 3. Commands（自定义命令）
+
+- **兼容性**：Incompatible (Degraded)
+- **映射策略**：转换为指令文档中的 "Commands" 章节
+- **使用方式**：Copilot 会在对话中识别命令关键词，但无原生 `/command` 支持
+- **格式示例**：
+
+```markdown
+## Commands
+
+You should recognize the following commands when triggered by natural language:
+
+### explain
+**Description:** Explain selected code
+**Prompt:** Analyze this code and explain...
+```
+
+### 4. Skills（可复用技能）
+
+- **兼容性**：Incompatible (Degraded)
+- **映射策略**：转换为指令文档中的 "Available Skills" 章节
+- **用户影响**：技能内容被转换为文本描述，Copilot 会根据上下文尝试应用
+
+### 5. MCP（外部工具集成）
+
+- **兼容性**：Incompatible (Degraded)
+- **映射策略**：在指令文件中添加能力说明章节
+- **用户操作**：用户需要手动在编辑器中配置 MCP 服务器
+- **降级说明**：
+
+```markdown
+## Capability Notes
+
+- MCP servers are defined in project config. Treat them as external tool context...
+```
+
+### 6. Hooks（生命周期钩子）
+
+- **兼容性**：Incompatible (Degraded)
+- **映射策略**：转换为 "Workflow Note" 章节
+- **用户影响**：Copilot 会在相关场景提醒用户执行钩子，但不会自动触发
+
+```markdown
+## Workflow Note
+
+This project defines the following workflow hooks. Please remind the user to run them:
+
+- **pre-commit**: `npm test`
+```
+
+### 7. Agents（子代理）
+
+- **兼容性**：Incompatible (Degraded)
+- **映射策略**：作为角色指导写入指令文档
+- **用户影响**：用户需通过自然语言提示 Copilot 采用特定角色
+
+### 8. Configuration（全局配置）
+
+- **兼容性**：Fully Compatible
+- **映射策略**：`tools.copilot` 直接透传至 `.github/copilot-settings.json`
+- **用途**：存储 Copilot 特定的编辑器设置
+
+## 限制与降级策略
+
+### 关键限制
+
+1. **无结构化配置**：Copilot 不支持规则、命令、技能的配置文件化
+2. **无 MCP 原生支持**：需在编辑器设置中手动配置 MCP 服务器
+3. **无生命周期钩子**：无法自动触发工作流脚本
+4. **无子代理系统**：无法切换不同 AI 角色
+
+### 降级处理汇总
+
+| ai-jue 能力 | 降级方式 | 用户影响 |
+|:---|:---|:---|
+| Rules | 写入 `copilot-instructions.md` | 规则全局生效，无路径特定触发 |
+| Commands | 写入指令文档 | 需通过自然语言触发，无 `/command` 快捷方式 |
+| Skills | 写入指令文档 | 内容转换为文本，依赖 Copilot 理解 |
+| MCP | 添加说明文字 | 需手动在编辑器中配置 |
+| Hooks | 添加提醒文字 | 需手动执行，无自动触发 |
+| Agents | 转换为角色描述 | 需通过提示词引导 |
+
+### 手动替代方案
+
+对于不支持的能力，用户可手动：
+
+1. **MCP 配置**：在 VS Code/Cursor 设置中手动添加 MCP 服务器
+2. **Hooks**：使用 Git hooks 或编辑器任务替代
+3. **Agents**：在对话开始时明确指定角色
 
 ## 安装
 
@@ -29,9 +148,35 @@
 npm install ai-jue-adapter-copilot
 ```
 
-## 文档
+## 使用
 
-关于具体的框架使用，请参考主项目 [ai-jue](https://github.com/zenHeart/ai-jue) 文档。
+在 `ai.config.js` 中配置：
+
+```javascript
+module.exports = {
+  preset: 'base',
+  adapters: ['copilot']
+};
+```
+
+然后运行：
+
+```bash
+npx jue apply --adapter copilot
+```
+
+## 验证
+
+运行适配器测试：
+
+```bash
+npm test -- packages/ai-jue-adapter-copilot/test/index.test.ts
+```
+
+## 相关链接
+
+- [ai-jue 主项目](https://github.com/zenHeart/ai-jue)
+- [GitHub Copilot 官方文档](https://docs.github.com/en/copilot)
 
 ## License
 

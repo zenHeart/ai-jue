@@ -30,9 +30,249 @@ const LOCALES: Record<string, any> = {
   },
 };
 
+/**
+ * Generate Cursor ignore files (.cursorignore, .cursorindexingignore)
+ * Uses .gitignore syntax
+ */
+function generateIgnoreFiles(
+  cursorConfig: any,
+  outputDir: string,
+): void {
+  if (!cursorConfig || typeof cursorConfig !== "object") return;
+
+  // Generate .cursorignore - blocks AI access
+  if (Array.isArray(cursorConfig.ignore) && cursorConfig.ignore.length > 0) {
+    const content = cursorConfig.ignore.join("\n") + "\n";
+    generateMarkdownFile(path.join(outputDir, ".cursorignore"), content);
+  }
+
+  // Generate .cursorindexingignore - excludes from indexing only
+  if (Array.isArray(cursorConfig.indexingIgnore) && cursorConfig.indexingIgnore.length > 0) {
+    const content = cursorConfig.indexingIgnore.join("\n") + "\n";
+    generateMarkdownFile(path.join(outputDir, ".cursorindexingignore"), content);
+  }
+}
+
+/**
+ * Generate Cursor rules (.cursor/rules/*.mdc)
+ * Supports description, globs, alwaysApply frontmatter fields
+ */
+function generateRules(
+  rules: Record<string, any>,
+  outputDir: string,
+): void {
+  if (!rules || typeof rules !== "object") return;
+
+  for (const [ruleName, value] of Object.entries(rules)) {
+    const rule = value as any;
+    const content = typeof rule === "string" ? rule : (rule.content || "");
+    if (!content || !String(content).trim()) continue;
+
+    const description =
+      typeof rule.description === "string" && rule.description.trim()
+        ? rule.description.trim()
+        : `ai-jue generated rule: ${ruleName}`;
+    const alwaysApply =
+      typeof rule.alwaysApply === "boolean" ? rule.alwaysApply : true;
+    const globs = Array.isArray(rule.globs) ? rule.globs : undefined;
+
+    const frontmatter = [
+      "---",
+      `description: ${description}`,
+      `alwaysApply: ${alwaysApply}`,
+      ...(globs && globs.length > 0 ? [`globs: [${globs.map((g: string) => `"${g}"`).join(", ")}]`] : []),
+      "---",
+      "",
+    ].join("\n");
+
+    generateMarkdownFile(
+      path.join(outputDir, ".cursor", "rules", `${ruleName}.mdc`),
+      `${frontmatter}${String(content).trim()}\n`,
+    );
+  }
+}
+
+/**
+ * Generate Cursor custom commands (.cursor/commands/*.md)
+ */
+function generateCommands(
+  commands: Record<string, any>,
+  outputDir: string,
+  lang: string,
+): void {
+  if (!commands || typeof commands !== "object") return;
+
+  const t = LOCALES[lang];
+
+  for (const [name, value] of Object.entries(commands)) {
+    const cmd = value as any;
+    if (!cmd?.prompt) continue;
+
+    const triggers = Array.isArray(cmd.triggers) && cmd.triggers.length > 0
+      ? cmd.triggers.join(", ")
+      : `/${name}`;
+
+    const body = [
+      `# /${name}`,
+      "",
+      cmd.description ? String(cmd.description) : "",
+      "",
+      `## ${t.actionLabel}`,
+      "",
+      String(cmd.prompt),
+      "",
+      `## ${t.triggersLabel}`,
+      "",
+      triggers,
+      "",
+    ].join("\n");
+
+    generateMarkdownFile(path.join(outputDir, ".cursor", "commands", `${name}.md`), body);
+  }
+}
+
+/**
+ * Generate Cursor skills (.cursor/skills/<name>/SKILL.md)
+ */
+function generateSkills(
+  skills: Record<string, any>,
+  outputDir: string,
+  lang: string,
+): void {
+  if (!skills || typeof skills !== "object") return;
+
+  const t = LOCALES[lang];
+
+  for (const [name, value] of Object.entries(skills)) {
+    const skill = value as any;
+    const skillBody = [
+      `# ${name}`,
+      "",
+      skill.description ? String(skill.description) : t.skillsDesc,
+      "",
+      String(skill.content || skill.prompt || ""),
+      "",
+    ].join("\n");
+
+    generateMarkdownFile(path.join(outputDir, ".cursor", "skills", name, "SKILL.md"), skillBody);
+  }
+}
+
+/**
+ * Generate Cursor hooks (.cursor/hooks.json)
+ * Supports all event types: sessionStart, preToolUse, postTool, etc.
+ */
+function generateHooks(
+  hooks: Record<string, any>,
+  outputDir: string,
+): void {
+  if (!hooks || typeof hooks !== "object") return;
+
+  const hooksConfig: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(hooks)) {
+    const hookValue = value as any;
+
+    // Support both simple string format and complex object format
+    if (typeof hookValue === "string") {
+      hooksConfig[key] = hookValue.trim();
+    } else if (hookValue && typeof hookValue === "object") {
+      // Complex format with matcher, script, async, timeout
+      const script = String(hookValue.script || "").trim();
+      if (!script) continue;
+
+      hooksConfig[key] = {
+        script,
+        ...(hookValue.matcher ? { matcher: hookValue.matcher } : {}),
+        ...(hookValue.async !== undefined ? { async: hookValue.async } : {}),
+        ...(hookValue.timeout ? { timeout: hookValue.timeout } : {}),
+      };
+    }
+  }
+
+  if (Object.keys(hooksConfig).length > 0) {
+    generateJsonFile(path.join(outputDir, ".cursor", "hooks.json"), hooksConfig);
+  }
+}
+
+/**
+ * Generate Cursor agents (.cursor/agents/*.md)
+ */
+function generateAgents(
+  agents: Record<string, any>,
+  outputDir: string,
+): void {
+  if (!agents || typeof agents !== "object") return;
+
+  for (const [name, value] of Object.entries(agents)) {
+    const agent = value as any;
+    const skillRefs = Array.isArray(agent.skills) ? agent.skills : [];
+
+    const agentDoc = [
+      `# ${name}`,
+      "",
+      agent.description ? String(agent.description) : "",
+      "",
+      String(agent.prompt || ""),
+      "",
+      skillRefs.length > 0 ? "## Skills" : "",
+      skillRefs.length > 0 ? skillRefs.map((s: string) => `- ${s}`).join("\n") : "",
+      "",
+    ].join("\n");
+
+    generateMarkdownFile(path.join(outputDir, ".cursor", "agents", `${name}.md`), agentDoc);
+  }
+}
+
+/**
+ * Generate MCP configuration (.cursor/mcp.json)
+ * Supports: command, args, env, disabled, autoApprove
+ */
+function generateMcpConfig(
+  mcp: { servers?: Record<string, any> },
+  outputDir: string,
+): void {
+  if (!mcp?.servers || typeof mcp.servers !== "object") return;
+
+  const mcpConfig: Record<string, any> = { mcpServers: {} };
+
+  for (const [name, server] of Object.entries(mcp.servers)) {
+    if (!server || typeof server !== "object") continue;
+
+    const serverConfig: Record<string, any> = {};
+
+    // Required fields
+    if (server.command) serverConfig.command = server.command;
+    if (Array.isArray(server.args)) serverConfig.args = server.args;
+
+    // Optional fields
+    if (server.env && typeof server.env === "object") {
+      serverConfig.env = server.env;
+    }
+    if (typeof server.disabled === "boolean") {
+      serverConfig.disabled = server.disabled;
+    }
+    if (Array.isArray(server.autoApprove)) {
+      serverConfig.autoApprove = server.autoApprove;
+    }
+
+    // Only add if has required command field
+    if (serverConfig.command) {
+      mcpConfig.mcpServers[name] = serverConfig;
+    }
+  }
+
+  if (Object.keys(mcpConfig.mcpServers).length > 0) {
+    generateJsonFile(path.join(outputDir, ".cursor", "mcp.json"), mcpConfig);
+  }
+}
+
+/**
+ * Main entry point for Cursor adapter
+ * Converts ai-jue config to Cursor native format
+ */
 export async function generate(config: any, outputDir: string): Promise<void> {
   const lang = config.language === "zh" || config.language === "zh-CN" ? "zh" : "en";
-  const t = LOCALES[lang];
 
   // 1. AGENTS context -> root AGENTS.md (Cursor native entry)
   const globalContext = config.context?.global;
@@ -43,124 +283,51 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     );
   }
 
-  // 2. Canonical rules -> .cursor/rules/*.mdc
-  if (config.rules && typeof config.rules === "object") {
-    for (const [ruleName, value] of Object.entries(config.rules)) {
-      const rule = value as any;
-      const content = typeof rule === "string" ? rule : (rule.content || "");
-      if (!content || !String(content).trim()) continue;
+  // Get cursor-specific config from tools.cursor
+  const cursorConfig = config.tools?.cursor;
 
-      const description =
-        typeof rule.description === "string" && rule.description.trim()
-          ? rule.description.trim()
-          : `ai-jue generated rule: ${ruleName}`;
-      const alwaysApply =
-        typeof rule.alwaysApply === "boolean" ? rule.alwaysApply : true;
-      const globs = Array.isArray(rule.globs) ? rule.globs : undefined;
+  // 2. Generate ignore files (.cursorignore, .cursorindexingignore)
+  generateIgnoreFiles(cursorConfig, outputDir);
 
-      const frontmatter = [
-        "---",
-        `description: ${description}`,
-        `alwaysApply: ${alwaysApply}`,
-        ...(globs && globs.length > 0 ? [`globs: [${globs.map((g: string) => `"${g}"`).join(", ")}]`] : []),
-        "---",
-        "",
-      ].join("\n");
-
-      generateMarkdownFile(
-        path.join(outputDir, ".cursor", "rules", `${ruleName}.mdc`),
-        `${frontmatter}${String(content).trim()}\n`,
-      );
-    }
+  // 3. Generate rules (.cursor/rules/*.mdc)
+  if (config.rules) {
+    generateRules(config.rules, outputDir);
   }
 
-  // 3. Commands -> .cursor/commands/*.md
-  if (config.commands && typeof config.commands === "object") {
-    for (const [name, value] of Object.entries(config.commands)) {
-      const cmd = value as any;
-      if (!cmd?.prompt) continue;
-      const triggers = Array.isArray(cmd.triggers) && cmd.triggers.length > 0
-        ? cmd.triggers.join(", ")
-        : `/${name}`;
-      const body = [
-        `# /${name}`,
-        "",
-        cmd.description ? String(cmd.description) : "",
-        "",
-        `## ${t.actionLabel}`,
-        "",
-        String(cmd.prompt),
-        "",
-        `## ${t.triggersLabel}`,
-        "",
-        triggers,
-        "",
-      ].join("\n");
-      generateMarkdownFile(path.join(outputDir, ".cursor", "commands", `${name}.md`), body);
-    }
+  // 4. Generate commands (.cursor/commands/*.md)
+  if (config.commands) {
+    generateCommands(config.commands, outputDir, lang);
   }
 
-  // 4. Skills -> .cursor/skills/<name>/SKILL.md
-  if (config.skills && typeof config.skills === "object") {
-    for (const [name, value] of Object.entries(config.skills)) {
-      const skill = value as any;
-      const skillBody = [
-        `# ${name}`,
-        "",
-        skill.description ? String(skill.description) : t.skillsDesc,
-        "",
-        String(skill.content || skill.prompt || ""),
-        "",
-      ].join("\n");
-      generateMarkdownFile(path.join(outputDir, ".cursor", "skills", name, "SKILL.md"), skillBody);
-    }
+  // 5. Generate skills (.cursor/skills/<name>/SKILL.md)
+  if (config.skills) {
+    generateSkills(config.skills, outputDir, lang);
   }
 
-  // 5. Hooks -> .cursor/hooks.json
-  if (config.hooks && typeof config.hooks === "object") {
-    const hooksConfig: Record<string, any> = {};
-    for (const [key, value] of Object.entries(config.hooks)) {
-      const hookValue = value as any;
-      const script =
-        typeof hookValue === "string" ? hookValue.trim() : String(hookValue?.script || "").trim();
-      if (!script) continue;
-      hooksConfig[key] = script;
-    }
-    if (Object.keys(hooksConfig).length > 0) {
-      generateJsonFile(path.join(outputDir, ".cursor", "hooks.json"), hooksConfig);
-    }
+  // 6. Generate hooks (.cursor/hooks.json)
+  if (config.hooks) {
+    generateHooks(config.hooks, outputDir);
   }
 
-  // 6. Agents -> .cursor/agents/*.md
-  if (config.agents && typeof config.agents === "object") {
-    for (const [name, value] of Object.entries(config.agents)) {
-      const agent = value as any;
-      const skillRefs = Array.isArray(agent.skills) ? agent.skills : [];
-      const agentDoc = [
-        `# ${name}`,
-        "",
-        agent.description ? String(agent.description) : "",
-        "",
-        String(agent.prompt || ""),
-        "",
-        skillRefs.length > 0 ? "## Skills" : "",
-        skillRefs.length > 0 ? skillRefs.map((s: string) => `- ${s}`).join("\n") : "",
-        "",
-      ].join("\n");
-      generateMarkdownFile(path.join(outputDir, ".cursor", "agents", `${name}.md`), agentDoc);
+  // 7. Generate agents (.cursor/agents/*.md)
+  if (config.agents) {
+    generateAgents(config.agents, outputDir);
+  }
+
+  // 8. Generate MCP config (.cursor/mcp.json)
+  if (config.mcp) {
+    generateMcpConfig(config.mcp, outputDir);
+  }
+
+  // 9. tools.cursor passthrough -> .cursor/settings.json
+  // Exclude ignore/indexingIgnore as they're handled separately
+  if (cursorConfig && typeof cursorConfig === "object") {
+    const settingsConfig = { ...cursorConfig };
+    delete settingsConfig.ignore;
+    delete settingsConfig.indexingIgnore;
+
+    if (Object.keys(settingsConfig).length > 0) {
+      generateJsonFile(path.join(outputDir, ".cursor", "settings.json"), settingsConfig);
     }
-  }
-
-  // 7. Generate .cursor/mcp.json
-  if (config.mcp && config.mcp.servers) {
-    const mcpConfig = {
-      mcpServers: config.mcp.servers,
-    };
-    generateJsonFile(path.join(outputDir, ".cursor", "mcp.json"), mcpConfig);
-  }
-
-  // 8. tools.cursor passthrough -> .cursor/settings.json
-  if (config.tools?.cursor && typeof config.tools.cursor === "object") {
-    generateJsonFile(path.join(outputDir, ".cursor", "settings.json"), config.tools.cursor);
   }
 }
