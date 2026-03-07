@@ -1,7 +1,87 @@
 # 已完成任务
 
-> 更新时间：2026-02-16
+> 更新时间：2026-03-07
 > 本文件归档所有在 `TODO.md` 中已完成的事项。
+
+---
+
+## 2026-03-07 归档（Claude/Cursor 第一轮最小闭环完成）
+
+### P3-P0: 统一协议与 Claude/Cursor 主线收敛
+
+- [x] **A1: 收敛统一输入协议**
+  - [x] A1.1 盘点 `packages/ai-jue/src/config.ts`、`packages/ai-jue/src/normalize.ts`、`packages/ai-jue/src/preset.ts`、`packages/ai-jue/src/resolver.ts` 的能力模型定义与隐含约定
+  - [x] A1.2 抽离单一可信的 canonical types/schema
+  - [x] A1.3 统一 `commands/rules/skills/hooks/agents/mcp/tools/context` 的最小标准结构
+  - [x] A1.4 明确工具扩展字段、历史兼容字段、降级字段边界
+
+- [x] **A2: 收敛 normalize 与 merge 规则**
+  - [x] A2.1 收敛 `AGENTS.md` 的 layered merge 规则
+  - [x] A2.2 去除重复的 `mergeConfigWithLayeredContext` 逻辑
+  - [x] A2.3 收敛 `deepMerge` 与配置合并边界
+  - [x] A2.4 定义缺失字段、空值、非法值的处理策略
+  - [x] A2.5 为 normalize 结果补充测试断言
+
+- [x] **A3: 建立 Claude/Cursor contract tests**
+  - [x] A3.1 扩展 `packages/ai-jue/test/adapter-matrix.test.ts`，覆盖 `AGENTS/Rules/Commands/Skills/Hooks/MCP/Agents`
+  - [x] A3.2 补充 Claude adapter 单测，覆盖规则、技能、命令、hooks、mcp、agents
+  - [x] A3.3 补充 Cursor adapter 单测，覆盖 rules、commands、skills、hooks、agents、mcp、settings
+  - [x] A3.4 增加 canonical contract 与 adapter 输出的一致性断言
+
+- [x] **A4: 对齐 Claude 主线**
+  - [x] A4.1 对齐 `AGENTS.md` / `CLAUDE.md` 引用与共存策略
+  - [x] A4.2 收敛 `rules -> .claude/rules/*.md` 的 frontmatter 映射规则
+  - [x] A4.3 收敛 `commands/skills -> .claude/skills/*/SKILL.md` 的协议与元数据边界
+  - [x] A4.4 收敛 `agents -> .claude/agents/*.md` 的最小协议
+  - [x] A4.5 统一 `hooks -> .claude/settings.json` 的格式
+  - [x] A4.6 显式化 `mcp -> .mcp.json / .claude/settings.json` 的 scope 策略
+
+- [x] **A5: 对齐 Cursor 主线**
+  - [x] A5.1 固化 `AGENTS.md` 作为根上下文入口语义
+  - [x] A5.2 收敛 `rules -> .cursor/rules/*.mdc` 的 frontmatter 规则与默认值
+  - [x] A5.3 对齐 `commands -> .cursor/commands/*.md` 的协议与触发词策略
+  - [x] A5.4 对齐 `skills -> .cursor/skills/*/SKILL.md` 的结构与最小元数据
+  - [x] A5.5 统一 `hooks -> .cursor/hooks.json` 的格式
+  - [x] A5.6 收敛 `agents -> .cursor/agents/*.md` 的协议边界
+  - [x] A5.7 收敛 `mcp -> .cursor/mcp.json` 的字段白名单与 passthrough 边界
+
+### P3-P1: 文档与规范收口
+
+- [x] **B2: 文档与规范收口**
+  - [x] B2.1 更新 `README.md` / `README.en.md` 中关于 Claude/Cursor 的支持说明
+  - [x] B2.2 更新 `packages/docs/guide/architecture.md` 中统一能力模型叙述
+  - [x] B2.3 修正 `packages/docs/specs/*` 中 canonical model 和 Claude/Cursor 映射规范
+  - [x] B2.4 将 `_drafts/features.md` 中本轮采纳的能力沉淀到正式 docs/spec
+
+### P3-P1: 治理一致性补强
+
+- [x] **B3: 测试与治理补强**
+  - [x] B3.1 增加 docs 契约测试或 capability matrix 契约测试
+  - [x] B3.2 统一 license 声明
+  - [x] B3.3 统一 packageManager / lockfile 策略中的仓库检查口径
+  - [x] B3.4 扩展 `scripts/check-consistency.js` 覆盖范围
+  - [x] B3.5 明确 private package 的 publish 语义并移除冲突字段
+  - [x] B3.6 对未知顶层能力字段实现真正的 fail-fast 校验，使实现与 canonical docs 一致
+  - [x] B3.7 清理混合 lockfile 策略残留（移除 `packages/ai-jue/pnpm-lock.yaml`）
+
+### P3-P1: 共享 adapter 基础设施收敛
+
+- [x] **B1: 抽取共享 adapter 基础设施**
+  - [x] B1.1 抽取 frontmatter builder / serializer 共享实现
+  - [x] B1.2 抽取通用文件输出与目录确保逻辑
+  - [x] B1.3 抽取 canonical capability walkers
+  - [x] B1.4 抽取通用 degradation note / capability note 渲染策略
+  - [x] B1.5 为 `ai-jue-core` 补齐 helper 单测，并让 Claude/Cursor/Copilot 回到共享 helper 消费路径
+  - [x] B1.6 修正 monorepo 测试时工作区包默认指向旧 `dist` 的问题，Vitest 统一解析 `ai-jue-core` 源码入口
+  - [x] B1.7 重新构建 `packages/ai-jue-core/dist`，确保工作区实现与发布产物一致
+
+### 验证
+
+- [x] 运行 `npm test`，`16` 个测试文件、`84` 个测试全部通过
+- [x] 运行 `npm run check-consistency`，所有 package 一致性检查通过
+- [x] 新增 docs contract tests 和 fail-fast 校验后，`17` 个测试文件、`87` 个测试全部通过
+- [x] 完成共享 adapter 基础设施收敛后，`17` 个测试文件、`93` 个测试全部通过
+- [x] 运行 `npm run build -w ai-jue-core`，共享 helper 已同步到 `dist`
 
 ---
 

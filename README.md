@@ -111,11 +111,10 @@ npx jue apply --all
 完成！ai-jue 会根据项目的 AI 配置策略，自动为各编辑器生成对应的配置文件：
 
 ```
-✓ CLAUDE.md                          — Claude Code
-✓ .cursor/rules/*.mdc                — Cursor (Rules 转换产物，存在 rules/ 时生成)
+✓ CLAUDE.md / .claude/*              — Claude Code
+✓ AGENTS.md / .cursor/*              — Cursor
 ✓ .gemini/settings.json              — Gemini CLI
 ✓ .github/copilot-instructions.md    — GitHub Copilot
-✓ AGENTS.md                          — Cursor 原生全局上下文入口（项目根目录）
 ```
 
 ---
@@ -141,6 +140,19 @@ npx jue apply --all
 
 - 规范名称统一为 `agents`。
 
+进一步说，`ai-jue` 的核心不是让用户学习一套新的内部模型，而是：
+
+1. 尽量复用主流工具已经存在的实践
+2. 把不同来源的配置收拢为一套统一资产
+3. 再把这套统一资产分发到不同工具
+4. 允许在必要时通过 `tools/<tool>` 保留工具私有逃生舱
+
+因此：
+
+- 新项目可以直接从 `.ai/` 和 `ai.config.js` 开始
+- 已有 `.cursor` / `.gemini` / `.claude` 配置的项目，也可以先通过 `jue format` 低成本收回统一资产
+- 后续无论扩展新工具还是扩展新通用能力，都尽量不增加用户侧心智负担
+
 ### 🎯 多预设组合
 
 ```javascript
@@ -155,6 +167,23 @@ export default {
 - 采用分层追加，不做覆盖替换
 - 顺序：依赖 preset -> 当前 preset -> `.ai/AGENTS.md` -> 根 `AGENTS.md` -> `ai.config.js.context.global`
 - 结构化能力（`rules/commands/...`）仍是对象深合并，后者覆盖前者
+
+统一能力模型的核心输入为：
+
+- `context.global`
+- `rules`
+- `commands`
+- `skills`
+- `agents`
+- `hooks`
+- `mcp.servers`
+- `tools.<tool>`
+
+其中：
+
+- `context.global` 采用分层追加
+- 结构化能力采用对象深合并
+- `hooks` 保留结构化对象，不在核心层提前压平成字符串
 
 ### 📁 本地资产扩展
 
@@ -196,6 +225,17 @@ npx jue apply --all --watch
 - `.md` 文件：只更新 `<!-- AI-JUE:START -->` 和 `<!-- AI-JUE:END -->` 包围的区块，保留你的手动修改
 - `.json` 文件：深度合并，只添加/更新管理的字段
 
+### 🔄 正反向低成本转换
+
+- 正向：从 `.ai/` / `ai.config.js` 分发到 `.claude`、`.cursor`、`.gemini`、`.github`
+- 反向：从已有 `.claude` / `.cursor` / `.gemini` 等配置收敛回 `.ai/`
+
+这使得：
+
+- 新项目可以直接采用统一管理
+- 老项目也不需要推倒重来
+- 团队资产可以在“项目沉淀 -> preset 发布 -> 多工具分发”之间形成闭环
+
 ---
 
 ## 官方预设
@@ -211,9 +251,9 @@ npx jue apply --all --watch
 ```
 ai.config.js          →  加载预设 & 合并配置  →  适配器插件生成文件
 ┌──────────────┐       ┌───────────────────┐    ┌──────────────────────┐
-│ preset: 'base' │ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md    │
-│ mcp: {...}    │      │  (微内核)          │    │ adapter-cursor → .cursor/rules/*.mdc │
-│ commands: {}  │      │  配置合并 & 路由    │    │ adapter-gemini → settings.json│
+│ preset: 'base' │ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md + .claude/* │
+│ mcp: {...}    │      │  (微内核)          │    │ adapter-cursor → AGENTS.md + .cursor/* │
+│ commands: {}  │      │  配置合并 & 规范化  │    │ adapter-gemini → settings.json│
 └──────────────┘       └───────────────────┘    │ adapter-copilot→ instructions │
                                                  └──────────────────────────────┘
 ```

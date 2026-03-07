@@ -1,5 +1,11 @@
 import path from "path";
-import { generateMarkdownFile, generateJsonFile } from "ai-jue-core";
+import {
+  generateMarkdownFile,
+  generateJsonFile,
+  getAssetText,
+  getRecordEntries,
+  renderBulletSection,
+} from "ai-jue-core";
 
 /**
  * GitHub Copilot Adapter
@@ -29,9 +35,9 @@ function generateMainInstructions(
 
   // 2. Add Prompts
   if (config.prompts) {
-    for (const [key, value] of Object.entries(config.prompts)) {
+    for (const [key, value] of getRecordEntries(config.prompts)) {
       if (key === "agents") continue;
-      const content = (value as any).content || value;
+      const content = getAssetText(value, ["content", "prompt"]);
       if (content) {
         instructionsContent += `## ${key}\n\n${content}\n\n`;
       }
@@ -41,12 +47,12 @@ function generateMainInstructions(
   // 3. Degrade canonical rules to instruction sections (if not handled as path-specific)
   if (config.rules && typeof config.rules === "object") {
     const globalRules: string[] = [];
-    for (const [key, value] of Object.entries(config.rules)) {
+    for (const [key, value] of getRecordEntries(config.rules)) {
       const rule = value as any;
       // Skip rules with globs - they go to path-specific files
       if (rule.globs) continue;
 
-      const body = typeof rule === "string" ? rule : rule.content || "";
+      const body = getAssetText(rule, ["content", "prompt"]);
       if (!String(body).trim()) continue;
       globalRules.push(`### ${key}\n${String(body).trim()}`);
     }
@@ -59,10 +65,10 @@ function generateMainInstructions(
   // 4. Add Skills
   if (config.skills) {
     const skillEntries: string[] = [];
-    for (const [key, value] of Object.entries(config.skills)) {
+    for (const [key, value] of getRecordEntries(config.skills)) {
       const skill = value as any;
       const description = skill.description || "";
-      const content = skill.content || skill.prompt || "";
+      const content = getAssetText(skill, ["content", "prompt"]);
       if (description || content) {
         skillEntries.push(`### ${key}\n${description}\n\n${content}`);
       }
@@ -76,7 +82,7 @@ function generateMainInstructions(
   // 5. Add Commands reference (if not handled as prompt files)
   if (config.commands) {
     const commandEntries: string[] = [];
-    for (const [key, value] of Object.entries(config.commands)) {
+    for (const [key, value] of getRecordEntries(config.commands)) {
       const cmd = value as any;
       // Skip commands with triggers - they go to prompt files
       if (cmd.triggers?.length > 0) continue;
@@ -96,17 +102,19 @@ function generateMainInstructions(
   // 6. Add Hooks Note
   if (config.hooks) {
     const hookEntries: string[] = [];
-    for (const [key, value] of Object.entries(config.hooks)) {
+    for (const [key, value] of getRecordEntries(config.hooks)) {
       const hookValue = value as any;
       const script = typeof hookValue === "string" ? hookValue : hookValue.script;
       if (script) {
-        hookEntries.push(`- **${key}**: \`${script}\``);
+        hookEntries.push(`**${key}**: \`${script}\``);
       }
     }
 
-    if (hookEntries.length > 0) {
-      instructionsContent += `## Workflow Hooks\n\nThis project defines the following workflow hooks. Please remind the user to run them when appropriate:\n\n${hookEntries.join("\n")}\n\n`;
-    }
+    instructionsContent += renderBulletSection(
+      "Workflow Hooks",
+      "This project defines the following workflow hooks. Please remind the user to run them when appropriate:",
+      hookEntries,
+    );
   }
 
   // Build main content without capability notes first
@@ -132,9 +140,11 @@ function generateMainInstructions(
       );
     }
 
-    if (manualCapabilities.length > 0) {
-      instructionsContent += `## Capability Notes\n\n${manualCapabilities.join("\n")}\n\n`;
-    }
+    instructionsContent += renderBulletSection(
+      "Capability Notes",
+      "",
+      manualCapabilities,
+    );
 
     generateMarkdownFile(
       path.join(outputDir, ".github", "copilot-instructions.md"),
@@ -155,11 +165,11 @@ function generatePathSpecificInstructions(
 
   // Handle Rules with globs
   if (config.rules && typeof config.rules === "object") {
-    for (const [ruleName, rule] of Object.entries(config.rules)) {
+    for (const [ruleName, rule] of getRecordEntries(config.rules)) {
       const r = rule as any;
       if (!r.globs) continue; // Skip rules without globs
 
-      const content = typeof r === "string" ? r : r.content || "";
+      const content = getAssetText(r, ["content", "prompt"]);
       if (!String(content).trim()) continue;
 
       const frontmatter = [`---`, `applyTo: "${Array.isArray(r.globs) ? r.globs.join(",") : r.globs}"`, `---`, ""].join("\n");
@@ -175,7 +185,7 @@ function generatePathSpecificInstructions(
 
   // Handle Agents as path-specific instructions
   if (config.agents && typeof config.agents === "object") {
-    for (const [agentName, agent] of Object.entries(config.agents)) {
+    for (const [agentName, agent] of getRecordEntries(config.agents)) {
       const a = agent as any;
       if (!a.description && !a.prompt) continue;
 
@@ -204,7 +214,7 @@ function generatePromptFiles(
   const promptsDir = path.join(outputDir, ".github", "prompts");
   let hasPromptFiles = false;
 
-  for (const [cmdName, cmd] of Object.entries(commands)) {
+  for (const [cmdName, cmd] of getRecordEntries(commands)) {
     // Only create prompt files for commands with triggers
     if (!cmd.triggers?.length) continue;
 

@@ -17,7 +17,7 @@
     "jue-preset"
   ],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "private": true,
   "repository": {
     "type": "git",
@@ -29,6 +29,6 @@
     "url": "https://github.com/zenHeart/ai-jue/issues"
   },
   "publishConfig": {
-    "access": "public"
+    "access": "restricted"
   }
 }

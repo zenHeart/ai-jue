@@ -2,7 +2,7 @@ import path from 'path';
 import fs from 'fs';
 import * as yaml from 'js-yaml'; // Import js-yaml
 import { MergedConfig } from './config';
-import { deepMerge } from 'ai-jue-core';
+import { mergeConfigWithLayeredContext } from './merge';
 
 type FrontmatterResult = {
   content: string;
@@ -234,23 +234,6 @@ export async function loadAssetsFromDir(dirPath: string, userLanguage?: string):
 export async function loadPreset(presetName: string, userLanguage?: string): Promise<MergedConfig> {
   if (!presetName) return {};
   return loadPresetRecursive(presetName, userLanguage, []);
-}
-
-function mergeConfigWithLayeredContext(
-  base: MergedConfig,
-  incoming: MergedConfig,
-): MergedConfig {
-  const baseContext = typeof base?.context?.global === 'string' ? base.context.global.trim() : '';
-  const incomingContext = typeof incoming?.context?.global === 'string' ? incoming.context.global.trim() : '';
-  const merged = deepMerge(base, incoming);
-  const layeredContext = [baseContext, incomingContext].filter(Boolean).join('\n\n');
-
-  if (layeredContext) {
-    merged.context = merged.context || {};
-    merged.context.global = layeredContext;
-  }
-
-  return merged;
 }
 
 function normalizePresetPackageName(presetName: string): string {

@@ -78,11 +78,10 @@ This guided flow does not create an empty `.ai` scaffold by default; `.ai` is cr
 Done! `ai-jue` generates tool files automatically:
 
 ```
-✓ CLAUDE.md                          — Claude Code
-✓ .cursor/rules/*.mdc                — Cursor (generated from rules/ when rules exist)
+✓ CLAUDE.md / .claude/*              — Claude Code
+✓ AGENTS.md / .cursor/*              — Cursor
 ✓ .gemini/settings.json              — Gemini CLI
 ✓ .github/copilot-instructions.md    — GitHub Copilot
-✓ AGENTS.md                          — Cursor native global context entry (project root)
 ```
 
 ---
@@ -122,6 +121,23 @@ export default {
 - Layered append semantics (no replacement)
 - Order: dependency presets -> current preset -> `.ai/AGENTS.md` -> root `AGENTS.md` -> `ai.config.js context.global`
 - Structured capabilities (`rules/commands/...`) still use deep object merge where later values override earlier ones
+
+The canonical capability inputs are:
+
+- `context.global`
+- `rules`
+- `commands`
+- `skills`
+- `agents`
+- `hooks`
+- `mcp.servers`
+- `tools.<tool>`
+
+Semantics:
+
+- `context.global` uses layered append semantics
+- structured capabilities use deep object merge
+- structured `hooks` stay structured until adapter mapping
 
 ### 📁 Local Asset Extension
 
@@ -168,9 +184,9 @@ npx jue apply --all --watch
 ```
 ai.config.js          →  Load Presets & Merge Config  →  Adapter Plugins Generate Files
 ┌──────────────┐       ┌───────────────────┐    ┌─────────────────────────┐
-│ preset: 'base' │ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md      │
-│ mcp: {...}    │      │  (Micro-kernel)    │    │ adapter-cursor → .cursor/rules/*.mdc │
-│ commands: {}  │      │  Merge & Route     │    │ adapter-gemini → settings.json  │
+│ preset: 'base' │ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md + .claude/* │
+│ mcp: {...}    │      │  (Micro-kernel)    │    │ adapter-cursor → AGENTS.md + .cursor/* │
+│ commands: {}  │      │  Merge & Normalize │    │ adapter-gemini → settings.json  │
 └──────────────┘       └───────────────────┘    │ adapter-copilot→ instructions   │
                                                 └─────────────────────────────────┘
 ```

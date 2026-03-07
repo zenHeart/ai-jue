@@ -2,31 +2,73 @@ import { cosmiconfig } from 'cosmiconfig';
 import { z } from 'zod';
 import { logger } from './logger';
 
+const StringListSchema = z.array(z.string());
+
 const McpServerSchema = z.object({
   command: z.string(),
   args: z.array(z.string()).optional(),
   env: z.record(z.string(), z.string()).optional(),
+  disabled: z.boolean().optional(),
+  autoApprove: StringListSchema.optional(),
+  scope: z.enum(['local', 'project', 'user']).optional(),
+}).passthrough();
+
+const AssetBundleSchema = z.object({
+  references: z.record(z.string(), z.string()).optional(),
+  scripts: z.record(z.string(), z.string()).optional(),
+  assets: z.record(z.string(), z.string()).optional(),
+}).passthrough();
+
+const PromptLikeAssetSchema = z.object({
+  content: z.string().optional(),
+  prompt: z.string().optional(),
+  description: z.string().optional(),
+}).passthrough();
+
+const RuleSchema = PromptLikeAssetSchema.extend({
+  globs: z.union([z.string(), StringListSchema]).optional(),
+  alwaysApply: z.boolean().optional(),
 });
 
-const CommandSchema = z.object({
+const SkillSchema = PromptLikeAssetSchema.extend({
+  name: z.string().optional(),
   description: z.string().optional(),
-  prompt: z.string(),
+  "allowed-tools": StringListSchema.optional(),
+  allowedTools: StringListSchema.optional(),
+  disableModelInvocation: z.boolean().optional(),
+  userInvocable: z.boolean().optional(),
+}).merge(AssetBundleSchema);
+
+const CommandSchema = PromptLikeAssetSchema.extend({
   triggers: z.array(z.string()).optional(),
-});
+  disableModelInvocation: z.boolean().optional(),
+  userInvocable: z.boolean().optional(),
+}).merge(AssetBundleSchema);
+
+const HookObjectSchema = z.object({
+  script: z.string(),
+  matcher: z.string().optional(),
+  tools: StringListSchema.optional(),
+  type: z.string().optional(),
+  async: z.boolean().optional(),
+  timeout: z.number().int().positive().optional(),
+}).passthrough();
 
 const HookSchema = z.union([
-    z.string(),
-    z.object({
-        script: z.string(),
-        tools: z.array(z.string()).optional()
-    })
+  z.string(),
+  HookObjectSchema,
+  z.array(z.unknown()),
 ]);
 
-const AgentSchema = z.object({
+const AgentSchema = PromptLikeAssetSchema.extend({
+  name: z.string().optional(),
   description: z.string().optional(),
-  prompt: z.string(),
-  skills: z.array(z.string()).optional(),
-});
+  skills: StringListSchema.optional(),
+}).merge(AssetBundleSchema);
+
+const ContextSchema = z.object({
+  global: z.string().optional(),
+}).passthrough();
 
 const ConfigSchema = z
   .object({
@@ -41,15 +83,11 @@ const ConfigSchema = z
         servers: z.record(z.string(), McpServerSchema).optional(),
       })
       .optional(),
-    context: z
-      .object({
-        global: z.string().optional(),
-      })
-      .optional(),
+    context: ContextSchema.optional(),
     commands: z.record(z.string(), CommandSchema).optional(),
-    prompts: z.record(z.string(), z.any()).optional(),
-    rules: z.record(z.string(), z.any()).optional(),
-    skills: z.record(z.string(), z.any()).optional(),
+    prompts: z.record(z.string(), PromptLikeAssetSchema).optional(),
+    rules: z.record(z.string(), RuleSchema).optional(),
+    skills: z.record(z.string(), SkillSchema).optional(),
     hooks: z.record(z.string(), HookSchema).optional(),
     agents: z.record(z.string(), AgentSchema).optional(),
     tools: z.record(z.string(), z.any()).optional(),
@@ -57,6 +95,32 @@ const ConfigSchema = z
   })
   .passthrough()
   .superRefine((config, ctx) => {
+    const allowedTopLevelKeys = new Set([
+      'preset',
+      'presets',
+      'extends',
+      'language',
+      'mcp',
+      'context',
+      'commands',
+      'prompts',
+      'rules',
+      'skills',
+      'hooks',
+      'agents',
+      'tools',
+    ]);
+
+    for (const key of Object.keys(config)) {
+      if (!allowedTopLevelKeys.has(key)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          path: [key],
+          message: `Unknown top-level capability field "${key}". Move tool-specific config under tools.<tool> or a canonical capability field.`,
+        });
+      }
+    }
+
     if (config.preset && Array.isArray(config.presets) && config.presets.length > 0) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,
@@ -76,6 +140,18 @@ const ConfigSchema = z
   });
 
 export type MergedConfig = z.infer<typeof ConfigSchema> & { [key: string]: any };
+export {
+  AgentSchema,
+  CommandSchema,
+  ConfigSchema,
+  ContextSchema,
+  HookObjectSchema,
+  HookSchema,
+  McpServerSchema,
+  PromptLikeAssetSchema,
+  RuleSchema,
+  SkillSchema,
+};
 
 const explorer = cosmiconfig('ai', {
   searchPlaces: [

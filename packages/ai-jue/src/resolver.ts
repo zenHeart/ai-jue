@@ -1,37 +1,9 @@
 import { MergedConfig } from './config';
 import { loadPreset, loadAssetsFromDir } from './preset';
-import { deepMerge } from 'ai-jue-core';
 import path from 'path';
 import fs from 'fs';
 import { normalizeConfig } from './normalize';
-
-/**
- * Merges two configurations while ensuring the global context (AGENTS.md content)
- * is appended layer by layer instead of being overwritten.
- * 
- * Merge order for context: base -> incoming
- * 
- * @param base - The existing configuration
- * @param incoming - The new configuration to merge
- * @returns A new MergedConfig with combined context and deep-merged properties
- */
-function mergeConfigWithLayeredContext(
-  base: MergedConfig,
-  incoming: MergedConfig,
-): MergedConfig {
-    const baseContext = typeof base?.context?.global === 'string' ? base.context.global.trim() : '';
-    const incomingContext =
-      typeof incoming?.context?.global === 'string' ? incoming.context.global.trim() : '';
-    const merged = deepMerge(base, incoming);
-    const layeredContext = [baseContext, incomingContext].filter(Boolean).join('\n\n');
-
-    if (layeredContext) {
-      merged.context = merged.context || {};
-      merged.context.global = layeredContext;
-    }
-
-    return merged;
-}
+import { mergeConfigWithLayeredContext } from './merge';
 
 /**
  * Loads external asset files defined in the 'extends' property of ai.config.js.

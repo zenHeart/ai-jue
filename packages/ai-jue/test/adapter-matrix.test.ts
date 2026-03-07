@@ -31,21 +31,33 @@ describe('adapter contract matrix', () => {
       rules: {
         style: {
           description: 'Style guide',
+          globs: ['src/**/*.ts'],
+          alwaysApply: true,
           content: 'Use strict typing',
         },
       },
       skills: {
-        review: { content: 'Review skill' },
+        review: { prompt: 'Review skill' },
       },
       commands: {
         test: { description: 'Run tests', prompt: 'Run test suite', triggers: ['/test'] },
       },
       hooks: {
-        'pre-commit': 'npm test',
+        PostToolUse: {
+          script: 'npm test',
+          matcher: 'Edit|Write',
+          async: true,
+          timeout: 30,
+        },
       },
       mcp: {
         servers: {
-          sqlite: { command: 'uvx', args: ['mcp-server-sqlite'] },
+          sqlite: {
+            command: 'uvx',
+            args: ['mcp-server-sqlite'],
+            scope: 'project',
+            autoApprove: ['read'],
+          },
         },
       },
       tools: {
@@ -69,8 +81,38 @@ describe('adapter contract matrix', () => {
     const claude = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
     const agentsMd = fs.readFileSync(path.join(TEST_DIR, 'AGENTS.md'), 'utf8');
     const cursorStyleRule = fs.readFileSync(path.join(TEST_DIR, '.cursor', 'rules', 'style.mdc'), 'utf8');
+    const cursorCommand = fs.readFileSync(
+      path.join(TEST_DIR, '.cursor', 'commands', 'test.md'),
+      'utf8',
+    );
+    const cursorSkill = fs.readFileSync(
+      path.join(TEST_DIR, '.cursor', 'skills', 'review', 'SKILL.md'),
+      'utf8',
+    );
+    const cursorHooks = JSON.parse(
+      fs.readFileSync(path.join(TEST_DIR, '.cursor', 'hooks.json'), 'utf8'),
+    );
+    const cursorAgent = fs.readFileSync(
+      path.join(TEST_DIR, '.cursor', 'agents', 'reviewer.md'),
+      'utf8',
+    );
+    const cursorMcp = JSON.parse(
+      fs.readFileSync(path.join(TEST_DIR, '.cursor', 'mcp.json'), 'utf8'),
+    );
     const cursorSettings = JSON.parse(
       fs.readFileSync(path.join(TEST_DIR, '.cursor', 'settings.json'), 'utf8'),
+    );
+    const claudeSkill = fs.readFileSync(
+      path.join(TEST_DIR, '.claude', 'skills', 'review', 'SKILL.md'),
+      'utf8',
+    );
+    const claudeCommand = fs.readFileSync(
+      path.join(TEST_DIR, '.claude', 'skills', 'test', 'SKILL.md'),
+      'utf8',
+    );
+    const claudeAgent = fs.readFileSync(
+      path.join(TEST_DIR, '.claude', 'agents', 'reviewer.md'),
+      'utf8',
     );
     const claudeSettings = JSON.parse(
       fs.readFileSync(path.join(TEST_DIR, '.claude', 'settings.json'), 'utf8'),
@@ -87,6 +129,10 @@ describe('adapter contract matrix', () => {
       path.join(TEST_DIR, '.github', 'copilot-instructions.md'),
       'utf8',
     );
+    const copilotRule = fs.readFileSync(
+      path.join(TEST_DIR, '.github', 'instructions', 'style.instructions.md'),
+      'utf8',
+    );
     const copilotSettings = JSON.parse(
       fs.readFileSync(path.join(TEST_DIR, '.github', 'copilot-settings.json'), 'utf8'),
     );
@@ -95,18 +141,36 @@ describe('adapter contract matrix', () => {
 
     expect(claude).toContain('@AGENTS.md');
     expect(claudeRule).toContain('Use strict typing');
+    expect(claudeRule).toContain('paths:');
+    expect(claudeRule).toContain('auto-apply: true');
+    expect(claudeSkill).toContain('Review skill');
+    expect(claudeCommand).toContain('disable-model-invocation: true');
+    expect(claudeCommand).toContain('Run test suite');
+    expect(claudeAgent).toContain('Review changes');
     expect(agentsMd).toContain('Global context');
     expect(cursorStyleRule).toContain('Use strict typing');
+    expect(cursorStyleRule).toContain('alwaysApply: true');
+    expect(cursorCommand).toContain('Run test suite');
+    expect(cursorCommand).toContain('/test');
+    expect(cursorSkill).toContain('Review skill');
+    expect(cursorHooks.PostToolUse.matcher).toBe('Edit|Write');
+    expect(cursorHooks.PostToolUse.async).toBe(true);
+    expect(cursorHooks.PostToolUse.timeout).toBe(30);
+    expect(cursorAgent).toContain('Review changes');
+    expect(cursorAgent).toContain('- review');
+    expect(cursorMcp.mcpServers.sqlite.autoApprove).toEqual(['read']);
     expect(cursorSettings.temperature).toBe(0.3);
     expect(claudeSettings.permissions.allow).toEqual(['Read']);
+    expect(claudeSettings.hooks.PostToolUse[0].matcher).toBe('Edit|Write');
+    expect(claudeSettings.hooks.PostToolUse[0].hooks[0].async).toBe(true);
     expect(geminiMd).toContain('Rules (Degraded)');
     expect(geminiMd).toContain('Use strict typing');
     expect(copilot).toContain('Global context');
-    expect(copilot).toContain('## Rules');
-    expect(copilot).toContain('Use strict typing');
+    expect(copilotRule).toContain('Use strict typing');
+    expect(copilotRule).toContain('applyTo: "src/**/*.ts"');
     expect(geminiCommand).toContain('description = "Run tests"');
     expect(geminiCommand).toContain('Run test suite');
-    expect(gemini.hooks['pre-commit']).toBe('npm test');
+    expect(gemini.hooks.PostToolUse).toBe('npm test');
     expect(gemini.mcpServers.sqlite.command).toBe('uvx');
     expect(gemini.temperature).toBe(0.2);
     expect(copilotSettings.codeReview).toBe(true);

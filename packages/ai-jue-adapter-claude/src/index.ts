@@ -1,7 +1,15 @@
 import path from "path";
-import fs from "fs";
 import * as yaml from "js-yaml";
-import { generateMarkdownFile, generateJsonFile, deepMerge } from "ai-jue-core";
+import {
+  ensureDir,
+  generateMarkdownFile,
+  generateJsonFile,
+  getAssetText,
+  renderMarkdownWithFrontmatter,
+  writeSupportFiles,
+  writeTextFile,
+  deepMerge,
+} from "ai-jue-core";
 
 /**
  * Claude Code Adapter (Native Implementation)
@@ -114,13 +122,11 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     let hasValidRules = false;
     for (const [ruleName, rule] of Object.entries(config.rules)) {
       const r = rule as any;
-      const content = typeof r === "string" ? r : r.content || "";
+      const content = getAssetText(r, ["content", "prompt"]);
       if (!content.trim()) continue;
 
       if (!hasValidRules) {
-        if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
-        const rulesDir = path.join(claudeDir, "rules");
-        if (!fs.existsSync(rulesDir)) fs.mkdirSync(rulesDir, { recursive: true });
+        ensureDir(path.join(claudeDir, "rules"));
         hasValidRules = true;
       }
 
@@ -155,8 +161,8 @@ export async function generate(config: any, outputDir: string): Promise<void> {
         frontmatter["auto-apply"] = commonFields["auto-apply"];
       }
 
-      const fileContent = `---\n${safeDump(frontmatter)}\n---\n\n${content}`;
-      fs.writeFileSync(path.join(claudeDir, "rules", `${ruleName}.md`), fileContent, "utf8");
+      const fileContent = renderMarkdownWithFrontmatter(safeDump(frontmatter), content);
+      writeTextFile(path.join(claudeDir, "rules", `${ruleName}.md`), fileContent);
     }
   }
 
@@ -165,18 +171,16 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     let hasValidSkills = false;
     for (const [skillName, skill] of Object.entries(config.skills)) {
       const s = skill as any;
-      // Skills can work with just description (for auto-invocation context) or with content
-      if (!s.description) continue;
+      const skillContent = getAssetText(s, ["content", "prompt"]);
+      if (!s.description && !skillContent.trim()) continue;
 
       if (!hasValidSkills) {
-        if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
-        const skillsDir = path.join(claudeDir, "skills");
-        if (!fs.existsSync(skillsDir)) fs.mkdirSync(skillsDir, { recursive: true });
+        ensureDir(path.join(claudeDir, "skills"));
         hasValidSkills = true;
       }
 
       const skillPath = path.join(claudeDir, "skills", skillName);
-      if (!fs.existsSync(skillPath)) fs.mkdirSync(skillPath, { recursive: true });
+      ensureDir(skillPath);
 
       // Extract Claude-specific config from frontmatter (supports claude: namespace)
       const { commonFields } = extractClaudeConfig(s);
@@ -186,7 +190,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
       const frontmatter = buildClaudeFrontmatter(
         {
           name: s.name || skillName,
-          description: s.description,
+          description: s.description || `Skill: ${skillName}`,
           "disable-model-invocation": s.disableModelInvocation ?? false,
           "user-invocable": s.userInvocable ?? true,
         },
@@ -203,20 +207,11 @@ export async function generate(config: any, outputDir: string): Promise<void> {
         frontmatter["allowed-tools"] = s["allowed-tools"] || s.allowedTools;
       }
 
-      const fileContent = `---\n${safeDump(frontmatter)}\n---\n\n${s.content || ""}`;
-      fs.writeFileSync(path.join(skillPath, "SKILL.md"), fileContent, "utf8");
-
-      const writeSubdir = (dirName: string, files?: Record<string, string>) => {
-        if (!files) return;
-        const subPath = path.join(skillPath, dirName);
-        if (!fs.existsSync(subPath)) fs.mkdirSync(subPath, { recursive: true });
-        for (const [filename, content] of Object.entries(files)) {
-          fs.writeFileSync(path.join(subPath, filename), content, "utf8");
-        }
-      };
-      writeSubdir("references", s.references);
-      writeSubdir("scripts", s.scripts);
-      writeSubdir("assets", s.assets);
+      const fileContent = renderMarkdownWithFrontmatter(safeDump(frontmatter), skillContent);
+      writeTextFile(path.join(skillPath, "SKILL.md"), fileContent);
+      writeSupportFiles(path.join(skillPath, "references"), s.references);
+      writeSupportFiles(path.join(skillPath, "scripts"), s.scripts);
+      writeSupportFiles(path.join(skillPath, "assets"), s.assets);
     }
   }
 
@@ -230,9 +225,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
       if (!c.prompt) continue;
 
       if (!hasValidCommands) {
-        if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
-        const skillsDir = path.join(claudeDir, "skills");
-        if (!fs.existsSync(skillsDir)) fs.mkdirSync(skillsDir, { recursive: true });
+        ensureDir(path.join(claudeDir, "skills"));
         hasValidCommands = true;
       }
 
@@ -258,24 +251,13 @@ export async function generate(config: any, outputDir: string): Promise<void> {
       }
 
       const skillPath = path.join(claudeDir, "skills", cmdName);
-      if (!fs.existsSync(skillPath)) fs.mkdirSync(skillPath, { recursive: true });
+      ensureDir(skillPath);
 
-      const fileContent = `---\n${safeDump(frontmatter)}\n---\n\n${c.prompt || ""}`;
-      fs.writeFileSync(path.join(skillPath, "SKILL.md"), fileContent, "utf8");
-
-      // Copy subdirectories if they exist (scripts/, references/, assets/)
-      const copySubdir = (dirName: string) => {
-        const sourceDir = c[dirName];
-        if (!sourceDir || typeof sourceDir !== "object") return;
-        const targetDir = path.join(skillPath, dirName);
-        if (!fs.existsSync(targetDir)) fs.mkdirSync(targetDir, { recursive: true });
-        for (const [filename, content] of Object.entries(sourceDir)) {
-          fs.writeFileSync(path.join(targetDir, filename), content as string, "utf8");
-        }
-      };
-      copySubdir("references");
-      copySubdir("scripts");
-      copySubdir("assets");
+      const fileContent = renderMarkdownWithFrontmatter(safeDump(frontmatter), c.prompt || "");
+      writeTextFile(path.join(skillPath, "SKILL.md"), fileContent);
+      writeSupportFiles(path.join(skillPath, "references"), c.references);
+      writeSupportFiles(path.join(skillPath, "scripts"), c.scripts);
+      writeSupportFiles(path.join(skillPath, "assets"), c.assets);
     }
   }
 
@@ -285,12 +267,11 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     let hasValidAgents = false;
     for (const [agentName, agent] of Object.entries(config.agents)) {
       const a = agent as any;
-      if (!a.description) continue;
+      const prompt = a.prompt || a.content || "";
+      if (!a.description && !prompt.trim()) continue;
 
       if (!hasValidAgents) {
-        if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
-        const agentsDir = path.join(claudeDir, "agents");
-        if (!fs.existsSync(agentsDir)) fs.mkdirSync(agentsDir, { recursive: true });
+        ensureDir(path.join(claudeDir, "agents"));
         hasValidAgents = true;
       }
 
@@ -301,7 +282,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
       const frontmatter = buildClaudeFrontmatter(
         {
           name: a.name || agentName,
-          description: a.description,
+          description: a.description || `Agent: ${agentName}`,
         },
         commonFields
       );
@@ -311,9 +292,8 @@ export async function generate(config: any, outputDir: string): Promise<void> {
         frontmatter.skills = a.skills;
       }
 
-      const prompt = a.prompt || a.content || "";
-      const fileContent = `---\n${safeDump(frontmatter)}\n---\n\n${prompt}`;
-      fs.writeFileSync(path.join(claudeDir, "agents", `${agentName}.md`), fileContent, "utf8");
+      const fileContent = renderMarkdownWithFrontmatter(safeDump(frontmatter), prompt);
+      writeTextFile(path.join(claudeDir, "agents", `${agentName}.md`), fileContent);
     }
   }
 
@@ -440,7 +420,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
   }
 
   if (Object.keys(settings).length > 0) {
-    if (!fs.existsSync(claudeDir)) fs.mkdirSync(claudeDir, { recursive: true });
+    ensureDir(claudeDir);
     generateJsonFile(path.join(claudeDir, "settings.json"), settings);
   }
 }

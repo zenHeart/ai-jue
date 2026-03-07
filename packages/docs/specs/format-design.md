@@ -22,6 +22,11 @@ The migration engine detects tool-specific patterns and maps them to `.ai/` subd
 | **Hooks** | `.cursor/hooks.json`, `.opencode/plugin/*.ts` | `.ai/hooks/` | Maps plugins to the hooks directory |
 | **Config** | `.cursor/mcp.json`, `.trae/config.json` | `.ai/tools/{tool}/settings.json` | Tool-specific configuration preservation |
 
+Canonical note:
+
+- migration output should preserve the canonical capability model shape expected by core normalize/adapter mapping
+- structured hook metadata should not be flattened during migration unless the source format already lost that structure
+
 ## 3. Conflict Strategy
 
 When a file already exists in the `.ai/` directory:

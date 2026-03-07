@@ -10,6 +10,7 @@
   "categories": [
     "Other"
   ],
+  "license": "MIT",
   "main": "./dist/extension.js",
   "contributes": {
     "commands": [
@@ -43,6 +44,15 @@
     "watch": "tsc -watch -p ./",
     "package": "tsc -p ./"
   },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenHeart/ai-jue.git",
+    "directory": "packages/vscode-extension"
+  },
+  "bugs": {
+    "url": "https://github.com/zenHeart/ai-jue/issues"
+  },
+  "homepage": "https://github.com/zenHeart/ai-jue/tree/main/packages/vscode-extension#readme",
   "devDependencies": {
     "@types/vscode": "^1.80.0",
     "@types/node": "^16.x",

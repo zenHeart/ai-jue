@@ -51,10 +51,40 @@ export function normalizeConfig(config: MergedConfig): MergedConfig {
     commands[name] = command;
   }
 
+  for (const [name, value] of Object.entries(rules)) {
+    const rule = toObject(value);
+    if (!rule.content && typeof rule.prompt === 'string') {
+      rule.content = rule.prompt;
+    }
+    rules[name] = rule;
+  }
+
+  for (const [name, value] of Object.entries(skills)) {
+    const skill = toObject(value);
+    if (!skill.content && typeof skill.prompt === 'string') {
+      skill.content = skill.prompt;
+    }
+    if (!skill.prompt && typeof skill.content === 'string') {
+      skill.prompt = skill.content;
+    }
+    skills[name] = skill;
+  }
+
   for (const [name, value] of Object.entries(hooks)) {
     const hook = value as any;
-    if (typeof hook === 'object' && hook && typeof hook.script === 'string') {
-      hooks[name] = hook.script;
+    if (typeof hook === 'string' || Array.isArray(hook)) {
+      hooks[name] = hook;
+      continue;
+    }
+
+    if (typeof hook === 'object' && hook) {
+      const normalizedHook = { ...hook };
+      if (Array.isArray(normalizedHook.tools)) {
+        normalizedHook.tools = normalizedHook.tools
+          .map((tool: unknown) => String(tool).trim())
+          .filter(Boolean);
+      }
+      hooks[name] = normalizedHook;
     }
   }
 
@@ -62,6 +92,9 @@ export function normalizeConfig(config: MergedConfig): MergedConfig {
     const agent = toObject(rawAgent);
     if (!agent.prompt && typeof agent.content === 'string') {
       agent.prompt = agent.content;
+    }
+    if (!agent.content && typeof agent.prompt === 'string') {
+      agent.content = agent.prompt;
     }
     agents[name] = agent;
   }

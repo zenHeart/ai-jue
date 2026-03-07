@@ -77,6 +77,29 @@ describe('ai-jue-adapter-cursor', () => {
     expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'hooks.json'))).toBe(true);
   });
 
+  it('should preserve structured hook fields from canonical input', async () => {
+    await generate(
+      {
+        hooks: {
+          PostToolUse: {
+            script: 'npm test',
+            matcher: 'Edit|Write',
+            async: true,
+            timeout: 30,
+          },
+        },
+      },
+      TEST_DIR,
+    );
+
+    const hooksPath = path.join(TEST_DIR, '.cursor', 'hooks.json');
+    const content = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
+
+    expect(content.PostToolUse.matcher).toBe('Edit|Write');
+    expect(content.PostToolUse.async).toBe(true);
+    expect(content.PostToolUse.timeout).toBe(30);
+  });
+
   it('should not generate hooks.json when hooks are empty', async () => {
     await generate(
       {

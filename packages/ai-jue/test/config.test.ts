@@ -39,11 +39,45 @@ describe('loadConfig', () => {
     it('should return validated config if valid', async () => {
         searchMock.mockResolvedValue({
             config: {
-                preset: 'base'
+                preset: 'base',
+                mcp: {
+                    servers: {
+                        local: {
+                            command: 'npx',
+                            scope: 'project',
+                            autoApprove: ['read']
+                        }
+                    }
+                },
+                hooks: {
+                    'pre-tool-use': {
+                        script: 'npm test',
+                        matcher: 'Edit',
+                        async: true
+                    }
+                }
             }
         });
         const config = await loadConfig();
-        expect(config).toEqual({ preset: 'base' });
+        expect(config).toEqual({
+            preset: 'base',
+            mcp: {
+                servers: {
+                    local: {
+                        command: 'npx',
+                        scope: 'project',
+                        autoApprove: ['read']
+                    }
+                }
+            },
+            hooks: {
+                'pre-tool-use': {
+                    script: 'npm test',
+                    matcher: 'Edit',
+                    async: true
+                }
+            }
+        });
     });
 
     it('should fail validation for invalid config', async () => {
@@ -71,5 +105,22 @@ describe('loadConfig', () => {
 
         expect(process.exit).toHaveBeenCalledWith(1);
         expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Configuration validation failed'));
+    });
+
+    it('should fail fast on unknown top-level capability fields', async () => {
+        searchMock.mockResolvedValue({
+            config: {
+                preset: 'base',
+                bugbot: {
+                    enabled: true
+                }
+            }
+        });
+
+        await loadConfig();
+
+        expect(process.exit).toHaveBeenCalledWith(1);
+        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Configuration validation failed'));
+        expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Unknown top-level capability field "bugbot"'));
     });
 });

@@ -1,5 +1,16 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
-import { deepMerge, generateMarkdownFile, generateJsonFile } from './index';
+import {
+  deepMerge,
+  ensureDir,
+  generateMarkdownFile,
+  generateJsonFile,
+  getAssetText,
+  getRecordEntries,
+  renderBulletSection,
+  renderMarkdownWithFrontmatter,
+  writeSupportFiles,
+  writeTextFile,
+} from './index';
 import fs from 'fs';
 import path from 'path';
 
@@ -128,3 +139,48 @@ describe('generateJsonFile', () => {
         expect(consoleSpy).toHaveBeenCalled();
       });
   });
+
+describe('adapter helpers', () => {
+  beforeEach(() => {
+    vi.resetAllMocks();
+    (fs.existsSync as any).mockReturnValue(false);
+    (fs.mkdirSync as any).mockImplementation(() => {});
+    (fs.writeFileSync as any).mockImplementation(() => {});
+    (fs.readFileSync as any).mockImplementation(() => '');
+  });
+
+  it('ensures directories and writes plain text files', () => {
+    writeTextFile('/test/output/file.md', 'hello');
+    expect(fs.mkdirSync).toHaveBeenCalledWith('/test/output', { recursive: true });
+    expect(fs.writeFileSync).toHaveBeenCalledWith('/test/output/file.md', 'hello', 'utf8');
+  });
+
+  it('writes support files into a subdirectory', () => {
+    writeSupportFiles('/test/output/references', { 'README.md': 'ref' });
+    expect(fs.mkdirSync).toHaveBeenCalledWith('/test/output/references', { recursive: true });
+    expect(fs.writeFileSync).toHaveBeenCalledWith('/test/output/references/README.md', 'ref', 'utf8');
+  });
+
+  it('selects canonical asset text from content or prompt', () => {
+    expect(getAssetText({ content: 'body' })).toBe('body');
+    expect(getAssetText({ prompt: 'fallback' })).toBe('fallback');
+    expect(getAssetText('raw text')).toBe('raw text');
+  });
+
+  it('returns filtered record entries only for objects', () => {
+    expect(getRecordEntries({ a: 1 })).toEqual([['a', 1]]);
+    expect(getRecordEntries(null)).toEqual([]);
+    expect(getRecordEntries(undefined)).toEqual([]);
+  });
+
+  it('renders markdown with frontmatter and reusable bullet sections', () => {
+    expect(renderMarkdownWithFrontmatter('name: test', 'Body')).toBe('---\nname: test\n---\n\nBody');
+    expect(renderBulletSection('Notes', 'Intro', ['One', 'Two'])).toContain('## Notes');
+    expect(renderBulletSection('Notes', 'Intro', ['One', 'Two'])).toContain('- One');
+  });
+
+  it('exposes ensureDir as a standalone helper', () => {
+    ensureDir('/test/path');
+    expect(fs.mkdirSync).toHaveBeenCalledWith('/test/path', { recursive: true });
+  });
+});

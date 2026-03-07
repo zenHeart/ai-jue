@@ -79,6 +79,33 @@ describe('ai-jue-adapter-claude', () => {
     expect(content).toContain('Review instruction');
   });
 
+  it('should generate skills and agents from canonical prompt-only input', async () => {
+    await generate(
+      {
+        skills: {
+          review: {
+            prompt: 'Review instruction',
+          },
+        },
+        agents: {
+          reviewer: {
+            prompt: 'Review changes',
+            skills: ['review'],
+          },
+        },
+      },
+      TEST_DIR,
+    );
+
+    const skillPath = path.join(TEST_DIR, '.claude', 'skills', 'review', 'SKILL.md');
+    const agentPath = path.join(TEST_DIR, '.claude', 'agents', 'reviewer.md');
+
+    expect(fs.existsSync(skillPath)).toBe(true);
+    expect(fs.readFileSync(skillPath, 'utf8')).toContain('Review instruction');
+    expect(fs.existsSync(agentPath)).toBe(true);
+    expect(fs.readFileSync(agentPath, 'utf8')).toContain('Review changes');
+  });
+
   it('should generate .mcp.json with MCP servers', async () => {
     const config = {
       mcp: {

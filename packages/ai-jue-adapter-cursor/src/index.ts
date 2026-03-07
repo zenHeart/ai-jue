@@ -1,5 +1,10 @@
 import path from "path";
-import { generateMarkdownFile, generateJsonFile } from "ai-jue-core";
+import {
+  generateMarkdownFile,
+  generateJsonFile,
+  getAssetText,
+  getRecordEntries,
+} from "ai-jue-core";
 
 const LOCALES: Record<string, any> = {
   zh: {
@@ -63,9 +68,9 @@ function generateRules(
 ): void {
   if (!rules || typeof rules !== "object") return;
 
-  for (const [ruleName, value] of Object.entries(rules)) {
+  for (const [ruleName, value] of getRecordEntries(rules)) {
     const rule = value as any;
-    const content = typeof rule === "string" ? rule : (rule.content || "");
+    const content = getAssetText(rule, ["content", "prompt"]);
     if (!content || !String(content).trim()) continue;
 
     const description =
@@ -104,7 +109,7 @@ function generateCommands(
 
   const t = LOCALES[lang];
 
-  for (const [name, value] of Object.entries(commands)) {
+  for (const [name, value] of getRecordEntries(commands)) {
     const cmd = value as any;
     if (!cmd?.prompt) continue;
 
@@ -143,7 +148,7 @@ function generateSkills(
 
   const t = LOCALES[lang];
 
-  for (const [name, value] of Object.entries(skills)) {
+  for (const [name, value] of getRecordEntries(skills)) {
     const skill = value as any;
     const skillBody = [
       `# ${name}`,
@@ -170,7 +175,7 @@ function generateHooks(
 
   const hooksConfig: Record<string, any> = {};
 
-  for (const [key, value] of Object.entries(hooks)) {
+  for (const [key, value] of getRecordEntries(hooks)) {
     const hookValue = value as any;
 
     // Support both simple string format and complex object format
@@ -204,7 +209,7 @@ function generateAgents(
 ): void {
   if (!agents || typeof agents !== "object") return;
 
-  for (const [name, value] of Object.entries(agents)) {
+  for (const [name, value] of getRecordEntries(agents)) {
     const agent = value as any;
     const skillRefs = Array.isArray(agent.skills) ? agent.skills : [];
 
@@ -236,7 +241,7 @@ function generateMcpConfig(
 
   const mcpConfig: Record<string, any> = { mcpServers: {} };
 
-  for (const [name, server] of Object.entries(mcp.servers)) {
+  for (const [name, server] of getRecordEntries(mcp.servers)) {
     if (!server || typeof server !== "object") continue;
 
     const serverConfig: Record<string, any> = {};
