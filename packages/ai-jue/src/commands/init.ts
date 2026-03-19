@@ -36,6 +36,17 @@ function resolvePresetPackageName(presetName: string): string {
     : `jue-preset-${presetName}`;
 }
 
+function isEsmProject(): boolean {
+  const pkgPath = path.join(process.cwd(), "package.json");
+  if (!fs.existsSync(pkgPath)) return false;
+  try {
+    const pkg = JSON.parse(fs.readFileSync(pkgPath, "utf8"));
+    return pkg.type === "module";
+  } catch {
+    return false;
+  }
+}
+
 function isPresetInstalled(presetName: string): boolean {
   const pkgName = resolvePresetPackageName(presetName);
   try {
@@ -82,11 +93,22 @@ export async function runInitFlow(options: InitFlowOptions = {}): Promise<void> 
   const ensurePresetInstalled = options.ensurePresetInstalled ?? true;
 
   logger.info(t("commands.init.running"));
-  const configPath = path.join(process.cwd(), "ai.config.js");
+  const esm = isEsmProject();
+  const configFileName = esm ? "ai.config.cjs" : "ai.config.js";
+  const configPath = path.join(process.cwd(), configFileName);
   let selectedPreset = "base";
 
+  const existingConfigPaths = [
+    "ai.config.js", "ai.config.cjs", "ai.config.json",
+    "jue.config.js", "jue.config.cjs", "jue.config.json",
+    ".airc.js", ".airc.json", ".juerc.js", ".juerc.json",
+  ];
+  const existingConfig = existingConfigPaths.find((p) =>
+    fs.existsSync(path.join(process.cwd(), p)),
+  );
+
   let createConfig = true;
-  if (fs.existsSync(configPath)) {
+  if (existingConfig) {
     logger.warn(t("commands.init.already_exists"));
     createConfig = false;
   } else {

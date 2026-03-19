@@ -367,7 +367,7 @@ npm run release-gate:v1.1
 
 ## 贡献
 
-欢迎贡献！
+欢迎贡献！本地开发环境搭建、构建测试、调试方法等详见 **[DEVELOPER.md](DEVELOPER.md)**。
 
 1. Fork 本仓库
 2. 创建功能分支 (`git checkout -b feature/amazing-feature`)

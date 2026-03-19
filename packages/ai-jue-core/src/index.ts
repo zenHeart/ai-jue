@@ -19,41 +19,43 @@ export function deepMerge(target: any, source: any) {
   return target;
 }
 
+const AI_JUE_START_TAG = '<!-- AI-JUE:START -->';
+const AI_JUE_END_TAG = '<!-- AI-JUE:END -->';
+const ESCAPED_START = AI_JUE_START_TAG.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const ESCAPED_END = AI_JUE_END_TAG.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const MANAGED_BLOCK_RE = new RegExp(`${ESCAPED_START}[\\s\\S]*?${ESCAPED_END}\\n?`, 'g');
+const ORPHAN_TAG_RE = new RegExp(`^\\s*(?:${ESCAPED_START}|${ESCAPED_END})\\s*$`, 'gm');
+
+/**
+ * Strips `<!-- AI-JUE:START -->...<!-- AI-JUE:END -->` managed blocks
+ * (and any orphan tags) from the given markdown content.
+ */
+export function stripManagedBlock(content: string): string {
+    return content
+        .replace(MANAGED_BLOCK_RE, '')
+        .replace(ORPHAN_TAG_RE, '')
+        .trim();
+}
+
 /**
  * Generates a Markdown file with "Smart Coexistence" strategy.
  */
 export function generateMarkdownFile(filePath: string, content: string) {
-    const startTag = '<!-- AI-JUE:START -->';
-    const endTag = '<!-- AI-JUE:END -->';
-    
-    // Strip existing markers from incoming content to avoid nesting
-    const escapedStart = startTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const escapedEnd = endTag.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-    const managedBlockPattern = new RegExp(`${escapedStart}[\\s\\S]*?${escapedEnd}\\n?`, 'g');
-    const orphanTagPattern = new RegExp(`^\\s*(?:${escapedStart}|${escapedEnd})\\s*$`, 'gm');
-    
-    const cleanContent = content
-        .replace(managedBlockPattern, '')
-        .replace(orphanTagPattern, '')
-        .trim();
+    const cleanContent = stripManagedBlock(content);
 
-    const managedContent = `${startTag}\n${cleanContent}\n${endTag}`;
+    const managedContent = `${AI_JUE_START_TAG}\n${cleanContent}\n${AI_JUE_END_TAG}`;
 
     let finalContent = managedContent;
 
     if (fs.existsSync(filePath)) {
         const existingContent = fs.readFileSync(filePath, 'utf8');
-        const userContent = existingContent
-          .replace(managedBlockPattern, '')
-          .replace(orphanTagPattern, '')
-          .trim();
+        const userContent = stripManagedBlock(existingContent);
         finalContent = userContent ? `${userContent}\n\n${managedContent}` : managedContent;
 
         if (existingContent.trim() === finalContent.trim()) {
             return;
         }
     } else {
-        // Create directory if not exists
         const dir = path.dirname(filePath);
         if (!fs.existsSync(dir)) {
             fs.mkdirSync(dir, { recursive: true });
@@ -61,7 +63,6 @@ export function generateMarkdownFile(filePath: string, content: string) {
     }
 
     fs.writeFileSync(filePath, finalContent);
-    // console.log(`Generated ${filePath}`);
 }
 
 /**

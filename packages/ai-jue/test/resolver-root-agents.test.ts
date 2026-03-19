@@ -20,6 +20,77 @@ describe('resolveFinalConfig root AGENTS.md auto injection', () => {
     }
   });
 
+  it('strips AI-JUE managed blocks from root AGENTS.md before injection', async () => {
+    const originalCwd = process.cwd();
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-strip-managed-'));
+    const agentsContent = [
+      '# User Guidelines',
+      '',
+      'Custom project rules here.',
+      '',
+      '<!-- AI-JUE:START -->',
+      '# Old Preset Content',
+      'This should be stripped.',
+      '<!-- AI-JUE:END -->',
+    ].join('\n');
+    fs.writeFileSync(path.join(tempDir, 'AGENTS.md'), agentsContent);
+
+    try {
+      process.chdir(tempDir);
+      const config = await resolveFinalConfig({} as any);
+      const globalContext = String(config.context?.global || '');
+      expect(globalContext).toContain('User Guidelines');
+      expect(globalContext).toContain('Custom project rules here.');
+      expect(globalContext).not.toContain('Old Preset Content');
+      expect(globalContext).not.toContain('This should be stripped.');
+      expect(globalContext).not.toContain('AI-JUE:START');
+    } finally {
+      process.chdir(originalCwd);
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('skips root AGENTS.md when it contains only an AI-JUE managed block', async () => {
+    const originalCwd = process.cwd();
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-only-managed-'));
+    const agentsContent = [
+      '<!-- AI-JUE:START -->',
+      '# Preset Content Only',
+      '<!-- AI-JUE:END -->',
+    ].join('\n');
+    fs.writeFileSync(path.join(tempDir, 'AGENTS.md'), agentsContent);
+
+    try {
+      process.chdir(tempDir);
+      const config = await resolveFinalConfig({
+        context: { global: 'From Config' },
+      } as any);
+      const globalContext = String(config.context?.global || '');
+      expect(globalContext).not.toContain('Preset Content Only');
+      expect(globalContext).toContain('From Config');
+    } finally {
+      process.chdir(originalCwd);
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
+  it('defaults to base preset when no preset configured but jue-preset-base is installed', async () => {
+    const originalCwd = process.cwd();
+    const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-default-preset-'));
+
+    try {
+      process.chdir(tempDir);
+      const config = await resolveFinalConfig({
+        language: 'en',
+      } as any);
+      const globalContext = String(config.context?.global || '');
+      expect(globalContext).toContain('Agentic SDLC Meta-Rules (English Version)');
+    } finally {
+      process.chdir(originalCwd);
+      fs.rmSync(tempDir, { recursive: true, force: true });
+    }
+  });
+
   it('layers AGENTS context in stable priority order', async () => {
     const originalCwd = process.cwd();
     const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-layered-agents-'));

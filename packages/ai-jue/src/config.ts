@@ -156,12 +156,16 @@ export {
 const explorer = cosmiconfig('ai', {
   searchPlaces: [
     'ai.config.js',
+    'ai.config.cjs',
     'ai.config.json',
     '.airc.js',
+    '.airc.cjs',
     '.airc.json',
     'jue.config.js',
+    'jue.config.cjs',
     'jue.config.json',
     '.juerc.js',
+    '.juerc.cjs',
     '.juerc.json',
     'package.json'
   ],

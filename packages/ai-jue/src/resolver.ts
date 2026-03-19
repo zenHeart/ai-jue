@@ -4,6 +4,7 @@ import path from 'path';
 import fs from 'fs';
 import { normalizeConfig } from './normalize';
 import { mergeConfigWithLayeredContext } from './merge';
+import { stripManagedBlock } from 'ai-jue-core';
 
 /**
  * Loads external asset files defined in the 'extends' property of ai.config.js.
@@ -54,6 +55,13 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
       presets = userConfig.presets;
     } else if (userConfig.preset) {
       presets = [userConfig.preset];
+    } else {
+      try {
+        require.resolve('jue-preset-base/package.json');
+        presets = ['base'];
+      } catch {
+        // jue-preset-base not installed, proceed without preset
+      }
     }
 
     if (presets.length > 0) {
@@ -74,16 +82,18 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
       finalConfig = mergeConfigWithLayeredContext(finalConfig, localAssets);
     }
     
-    // Explicitly load root AGENTS.md from process.cwd() - MOVED THIS BLOCK
     const rootAgentsFile = path.join(process.cwd(), 'AGENTS.md');
     if (fs.existsSync(rootAgentsFile)) {
-        const rootAgentsContent = await fs.promises.readFile(rootAgentsFile, 'utf8');
-        const rootConfig: MergedConfig = {
-            context: {
-                global: rootAgentsContent
-            }
-        };
-        finalConfig = mergeConfigWithLayeredContext(finalConfig, rootConfig);
+        const rawContent = await fs.promises.readFile(rootAgentsFile, 'utf8');
+        const userContent = stripManagedBlock(rawContent);
+        if (userContent) {
+            const rootConfig: MergedConfig = {
+                context: {
+                    global: userContent
+                }
+            };
+            finalConfig = mergeConfigWithLayeredContext(finalConfig, rootConfig);
+        }
     }
 
     if (userConfig.extends) {

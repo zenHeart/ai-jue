@@ -71,12 +71,16 @@ const ADAPTER_INDICATORS: Record<string, string[]> = {
 };
 const CONFIG_SEARCH_PATHS = [
   "ai.config.js",
+  "ai.config.cjs",
   "ai.config.json",
   ".airc.js",
+  ".airc.cjs",
   ".airc.json",
   "jue.config.js",
+  "jue.config.cjs",
   "jue.config.json",
   ".juerc.js",
+  ".juerc.cjs",
   ".juerc.json",
 ];
 
@@ -571,9 +575,13 @@ export const handler = async (argv: Arguments) => {
 
     const configEntries = [
       "ai.config.js",
+      "ai.config.cjs",
       "jue.config.js",
+      "jue.config.cjs",
       ".airc.js",
+      ".airc.cjs",
       ".juerc.js",
+      ".juerc.cjs",
     ];
     for (const entry of configEntries) {
       try {
@@ -609,12 +617,16 @@ export const handler = async (argv: Arguments) => {
 
     const watchPaths = [
       path.join(process.cwd(), "ai.config.js"),
+      path.join(process.cwd(), "ai.config.cjs"),
       path.join(process.cwd(), "ai.config.json"),
       path.join(process.cwd(), ".airc.js"),
+      path.join(process.cwd(), ".airc.cjs"),
       path.join(process.cwd(), ".airc.json"),
       path.join(process.cwd(), "jue.config.js"),
+      path.join(process.cwd(), "jue.config.cjs"),
       path.join(process.cwd(), "jue.config.json"),
       path.join(process.cwd(), ".juerc.js"),
+      path.join(process.cwd(), ".juerc.cjs"),
       path.join(process.cwd(), ".juerc.json"),
       path.join(process.cwd(), "AGENTS.md"),
       path.join(process.cwd(), ".ai"),
