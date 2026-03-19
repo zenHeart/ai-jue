@@ -39,6 +39,7 @@ function main() {
   run("node", ["scripts/check-consistency.js"]);
   run("node", ["scripts/check-base-i18n.js"]);
   run("node", ["scripts/smoke-apply.js"]);
+  run("npm", ["audit", "--audit-level=high", "--omit=dev"]);
 
   assertFile(path.resolve(__dirname, "../release-note.md"), "Missing release-note.md");
   assertFile(
