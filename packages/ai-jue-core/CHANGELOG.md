@@ -1,3 +1,14 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.2.0...ai-jue-core@1.0.0) (2026-03-19)
+
+
+### Bug Fixes
+
+* fix ai-jue preset error ([3f2a464](https://github.com/zenHeart/ai-jue/commit/3f2a4642005d74d355f572abaa3f056dc1711ac1))
+* 完成修改 ([959dc2f](https://github.com/zenHeart/ai-jue/commit/959dc2f5583a7016fdbe951fff04c3011cc70c8e))
+* 完成草 ([b683b0d](https://github.com/zenHeart/ai-jue/commit/b683b0dab47ae6c5844e473f9d631551495836e5))
+
+
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.1.0...ai-jue-core@1.0.0) (2026-02-15)
 
 
