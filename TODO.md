@@ -1,7 +1,32 @@
 # 当前执行计划
 
-> 更新时间：2026-03-07
-> 项目状态：**进入 P4 文档收口与统一标准结构对齐审阅阶段**
+> 更新时间：2026-07-23
+> 项目状态：**Jue 能力标准化 MVP 实施阶段**
+
+## 当前 MVP 闭环
+
+目标协议已收敛到
+[`packages/docs/specs/jue-mvp.md`](packages/docs/specs/jue-mvp.md)：
+
+- [x] 明确 Jue 是能力标准化与 Agent 适配层，不只是 CLI 工具
+- [x] 明确 Capability / Preset / Adapter 三层边界
+- [ ] 递归保留 skill / agent / rule 附属资源的相对路径
+- [ ] 收紧 canonical schema 与 normalize 的一致性
+- [ ] 将 `ai-assets` 接入为 `jue-preset-ai-assets`
+- [ ] 用同一真实能力集验证 Claude 与 Cursor 输出
+- [ ] 在 monorepo 完成官网并发布到 `jue.zenheart.site`
+- [ ] 通过全量测试、构建、consistency、真实 smoke 与敏感信息门禁
+
+## 非 MVP 范围
+
+- Preset Registry 或远程能力市场
+- ai-assets 专属 CLI / adapter / installer
+- 自动同步服务
+- 在真实接入闭环前继续扩展 canonical top-level capability
+
+---
+
+## P4 历史收口项
 
 ## P4: 文档先行的协议收口
 

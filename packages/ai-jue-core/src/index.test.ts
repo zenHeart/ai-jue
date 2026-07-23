@@ -161,6 +161,28 @@ describe('adapter helpers', () => {
     expect(fs.writeFileSync).toHaveBeenCalledWith('/test/output/references/README.md', 'ref', 'utf8');
   });
 
+  it('writes nested binary support files', () => {
+    writeSupportFiles('/test/output/assets', {
+      'fixtures/sample.bin': {
+        content: Buffer.from([0, 255, 10, 128]).toString('base64'),
+        encoding: 'base64',
+      },
+    });
+    expect(fs.mkdirSync).toHaveBeenCalledWith('/test/output/assets/fixtures', {
+      recursive: true,
+    });
+    expect(fs.writeFileSync).toHaveBeenCalledWith(
+      '/test/output/assets/fixtures/sample.bin',
+      Buffer.from([0, 255, 10, 128]),
+    );
+  });
+
+  it('rejects support file paths outside the capability directory', () => {
+    expect(() =>
+      writeSupportFiles('/test/output/assets', { '../secret': 'nope' }),
+    ).toThrow('Support file path must stay inside its asset directory');
+  });
+
   it('selects canonical asset text from content or prompt', () => {
     expect(getAssetText({ content: 'body' })).toBe('body');
     expect(getAssetText({ prompt: 'fallback' })).toBe('fallback');

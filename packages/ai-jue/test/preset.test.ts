@@ -78,4 +78,41 @@ Create adapter docs first, then implementation.`,
       'Create adapter docs first',
     );
   });
+
+  it('preserves nested text and binary skill resources', async () => {
+    const dir = makeTempDir();
+    const skillDir = path.join(dir, 'skills', 'deep-skill');
+    fs.mkdirSync(path.join(skillDir, 'references', 'protocol', 'roles'), {
+      recursive: true,
+    });
+    fs.mkdirSync(path.join(skillDir, 'assets', 'fixtures'), {
+      recursive: true,
+    });
+    fs.writeFileSync(
+      path.join(skillDir, 'SKILL.md'),
+      '---\nname: deep-skill\ndescription: Deep skill\n---\nUse nested resources.',
+    );
+    fs.writeFileSync(
+      path.join(skillDir, 'references', 'protocol', 'roles', 'reviewer.md'),
+      '# Reviewer',
+    );
+    const binary = Buffer.from([0, 255, 10, 128]);
+    fs.writeFileSync(
+      path.join(skillDir, 'assets', 'fixtures', 'sample.bin'),
+      binary,
+    );
+
+    const config = await loadAssetsFromDir(dir, 'en');
+    expect(
+      config.skills?.['deep-skill']?.references?.[
+        'protocol/roles/reviewer.md'
+      ],
+    ).toBe('# Reviewer');
+    expect(
+      config.skills?.['deep-skill']?.assets?.['fixtures/sample.bin'],
+    ).toEqual({
+      content: binary.toString('base64'),
+      encoding: 'base64',
+    });
+  });
 });

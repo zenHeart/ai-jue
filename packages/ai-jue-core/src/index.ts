@@ -112,11 +112,49 @@ export function writeTextFile(filePath: string, content: string) {
     fs.writeFileSync(filePath, content, 'utf8');
 }
 
-export function writeSupportFiles(baseDir: string, files?: Record<string, string>) {
+export type SupportFile =
+    | string
+    | {
+        content: string;
+        encoding: 'utf8' | 'base64';
+    };
+
+function resolveSupportFilePath(baseDir: string, relativePath: string): string {
+    const resolvedBase = path.resolve(baseDir);
+    const resolvedFile = path.resolve(resolvedBase, relativePath);
+    if (
+        resolvedFile === resolvedBase ||
+        !resolvedFile.startsWith(`${resolvedBase}${path.sep}`)
+    ) {
+        throw new Error(`Support file path must stay inside its asset directory: ${relativePath}`);
+    }
+    return resolvedFile;
+}
+
+/**
+ * Writes text or binary files attached to a capability while preserving nested
+ * relative paths. The explicit base64 form keeps the canonical model JSON-safe.
+ */
+export function writeSupportFiles(baseDir: string, files?: Record<string, SupportFile>) {
     if (!files) return;
     ensureDir(baseDir);
-    for (const [filename, content] of Object.entries(files)) {
-        writeTextFile(path.join(baseDir, filename), content);
+    for (const [relativePath, file] of Object.entries(files)) {
+        const filePath = resolveSupportFilePath(baseDir, relativePath);
+        if (typeof file === 'string') {
+            writeTextFile(filePath, file);
+            continue;
+        }
+
+        if (!file || (file.encoding !== 'utf8' && file.encoding !== 'base64')) {
+            throw new Error(`Unsupported support file encoding: ${relativePath}`);
+        }
+
+        ensureDir(path.dirname(filePath));
+        const content = Buffer.from(file.content, file.encoding);
+        if (fs.existsSync(filePath) && fs.readFileSync(filePath).equals(content)) {
+            continue;
+        }
+        fs.writeFileSync(filePath, content);
     }
 }
 

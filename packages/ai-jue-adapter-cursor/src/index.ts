@@ -4,6 +4,7 @@ import {
   generateJsonFile,
   getAssetText,
   getRecordEntries,
+  writeSupportFiles,
 } from "ai-jue-core";
 
 const LOCALES: Record<string, any> = {
@@ -159,7 +160,11 @@ function generateSkills(
       "",
     ].join("\n");
 
-    generateMarkdownFile(path.join(outputDir, ".cursor", "skills", name, "SKILL.md"), skillBody);
+    const skillDir = path.join(outputDir, ".cursor", "skills", name);
+    generateMarkdownFile(path.join(skillDir, "SKILL.md"), skillBody);
+    writeSupportFiles(path.join(skillDir, "references"), skill.references);
+    writeSupportFiles(path.join(skillDir, "scripts"), skill.scripts);
+    writeSupportFiles(path.join(skillDir, "assets"), skill.assets);
   }
 }
 

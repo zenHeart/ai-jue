@@ -4,15 +4,33 @@ import { withMermaid } from "vitepress-plugin-mermaid";
 // https://vitepress.dev/reference/site-config
 export default withMermaid(
   defineConfig({
+    title: "Jue",
+    titleTemplate: ":title · Jue",
+    description: "AI capability standardization and Agent adapter platform",
+    lang: "zh-CN",
+    sitemap: {
+      hostname: "https://jue.zenheart.site",
+    },
+    head: [
+      ["link", { rel: "icon", href: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 64 64%22><rect width=%2264%22 height=%2264%22 rx=%2212%22 fill=%22%23111411%22/><path d=%22M16 16h12v6h-6v6h-6V16zm20 0h12v12h-6v-6h-6v-6zM16 36h6v6h6v6H16V36zm26 0h6v12H36v-6h6v-6z%22 fill=%22%23c0db42%22/></svg>" }],
+      ["meta", { property: "og:type", content: "website" }],
+      ["meta", { property: "og:site_name", content: "Jue" }],
+      ["meta", { property: "og:title", content: "Jue — Define once. Adapt everywhere." }],
+      ["meta", { property: "og:description", content: "Standardize AI capabilities and adapt them to every Agent." }],
+      ["meta", { property: "og:image", content: "https://jue.zenheart.site/og.png" }],
+      ["meta", { name: "twitter:card", content: "summary_large_image" }],
+      ["meta", { name: "twitter:image", content: "https://jue.zenheart.site/og.png" }],
+    ],
     locales: {
       root: {
         label: "简体中文",
         lang: "zh",
-        description: "AI 配置的终极解决方案",
+        description: "AI 能力标准化与 Agent 适配层",
         themeConfig: {
           nav: [
             { text: "首页", link: "/" },
             { text: "指南", link: "/guide/getting-started" },
+            { text: "架构", link: "/guide/architecture" },
           ],
           sidebar: [
             {
@@ -29,6 +47,7 @@ export default withMermaid(
               text: "开发",
               items: [
                 { text: "架构", link: "/guide/architecture" },
+                { text: "MVP 规范", link: "/specs/jue-mvp" },
                 { text: "创建预设", link: "/guide/creating-a-preset" },
                 {
                   text: "适配器标准化",
@@ -43,12 +62,13 @@ export default withMermaid(
       en: {
         label: "English",
         lang: "en",
-        description: "The Ultimate AI Configuration Solution",
+        description: "AI capability standardization and Agent adaptation",
         link: "/en/",
         themeConfig: {
           nav: [
             { text: "Home", link: "/en/" },
             { text: "Guide", link: "/en/guide/getting-started" },
+            { text: "Architecture", link: "/en/guide/architecture" },
           ],
           sidebar: [
             {
@@ -84,10 +104,20 @@ export default withMermaid(
       },
     },
     themeConfig: {
-      // Shared theme config
+      logo: {
+        src: "data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 40 40%22><rect width=%2240%22 height=%2240%22 rx=%229%22 fill=%22%23111411%22/><path d=%22M9 9h9v4h-5v5H9V9zm13 0h9v9h-4v-5h-5V9zM9 22h4v5h5v4H9v-9zm18 0h4v9h-9v-4h5v-5z%22 fill=%22%23c0db42%22/></svg>",
+        alt: "Jue",
+      },
+      search: {
+        provider: "local",
+      },
       socialLinks: [
-        { icon: "github", link: "https://github.com/your-username/ai-jue" },
+        { icon: "github", link: "https://github.com/zenHeart/ai-jue" },
       ],
+      footer: {
+        message: "Define once. Adapt everywhere.",
+        copyright: "Released under the MIT License.",
+      },
     },
     mermaid: {
       // 参考 https://mermaid.js.org/config/getting-started.html#mermaidapi-configuration-defaults

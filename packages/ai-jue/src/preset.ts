@@ -9,37 +9,62 @@ type FrontmatterResult = {
   attributes: Record<string, any>;
 };
 
+type SupportFile =
+  | string
+  | {
+      content: string;
+      encoding: 'base64';
+    };
+
 async function readJsonIfExists(filePath: string): Promise<any> {
   if (!fs.existsSync(filePath)) return {};
   const content = await fs.promises.readFile(filePath, 'utf8');
   return JSON.parse(content);
 }
 
-// Helper to load all files in a subdirectory as a key-value pair (filename -> content)
-async function loadAssetSubdir(dirPath: string): Promise<Record<string, string>> {
-  const result: Record<string, string> = {};
+function toPortableRelativePath(value: string): string {
+  return value.split(path.sep).join('/');
+}
+
+function decodeSupportFile(content: Buffer): SupportFile {
+  const utf8 = content.toString('utf8');
+  if (Buffer.from(utf8, 'utf8').equals(content)) {
+    return utf8;
+  }
+  return {
+    content: content.toString('base64'),
+    encoding: 'base64',
+  };
+}
+
+// Recursively load capability attachments and preserve portable relative paths.
+async function loadAssetSubdir(
+  dirPath: string,
+  relativeDir = '',
+): Promise<Record<string, SupportFile>> {
+  const result: Record<string, SupportFile> = {};
   if (!fs.existsSync(dirPath)) return result;
 
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
-  await Promise.all(
-    entries
-      .filter((entry) => entry.isFile())
-      .map(async (entry) => {
-        const filePath = path.join(dirPath, entry.name);
-        result[entry.name] = await fs.promises.readFile(filePath, 'utf8');
-      }),
-  );
+  for (const entry of entries) {
+    const filePath = path.join(dirPath, entry.name);
+    const relativePath = path.join(relativeDir, entry.name);
+    if (entry.isDirectory()) {
+      Object.assign(result, await loadAssetSubdir(filePath, relativePath));
+      continue;
+    }
+    if (entry.isFile()) {
+      result[toPortableRelativePath(relativePath)] = decodeSupportFile(
+        await fs.promises.readFile(filePath),
+      );
+    }
+  }
   return result;
 }
 
 // Replaced parseSimpleYamlFrontmatter with a robust YAML parser using js-yaml
 function parseYamlFrontmatter(yamlText: string): Record<string, any> {
-  try {
-    return (yaml.load(yamlText) as Record<string, any>) || {};
-  } catch (error) {
-    console.error('Error parsing YAML frontmatter:', error);
-    return {};
-  }
+  return (yaml.load(yamlText) as Record<string, any>) || {};
 }
 
 function parseMarkdownWithFrontmatter(raw: string): FrontmatterResult {

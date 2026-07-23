@@ -13,10 +13,18 @@ const McpServerSchema = z.object({
   scope: z.enum(['local', 'project', 'user']).optional(),
 }).passthrough();
 
+const SupportFileSchema = z.union([
+  z.string(),
+  z.object({
+    content: z.string(),
+    encoding: z.enum(['utf8', 'base64']),
+  }).strict(),
+]);
+
 const AssetBundleSchema = z.object({
-  references: z.record(z.string(), z.string()).optional(),
-  scripts: z.record(z.string(), z.string()).optional(),
-  assets: z.record(z.string(), z.string()).optional(),
+  references: z.record(z.string(), SupportFileSchema).optional(),
+  scripts: z.record(z.string(), SupportFileSchema).optional(),
+  assets: z.record(z.string(), SupportFileSchema).optional(),
 }).passthrough();
 
 const PromptLikeAssetSchema = z.object({
@@ -151,6 +159,7 @@ export {
   PromptLikeAssetSchema,
   RuleSchema,
   SkillSchema,
+  SupportFileSchema,
 };
 
 const explorer = cosmiconfig('ai', {

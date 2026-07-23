@@ -1,7 +1,7 @@
 import path from "path";
 import fs from "fs";
 import * as yaml from "js-yaml";
-import { generateMarkdownFile, generateJsonFile, deepMerge } from "ai-jue-core";
+import { generateMarkdownFile, generateJsonFile, deepMerge, writeSupportFiles } from "ai-jue-core";
 
 function toTomlBasicString(value: string): string {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"');
@@ -59,9 +59,9 @@ function writeGeminiSkillFile(
     description: string; 
     content: string; 
     metadata?: Record<string, any>; 
-    references?: Record<string, string>;
-    scripts?: Record<string, string>;
-    assets?: Record<string, string>;
+    references?: Record<string, any>;
+    scripts?: Record<string, any>;
+    assets?: Record<string, any>;
     [key: string]: any 
   },
 ): void {
@@ -90,19 +90,9 @@ function writeGeminiSkillFile(
   
   fs.writeFileSync(path.join(skillDir, "SKILL.md"), skillMdContent, "utf8");
 
-  // Write subdirectories
-  const writeSubdir = (name: string, files?: Record<string, string>) => {
-    if (!files) return;
-    const subdirPath = path.join(skillDir, name);
-    fs.mkdirSync(subdirPath, { recursive: true });
-    for (const [filename, content] of Object.entries(files)) {
-      fs.writeFileSync(path.join(subdirPath, filename), content, "utf8");
-    }
-  };
-
-  writeSubdir("references", skill.references);
-  writeSubdir("scripts", skill.scripts);
-  writeSubdir("assets", skill.assets);
+  writeSupportFiles(path.join(skillDir, "references"), skill.references);
+  writeSupportFiles(path.join(skillDir, "scripts"), skill.scripts);
+  writeSupportFiles(path.join(skillDir, "assets"), skill.assets);
 }
 
 

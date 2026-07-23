@@ -37,7 +37,18 @@ describe('adapter contract matrix', () => {
         },
       },
       skills: {
-        review: { prompt: 'Review skill' },
+        review: {
+          prompt: 'Review skill',
+          references: {
+            'protocol/roles/reviewer.md': '# Reviewer role',
+          },
+          assets: {
+            'fixtures/sample.bin': {
+              content: Buffer.from([0, 255, 10, 128]).toString('base64'),
+              encoding: 'base64',
+            },
+          },
+        },
       },
       commands: {
         test: { description: 'Run tests', prompt: 'Run test suite', triggers: ['/test'] },
@@ -144,6 +155,21 @@ describe('adapter contract matrix', () => {
     expect(claudeRule).toContain('paths:');
     expect(claudeRule).toContain('auto-apply: true');
     expect(claudeSkill).toContain('Review skill');
+    expect(
+      fs.readFileSync(
+        path.join(
+          TEST_DIR,
+          '.claude',
+          'skills',
+          'review',
+          'references',
+          'protocol',
+          'roles',
+          'reviewer.md',
+        ),
+        'utf8',
+      ),
+    ).toBe('# Reviewer role');
     expect(claudeCommand).toContain('disable-model-invocation: true');
     expect(claudeCommand).toContain('Run test suite');
     expect(claudeAgent).toContain('Review changes');
@@ -153,6 +179,34 @@ describe('adapter contract matrix', () => {
     expect(cursorCommand).toContain('Run test suite');
     expect(cursorCommand).toContain('/test');
     expect(cursorSkill).toContain('Review skill');
+    expect(
+      fs.readFileSync(
+        path.join(
+          TEST_DIR,
+          '.cursor',
+          'skills',
+          'review',
+          'references',
+          'protocol',
+          'roles',
+          'reviewer.md',
+        ),
+        'utf8',
+      ),
+    ).toBe('# Reviewer role');
+    expect(
+      fs.readFileSync(
+        path.join(
+          TEST_DIR,
+          '.cursor',
+          'skills',
+          'review',
+          'assets',
+          'fixtures',
+          'sample.bin',
+        ),
+      ),
+    ).toEqual(Buffer.from([0, 255, 10, 128]));
     expect(cursorHooks.PostToolUse.matcher).toBe('Edit|Write');
     expect(cursorHooks.PostToolUse.async).toBe(true);
     expect(cursorHooks.PostToolUse.timeout).toBe(30);
