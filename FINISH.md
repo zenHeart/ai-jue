@@ -204,7 +204,7 @@
   - [x] 明确“不说项”清单（暂不覆盖的次要能力），避免范围膨胀。
   - [x] 固化用户命令接口为 7 个核心命令：`jue:impl`、`jue:fix`、`jue:rev`、`jue:ref`、`jue:exp`、`jue:test`、`jue:doc`。
 - [x] **B1 `jue-preset-base` 用户场景闭环（文档先行）**
-  - [x] 重构 `REPO_ROOT/packages/jue-preset-base/README.md`：按“用户场景”组织而不是仅能力罗列。
+  - [x] 重构 `packages/jue-preset-base/README.md`：按“用户场景”组织而不是仅能力罗列。
   - [x] 场景 1：意图识别（需求澄清/约束确认/边界澄清）的使用路径与验收标准。
   - [x] 场景 2：新项目启动（初始化、规则落地、基础命令）的最小操作路径。
   - [x] 场景 3：已有项目开发与重构（变更前分析 -> 实施 -> 验证 -> 复盘）的标准流程。
@@ -228,9 +228,9 @@
   - [x] 支持 `--adapter` 多次传入与逗号分隔（含 `cursor/gemini/claude/copilot` 友好别名）。
   - [x] 更新 smoke 与文档示例，统一为显式适配器执行模式。
 - [x] **B2 `jue-preset-internal` 闭环文档补齐（文档先行）**
-  - [x] 新增 `REPO_ROOT/packages/jue-preset-internal/README.md`，定义 internal 的目标、边界、使用方式。
+  - [x] 新增 `packages/jue-preset-internal/README.md`，定义 internal 的目标、边界、使用方式。
   - [x] 在 internal README 明确“在 base 之上”补充能力：adapter 开发、preset 开发、能力扩展、仓库治理。
-  - [x] 清理 `REPO_ROOT/packages/jue-preset-internal/AGENTS.md` 历史概念，统一到当前规范术语与架构。
+  - [x] 清理 `packages/jue-preset-internal/AGENTS.md` 历史概念，统一到当前规范术语与架构。
   - [x] 给出“吃自己狗粮”操作手册：本仓如何用 internal 驱动持续迭代。
 - [x] **B3 internal 最小能力面定义（先定义后实现）**
   - [x] 固化 internal 最小资产集合（在现有 AGENTS + commands 基础上，明确是否补 rules/hooks/tools 的最小样例）。
