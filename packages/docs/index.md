@@ -3,33 +3,9 @@ layout: home
 
 title: Jue — 定义一次，适配所有 Agent
 titleTemplate: false
-
-hero:
-  name: "JUE"
-  text: "定义一次，适配所有 Agent"
-  tagline: 把 skills、agents、hooks、MCP、rules 与 commands 组织成通用能力集，再由 Adapter 转换为每个 Agent 的原生体验。
-  actions:
-    - theme: brand
-      text: 3 分钟接入
-      link: /guide/getting-started
-    - theme: alt
-      text: 理解 Jue
-      link: /guide/what-is-ai-jue
-    - theme: alt
-      text: GitHub
-      link: https://github.com/zenHeart/ai-jue
-
-features:
-  - icon: "01"
-    title: 通用能力标准
-    details: 用一套稳定的 canonical model 描述上下文、技能、智能体、命令、规则、钩子与 MCP。
-  - icon: "02"
-    title: Preset 能力集
-    details: 把个人或团队最佳实践封装成可版本化、可组合、可分发的能力集，而不是复制散落配置。
-  - icon: "03"
-    title: Adapter 原生适配
-    details: 同一份能力转换为 Claude、Cursor、Gemini 与 Copilot 的原生产物，差异和降级保持显式。
 ---
+
+<HomeHero />
 
 <div class="jue-home">
 

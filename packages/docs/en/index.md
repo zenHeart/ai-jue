@@ -3,33 +3,9 @@ layout: home
 
 title: Jue — Define once, adapt everywhere
 titleTemplate: false
-
-hero:
-  name: "JUE"
-  text: "Define once. Adapt everywhere."
-  tagline: Standardize skills, agents, hooks, MCP, rules, and commands as reusable capability sets—then adapt them to each Agent's native experience.
-  actions:
-    - theme: brand
-      text: Get started
-      link: /en/guide/getting-started
-    - theme: alt
-      text: Understand Jue
-      link: /en/guide/what-is-ai-jue
-    - theme: alt
-      text: GitHub
-      link: https://github.com/zenHeart/ai-jue
-
-features:
-  - icon: "01"
-    title: One capability standard
-    details: A stable canonical model for context, skills, agents, commands, rules, hooks, and MCP.
-  - icon: "02"
-    title: Versioned capability sets
-    details: Package personal or team practices as composable Presets instead of copying fragmented configuration.
-  - icon: "03"
-    title: Native Agent adapters
-    details: Convert the same capabilities into native Claude, Cursor, Gemini, and Copilot outputs with explicit degradation.
 ---
+
+<HomeHero />
 
 <div class="jue-home">
 

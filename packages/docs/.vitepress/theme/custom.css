@@ -23,11 +23,7 @@
 }
 
 body {
-  background-image:
-    linear-gradient(var(--jue-line) 1px, transparent 1px),
-    linear-gradient(90deg, var(--jue-line) 1px, transparent 1px);
-  background-size: 72px 72px;
-  background-position: center top;
+  background: var(--vp-c-bg);
 }
 
 .VPNavBar {
@@ -39,23 +35,10 @@ body {
   overflow: hidden;
 }
 
-.VPHero {
-  padding-top: 108px !important;
-}
-
-.VPHero .name {
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  letter-spacing: -0.08em;
-}
-
-.VPHero .text {
-  max-width: 840px;
-  letter-spacing: -0.055em;
-}
-
-.VPHero .tagline {
-  max-width: 720px;
-  line-height: 1.65;
+.VPHome .VPHomeContent,
+.VPHome .vp-doc {
+  max-width: none;
+  padding: 0;
 }
 
 .VPButton.brand,
@@ -313,14 +296,6 @@ body {
 }
 
 @media (max-width: 640px) {
-  body {
-    background-size: 44px 44px;
-  }
-
-  .VPHero {
-    padding-top: 72px !important;
-  }
-
   .jue-home {
     width: min(100% - 32px, 1152px);
   }
