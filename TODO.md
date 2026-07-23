@@ -10,10 +10,10 @@
 
 - [x] 明确 Jue 是能力标准化与 Agent 适配层，不只是 CLI 工具
 - [x] 明确 Capability / Preset / Adapter 三层边界
-- [ ] 递归保留 skill / agent / rule 附属资源的相对路径
-- [ ] 收紧 canonical schema 与 normalize 的一致性
-- [ ] 将 `ai-assets` 接入为 `jue-preset-ai-assets`
-- [ ] 用同一真实能力集验证 Claude 与 Cursor 输出
+- [x] 递归保留 skill 附属资源的相对路径与二进制内容
+- [x] 收紧 canonical schema、normalize、Preset 目录协议的一致性
+- [x] 将 `ai-assets` 接入为 `jue-preset-ai-assets`
+- [x] 用同一真实能力集验证 Claude / Cursor / Gemini / Copilot 输出
 - [ ] 在 monorepo 完成官网并发布到 `jue.zenheart.site`
 - [ ] 通过全量测试、构建、consistency、真实 smoke 与敏感信息门禁
 
@@ -38,22 +38,22 @@
 
 ### P4-A: 统一标准结构收口
 
-- [ ] A1. 明确 `schema -> normalize -> preset/.ai -> adapters` 的单向依赖
-- [ ] A2. 明确 `commands` 是否必须具备 `prompt/content`
+- [x] A1. 明确 `schema -> normalize -> preset/.ai -> adapters` 的单向依赖
+- [x] A2. 明确 `commands` 必须具备非空 `prompt/content`
 - [ ] A3. 明确 `prompts` 的统一输入形状，决定是统一镜像还是收窄为单字段
-- [ ] A4. 明确 `hooks` 的稳定交集形状，与工具原生 array 形状的边界
-- [ ] A5. 明确“单工具能力 -> 多工具复用 -> 下沉为统一能力”的正式演进链路
+- [x] A4. 明确 `hooks` 的稳定交集形状，与工具原生 array 形状的边界
+- [x] A5. 明确“单工具能力 -> 多工具复用 -> 下沉为统一能力”的正式演进链路
 
 ### P4-B: preset / `.ai` 目录协议收口
 
-- [ ] B1. 明确 `hooks/` 在目录资产中的正式协议
-- [ ] B2. 明确 `tools/<tool>/` 的正式加载协议是否仅为 `config.json`
-- [ ] B3. 确认 preset 目录协议与 JS config 协议是否需要完全同构
+- [x] B1. 明确 `hooks/<name>/index.json` 的正式协议
+- [x] B2. 明确 `tools/<tool>/config.json` 的正式加载协议
+- [x] B3. 用根 `mcp.json` 补齐 preset / `.ai` 与 JS config 的同构表达
 
 ### P4-C: 脚手架与文档模板收口
 
-- [ ] C1. 对齐 `create-preset` 生成结果与当前 loader 实际消费的最小结构
-- [ ] C2. 清理脚手架中的历史包模板残留（如无效 `main` 字段）
+- [x] C1. 对齐 `create-preset` 生成结果与当前 loader 实际消费的最小结构
+- [x] C2. 清理脚手架中的历史包模板残留（如无效 `main` 字段）
 - [ ] C3. 将“当前实现事实”和“目标协议”拆分表述，避免文档先于代码失真
 
 ## 审查门禁

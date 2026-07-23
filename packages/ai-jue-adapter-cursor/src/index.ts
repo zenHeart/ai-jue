@@ -183,9 +183,16 @@ function generateHooks(
   for (const [key, value] of getRecordEntries(hooks)) {
     const hookValue = value as any;
 
-    // Support both simple string format and complex object format
+    // Preserve the canonical one-or-many hook shape.
     if (typeof hookValue === "string") {
       hooksConfig[key] = hookValue.trim();
+    } else if (Array.isArray(hookValue)) {
+      hooksConfig[key] = hookValue.map((hook) => ({
+        script: String(hook.script).trim(),
+        ...(hook.matcher ? { matcher: hook.matcher } : {}),
+        ...(hook.async !== undefined ? { async: hook.async } : {}),
+        ...(hook.timeout ? { timeout: hook.timeout } : {}),
+      }));
     } else if (hookValue && typeof hookValue === "object") {
       // Complex format with matcher, script, async, timeout
       const script = String(hookValue.script || "").trim();

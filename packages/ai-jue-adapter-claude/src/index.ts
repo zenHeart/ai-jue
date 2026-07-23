@@ -370,8 +370,17 @@ export async function generate(config: any, outputDir: string): Promise<void> {
           },
         ];
       } else if (Array.isArray(h)) {
-        // Already an array, use as-is
-        processedHooks[eventName] = h;
+        processedHooks[eventName] = h.map((hook) => ({
+          matcher: hook.matcher || (hook.tools ? hook.tools.join("|") : undefined),
+          hooks: [
+            {
+              type: hook.type || "command",
+              command: hook.script,
+              async: hook.async,
+              timeout: hook.timeout,
+            },
+          ],
+        }));
       } else if (typeof h === "object" && h !== null) {
         // Object format with matcher, type, command, etc.
         if (h.script) {

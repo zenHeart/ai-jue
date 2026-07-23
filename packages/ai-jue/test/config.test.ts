@@ -13,7 +13,7 @@ vi.mock('cosmiconfig', () => ({
 
 vi.mock('../src/logger');
 
-import { loadConfig } from '../src/config';
+import { ConfigSchema, loadConfig } from '../src/config';
 import { logger } from '../src/logger';
 
 describe('loadConfig', () => {
@@ -122,5 +122,42 @@ describe('loadConfig', () => {
         expect(process.exit).toHaveBeenCalledWith(1);
         expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Configuration validation failed'));
         expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Unknown top-level capability field "bugbot"'));
+    });
+
+    it.each(['commands', 'rules', 'skills', 'agents'])(
+        'should reject %s capabilities without an executable body',
+        (section) => {
+            const result = ConfigSchema.safeParse({
+                [section]: {
+                    empty: {
+                        description: 'Metadata only'
+                    }
+                }
+            });
+
+            expect(result.success).toBe(false);
+        }
+    );
+
+    it('should accept one-or-many canonical hook definitions and reject tool-native arrays', () => {
+        expect(ConfigSchema.safeParse({
+            hooks: {
+                PostToolUse: [
+                    { script: 'npm test', matcher: 'Edit' },
+                    { script: 'npm run lint', async: true }
+                ]
+            }
+        }).success).toBe(true);
+
+        expect(ConfigSchema.safeParse({
+            hooks: {
+                PostToolUse: [
+                    {
+                        matcher: 'Edit',
+                        hooks: [{ type: 'command', command: 'npm test' }]
+                    }
+                ]
+            }
+        }).success).toBe(false);
     });
 });

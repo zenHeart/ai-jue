@@ -48,6 +48,9 @@ export function normalizeConfig(config: MergedConfig): MergedConfig {
     if (!command.prompt && typeof command.content === 'string') {
       command.prompt = command.content;
     }
+    if (!command.content && typeof command.prompt === 'string') {
+      command.content = command.prompt;
+    }
     commands[name] = command;
   }
 
@@ -55,6 +58,9 @@ export function normalizeConfig(config: MergedConfig): MergedConfig {
     const rule = toObject(value);
     if (!rule.content && typeof rule.prompt === 'string') {
       rule.content = rule.prompt;
+    }
+    if (!rule.prompt && typeof rule.content === 'string') {
+      rule.prompt = rule.content;
     }
     rules[name] = rule;
   }
@@ -72,8 +78,21 @@ export function normalizeConfig(config: MergedConfig): MergedConfig {
 
   for (const [name, value] of Object.entries(hooks)) {
     const hook = value as any;
-    if (typeof hook === 'string' || Array.isArray(hook)) {
+    if (typeof hook === 'string') {
       hooks[name] = hook;
+      continue;
+    }
+
+    if (Array.isArray(hook)) {
+      hooks[name] = hook.map((item) => {
+        const normalizedHook = { ...toObject(item) };
+        if (Array.isArray(normalizedHook.tools)) {
+          normalizedHook.tools = normalizedHook.tools
+            .map((tool: unknown) => String(tool).trim())
+            .filter(Boolean);
+        }
+        return normalizedHook;
+      });
       continue;
     }
 

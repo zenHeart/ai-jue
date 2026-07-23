@@ -104,9 +104,12 @@ function generateMainInstructions(
     const hookEntries: string[] = [];
     for (const [key, value] of getRecordEntries(config.hooks)) {
       const hookValue = value as any;
-      const script = typeof hookValue === "string" ? hookValue : hookValue.script;
-      if (script) {
-        hookEntries.push(`**${key}**: \`${script}\``);
+      const hookList = Array.isArray(hookValue) ? hookValue : [hookValue];
+      for (const hook of hookList) {
+        const script = typeof hook === "string" ? hook : hook.script;
+        if (script) {
+          hookEntries.push(`**${key}**: \`${script}\``);
+        }
       }
     }
 

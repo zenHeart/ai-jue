@@ -67,12 +67,17 @@ agents/<name>/prompt.md
 commands/<name>/prompt.md
 rules/<name>/prompt.md
 hooks/<name>/index.json
+mcp.json
 tools/<tool>/config.json
 package.json
 ```
 
-`references/`、`scripts/`、`assets/` 下的所有嵌套文件必须保留相对路径。Jue
-不得因为目录深度而静默丢失能力资源。
+`mcp.json` 使用 canonical `{"servers": {...}}` 结构；它与
+`ai.config.js` 的 `mcp` 字段同构，不引入第二套 MCP 表达。
+
+Skill 的 `references/`、`scripts/`、`assets/` 下的所有嵌套文件必须保留
+相对路径。Jue 不得因为目录深度而静默丢失能力资源。其他能力类型只有形成
+至少两个 Agent 的稳定资源契约后，才扩展附件模型。
 
 Preset 可以有文档、评测集或源材料等额外内容；只有上述目录契约进入
 canonical model。实例部署配置、私有本地设置和凭据不得作为通用 Preset 分发。

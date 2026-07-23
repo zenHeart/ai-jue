@@ -72,21 +72,14 @@ commands?: Record<string, {
   triggers?: string[]
   disableModelInvocation?: boolean
   userInvocable?: boolean
-  references?: Record<string, string>
-  scripts?: Record<string, string>
-  assets?: Record<string, string>
 }>
 ```
 
 Target normalization rule:
 
 - `content -> prompt` compatibility is preserved.
-- command assets should not enter adapter generation without an executable prompt body.
-
-Current implementation gap:
-
-- schema currently accepts commands that omit both `prompt` and `content`
-- adapters still skip commands without `prompt`
+- normalization mirrors `content` and `prompt`.
+- commands without a non-empty executable body fail canonical validation.
 
 ### 3.4 Skills
 
@@ -119,9 +112,6 @@ agents?: Record<string, {
   content?: string
   description?: string
   skills?: string[]
-  references?: Record<string, string>
-  scripts?: Record<string, string>
-  assets?: Record<string, string>
 }>
 ```
 
@@ -142,7 +132,14 @@ hooks?: Record<string,
     async?: boolean
     timeout?: number
   } |
-  unknown[]
+  Array<{
+    script: string
+    matcher?: string
+    tools?: string[]
+    type?: string
+    async?: boolean
+    timeout?: number
+  }>
 >
 ```
 
@@ -150,13 +147,8 @@ Target normalization rule:
 
 - structured hook objects must be preserved.
 - adapters may degrade unsupported hook metadata, but core must not flatten them prematurely.
-- the standard shape should prefer the stable cross-adapter subset over tool-native private arrays.
-
-Current implementation gap:
-
-- schema currently accepts `unknown[]`
-- Claude can consume array-shaped hooks more natively than other adapters
-- Cursor/Copilot/Gemini do not yet share a single equivalent array contract
+- arrays mean multiple canonical hook definitions for the same event.
+- tool-native hook arrays are not canonical input and belong under `tools.<tool>`.
 
 ### 3.7 MCP
 
@@ -181,7 +173,21 @@ mcp?: {
 
 Later layers override earlier layers for the same key.
 
-### 4.2 Global Context
+### 4.2 Preset and `.ai` Directory Mapping
+
+- root `AGENTS.md` -> `context.global`
+- `rules/<name>/prompt.md` -> `rules.<name>`
+- `commands/<name>/prompt.md` -> `commands.<name>`
+- `skills/<name>/SKILL.md` -> `skills.<name>`
+- `agents/<name>/prompt.md` -> `agents.<name>`
+- `hooks/<name>/index.json` -> `hooks.<name>`
+- root `mcp.json` -> `mcp`
+- `tools/<tool>/config.json` -> `tools.<tool>`
+
+The root `mcp.json` shape is identical to the canonical `mcp` object:
+`{"servers": {...}}`.
+
+### 4.3 Global Context
 
 `context.global` is merged by append order:
 
@@ -224,5 +230,4 @@ This is additive, not replace semantics.
 Current implementation gaps to close:
 
 - `prompts` still lack a single normalized `content/prompt` contract across all adapters
-- `commands` still allow semantically incomplete assets through schema validation
-- preset / `.ai` hooks directory format is not yet fully aligned with structured hooks
+- `prompts` remain a backward-compatibility input and are not a new canonical capability

@@ -8,6 +8,8 @@ const { loadAssetsFromDir } = require('../packages/ai-jue/src/preset.ts');
 const { normalizeConfig } = require('../packages/ai-jue/src/normalize.ts');
 const { generate: generateClaude } = require('../packages/ai-jue-adapter-claude/src/index.ts');
 const { generate: generateCursor } = require('../packages/ai-jue-adapter-cursor/src/index.ts');
+const { generate: generateGemini } = require('../packages/ai-jue-adapter-gemini/src/index.ts');
+const { generate: generateCopilot } = require('../packages/ai-jue-adapter-copilot/src/index.ts');
 
 function requireFile(filePath, label) {
   if (!fs.existsSync(filePath)) {
@@ -40,8 +42,12 @@ async function main() {
 
   const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jue-ai-assets-smoke-'));
   try {
-    await generateClaude(config, outputDir);
-    await generateCursor(config, outputDir);
+    await Promise.all([
+      generateClaude(config, outputDir),
+      generateCursor(config, outputDir),
+      generateGemini(config, outputDir),
+      generateCopilot(config, outputDir),
+    ]);
 
     const relativeReference = path.join(
       'skills',
@@ -69,9 +75,21 @@ async function main() {
       path.join(outputDir, '.cursor', 'agents', 'senior-frontend-architect.md'),
       'Cursor agent output',
     );
+    requireFile(
+      path.join(outputDir, '.gemini', 'skills', 'agent-os', 'SKILL.md'),
+      'Gemini skill output',
+    );
+    requireFile(
+      path.join(outputDir, '.gemini', 'settings.json'),
+      'Gemini settings output',
+    );
+    requireFile(
+      path.join(outputDir, '.github', 'copilot-instructions.md'),
+      'Copilot instructions output',
+    );
 
     console.log(
-      `[OK] ai-assets -> canonical model -> Claude/Cursor (${counts.skills} skills, ${counts.agents} agents, ${counts.commands} commands)`,
+      `[OK] ai-assets -> canonical model -> Claude/Cursor/Gemini/Copilot (${counts.skills} skills, ${counts.agents} agents, ${counts.commands} commands)`,
     );
   } finally {
     fs.rmSync(outputDir, { recursive: true, force: true });

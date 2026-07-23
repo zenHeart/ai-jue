@@ -49,9 +49,9 @@
 
 当前实现补充：
 
-- `prompts` 仍存在 `content/prompt` 双输入形状
-- `hooks` 仍存在 `string/object/array` 三种输入形状
-- 这些形状已经被 schema 接受，但还没有全部收口为跨 adapter 的单一消费协议
+- `prompts` 仍是待迁移的兼容输入，不属于新的 canonical 能力
+- `hooks` 支持 `string / canonical object / canonical object[]`
+- hook 数组表示同一事件下的多个统一 hook，工具原生数组必须放入 `tools.<tool>`
 
 这也是当前待收口的重点：
 
@@ -68,6 +68,7 @@
 ├── rules/
 ├── agents/
 ├── hooks/
+├── mcp.json
 └── tools/
     ├── gemini/
     └── cursor/
@@ -146,8 +147,7 @@
 
 当前待收口差异：
 
-- 部分“结构合法但语义不完整”的统一输入不会在 schema 阶段失败，而会在 adapter 阶段被跳过或降级
-- 典型例子包括：缺失正文的 `commands`、不同 adapter 对 `prompts` 的消费差异、以及 `hooks` array 的跨 adapter 语义不一致
+- `prompts` 仍需迁移到 `context.global` 或 `tools.<tool>`，避免长期保留第二套提示词分类
 
 对于目标工具不支持的能力：
 - 必须输出显式降级说明或映射到可消费文件

@@ -115,4 +115,50 @@ Create adapter docs first, then implementation.`,
       encoding: 'base64',
     });
   });
+
+  it('loads structured hooks without discarding canonical metadata', async () => {
+    const dir = makeTempDir();
+    const hookDir = path.join(dir, 'hooks', 'post-edit');
+    fs.mkdirSync(hookDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(hookDir, 'index.json'),
+      JSON.stringify({
+        script: 'npm test',
+        matcher: 'Edit|Write',
+        async: true,
+        timeout: 30,
+      }),
+    );
+
+    const config = await loadAssetsFromDir(dir, 'en');
+    expect(config.hooks?.['post-edit']).toEqual({
+      script: 'npm test',
+      matcher: 'Edit|Write',
+      async: true,
+      timeout: 30,
+    });
+  });
+
+  it('loads MCP servers from the preset root mcp.json', async () => {
+    const dir = makeTempDir();
+    fs.writeFileSync(
+      path.join(dir, 'mcp.json'),
+      JSON.stringify({
+        servers: {
+          filesystem: {
+            command: 'npx',
+            args: ['-y', '@modelcontextprotocol/server-filesystem', '.'],
+            scope: 'project',
+          },
+        },
+      }),
+    );
+
+    const config = await loadAssetsFromDir(dir, 'en');
+    expect(config.mcp?.servers?.filesystem).toEqual({
+      command: 'npx',
+      args: ['-y', '@modelcontextprotocol/server-filesystem', '.'],
+      scope: 'project',
+    });
+  });
 });

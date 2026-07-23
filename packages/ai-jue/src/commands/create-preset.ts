@@ -53,7 +53,20 @@ Run the example command workflow.`,
     name: packageName,
     version: "1.0.0",
     description: `AI-Jue preset for ${name}`,
-    main: "index.js",
+    files: [
+      "AGENTS.md",
+      "commands",
+      "rules",
+      "skills",
+      "agents",
+      "hooks",
+      "mcp.json",
+      "tools",
+      "README.md",
+    ],
+    ai: {
+      presets: [],
+    },
     keywords: ["jue-preset"],
     license: "MIT",
   };
@@ -72,6 +85,6 @@ Run the example command workflow.`,
   );
   // Next steps text remains same for now as it contains code commands
   logger.info(
-    `\nNext steps:\n  cd ${packageName}\n  npm install\n  # Add your assets in AGENTS.md, commands/, rules/, skills/, agents/, hooks/, tools/`,
+    `\nNext steps:\n  cd ${packageName}\n  # Add capabilities in AGENTS.md, commands/, rules/, skills/, agents/, hooks/, mcp.json, tools/`,
   );
 };

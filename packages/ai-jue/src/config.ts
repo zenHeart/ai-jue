@@ -33,10 +33,24 @@ const PromptLikeAssetSchema = z.object({
   description: z.string().optional(),
 }).passthrough();
 
+function requireCapabilityBody(
+  value: { content?: string; prompt?: string },
+  ctx: z.RefinementCtx,
+): void {
+  const body = value.prompt ?? value.content;
+  if (typeof body !== 'string' || body.trim().length === 0) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      path: ['prompt'],
+      message: 'Capability must define a non-empty prompt or content body.',
+    });
+  }
+}
+
 const RuleSchema = PromptLikeAssetSchema.extend({
   globs: z.union([z.string(), StringListSchema]).optional(),
   alwaysApply: z.boolean().optional(),
-});
+}).superRefine(requireCapabilityBody);
 
 const SkillSchema = PromptLikeAssetSchema.extend({
   name: z.string().optional(),
@@ -45,13 +59,13 @@ const SkillSchema = PromptLikeAssetSchema.extend({
   allowedTools: StringListSchema.optional(),
   disableModelInvocation: z.boolean().optional(),
   userInvocable: z.boolean().optional(),
-}).merge(AssetBundleSchema);
+}).merge(AssetBundleSchema).superRefine(requireCapabilityBody);
 
 const CommandSchema = PromptLikeAssetSchema.extend({
   triggers: z.array(z.string()).optional(),
   disableModelInvocation: z.boolean().optional(),
   userInvocable: z.boolean().optional(),
-}).merge(AssetBundleSchema);
+}).superRefine(requireCapabilityBody);
 
 const HookObjectSchema = z.object({
   script: z.string(),
@@ -65,14 +79,14 @@ const HookObjectSchema = z.object({
 const HookSchema = z.union([
   z.string(),
   HookObjectSchema,
-  z.array(z.unknown()),
+  z.array(HookObjectSchema).min(1),
 ]);
 
 const AgentSchema = PromptLikeAssetSchema.extend({
   name: z.string().optional(),
   description: z.string().optional(),
   skills: StringListSchema.optional(),
-}).merge(AssetBundleSchema);
+}).superRefine(requireCapabilityBody);
 
 const ContextSchema = z.object({
   global: z.string().optional(),

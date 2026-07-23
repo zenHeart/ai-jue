@@ -62,6 +62,24 @@ async function loadAssetSubdir(
   return result;
 }
 
+async function loadAssetBundle(assetDir: string): Promise<{
+  references?: Record<string, SupportFile>;
+  scripts?: Record<string, SupportFile>;
+  assets?: Record<string, SupportFile>;
+}> {
+  const [references, scripts, assets] = await Promise.all([
+    loadAssetSubdir(path.join(assetDir, 'references')),
+    loadAssetSubdir(path.join(assetDir, 'scripts')),
+    loadAssetSubdir(path.join(assetDir, 'assets')),
+  ]);
+
+  return {
+    references: Object.keys(references).length > 0 ? references : undefined,
+    scripts: Object.keys(scripts).length > 0 ? scripts : undefined,
+    assets: Object.keys(assets).length > 0 ? assets : undefined,
+  };
+}
+
 // Replaced parseSimpleYamlFrontmatter with a robust YAML parser using js-yaml
 function parseYamlFrontmatter(yamlText: string): Record<string, any> {
   return (yaml.load(yamlText) as Record<string, any>) || {};
@@ -125,19 +143,16 @@ async function loadNamedAssetDir(
         const rawContent = await fs.promises.readFile(contentPath, 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawContent);
         
-        // Load subdirectories if they exist (common for Agent Skills)
-        const [references, scripts, assets] = await Promise.all([
-          loadAssetSubdir(path.join(assetDir, 'references')),
-          loadAssetSubdir(path.join(assetDir, 'scripts')),
-          loadAssetSubdir(path.join(assetDir, 'assets')),
-        ]);
+        // Agent Skills have a cross-agent attachment contract. Other
+        // capability types remain single-body assets unless promoted later.
+        const bundle = section === 'skills'
+          ? await loadAssetBundle(assetDir)
+          : {};
 
         config[section][assetName] = { 
           ...parsed.attributes, 
           content: parsed.content,
-          references: Object.keys(references).length > 0 ? references : undefined,
-          scripts: Object.keys(scripts).length > 0 ? scripts : undefined,
-          assets: Object.keys(assets).length > 0 ? assets : undefined,
+          ...bundle,
         };
       }),
   );
@@ -162,6 +177,7 @@ async function loadCommands(config: MergedConfig, dirPath: string, userLanguage?
         commands[commandName] = {
           ...parsed.attributes,
           prompt: parsed.content,
+          content: parsed.content,
         };
       }),
   );
@@ -184,7 +200,12 @@ async function loadAgents(config: MergedConfig, dirPath: string, userLanguage?: 
 
         const rawPrompt = await fs.promises.readFile(promptPath, 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawPrompt);
-        agents[agentName] = { ...meta, ...parsed.attributes, prompt: parsed.content, content: parsed.content };
+        agents[agentName] = {
+          ...meta,
+          ...parsed.attributes,
+          prompt: parsed.content,
+          content: parsed.content,
+        };
       }),
   );
 }
@@ -205,12 +226,14 @@ async function loadHooks(config: MergedConfig, dirPath: string, userLanguage?: s
 
         if (promptPath) {
           const script = (await fs.promises.readFile(promptPath, 'utf8')).trim();
-          hooks[hookName] = script;
+          hooks[hookName] = Object.keys(meta).length > 0
+            ? { ...meta, script }
+            : script;
           return;
         }
 
         if (typeof meta.script === 'string' && meta.script.trim()) {
-          hooks[hookName] = meta.script;
+          hooks[hookName] = meta;
         }
       }),
   );
@@ -234,6 +257,12 @@ async function loadToolConfigs(config: MergedConfig, toolsDir: string): Promise<
   );
 }
 
+async function loadMcpConfig(config: MergedConfig, dirPath: string): Promise<void> {
+  const mcpPath = path.join(dirPath, 'mcp.json');
+  if (!fs.existsSync(mcpPath)) return;
+  config.mcp = await readJsonIfExists(mcpPath);
+}
+
 export async function loadAssetsFromDir(dirPath: string, userLanguage?: string): Promise<MergedConfig> {
   const config: MergedConfig = {};
 
@@ -251,6 +280,7 @@ export async function loadAssetsFromDir(dirPath: string, userLanguage?: string):
     loadCommands(config, path.join(dirPath, 'commands'), userLanguage),
     loadHooks(config, path.join(dirPath, 'hooks'), userLanguage),
     loadToolConfigs(config, path.join(dirPath, 'tools')),
+    loadMcpConfig(config, dirPath),
   ]);
 
   return config;

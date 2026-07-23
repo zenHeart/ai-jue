@@ -1,4 +1,4 @@
-import { MergedConfig } from './config';
+import { ConfigSchema, MergedConfig } from './config';
 import { loadPreset, loadAssetsFromDir } from './preset';
 import path from 'path';
 import fs from 'fs';
@@ -102,5 +102,6 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
     }
 
     finalConfig = mergeConfigWithLayeredContext(finalConfig, userConfig);
-    return normalizeConfig(finalConfig);
+    const normalized = normalizeConfig(finalConfig);
+    return ConfigSchema.parse(normalized);
 }

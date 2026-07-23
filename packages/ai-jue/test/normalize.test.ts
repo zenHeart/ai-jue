@@ -24,6 +24,12 @@ describe('normalizeConfig', () => {
           script: 'npm test',
           tools: ['Edit', ' Read '],
         },
+        'post-edit': [
+          {
+            script: 'npm run lint',
+            tools: [' Edit ', 'Write'],
+          },
+        ],
       },
       agents: {
         reviewer: {
@@ -37,10 +43,18 @@ describe('normalizeConfig', () => {
     expect(normalized.skills?.review?.content).toBe('Review skill');
     expect(normalized.skills?.review?.prompt).toBe('Review skill');
     expect(normalized.commands?.explain?.prompt).toBe('Explain code');
+    expect(normalized.commands?.explain?.content).toBe('Explain code');
+    expect(normalized.rules?.style?.prompt).toBe('Use strict typing');
     expect(normalized.hooks?.['pre-commit']).toEqual({
       script: 'npm test',
       tools: ['Edit', 'Read'],
     });
+    expect(normalized.hooks?.['post-edit']).toEqual([
+      {
+        script: 'npm run lint',
+        tools: ['Edit', 'Write'],
+      },
+    ]);
     expect(normalized.agents?.reviewer?.prompt).toBe('Review prompt');
     expect(normalized.agents?.reviewer?.content).toBe('Review prompt');
     expect(normalized.agents?.reviewer?.skills).toEqual(['review-skill']);
