@@ -1,9 +1,28 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import CapabilityFlow from "./CapabilityFlow.vue";
+
+interface Props {
+  locale?: "zh" | "en";
+}
+
+const props = withDefaults(defineProps<Props>(), {
+  locale: "zh",
+});
+
+const copy = computed(() =>
+  props.locale === "en"
+    ? { lead: "Define once.", accent: "Adapt", tail: " everywhere." }
+    : { lead: "定义一次。", accent: "适配", tail: "所有 Agent。" },
+);
 </script>
 
 <template>
-  <section class="reference-hero" aria-labelledby="jue-home-title">
+  <section
+    class="reference-hero"
+    :class="`locale-${props.locale}`"
+    aria-labelledby="jue-home-title"
+  >
     <span class="frame-corner frame-corner-tl" aria-hidden="true"></span>
     <span class="frame-corner frame-corner-tr" aria-hidden="true"></span>
     <span class="frame-corner frame-corner-bl" aria-hidden="true"></span>
@@ -15,17 +34,9 @@ import CapabilityFlow from "./CapabilityFlow.vue";
       <p class="reference-wordmark" translate="no">JUE</p>
       <span class="wordmark-rule" aria-hidden="true"></span>
       <h1 id="jue-home-title" class="reference-title">
-        <span>Define once.</span>
-        <span><em>Adapt</em><span class="reference-title-tail"> everywhere.</span></span>
+        <span>{{ copy.lead }}</span>
+        <span><em>{{ copy.accent }}</em><span class="reference-title-tail">{{ copy.tail }}</span></span>
       </h1>
-      <div class="reference-domain">
-        <span class="reference-domain-rule" aria-hidden="true"></span>
-        <p>
-          <span class="domain-mark" aria-hidden="true">+</span>
-          <span translate="no">jue.zenheart.site</span>
-        </p>
-        <span class="reference-domain-rule" aria-hidden="true"></span>
-      </div>
     </div>
 
     <CapabilityFlow class="reference-flow" />
@@ -77,8 +88,8 @@ import CapabilityFlow from "./CapabilityFlow.vue";
   display: flex;
   min-width: 0;
   flex-direction: column;
-  justify-content: center;
-  padding: clamp(48px, 5.2vw, 90px);
+  justify-content: flex-start;
+  padding: clamp(90px, 7vw, 130px) clamp(48px, 5.2vw, 90px);
 }
 
 .reference-wordmark {
@@ -116,42 +127,6 @@ import CapabilityFlow from "./CapabilityFlow.vue";
 
 .reference-title-tail {
   display: inline;
-}
-
-.reference-domain {
-  width: min(100%, 500px);
-  margin-top: 58px;
-}
-
-.reference-domain-rule {
-  display: block;
-  width: 100%;
-  height: 1px;
-  opacity: 0.38;
-  background-image: linear-gradient(90deg, rgba(221, 230, 224, 0.7) 50%, transparent 50%);
-  background-size: 4px 1px;
-}
-
-.reference-domain p {
-  display: flex;
-  margin: 0;
-  padding: 18px 0;
-  align-items: center;
-  gap: 28px;
-  color: #56c4ed;
-  font: 500 clamp(18px, 2vw, 30px)/1 ui-monospace, SFMono-Regular, Menlo, monospace;
-  letter-spacing: 0.1em;
-}
-
-.domain-mark {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  flex: 0 0 auto;
-  place-items: center;
-  color: #c5df3d;
-  font-size: 30px;
-  border: 2px solid currentColor;
 }
 
 .reference-flow {
@@ -218,50 +193,70 @@ import CapabilityFlow from "./CapabilityFlow.vue";
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 720px) {
   .reference-hero {
-    min-height: 980px;
+    height: max(680px, calc(100svh - var(--vp-nav-height)));
+    min-height: 680px;
+    grid-template-columns: 1fr;
+  }
+
+  .reference-grid {
+    inset: 0;
+    opacity: 0.08;
+    mask-image: none;
   }
 
   .reference-copy {
-    padding: 64px 24px 10px;
+    z-index: 1;
+    justify-content: center;
+    padding: 56px 32px;
   }
 
   .reference-wordmark {
-    font-size: clamp(112px, 42vw, 190px);
+    font-size: clamp(112px, 39vw, 180px);
   }
 
   .wordmark-rule {
     width: 100px;
     height: 4px;
-    margin: 42px 0 30px;
+    margin: 44px 0 32px;
   }
 
   .reference-title {
-    font-size: clamp(40px, 12vw, 60px);
+    font-size: clamp(38px, 10.5vw, 54px);
   }
 
-  .reference-title-tail {
+  .locale-en .reference-title-tail {
     display: block;
   }
 
-  .reference-domain {
-    margin-top: 48px;
-  }
-
-  .reference-domain p {
-    gap: 14px;
-    letter-spacing: 0.04em;
-  }
-
-  .domain-mark {
-    width: 38px;
-    height: 38px;
-    font-size: 24px;
-  }
-
   .reference-flow {
-    height: 510px;
+    position: absolute;
+    z-index: 0;
+    inset: 0;
+    height: 100%;
+    min-height: 0;
+    opacity: 0.24;
+    pointer-events: none;
+  }
+
+  .reference-flow :deep(.connector-map),
+  .reference-flow :deep(.agent-list) {
+    display: none;
+  }
+
+  .reference-flow :deep(.canonical-stack) {
+    top: 42%;
+    left: 25%;
+    width: 70%;
+    height: 46%;
+    transform: rotate(-4deg);
+  }
+}
+
+@media (max-width: 420px) {
+  .reference-copy {
+    padding-inline: 28px;
   }
 }
 </style>

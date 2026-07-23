@@ -5,7 +5,7 @@ title: Jue — Define once, adapt everywhere
 titleTemplate: false
 ---
 
-<HomeHero />
+<HomeHero locale="en" />
 
 <div class="jue-home">
 

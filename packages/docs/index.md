@@ -5,7 +5,7 @@ title: Jue — 定义一次，适配所有 Agent
 titleTemplate: false
 ---
 
-<HomeHero />
+<HomeHero locale="zh" />
 
 <div class="jue-home">
 
