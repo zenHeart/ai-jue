@@ -4,7 +4,7 @@ const path = require('path');
 
 require('ts-node/register');
 
-const { loadAssetsFromDir } = require('../packages/ai-jue/src/preset.ts');
+const { loadPreset } = require('../packages/ai-jue/src/preset.ts');
 const { normalizeConfig } = require('../packages/ai-jue/src/normalize.ts');
 const { generate: generateClaude } = require('../packages/ai-jue-adapter-claude/src/index.ts');
 const { generate: generateCursor } = require('../packages/ai-jue-adapter-cursor/src/index.ts');
@@ -29,19 +29,26 @@ async function main() {
     'Nested skill reference',
   );
 
-  const config = normalizeConfig(await loadAssetsFromDir(presetDir, 'zh'));
-  const counts = Object.fromEntries(
-    ['skills', 'agents', 'commands'].map((name) => [
-      name,
-      Object.keys(config[name] || {}).length,
-    ]),
-  );
-  if (counts.skills === 0 || counts.agents === 0 || counts.commands === 0) {
-    throw new Error(`Preset did not load the required capability types: ${JSON.stringify(counts)}`);
-  }
+  const projectDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jue-preset-consumer-'));
+  const packageDir = path.join(projectDir, 'node_modules', 'jue-preset-ai-assets');
+  fs.mkdirSync(path.dirname(packageDir), { recursive: true });
+  fs.symlinkSync(presetDir, packageDir, 'dir');
 
-  const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), 'jue-ai-assets-smoke-'));
+  const originalCwd = process.cwd();
+  const outputDir = path.join(projectDir, 'generated');
   try {
+    process.chdir(projectDir);
+    const config = normalizeConfig(await loadPreset('ai-assets', 'zh'));
+    const counts = Object.fromEntries(
+      ['skills', 'agents', 'commands'].map((name) => [
+        name,
+        Object.keys(config[name] || {}).length,
+      ]),
+    );
+    if (counts.skills === 0 || counts.agents === 0 || counts.commands === 0) {
+      throw new Error(`Preset did not load the required capability types: ${JSON.stringify(counts)}`);
+    }
+
     await Promise.all([
       generateClaude(config, outputDir),
       generateCursor(config, outputDir),
@@ -92,7 +99,8 @@ async function main() {
       `[OK] ai-assets -> canonical model -> Claude/Cursor/Gemini/Copilot (${counts.skills} skills, ${counts.agents} agents, ${counts.commands} commands)`,
     );
   } finally {
-    fs.rmSync(outputDir, { recursive: true, force: true });
+    process.chdir(originalCwd);
+    fs.rmSync(projectDir, { recursive: true, force: true });
   }
 }
 

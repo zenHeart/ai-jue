@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { loadAssetsFromDir } from '../src/preset';
+import { loadAssetsFromDir, loadPreset } from '../src/preset';
 
 function makeTempDir(): string {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-preset-test-'));
@@ -160,5 +160,31 @@ Create adapter docs first, then implementation.`,
       args: ['-y', '@modelcontextprotocol/server-filesystem', '.'],
       scope: 'project',
     });
+  });
+
+  it('resolves a project-local installed preset by its short name', async () => {
+    const projectDir = makeTempDir();
+    const presetDir = makeTempDir();
+    const packageDir = path.join(
+      projectDir,
+      'node_modules',
+      'jue-preset-project-local',
+    );
+    fs.mkdirSync(path.dirname(packageDir), { recursive: true });
+    fs.writeFileSync(
+      path.join(presetDir, 'package.json'),
+      JSON.stringify({ name: 'jue-preset-project-local', version: '1.0.0' }),
+    );
+    fs.writeFileSync(path.join(presetDir, 'AGENTS.md'), '# Project-local preset');
+    fs.symlinkSync(presetDir, packageDir, 'dir');
+
+    const originalCwd = process.cwd();
+    process.chdir(projectDir);
+    try {
+      const config = await loadPreset('project-local', 'en');
+      expect(config.context?.global).toContain('Project-local preset');
+    } finally {
+      process.chdir(originalCwd);
+    }
   });
 });

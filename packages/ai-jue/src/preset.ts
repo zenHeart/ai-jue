@@ -321,7 +321,12 @@ async function loadPresetRecursive(
   const nextStack = [...resolvingStack, packageName];
 
   try {
-    const packageJsonPath = require.resolve(`${packageName}/package.json`);
+    const packageJsonPath = require.resolve(`${packageName}/package.json`, {
+      // Project-local presets must win for both a locally installed CLI and a
+      // globally invoked CLI. `__dirname` keeps bundled/default presets
+      // discoverable as the fallback.
+      paths: [process.cwd(), __dirname],
+    });
     const presetPath = path.dirname(packageJsonPath);
     const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
     const nestedPresets = extractNestedPresets(packageJson);
