@@ -1,7 +1,7 @@
 # 当前执行计划
 
 > 更新时间：2026-07-23
-> 项目状态：**Jue 能力标准化 MVP 实施阶段**
+> 项目状态：**Jue 能力标准化 MVP 已完成**
 
 ## 当前 MVP 闭环
 
@@ -14,8 +14,8 @@
 - [x] 收紧 canonical schema、normalize、Preset 目录协议的一致性
 - [x] 将 `ai-assets` 接入为 `jue-preset-ai-assets`
 - [x] 用同一真实能力集验证 Claude / Cursor / Gemini / Copilot 输出
-- [ ] 在 monorepo 完成官网并发布到 `jue.zenheart.site`
-- [ ] 通过全量测试、构建、consistency、真实 smoke 与敏感信息门禁
+- [x] 在 monorepo 完成官网并发布到 `jue.zenheart.site`
+- [x] 通过全量测试、构建、consistency、真实 smoke 与敏感信息门禁
 
 ## 非 MVP 范围
 
