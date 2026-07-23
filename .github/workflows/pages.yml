@@ -31,8 +31,11 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v6
         with:
-          node-version: 20
+          node-version: 24
           cache: npm
+
+      - name: Setup npm
+        run: npm install --global npm@11.6.2
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
