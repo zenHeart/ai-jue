@@ -7,7 +7,9 @@ non-atomic fields (`context.global`, `tools.<tool>`), and finally the
 content-reference protocol and the reverse command (Capability Source,
 `jue format`).
 
-> **Known gap**: `jue-mvp.md`, `canonical-model.md`, and `capability-source.md` are currently Chinese-only (no `en/specs/` mirror exists yet). The authoritative-source links below point to those Chinese documents until they are translated.
+> **Translation status**: `jue-mvp.md` and `capability-source.md` are currently
+> Chinese-only. The [specification index](../specs/index.md) links to each
+> authoritative source and labels untranslated documents explicitly.
 
 ## Capability {#capability}
 
@@ -69,7 +71,8 @@ Capability Source is the reference protocol for "referencing a Capability" (the 
 
 Once resolved and converted, the result lands back into one of the six Capability types — no new asset type is produced. MVP-supported source types are `file:` / `github:` / `npm:` (`url:` reserved), converted via a converter (`agent-skill` / `mcp` / `jue-native`) into a canonical key. [Preset](#preset) only has two composition mechanisms — Preset nesting and Capability reference — there is no third, independent Plugin/Capability package layer.
 
-> Current status: **Proposed for implementation**, not yet coded.
+> Current status: **Implemented** for `file:`, mocked `github:`, and local
+> tarball-backed `npm:` sources. `url:` remains reserved.
 
 - Authoritative source: [capability-source.md](../../specs/capability-source.md) (§0 terminology, §1.1 composition mechanisms, §4 minimal user surface, §6 lock/cache decisions)
 - Related: [Capability](#capability), [Preset](#preset), [Canonical Model](#canonical-model)

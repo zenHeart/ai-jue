@@ -1,0 +1,35 @@
+# Jue specifications
+
+This section indexes Jue's public protocols and implementation contracts.
+Specifications define valid inputs, outputs, and compatibility boundaries. For
+design rationale and runtime flow, start with
+[Architecture](../guide/architecture.md).
+
+## Recommended reading order
+
+1. [Jue MVP](../../specs/jue-mvp.md) *(Chinese)* defines the
+   `Capability → Preset → Adapter` product model, capability boundaries, and
+   Preset directory contract.
+2. [Canonical Model](../../specs/canonical-model.md) defines the normalized
+   structure shared by resolution, validation, and Adapters.
+3. [Capability Source](../../specs/capability-source.md) *(Chinese)* defines how
+   a Preset references external Capability content through `ai.capabilities`.
+4. [Codex / Claude Code Adapter](../../specs/codex-claude-code-adapters.md)
+   defines native outputs and verification boundaries for the prioritized
+   runtimes.
+
+The language labels are intentional: untranslated specifications continue to
+link to their authoritative source instead of presenting an incomplete English
+copy.
+
+## Status labels
+
+| Status | Meaning |
+| --- | --- |
+| Draft | The target contract can still change; implementation gaps must be explicit |
+| Accepted | The document is the accepted product or protocol boundary for the current phase |
+| Implemented | The contract has implementation and verification evidence; later changes must consider compatibility |
+
+The status at the top of each specification is authoritative for that document.
+If a specification and the implementation differ, verify the runnable behavior
+and track the mismatch as a protocol defect rather than silently choosing one.

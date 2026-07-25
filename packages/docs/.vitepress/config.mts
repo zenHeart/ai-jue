@@ -47,13 +47,25 @@ export default withMermaid(
               text: "开发",
               items: [
                 { text: "架构", link: "/guide/architecture" },
-                { text: "MVP 规范", link: "/specs/jue-mvp" },
                 { text: "创建预设", link: "/guide/creating-a-preset" },
                 {
                   text: "适配器标准化",
                   link: "/guide/adapter-standardization",
                 },
                 { text: "与脚手架集成", link: "/guide/integration" },
+              ],
+            },
+            {
+              text: "规范",
+              items: [
+                { text: "规范总览", link: "/specs/" },
+                { text: "Jue MVP", link: "/specs/jue-mvp" },
+                { text: "Canonical Model", link: "/specs/canonical-model" },
+                { text: "Capability Source", link: "/specs/capability-source" },
+                {
+                  text: "Codex / Claude Code Adapter",
+                  link: "/specs/codex-claude-code-adapters",
+                },
               ],
             },
             {
@@ -101,6 +113,17 @@ export default withMermaid(
                   link: "/en/guide/adapter-standardization",
                 },
                 { text: "Integration Guide", link: "/en/guide/integration" },
+              ],
+            },
+            {
+              text: "Specifications",
+              items: [
+                { text: "Specification Index", link: "/en/specs/" },
+                { text: "Canonical Model", link: "/specs/canonical-model" },
+                {
+                  text: "Codex / Claude Code Adapter",
+                  link: "/specs/codex-claude-code-adapters",
+                },
               ],
             },
             {
