@@ -60,7 +60,12 @@ export default withMermaid(
               items: [
                 { text: "规范总览", link: "/specs/" },
                 { text: "Jue MVP", link: "/specs/jue-mvp" },
+                { text: "Canonical Model", link: "/specs/canonical-model" },
                 { text: "Capability Source", link: "/specs/capability-source" },
+                {
+                  text: "Codex / Claude Code Adapter",
+                  link: "/specs/codex-claude-code-adapters",
+                },
               ],
             },
             {
@@ -114,9 +119,14 @@ export default withMermaid(
               text: "Specifications",
               items: [
                 { text: "Specification Index", link: "/en/specs/" },
+                { text: "Jue MVP", link: "/en/specs/jue-mvp" },
                 {
                   text: "Canonical Model",
                   link: "/en/specs/canonical-model",
+                },
+                {
+                  text: "Capability Source",
+                  link: "/en/specs/capability-source",
                 },
                 {
                   text: "Codex / Claude Code Adapter",

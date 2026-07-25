@@ -31,7 +31,7 @@ A team or individual maintains one capability set; Adapters absorb
 per-Agent differences, and configuration that truly cannot be shared stays
 in the `tools.<tool>` escape hatch.
 
-See [Jue MVP: AI Capability Standard and Agent Adaptation](../../specs/jue-mvp.md)
+See [Jue MVP: AI Capability Standard and Agent Adaptation](../specs/jue-mvp.md)
 for the full MVP definition and acceptance boundary, and the
 [Glossary](glossary.md) for one-line definitions of every term with links to
 their authoritative specs.

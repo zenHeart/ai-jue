@@ -1,8 +1,11 @@
 # Codex / Claude Code Adapter Target
 
-> Status: **Implemented and verified**  
-> Priority: **P0 — Codex and Claude Code first**  
-> Scope owner: `ai-jue`  
+> Status: **Implemented and verified**
+>
+> Priority: **P0 — Codex and Claude Code first**
+>
+> Scope owner: `ai-jue`
+>
 > Updated: 2026-07-25
 
 ## 1. Goal

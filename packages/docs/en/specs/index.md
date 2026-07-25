@@ -7,20 +7,16 @@ design rationale and runtime flow, start with
 
 ## Recommended reading order
 
-1. [Jue MVP](../../specs/jue-mvp.md) *(Chinese)* defines the
+1. [Jue MVP](jue-mvp.md) defines the
    `Capability → Preset → Adapter` product model, capability boundaries, and
    Preset directory contract.
 2. [Canonical Model](canonical-model.md) defines the normalized
    structure shared by resolution, validation, and Adapters.
-3. [Capability Source](../../specs/capability-source.md) *(Chinese)* defines how
+3. [Capability Source](capability-source.md) defines how
    a Preset references external Capability content through `ai.capabilities`.
 4. [Codex / Claude Code Adapter](codex-claude-code-adapters.md)
    defines native outputs and verification boundaries for the prioritized
    runtimes.
-
-The language labels are intentional: untranslated specifications continue to
-link to their authoritative source instead of presenting an incomplete English
-copy.
 
 ## Status labels
 
