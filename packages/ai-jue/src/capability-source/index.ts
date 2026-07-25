@@ -13,9 +13,6 @@ import { loadAssetsFromDir, loadSkillFromDir } from '../preset';
 
 export interface CapabilityLockEntry {
   converter: CapabilityRef['converter'];
-  source: string;
-  ref?: string;
-  path?: string;
   contentHash: string;
   locatorHash: string;
   sourceType: 'file' | 'npm' | 'github';
@@ -170,7 +167,7 @@ function resolveFile(ref: CapabilityRef, baseDir: string): string {
   if (!locator) throw new Error('file: Capability source must include a path');
   const resolved = path.resolve(baseDir, locator);
   if (!fs.existsSync(resolved)) {
-    throw new Error(`Capability source does not exist: ${locator}`);
+    throw new Error('file: Capability source does not exist');
   }
   return resolved;
 }
@@ -246,8 +243,8 @@ async function resolveGithub(
       throw new Error('Frozen resolution requires github: Capability sources to declare ref');
     }
     console.warn(
-      `[WARN] Capability "${name}" (github:${repository}) has no pinned ref; `
-      + 'resolving against the floating default branch. Pin a ref or run `jue apply --frozen` in CI.',
+      '[WARN] A github: Capability has no pinned ref; resolving against the '
+      + 'floating default branch. Pin a ref or run `jue apply --frozen` in CI.',
     );
   }
   const unpackedDir = path.join(cacheDir, 'unpacked');
@@ -299,7 +296,7 @@ async function resolveSource(
   }
   const selected = ref.path ? safeChild(root, ref.path) : root;
   if (!fs.existsSync(selected)) {
-    throw new Error(`Capability source path does not exist: ${ref.path}`);
+    throw new Error('Capability source path does not exist');
   }
   return selected;
 }
@@ -369,9 +366,6 @@ export async function loadCapabilityRefs(
     config = mergeConfigWithLayeredContext(config, converted);
     capabilities[name] = {
       converter: value.converter,
-      source: value.source,
-      ...(value.ref ? { ref: value.ref } : {}),
-      ...(value.path ? { path: value.path } : {}),
       contentHash: hashDirectory(resolved),
       locatorHash: sha256(`${value.source}\0${value.ref || ''}\0${value.path || ''}`),
       sourceType: sourceType(value.source),

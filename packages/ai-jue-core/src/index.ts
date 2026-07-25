@@ -156,7 +156,7 @@ export function assertCapabilityRef(name: string, value: unknown): asserts value
     const ref = value as Record<string, unknown>;
     if (
         typeof ref.source !== 'string' ||
-        !/^(?:file|npm|github):[^/].*/.test(ref.source)
+        !/^(?:file|npm|github):.+/.test(ref.source)
     ) {
         throw new Error(`Capability "${name}" has an invalid source`);
     }

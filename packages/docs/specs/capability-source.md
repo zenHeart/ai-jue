@@ -194,9 +194,10 @@ Preset / `ai.config.js` 增加 `ai.capabilities`（与现有 `ai.presets` 同级
   不提供项目级 `.jue/cache/` 备选。理由：多项目复用同一第三方 Capability 内容时
   避免重复下载，行为对齐 npm 全局包缓存。
 - **锁文件**：固定文件名 `ai-jue.lock`，JSON 格式，放在项目根目录（与
-  `ai.config.js` 同级）。记录 `source`（原始引用，含 URL / npm spec）/
-  可选 `ref`（commit SHA 或 tag）/ 可选 `path` / `contentHash` / `locatorHash` /
-  `converter`。理由：与 CLI 发行包名 `ai-jue` 一致，避免与
+  `ai.config.js` 同级）。只记录 `sourceType` / `contentHash` /
+  `locatorHash` / `converter`，不复制原始 URL、npm spec、私有路径或凭据。
+  原始引用仍以本地 Preset 清单为唯一事实源。理由：与 CLI 发行包名
+  `ai-jue` 一致，避免与
   其他工具的通用 `jue.lock` 命名冲突。lock 是解析结果的**只写审计产物**：
   正常解析链路（`jue apply` / preset 加载）从不读取它来决定行为，只有
   `jue capability update` 会在写入后读回它来汇报"这次实际更新了哪些引用"。

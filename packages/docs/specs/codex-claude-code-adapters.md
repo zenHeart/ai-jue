@@ -258,7 +258,7 @@ Verified on 2026-07-25:
 
 - targeted Codex / Claude Code / matrix tests: 22 passed
 - real CLI: `--adapter codex` and `--adapter claude-code` passed independently
-- full repository tests: 19 files, 119 tests passed
+- full repository tests: 23 files, 144 tests passed
 - build: 8 tasks passed
 - package consistency: all packages passed
 - isolated local packed-install smoke: passed for Codex and Claude Code

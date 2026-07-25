@@ -1,4 +1,6 @@
-# Release 2026-03-19T11:58:59.485Z
+# Release 2026-07-25
 
-- ai-jue-core@v1.2.1
-- ai-jue@v1.3.2
+- ai-jue-core@v1.3.0
+- ai-jue-adapter-claude@v1.3.0
+- ai-jue-adapter-codex@v0.1.0
+- ai-jue@v1.4.0

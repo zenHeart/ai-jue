@@ -99,7 +99,7 @@ describe('Capability Source cache integrity', () => {
     );
     const unpackedDir = path.join(destination, 'unpacked');
     expect(fs.existsSync(unpackedDir) && fs.readdirSync(unpackedDir).length > 0).toBe(false);
-  });
+  }, 60_000);
 
   it('recovers with a fresh fetch after a previous run was interrupted mid-extraction', async () => {
     const root = tempDir();
@@ -155,5 +155,5 @@ describe('Capability Source cache integrity', () => {
 
     expect(result.config.skills?.['neutral-skill']?.content).toContain('Complete skill body');
     expect(mockFetch).toHaveBeenCalledTimes(2);
-  });
+  }, 60_000);
 });

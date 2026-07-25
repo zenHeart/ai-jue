@@ -68,7 +68,7 @@ describe('Capability Source', () => {
     expect(JSON.stringify(result.lock)).not.toContain(root);
   });
 
-  it('records a human-readable source/ref/path in the lock for audit, alongside the hashes', async () => {
+  it('records only redacted source metadata and hashes in the lock', async () => {
     const root = tempDir();
     const skillDir = path.join(root, 'capabilities', 'neutral-skill');
     writeSkill(skillDir);
@@ -86,10 +86,12 @@ describe('Capability Source', () => {
     );
 
     expect(result.lock.capabilities['neutral-skill']).toMatchObject({
-      source: 'file:./capabilities/neutral-skill',
       converter: 'agent-skill',
       sourceType: 'file',
     });
+    expect(result.lock.capabilities['neutral-skill']).not.toHaveProperty('source');
+    expect(result.lock.capabilities['neutral-skill']).not.toHaveProperty('path');
+    expect(result.lock.capabilities['neutral-skill']).not.toHaveProperty('ref');
     // Must still not leak the resolved absolute filesystem path.
     expect(JSON.stringify(result.lock)).not.toContain(root);
   });
@@ -110,11 +112,14 @@ describe('Capability Source', () => {
     fs.writeFileSync(path.join(packageDir, 'server.js'), '');
     const packDir = path.join(root, 'packs');
     fs.mkdirSync(packDir);
-    const archiveName = execFileSync(
-      'npm',
-      ['pack', '--ignore-scripts', '--pack-destination', packDir],
-      { cwd: packageDir, encoding: 'utf8' },
-    ).trim().split('\n').pop()!;
+    const archiveName = 'neutral-mcp-fixture-1.0.0.tgz';
+    execFileSync('tar', [
+      '-czf',
+      path.join(packDir, archiveName),
+      '-C',
+      root,
+      'package',
+    ]);
 
     const result = await loadCapabilityRefs(
       {
@@ -243,13 +248,8 @@ describe('Capability Source', () => {
       );
 
       expect(result.config.skills?.['neutral-skill']).toBeDefined();
-      expect(
-        warnSpy.mock.calls.some((call) =>
-          call.some(
-            (arg) => typeof arg === 'string' && /neutral-skill/.test(arg) && /ref/i.test(arg),
-          ),
-        ),
-      ).toBe(true);
+      expect(warnSpy).toHaveBeenCalledWith(expect.stringContaining('pinned ref'));
+      expect(JSON.stringify(warnSpy.mock.calls)).not.toContain('neutral-repo');
     } finally {
       warnSpy.mockRestore();
     }
@@ -427,4 +427,67 @@ describe('Capability Source', () => {
       ),
     ).rejects.toThrow('requires github');
   });
+
+  it('rejects literal MCP credentials from a converted source', async () => {
+    const root = tempDir();
+    const sourceDir = path.join(root, 'mcp-source');
+    fs.mkdirSync(sourceDir);
+    fs.writeFileSync(
+      path.join(sourceDir, 'mcp.json'),
+      JSON.stringify({
+        servers: {
+          neutral: {
+            command: 'node',
+            env: { API_TOKEN: 'literal-value' },
+          },
+        },
+      }),
+    );
+
+    await expect(
+      loadCapabilityRefs(
+        {
+          neutral: {
+            source: 'file:./mcp-source',
+            converter: 'mcp',
+          },
+        },
+        root,
+      ),
+    ).rejects.toThrow('runtime environment variable');
+  });
+
+  it('rejects archive symbolic links before extraction', async () => {
+    const root = tempDir();
+    const archiveRoot = path.join(root, 'archive', 'neutral-repository');
+    fs.mkdirSync(archiveRoot, { recursive: true });
+    fs.symlinkSync('/tmp', path.join(archiveRoot, 'unsafe-link'));
+    const archivePath = path.join(root, 'unsafe.tgz');
+    execFileSync('tar', [
+      '-czf',
+      archivePath,
+      '-C',
+      path.join(root, 'archive'),
+      'neutral-repository',
+    ]);
+    const archive = fs.readFileSync(archivePath);
+
+    await expect(
+      loadCapabilityRefs(
+        {
+          neutral: {
+            source: 'github:example/neutral-repo',
+            ref: 'v1.0.0',
+            converter: 'jue-native',
+          },
+        },
+        root,
+        undefined,
+        {
+          cacheDir: path.join(root, 'cache'),
+          fetch: (async () => new Response(archive)) as typeof fetch,
+        },
+      ),
+    ).rejects.toThrow('symbolic or hard links');
+  }, 60_000);
 });
