@@ -32,13 +32,13 @@ npm install -D jue-preset-base
 
 You can combine multiple presets using the `presets` array in `ai.config.js`.
 
-\`\`\`javascript
+```javascript
 // ai.config.js
 module.exports = {
   presets: [
     'base'
   ]
 }
-\`\`\`
+```
 
 `ai-jue` loads presets in the order of the array, so later configurations will overwrite or merge with earlier ones.

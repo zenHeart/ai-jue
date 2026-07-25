@@ -8,12 +8,16 @@
 
 1. [Jue MVP](jue-mvp.md)：定义 `Capability → Preset → Adapter` 产品模型、
    能力边界和 Preset 目录契约。
-2. [Canonical Model](canonical-model.md)：定义解析、合并、校验和 Adapter
-   共同使用的标准结构。
-3. [Capability Source](capability-source.md)：定义 Preset 如何通过
+2. [Capability Source](capability-source.md)：定义 Preset 如何通过
    `ai.capabilities` 引用外部 Capability。
-4. [Codex / Claude Code Adapter](codex-claude-code-adapters.md)：定义当前
-   优先运行时的原生产物和验证边界。
+
+以下规范尚未完成中文翻译，链接会明确进入英文文档，不在中文侧边栏中伪装成
+中文页面：
+
+- [Canonical Model（英文）](../en/specs/canonical-model.md)：定义解析、
+  合并、校验和 Adapter 共同使用的标准结构。
+- [Codex / Claude Code Adapter（英文）](../en/specs/codex-claude-code-adapters.md)：
+  定义当前优先运行时的原生产物和验证边界。
 
 ## 状态说明
 

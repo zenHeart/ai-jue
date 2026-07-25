@@ -17,7 +17,7 @@ A Capability is the smallest atomic asset an Agent can use, fixed to six types: 
 
 This is the first of the three concepts Jue exposes to users (the other two are [Preset](#preset) and [Adapter](#adapter)). The word choice deliberately aligns with MCP's own `capabilities` / "Capability Negotiation" protocol vocabulary, and with Anthropic's Agent Skills docs ("extend Claude's capabilities") — it is not a term Jue invented. [`context.global`](#context-global) (global context) and [`tools.<tool>`](#tools-tool) (escape hatch) are **not** part of these six. A capability can only be proposed as a new, seventh atomic Capability once it has stable, similar semantics across at least two Agents.
 
-- Authoritative source: [jue-mvp.md §1, §3](../../specs/jue-mvp.md), [canonical-model.md §2.1](../../specs/canonical-model.md)
+- Authoritative source: [jue-mvp.md §1, §3](../../specs/jue-mvp.md), [canonical-model.md §2.1](../specs/canonical-model.md)
 - Related: [Preset](#preset), [Canonical Model](#canonical-model), [Capability Source](#capability-source), [context.global](#context-global), [tools.\<tool\>](#tools-tool)
 
 ## Preset {#preset}
@@ -35,7 +35,7 @@ An Adapter is the boundary layer that converts the [Canonical Model](#canonical-
 
 Adapters consume only the normalized canonical model, preserve the target Agent's native semantics, explicitly degrade or report unsupported capabilities instead of silently dropping them, and are verified by the same capability contract tests. When a target Agent uses its own vocabulary ("plugin", "extension", "skill", ...) to describe the output, the Adapter may output using that native term, but internally Jue always calls them Preset and Capability.
 
-- Authoritative source: [jue-mvp.md §5](../../specs/jue-mvp.md) (Adapter contract), [canonical-model.md §5](../../specs/canonical-model.md) (Adapter Mapping Boundary)
+- Authoritative source: [jue-mvp.md §5](../../specs/jue-mvp.md) (Adapter contract), [canonical-model.md §5](../specs/canonical-model.md) (Adapter Mapping Boundary)
 - Related: [Canonical Model](#canonical-model), [Capability](#capability), [jue format](#jue-format)
 
 ## Canonical Model {#canonical-model}
@@ -44,7 +44,7 @@ The Canonical Model is Jue's **single** shared internal structure — the interm
 
 Produced by four stages: `load → merge → validate → normalize`. It fixes six atomic [Capability](#capability) types (`skills` / `agents` / `commands` / `rules` / `hooks` / `mcp.servers`) plus two non-capability fields ([`context.global`](#context-global), [`tools.<tool>`](#tools-tool)). Adapters must consume this normalized structure rather than guessing private input shapes.
 
-- Authoritative source: [canonical-model.md](../../specs/canonical-model.md) (whole document, especially §2 Supported Capability Set, §4 Merge Rules)
+- Authoritative source: [canonical-model.md](../specs/canonical-model.md) (whole document, especially §2 Supported Capability Set, §4 Merge Rules)
 - Related: [Capability](#capability), [context.global](#context-global), [tools.\<tool\>](#tools-tool), [Adapter](#adapter)
 
 ## context.global {#context-global}
@@ -53,7 +53,7 @@ Produced by four stages: `load → merge → validate → normalize`. It fixes s
 
 Merge order (low to high): nested preset dependency chain → current preset → `.ai/AGENTS.md` → project root `AGENTS.md` → `ai.config.js`'s `context.global`. This is append semantics, not replace semantics — unlike the other six structured Capabilities, which use deep object merge with later values overriding earlier ones.
 
-- Authoritative source: [canonical-model.md §3.1, §4.3](../../specs/canonical-model.md), [jue-mvp.md §3](../../specs/jue-mvp.md)
+- Authoritative source: [canonical-model.md §3.1, §4.3](../specs/canonical-model.md), [jue-mvp.md §3](../../specs/jue-mvp.md)
 - Related: [Capability](#capability), [Canonical Model](#canonical-model)
 
 ## tools.\<tool\> {#tools-tool}
@@ -62,7 +62,7 @@ Merge order (low to high): nested preset dependency chain → current preset →
 
 When a capability is still a single-tool private feature, or hasn't yet reached stable semantics across at least two Agents, it should stay here rather than being promoted into the shared structure. The escape hatch doesn't exist to encourage bypassing the shared structure — it exists to leave room for extension beyond mainstream capabilities, while keeping tool-specific differences from polluting the mainstream usage path.
 
-- Authoritative source: [canonical-model.md §2.2](../../specs/canonical-model.md), [architecture.md](architecture.md) (escape-hatch principle; the Chinese version's §0.4/§0.6 have more detail than this English page)
+- Authoritative source: [canonical-model.md §2.2](../specs/canonical-model.md), [architecture.md](architecture.md) (escape-hatch principle; the Chinese version's §0.4/§0.6 have more detail than this English page)
 - Related: [Capability](#capability), [Canonical Model](#canonical-model)
 
 ## Capability Source {#capability-source}

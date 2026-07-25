@@ -31,13 +31,13 @@ npm install -D jue-preset-base
 
 你可以通过 `ai.config.js` 中的 `presets` 数组来组合多个预设。
 
-\`\`\`javascript
+```javascript
 // ai.config.js
 export default {
   presets: [
     'base'
   ]
 }
-\`\`\`
+```
 
 `ai-jue` 会按照数组顺序加载预设，后加载的配置会覆盖或合并前面的配置。
