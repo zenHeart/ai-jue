@@ -2,7 +2,7 @@
   "name": "ai-jue-monorepo",
   "version": "1.0.0",
   "private": true,
-  "packageManager": "npm@10.0.0",
+  "packageManager": "npm@10.9.4",
   "description": "Monorepo for the ai-jue project",
   "main": "index.js",
   "scripts": {
@@ -14,7 +14,7 @@
     "check-consistency": "node scripts/check-consistency.js",
     "check-base-i18n": "node scripts/check-base-i18n.js",
     "smoke-apply": "node scripts/smoke-apply.js",
-    "smoke:preset-local": "node scripts/smoke-local-preset.js",
+    "smoke:preset-local": "node scripts/smoke-local-preset.js --packages-dir packages/ai-jue/test/fixtures/local-preset-monorepo --entry jue-preset-neutral-bundle --cleanup delete",
     "release-gate:v1.1": "node scripts/release-gate-v1.1.js",
     "prerelease": "npm run release-gate:v1.1",
     "setup": "npm install && npm dedupe",
