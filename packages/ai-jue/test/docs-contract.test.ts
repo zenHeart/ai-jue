@@ -11,6 +11,7 @@ describe("documentation contract", () => {
     const canonicalModel = readRepoFile(
       "packages",
       "docs",
+      "en",
       "specs",
       "canonical-model.md",
     );
