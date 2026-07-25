@@ -20,18 +20,29 @@ Note:
 
 ## 2. Supported Capability Set
 
-The supported top-level capabilities are:
+### 2.1 Atomic capabilities (6)
 
-- `context.global`
 - `rules`
 - `commands`
 - `skills`
 - `agents`
 - `hooks`
 - `mcp.servers`
-- `tools.<tool>`
 
-No additional top-level capability categories are allowed.
+These six are the only atomic Capability types. No additional atomic
+capability categories are allowed without going through the promotion path
+in [architecture.md §0.6](../guide/architecture.md).
+
+### 2.2 Non-capability top-level fields (2)
+
+- `context.global` — layered-append global context, not an atomic
+  Capability (see §4.3).
+- `tools.<tool>` — escape hatch for tool-private, non-canonical
+  configuration, not an atomic Capability.
+
+These two fields are part of the shared structure but must not be counted
+when validating "is this a supported capability" — they exist for global
+context and tool-native escape hatches respectively.
 
 ## 3. Canonical Shapes
 
@@ -227,7 +238,6 @@ This is additive, not replace semantics.
 - adapters must not silently invent unsupported top-level capabilities
 - unsupported target-tool features must be degraded explicitly, not ignored silently
 
-Current implementation gaps to close:
-
-- `prompts` still lack a single normalized `content/prompt` contract across all adapters
-- `prompts` remain a backward-compatibility input and are not a new canonical capability
+Design note: `prompts` is normalized to the same `prompt`/`content` mirror contract as
+`skills`/`agents` (see [architecture.md §3.1](../guide/architecture.md)), but it remains a
+backward-compatibility input, not a new canonical capability.

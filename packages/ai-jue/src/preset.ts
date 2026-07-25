@@ -3,6 +3,10 @@ import fs from 'fs';
 import * as yaml from 'js-yaml'; // Import js-yaml
 import { MergedConfig } from './config';
 import { mergeConfigWithLayeredContext } from './merge';
+import type {
+  CapabilitySourceOptions,
+  LoadedCapabilities,
+} from './capability-source';
 
 type FrontmatterResult = {
   content: string;
@@ -77,6 +81,28 @@ async function loadAssetBundle(assetDir: string): Promise<{
     references: Object.keys(references).length > 0 ? references : undefined,
     scripts: Object.keys(scripts).length > 0 ? scripts : undefined,
     assets: Object.keys(assets).length > 0 ? assets : undefined,
+  };
+}
+
+export async function loadSkillFromDir(
+  skillName: string,
+  skillDir: string,
+  userLanguage?: string,
+): Promise<MergedConfig> {
+  const contentPath = findLocalizedFile(skillDir, ['SKILL.md'], userLanguage);
+  if (!contentPath) {
+    throw new Error(`agent-skill Capability "${skillName}" is missing SKILL.md`);
+  }
+  const rawContent = await fs.promises.readFile(contentPath, 'utf8');
+  const parsed = parseMarkdownWithFrontmatter(rawContent);
+  return {
+    skills: {
+      [skillName]: {
+        ...parsed.attributes,
+        content: parsed.content,
+        ...(await loadAssetBundle(skillDir)),
+      },
+    },
   };
 }
 
@@ -286,9 +312,24 @@ export async function loadAssetsFromDir(dirPath: string, userLanguage?: string):
   return config;
 }
 
-export async function loadPreset(presetName: string, userLanguage?: string): Promise<MergedConfig> {
+export async function loadPreset(
+  presetName: string,
+  userLanguage?: string,
+  sourceOptions: CapabilitySourceOptions = {},
+): Promise<MergedConfig> {
   if (!presetName) return {};
-  return loadPresetRecursive(presetName, userLanguage, []);
+  return (await loadPresetWithLock(presetName, userLanguage, sourceOptions)).config;
+}
+
+export async function loadPresetWithLock(
+  presetName: string,
+  userLanguage?: string,
+  sourceOptions: CapabilitySourceOptions = {},
+): Promise<LoadedCapabilities> {
+  if (!presetName) {
+    return { config: {}, lock: { version: 1, capabilities: {} } };
+  }
+  return loadPresetRecursive(presetName, userLanguage, [], sourceOptions);
 }
 
 function normalizePresetPackageName(presetName: string): string {
@@ -305,47 +346,66 @@ function extractNestedPresets(packageJson: any): string[] {
     .filter(Boolean);
 }
 
+function extractCapabilityRefs(packageJson: any): unknown {
+  return packageJson?.ai?.capabilities ?? packageJson?.jue?.capabilities;
+}
+
 async function loadPresetRecursive(
   presetName: string,
   userLanguage: string | undefined,
   resolvingStack: string[],
-): Promise<MergedConfig> {
+  sourceOptions: CapabilitySourceOptions,
+): Promise<LoadedCapabilities> {
   const packageName = normalizePresetPackageName(presetName);
 
   if (resolvingStack.includes(packageName)) {
     const cyclePath = [...resolvingStack, packageName].join(' -> ');
-    console.error(`Preset dependency cycle detected: ${cyclePath}`);
-    return {};
+    throw new Error(`Preset dependency cycle detected: ${cyclePath}`);
   }
 
   const nextStack = [...resolvingStack, packageName];
 
-  try {
-    const packageJsonPath = require.resolve(`${packageName}/package.json`, {
+  const packageJsonPath = require.resolve(`${packageName}/package.json`, {
       // Project-local presets must win for both a locally installed CLI and a
       // globally invoked CLI. `__dirname` keeps bundled/default presets
       // discoverable as the fallback.
       paths: [process.cwd(), __dirname],
-    });
-    const presetPath = path.dirname(packageJsonPath);
-    const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
-    const nestedPresets = extractNestedPresets(packageJson);
+  });
+  const presetPath = path.dirname(packageJsonPath);
+  const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
+  const nestedPresets = extractNestedPresets(packageJson);
+  const capabilityRefs = extractCapabilityRefs(packageJson);
+  const { loadCapabilityRefs, mergeCapabilityLocks } = await import('./capability-source');
 
-    let mergedConfig: MergedConfig = {};
+  let mergedConfig: MergedConfig = {};
+  const locks: LoadedCapabilities['lock'][] = [];
 
-    for (const nestedPresetName of nestedPresets) {
-      const nestedPresetConfig = await loadPresetRecursive(
-        nestedPresetName,
-        userLanguage,
-        nextStack,
-      );
-      mergedConfig = mergeConfigWithLayeredContext(mergedConfig, nestedPresetConfig);
-    }
-
-    const selfConfig = await loadAssetsFromDir(presetPath, userLanguage);
-    return mergeConfigWithLayeredContext(mergedConfig, selfConfig);
-  } catch (error: any) {
-    console.error(`Error loading preset "${presetName}":`, error.message);
-    return {};
+  for (const nestedPresetName of nestedPresets) {
+    const nestedPreset = await loadPresetRecursive(
+      nestedPresetName,
+      userLanguage,
+      nextStack,
+      sourceOptions,
+    );
+    mergedConfig = mergeConfigWithLayeredContext(mergedConfig, nestedPreset.config);
+    locks.push(nestedPreset.lock);
   }
+
+  const capabilityResult = await loadCapabilityRefs(
+    capabilityRefs,
+    presetPath,
+    userLanguage,
+    sourceOptions,
+  );
+  mergedConfig = mergeConfigWithLayeredContext(
+    mergedConfig,
+    capabilityResult.config,
+  );
+  locks.push(capabilityResult.lock);
+
+  const selfConfig = await loadAssetsFromDir(presetPath, userLanguage);
+  return {
+    config: mergeConfigWithLayeredContext(mergedConfig, selfConfig),
+    lock: mergeCapabilityLocks(...locks),
+  };
 }

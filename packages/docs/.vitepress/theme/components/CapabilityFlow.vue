@@ -1,40 +1,127 @@
 <script setup lang="ts">
+import { onBeforeUnmount, onMounted, reactive, ref } from "vue";
+
 const agents = ["Agent", "Agent", "Agent", "Agent"];
+
+const flowRef = ref<HTMLElement | null>(null);
+const sourceRef = ref<HTMLElement | null>(null);
+const agentCardRefs: (HTMLElement | null)[] = [];
+
+const ready = ref(false);
+const viewBox = reactive({ width: 920, height: 760 });
+const sourcePoint = reactive({ x: 0, y: 0 });
+const targetPoints = reactive(
+  agents.map(() => ({ x: 0, y: 0 })),
+);
+
+function setAgentCardRef(el: Element | null, index: number) {
+  agentCardRefs[index] = (el as HTMLElement) ?? null;
+}
+
+// Elbow routing (horizontal -> diagonal -> horizontal) derived from the
+// live source/target points, so the connectors always land exactly on the
+// dots regardless of container size. Hardcoding pixel coordinates here
+// previously assumed a fixed 920x760 layout, which drifted out of sync
+// with the agent cards' fixed-px grid whenever the container was taller
+// or shorter than that assumption (see the misaligned lines this replaces).
+function buildPath(sx: number, sy: number, tx: number, ty: number): string {
+  const dx = tx - sx;
+  const bendX = sx + Math.max(24, dx * 0.34);
+  const stub = Math.min(70, Math.max(24, dx * 0.16));
+  const approachX = tx - stub;
+  return `M${sx} ${sy} H${bendX} L${approachX} ${ty} H${tx}`;
+}
+
+function measure() {
+  const container = flowRef.value;
+  const source = sourceRef.value;
+  if (!container || !source) return;
+
+  const containerRect = container.getBoundingClientRect();
+  if (containerRect.width === 0 || containerRect.height === 0) return;
+
+  viewBox.width = containerRect.width;
+  viewBox.height = containerRect.height;
+
+  const sourceRect = source.getBoundingClientRect();
+  sourcePoint.x = sourceRect.right - containerRect.left;
+  sourcePoint.y = sourceRect.top + sourceRect.height / 2 - containerRect.top;
+
+  agentCardRefs.forEach((el, index) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    targetPoints[index].x = rect.left - containerRect.left;
+    targetPoints[index].y = rect.top + rect.height / 2 - containerRect.top;
+  });
+
+  ready.value = true;
+}
+
+let observer: ResizeObserver | undefined;
+
+onMounted(() => {
+  measure();
+  observer = new ResizeObserver(() => measure());
+  if (flowRef.value) observer.observe(flowRef.value);
+  window.addEventListener("resize", measure);
+});
+
+onBeforeUnmount(() => {
+  observer?.disconnect();
+  window.removeEventListener("resize", measure);
+});
 </script>
 
 <template>
   <div
+    ref="flowRef"
     class="capability-flow"
     role="img"
     aria-label="One Jue capability set branches into four Agent adapters"
   >
     <svg
       class="connector-map"
-      viewBox="0 0 920 760"
+      :class="{ 'connector-map-ready': ready }"
+      :viewBox="`0 0 ${viewBox.width} ${viewBox.height}`"
       preserveAspectRatio="none"
       aria-hidden="true"
     >
-      <path d="M280 380 H350 L540 116 H635" />
-      <path d="M280 380 H356 L522 252 H635" />
-      <path d="M280 380 H348 L510 388 H635" />
-      <path d="M280 380 H356 L542 524 H635" />
-      <rect x="272" y="372" width="16" height="16" />
-      <rect x="627" y="108" width="16" height="16" />
-      <rect x="627" y="244" width="16" height="16" />
-      <rect x="627" y="380" width="16" height="16" />
-      <rect x="627" y="516" width="16" height="16" />
+      <path
+        v-for="(point, index) in targetPoints"
+        :key="`path-${index}`"
+        :d="buildPath(sourcePoint.x, sourcePoint.y, point.x, point.y)"
+      />
+      <rect
+        :x="sourcePoint.x - 8"
+        :y="sourcePoint.y - 8"
+        width="16"
+        height="16"
+      />
+      <rect
+        v-for="(point, index) in targetPoints"
+        :key="`dot-${index}`"
+        :x="point.x - 8"
+        :y="point.y - 8"
+        width="16"
+        height="16"
+      />
     </svg>
 
     <div class="canonical-stack" aria-hidden="true">
       <span class="stack-plane stack-plane-back"></span>
       <span class="stack-plane stack-plane-middle"></span>
-      <span class="stack-plane stack-plane-front">
+      <span ref="sourceRef" class="stack-plane stack-plane-front">
         <span class="focus-mark"><i></i></span>
       </span>
     </div>
 
     <ol class="agent-list" aria-hidden="true">
-      <li v-for="(agent, index) in agents" :key="index" class="agent-card">
+      <li
+        v-for="(agent, index) in agents"
+        :key="index"
+        class="agent-card"
+        :ref="(el) => setAgentCardRef(el as Element | null, index)"
+      >
         <span class="agent-mark"><i></i></span>
         <strong>{{ agent }}</strong>
       </li>
@@ -57,6 +144,12 @@ const agents = ["Agent", "Agent", "Agent", "Agent"];
   width: 100%;
   height: 100%;
   overflow: visible;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.connector-map-ready {
+  opacity: 1;
 }
 
 .connector-map path {

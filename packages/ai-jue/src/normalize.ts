@@ -43,6 +43,17 @@ export function normalizeConfig(config: MergedConfig): MergedConfig {
     context.global = '';
   }
 
+  for (const [name, value] of Object.entries(prompts)) {
+    const promptEntry = toObject(value);
+    if (!promptEntry.content && typeof promptEntry.prompt === 'string') {
+      promptEntry.content = promptEntry.prompt;
+    }
+    if (!promptEntry.prompt && typeof promptEntry.content === 'string') {
+      promptEntry.prompt = promptEntry.content;
+    }
+    prompts[name] = promptEntry;
+  }
+
   for (const [name, cmd] of Object.entries(commands)) {
     const command = toObject(cmd);
     if (!command.prompt && typeof command.content === 'string') {
@@ -72,6 +83,14 @@ export function normalizeConfig(config: MergedConfig): MergedConfig {
     }
     if (!skill.prompt && typeof skill.content === 'string') {
       skill.prompt = skill.content;
+    }
+    for (const field of ['allowed-tools', 'allowedTools']) {
+      if (typeof skill[field] === 'string') {
+        skill[field] = skill[field]
+          .split(',')
+          .map((tool: string) => tool.trim())
+          .filter(Boolean);
+      }
     }
     skills[name] = skill;
   }

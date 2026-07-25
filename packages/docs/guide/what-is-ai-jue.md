@@ -6,9 +6,7 @@ Jue 是 AI 能力标准化与 Agent 接入适配层。
 和 MCP 配置，组织成一套稳定的通用能力模型；再通过 Adapter 转换为 Claude、
 Cursor、Gemini、Copilot 等目标 Agent 的原生格式。
 
-Jue 的核心不是 CLI。CLI、网站和编辑器扩展只是使用这套标准的不同入口。
-
-## 三个稳定概念
+## Capability → Preset → Adapter 三层模型
 
 - **Capability（能力）**：Agent 可使用的最小资产。
 - **Preset（能力集）**：一组可版本化、组合和分发的能力。它在目标 Agent
@@ -30,4 +28,5 @@ Preset / .ai / ai.config.js
 `tools.<tool>` 逃生舱中。
 
 完整 MVP 定义与验收边界见
-[Jue MVP：AI 能力标准与 Agent 适配](../specs/jue-mvp.md)。
+[Jue MVP：AI 能力标准与 Agent 适配](../specs/jue-mvp.md)；
+更多术语的一句话定义与相关文档入口见[术语表](glossary.md)。

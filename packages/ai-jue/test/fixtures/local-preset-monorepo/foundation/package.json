@@ -1,0 +1,10 @@
+{
+  "name": "jue-preset-neutral-foundation",
+  "version": "1.0.0",
+  "private": true,
+  "files": ["AGENTS.md", "skills/", "agents/", "package.json"],
+  "ai": {
+    "presets": [],
+    "capabilities": {}
+  }
+}

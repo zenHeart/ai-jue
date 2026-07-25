@@ -1,0 +1,267 @@
+const fs = require('fs');
+const crypto = require('crypto');
+const os = require('os');
+const path = require('path');
+const { spawnSync } = require('child_process');
+
+require('ts-node/register');
+
+const { loadPreset } = require('../packages/ai-jue/src/preset.ts');
+const { normalizeConfig } = require('../packages/ai-jue/src/normalize.ts');
+
+function parseArgs(argv) {
+  const args = {};
+  for (let index = 0; index < argv.length; index += 2) {
+    const key = argv[index];
+    if (!key.startsWith('--') || argv[index + 1] === undefined) {
+      throw new Error('Arguments must use --packages-dir, --entry and optional --cleanup');
+    }
+    args[key.slice(2)] = argv[index + 1];
+  }
+  if (!args['packages-dir'] || !args.entry) {
+    throw new Error('Usage: smoke-local-preset --packages-dir <dir> --entry <preset> [--cleanup delete|trash]');
+  }
+  return args;
+}
+
+function run(command, args, cwd) {
+  const result = spawnSync(command, args, {
+    cwd,
+    encoding: 'utf8',
+    env: process.env,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  if (result.status !== 0) {
+    const rawError = String(result.stderr || result.stdout || '');
+    let structuredSummary = '';
+    const jsonStart = rawError.indexOf(': [');
+    if (jsonStart >= 0) {
+      try {
+        const issues = JSON.parse(rawError.slice(jsonStart + 2));
+        structuredSummary = issues
+          .map((issue) => {
+            const issuePath = Array.isArray(issue.path) ? issue.path : [];
+            const safePath = issuePath.length > 1
+              ? [issuePath[0], '<asset>', issuePath.at(-1)].join('.')
+              : issuePath.join('.');
+            return `${safePath}: ${String(issue.message).replace(/"[^"]+"/g, '"<redacted>"')}`;
+          })
+          .join('; ');
+      } catch {
+        structuredSummary = '';
+      }
+    }
+    const sanitizedLines = rawError
+      .split('\n')
+      .map((line) =>
+        line
+          .replace(/"[^"]+"/g, '"<redacted>"')
+          .replace(/(?:\/[^/\s:]+){2,}/g, '<path>'),
+      );
+    const firstError = sanitizedLines.findIndex((line) =>
+      /error|failed|invalid|missing/i.test(line),
+    );
+    const summary = structuredSummary || (firstError >= 0
+      ? sanitizedLines.slice(firstError, firstError + 12).join(' ').trim()
+      : '');
+    throw new Error(
+      `${path.basename(command)} failed with exit code ${result.status}`
+      + (summary ? `: ${summary.trim()}` : ''),
+    );
+  }
+  return result.stdout;
+}
+
+function packPresetDirectories(packagesDir, packDir) {
+  const archives = [];
+  for (const entry of fs.readdirSync(packagesDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const packageDir = path.join(packagesDir, entry.name);
+    if (!fs.existsSync(path.join(packageDir, 'package.json'))) continue;
+    const output = JSON.parse(
+      run(
+        'npm',
+        ['pack', packageDir, '--ignore-scripts', '--json', '--pack-destination', packDir],
+        packagesDir,
+      ),
+    );
+    const filename = output?.[0]?.filename;
+    if (typeof filename !== 'string') {
+      throw new Error('npm pack did not return an archive filename');
+    }
+    archives.push(path.join(packDir, filename));
+  }
+  if (archives.length === 0) throw new Error('No Preset packages were found');
+  return archives;
+}
+
+function createOfflineMirror(packagesDir, mirrorDir) {
+  fs.mkdirSync(mirrorDir);
+  for (const entry of fs.readdirSync(packagesDir, { withFileTypes: true })) {
+    if (!entry.isDirectory()) continue;
+    const manifestPath = path.join(packagesDir, entry.name, 'package.json');
+    if (!fs.existsSync(manifestPath)) continue;
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+    for (const [name, ref] of Object.entries(manifest.ai?.capabilities || {})) {
+      const locator = `${ref.source}\0${ref.ref || ''}\0${ref.path || ''}`;
+      const key = crypto.createHash('sha256').update(locator).digest('hex');
+      const stage = fs.mkdtempSync(path.join(path.dirname(mirrorDir), 'mirror-stage-'));
+      try {
+        if (String(ref.source).startsWith('npm:')) {
+          const packageDir = path.join(stage, 'package');
+          fs.mkdirSync(packageDir);
+          fs.writeFileSync(
+            path.join(packageDir, 'package.json'),
+            JSON.stringify({
+              name: `neutral-${name}`,
+              version: '1.0.0',
+              bin: { [name]: 'server.js' },
+            }),
+          );
+          fs.writeFileSync(path.join(packageDir, 'server.js'), '');
+          const output = JSON.parse(
+            run(
+              'npm',
+              ['pack', packageDir, '--ignore-scripts', '--json', '--pack-destination', stage],
+              stage,
+            ),
+          );
+          fs.renameSync(
+            path.join(stage, output[0].filename),
+            path.join(mirrorDir, `${key}.tgz`),
+          );
+          continue;
+        }
+        if (String(ref.source).startsWith('github:')) {
+          const archiveRoot = path.join(stage, 'neutral-repository');
+          const capabilityDir = path.join(archiveRoot, ref.path || '.');
+          fs.mkdirSync(capabilityDir, { recursive: true });
+          fs.writeFileSync(
+            path.join(capabilityDir, 'SKILL.md'),
+            `---\nname: ${name}\ndescription: Neutral offline source fixture\n---\nOffline fixture.`,
+          );
+          run(
+            'tar',
+            ['-czf', path.join(mirrorDir, `${key}.tgz`), '-C', stage, 'neutral-repository'],
+            stage,
+          );
+        }
+      } finally {
+        fs.rmSync(stage, { recursive: true, force: true });
+      }
+    }
+  }
+}
+
+function firstEntry(record) {
+  return Object.entries(record || {}).sort(([a], [b]) => a.localeCompare(b))[0];
+}
+
+function verifySupportFiles(skillName, skill, consumerDir) {
+  for (const [section, files] of [
+    ['references', skill.references],
+    ['scripts', skill.scripts],
+    ['assets', skill.assets],
+  ]) {
+    for (const [relativePath, expected] of Object.entries(files || {})) {
+      for (const runtimeDir of ['.agents', '.claude']) {
+        const generated = fs.readFileSync(
+          path.join(consumerDir, runtimeDir, 'skills', skillName, section, relativePath),
+        );
+        const expectedBytes =
+          typeof expected === 'string'
+            ? Buffer.from(expected)
+            : Buffer.from(expected.content, expected.encoding);
+        if (!generated.equals(expectedBytes)) {
+          throw new Error('A generated support file differs from its resolved Capability');
+        }
+      }
+    }
+  }
+}
+
+function cleanup(tempRoot, mode) {
+  if (mode !== 'trash') {
+    fs.rmSync(tempRoot, { recursive: true, force: true });
+    return;
+  }
+  const trashDir = path.join(os.homedir(), '.Trash');
+  fs.mkdirSync(trashDir, { recursive: true });
+  fs.renameSync(
+    tempRoot,
+    path.join(trashDir, `jue-local-smoke-${Date.now()}-${path.basename(tempRoot)}`),
+  );
+}
+
+async function main() {
+  const args = parseArgs(process.argv.slice(2));
+  const packagesDir = path.resolve(args['packages-dir']);
+  const tempRoot = fs.mkdtempSync(path.join(os.tmpdir(), 'jue-local-preset-'));
+  const packDir = path.join(tempRoot, 'packs');
+  const consumerDir = path.join(tempRoot, 'consumer');
+  fs.mkdirSync(packDir);
+  fs.mkdirSync(consumerDir);
+
+  const originalCwd = process.cwd();
+  try {
+    if (args['offline-mirror'] === 'true') {
+      const mirrorDir = path.join(tempRoot, 'mirror');
+      createOfflineMirror(packagesDir, mirrorDir);
+      process.env.AI_JUE_SOURCE_MIRROR_DIR = mirrorDir;
+    }
+    const archives = packPresetDirectories(packagesDir, packDir);
+    fs.writeFileSync(
+      path.join(consumerDir, 'package.json'),
+      JSON.stringify({ name: 'jue-local-consumer', private: true }),
+    );
+    run(
+      'npm',
+      ['install', '--ignore-scripts', '--no-audit', '--no-fund', ...archives],
+      consumerDir,
+    );
+    fs.writeFileSync(
+      path.join(consumerDir, 'ai.config.json'),
+      JSON.stringify({ presets: [args.entry] }),
+    );
+
+    process.chdir(consumerDir);
+    const config = normalizeConfig(await loadPreset(args.entry, 'en'));
+    const skillEntry = firstEntry(config.skills);
+    const agentEntry = firstEntry(config.agents);
+    if (!skillEntry || !agentEntry || !config.context?.global) {
+      throw new Error('The installed Preset did not resolve required Capability types');
+    }
+
+    const cli = path.resolve(__dirname, '../packages/ai-jue/dist/cli.js');
+    run(process.execPath, [cli, 'apply', '--adapter', 'codex'], consumerDir);
+    run(process.execPath, [cli, 'apply', '--adapter', 'claude-code'], consumerDir);
+
+    const [skillName, skill] = skillEntry;
+    const [agentName] = agentEntry;
+    for (const required of [
+      'AGENTS.md',
+      'CLAUDE.md',
+      path.join('.agents', 'skills', skillName, 'SKILL.md'),
+      path.join('.codex', 'agents', `${agentName}.toml`),
+      path.join('.codex', 'config.toml'),
+      path.join('.claude', 'skills', skillName, 'SKILL.md'),
+      path.join('.claude', 'agents', `${agentName}.md`),
+    ]) {
+      if (!fs.existsSync(path.join(consumerDir, required))) {
+        throw new Error('A required native Adapter output is missing');
+      }
+    }
+    verifySupportFiles(skillName, skill, consumerDir);
+    console.log(
+      `[OK] isolated local Preset install -> Codex/Claude Code (${archives.length} packages)`,
+    );
+  } finally {
+    process.chdir(originalCwd);
+    cleanup(tempRoot, args.cleanup || 'delete');
+  }
+}
+
+main().catch((error) => {
+  console.error(`[ERROR] ${error.message}`);
+  process.exitCode = 1;
+});

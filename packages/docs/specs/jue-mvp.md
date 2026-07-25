@@ -18,7 +18,7 @@ Jue 不是一个“生成 AI 工具配置文件”的单点工具。Jue 是位�
 Claude / Cursor / Gemini / Copilot / 后续 Agent
 ```
 
-Jue 对用户稳定暴露三类概念：
+Jue 对用户暴露且仅暴露三层概念（`Capability → Preset → Adapter`）：
 
 1. **Capability（能力）**：可被 Agent 使用的最小资产，例如 skill、agent、
    command、rule、hook 或 MCP server。
@@ -33,7 +33,7 @@ CLI、网站和编辑器扩展都是这套模型的入口或界面，不是 Jue 
 
 MVP 必须跑通一条真实、可重复验证的闭环：
 
-1. `jue-preset-ai-assets` 以 Preset 身份提供真实能力。
+1. 本地 Preset 包以标准 Preset 身份提供真实能力。
 2. Jue 无损加载 Preset 中的嵌套 skill 资源。
 3. Jue 把 Preset、项目 `.ai/` 和 `ai.config.js` 收敛为同一 canonical model。
 4. 至少 Claude 与 Cursor 两个 adapter 能从同一能力集生成各自的原生产物。
@@ -53,8 +53,16 @@ MVP 的通用能力集合固定为：
 - `mcp.servers`
 - `tools.<tool>`
 
-`tools.<tool>` 是逃生舱，不是新的通用能力分类。工具私有能力只有在至少两个
-Agent 中具有稳定、相近语义后，才可以提议提升到 canonical model。
+其中 `skills` / `agents` / `commands` / `rules` / `hooks` / `mcp.servers`
+六类是原子 Capability。`context.global` 与 `tools.<tool>` **不是**原子
+Capability：`context.global` 是分层追加的全局上下文，`tools.<tool>` 是
+逃生舱。工具私有能力只有在至少两个 Agent 中具有稳定、相近语义后，才可以
+提议提升到 canonical model 成为新的原子 Capability。
+
+第三方来源的 Capability 内容（GitHub / npm / URL / 本地）如何被 Preset
+引用并转换进 canonical model，见
+[Capability Source 规格](capability-source.md)——它新增的是引用协议，不改变
+上面这个 Capability 集合本身。
 
 ## 4. Preset 目录契约
 
@@ -95,9 +103,9 @@ Adapter：
 目标 Agent 使用“插件”“扩展”“skill”或其他名称时，Adapter 可按其原生术语
 输出；Jue 内部仍统一称为 Preset 和 Capability。
 
-## 6. ai-assets 边界
+## 6. Preset 仓库边界
 
-`ai-assets` 是 `jue-preset-ai-assets` 的源码与版本化能力集，不再承担第二套
+Preset 仓库是 Preset 包的源码与版本化能力集，不再承担第二套
 安装器、adapter、registry 或同步引擎。
 
 包含：
@@ -119,7 +127,7 @@ Adapter：
 | --- | --- |
 | 协议一致 | schema、normalize、loader、文档的 contract test |
 | 嵌套资源无损 | 加载与 adapter 输出深层相对路径测试 |
-| ai-assets 可消费 | 从真实仓库路径加载并生成两类 Agent 产物的 smoke test |
+| 本地 Preset 可消费 | 从用户提供的本地路径打包安装并生成两类 Agent 产物的 smoke test |
 | 不泄露实例配置 | package/preset 清单和敏感信息校验 |
 | 官网可交付 | production build、部署状态、`jue.zenheart.site` HTTPS 访问 |
 | 旧能力不回归 | 全量单元测试、monorepo build、consistency check |

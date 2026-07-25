@@ -98,11 +98,27 @@ function safeDump(obj: any): string {
 
 export async function generate(config: any, outputDir: string): Promise<void> {
   const claudeDir = path.join(outputDir, ".claude");
+  let hasNonProjectMcpServers = false;
 
   // 1. Handle Global Context (AGENTS.md)
   const globalContext = config.context?.global?.trim();
-  if (globalContext) {
-    generateMarkdownFile(path.join(outputDir, "AGENTS.md"), `${globalContext}\n`);
+  const agentsSections: string[] = globalContext ? [globalContext] : [];
+  for (const [ruleName, rule] of Object.entries(config.rules || {}).sort(([a], [b]) =>
+    a.localeCompare(b),
+  )) {
+    const r = rule as any;
+    const content = getAssetText(r, ["content", "prompt"]).trim();
+    if (!content) continue;
+    const scope = r.globs
+      ? `\n\nScope: ${Array.isArray(r.globs) ? r.globs.join(", ") : r.globs}`
+      : "";
+    agentsSections.push(`## Rule: ${ruleName}${scope}\n\n${content}`);
+  }
+  if (agentsSections.length > 0) {
+    generateMarkdownFile(
+      path.join(outputDir, "AGENTS.md"),
+      agentsSections.join("\n\n"),
+    );
   }
 
   // 2. Handle System Prompt (CLAUDE.md)
@@ -300,10 +316,6 @@ export async function generate(config: any, outputDir: string): Promise<void> {
   // 7. Handle MCP Servers (Native .mcp.json)
   // Supports scope: 'local' | 'project' | 'user'
   if (config.mcp?.servers && Object.keys(config.mcp.servers).length > 0) {
-    const mcpConfig: any = {
-      mcpServers: {},
-    };
-
     // Separate servers by scope
     const projectServers: Record<string, any> = {};
     const userServers: Record<string, any> = {};
@@ -341,14 +353,16 @@ export async function generate(config: any, outputDir: string): Promise<void> {
     // They could be written to ~/.claude.json or tools/claude/settings.json
     // For now, we include them in settings.json merge if tools.claude exists
     if (Object.keys(userServers).length > 0 || Object.keys(localServers).length > 0) {
-      // Store for potential use in settings.json
-      (config as any)._userMcpServers = userServers;
-      (config as any)._localMcpServers = localServers;
+      hasNonProjectMcpServers = true;
     }
   }
 
   // 8. Handle Settings & Hooks (.claude/settings.json)
-  let settings = config.tools?.claude || {};
+  const settings = deepMerge({}, config.tools?.claude || {});
+  if (hasNonProjectMcpServers) {
+    settings["_mcpServersNote"] =
+      "User/Local scope MCP servers should be configured via 'claude mcp add --scope user/local'";
+  }
 
   // Process hooks with enhanced structure support
   if (config.hooks && Object.keys(config.hooks).length > 0) {
@@ -415,19 +429,6 @@ export async function generate(config: any, outputDir: string): Promise<void> {
   }
 
   // Handle MCP servers with user/local scope (from step 7)
-  const userMcpServers = (config as any)._userMcpServers;
-  const localMcpServers = (config as any)._localMcpServers;
-
-  if (
-    (userMcpServers && Object.keys(userMcpServers).length > 0) ||
-    (localMcpServers && Object.keys(localMcpServers).length > 0)
-  ) {
-    // These would typically go in ~/.claude.json, but we can include them
-    // in settings.json for documentation purposes or future use
-    settings["_mcpServersNote"] =
-      "User/Local scope MCP servers should be configured via 'claude mcp add --scope user/local'";
-  }
-
   if (Object.keys(settings).length > 0) {
     ensureDir(claudeDir);
     generateJsonFile(path.join(claudeDir, "settings.json"), settings);

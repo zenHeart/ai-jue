@@ -6,6 +6,8 @@ import { generate as generateClaude } from '../../ai-jue-adapter-claude/src/inde
 import { generate as generateCursor } from '../../ai-jue-adapter-cursor/src/index';
 import { generate as generateGemini } from '../../ai-jue-adapter-gemini/src/index';
 import { generate as generateCopilot } from '../../ai-jue-adapter-copilot/src/index';
+import { generate as generateCodex } from '../../ai-jue-adapter-codex/src/index';
+import { parse as parseToml } from '@iarna/toml';
 
 const TEST_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-matrix-'));
 
@@ -72,6 +74,7 @@ describe('adapter contract matrix', () => {
         },
       },
       tools: {
+        codex: { approval_policy: 'on-request' },
         claude: { permissions: { allow: ['Read'] } },
         cursor: { temperature: 0.3 },
         gemini: { temperature: 0.2 },
@@ -83,11 +86,12 @@ describe('adapter contract matrix', () => {
     };
 
     await Promise.all([
-      generateClaude(config, TEST_DIR),
       generateCursor(config, TEST_DIR),
       generateGemini(config, TEST_DIR),
       generateCopilot(config, TEST_DIR),
     ]);
+    await generateCodex(config, TEST_DIR);
+    await generateClaude(config, TEST_DIR);
 
     const claude = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
     const agentsMd = fs.readFileSync(path.join(TEST_DIR, 'AGENTS.md'), 'utf8');
@@ -149,8 +153,35 @@ describe('adapter contract matrix', () => {
     );
 
     const claudeRule = fs.readFileSync(path.join(TEST_DIR, '.claude', 'rules', 'style.md'), 'utf8');
+    const codexSkill = fs.readFileSync(
+      path.join(TEST_DIR, '.agents', 'skills', 'review', 'SKILL.md'),
+      'utf8',
+    );
+    const codexCommand = fs.readFileSync(
+      path.join(TEST_DIR, '.agents', 'skills', 'test', 'SKILL.md'),
+      'utf8',
+    );
+    const codexAgent = parseToml(
+      fs.readFileSync(path.join(TEST_DIR, '.codex', 'agents', 'reviewer.toml'), 'utf8'),
+    ) as any;
+    const codexConfig = parseToml(
+      fs.readFileSync(path.join(TEST_DIR, '.codex', 'config.toml'), 'utf8'),
+    ) as any;
+    const codexHooks = JSON.parse(
+      fs.readFileSync(path.join(TEST_DIR, '.codex', 'hooks.json'), 'utf8'),
+    );
 
     expect(claude).toContain('@AGENTS.md');
+    expect(agentsMd).toContain('## Rule: style');
+    expect(codexSkill).toContain('Review skill');
+    expect(codexCommand).toContain('Run test suite');
+    expect(codexAgent.developer_instructions).toBe('Review changes');
+    expect(codexConfig.approval_policy).toBe('on-request');
+    expect(codexConfig.mcp_servers.sqlite.command).toBe('uvx');
+    expect(codexHooks.hooks.PostToolUse[0].matcher).toBe('Edit|Write');
+    expect(codexHooks.hooks.PostToolUse[0].hooks[0].command).toBe('npm test');
+    expect(codexHooks.hooks.PostToolUse[0].hooks[0].timeout).toBe(30);
+    expect(codexHooks.hooks.PostToolUse[0].hooks[0].async).toBeUndefined();
     expect(claudeRule).toContain('Use strict typing');
     expect(claudeRule).toContain('paths:');
     expect(claudeRule).toContain('auto-apply: true');

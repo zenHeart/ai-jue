@@ -39,10 +39,16 @@ export const builder: CommandBuilder = (yargs) => {
       type: "boolean",
       description: t("commands.apply.all_describe"),
       default: false,
+    })
+    .option("frozen", {
+      type: "boolean",
+      description: "Require immutable Capability Source references",
+      default: false,
     });
 };
 
 const ADAPTER_ALIAS_MAP: Record<string, string> = {
+  codex: "ai-jue-adapter-codex",
   claude: "ai-jue-adapter-claude",
   "claude-code": "ai-jue-adapter-claude",
   cursor: "ai-jue-adapter-cursor",
@@ -52,6 +58,11 @@ const ADAPTER_ALIAS_MAP: Record<string, string> = {
 const KNOWN_ADAPTERS = [...new Set(Object.values(ADAPTER_ALIAS_MAP))];
 
 const ADAPTER_INDICATORS: Record<string, string[]> = {
+  "ai-jue-adapter-codex": [
+    "AGENTS.md",
+    ".agents/skills",
+    ".codex",
+  ],
   "ai-jue-adapter-cursor": [
     ".cursor",
   ],
@@ -69,6 +80,10 @@ const ADAPTER_INDICATORS: Record<string, string[]> = {
     ".github/copilot-settings.json",
   ],
 };
+
+export function resolveAdapterAlias(name: string): string {
+  return ADAPTER_ALIAS_MAP[name.toLowerCase()] || name;
+}
 const CONFIG_SEARCH_PATHS = [
   "ai.config.js",
   "ai.config.cjs",
@@ -84,13 +99,13 @@ const CONFIG_SEARCH_PATHS = [
   ".juerc.json",
 ];
 
-function parseRequestedAdapters(raw: unknown): string[] {
+export function parseRequestedAdapters(raw: unknown): string[] {
   const list = Array.isArray(raw) ? raw : typeof raw === "string" ? [raw] : [];
   const expanded = list
     .flatMap((item) => String(item).split(","))
     .map((item) => item.trim())
     .filter(Boolean)
-    .map((item) => ADAPTER_ALIAS_MAP[item.toLowerCase()] || item);
+    .map((item) => resolveAdapterAlias(item));
   return [...new Set(expanded)];
 }
 
@@ -134,9 +149,14 @@ function parseManualSelection(
         return discoveredAdapters[idx];
       }
       const normalized = token.toLowerCase();
+      const aliased = resolveAdapterAlias(normalized);
       return (
-        ADAPTER_ALIAS_MAP[normalized] ||
-        discoveredAdapters.find((name) => name === token || toAdapterShortName(name) === normalized)
+        aliased !== normalized
+          ? aliased
+          : discoveredAdapters.find(
+              (name) =>
+                name === token || toAdapterShortName(name) === normalized,
+            )
       );
     })
     .filter((item): item is string => Boolean(item));
@@ -599,7 +619,9 @@ export const handler = async (argv: Arguments) => {
       }
       logger.debug(pc.dim(t("commands.apply.loaded_config")));
 
-      const finalConfig = await resolveFinalConfig(config);
+      const finalConfig = await resolveFinalConfig(config, {
+        frozen: Boolean((argv as Arguments<{ frozen?: boolean }>).frozen),
+      });
 
       await runAdapters(finalConfig, process.cwd(), applyOptions);
 

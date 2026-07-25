@@ -56,6 +56,10 @@ export default withMermaid(
                 { text: "与脚手架集成", link: "/guide/integration" },
               ],
             },
+            {
+              text: "参考",
+              items: [{ text: "术语表", link: "/guide/glossary" }],
+            },
           ],
         },
       },
@@ -98,6 +102,10 @@ export default withMermaid(
                 },
                 { text: "Integration Guide", link: "/en/guide/integration" },
               ],
+            },
+            {
+              text: "Reference",
+              items: [{ text: "Glossary", link: "/en/guide/glossary" }],
             },
           ],
         },

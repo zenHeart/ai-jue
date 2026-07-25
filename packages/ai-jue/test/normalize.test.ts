@@ -37,6 +37,14 @@ describe('normalizeConfig', () => {
           skills: ['review-skill'],
         },
       },
+      prompts: {
+        gemini: {
+          prompt: 'Gemini-only prompt body',
+        },
+        claude: {
+          content: 'Claude-only prompt body',
+        },
+      },
     } as any);
 
     expect(normalized.rules?.style?.content).toBe('Use strict typing');
@@ -59,5 +67,9 @@ describe('normalizeConfig', () => {
     expect(normalized.agents?.reviewer?.content).toBe('Review prompt');
     expect(normalized.agents?.reviewer?.skills).toEqual(['review-skill']);
     expect(normalized.context?.global).toBe('');
+    expect(normalized.prompts?.gemini?.content).toBe('Gemini-only prompt body');
+    expect(normalized.prompts?.gemini?.prompt).toBe('Gemini-only prompt body');
+    expect(normalized.prompts?.claude?.prompt).toBe('Claude-only prompt body');
+    expect(normalized.prompts?.claude?.content).toBe('Claude-only prompt body');
   });
 });

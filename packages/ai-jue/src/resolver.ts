@@ -1,10 +1,15 @@
 import { ConfigSchema, MergedConfig } from './config';
-import { loadPreset, loadAssetsFromDir } from './preset';
+import { loadPresetWithLock, loadAssetsFromDir } from './preset';
 import path from 'path';
 import fs from 'fs';
 import { normalizeConfig } from './normalize';
 import { mergeConfigWithLayeredContext } from './merge';
 import { stripManagedBlock } from 'ai-jue-core';
+import {
+  loadCapabilityRefs,
+  mergeCapabilityLocks,
+  CapabilitySourceOptions,
+} from './capability-source';
 
 /**
  * Loads external asset files defined in the 'extends' property of ai.config.js.
@@ -47,8 +52,12 @@ async function loadExtendedAssets(extendsConfig: { [key: string]: string | strin
  * @param userConfig - The initial configuration loaded from ai.config.js
  * @returns The fully resolved and layered configuration
  */
-export async function resolveFinalConfig(userConfig: MergedConfig): Promise<MergedConfig> {
+export async function resolveFinalConfig(
+  userConfig: MergedConfig,
+  sourceOptions: CapabilitySourceOptions = {},
+): Promise<MergedConfig> {
     let finalConfig: MergedConfig = { };
+    const locks = [];
 
     let presets: string[] = [];
     if (userConfig.presets && Array.isArray(userConfig.presets)) {
@@ -66,8 +75,13 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
 
     if (presets.length > 0) {
       for (const presetName of presets) {
-         const presetConfig = await loadPreset(presetName, userConfig.language);
-         finalConfig = mergeConfigWithLayeredContext(finalConfig, presetConfig);
+         const preset = await loadPresetWithLock(
+           presetName,
+           userConfig.language,
+           sourceOptions,
+         );
+         finalConfig = mergeConfigWithLayeredContext(finalConfig, preset.config);
+         locks.push(preset.lock);
       }
     }
 
@@ -101,7 +115,38 @@ export async function resolveFinalConfig(userConfig: MergedConfig): Promise<Merg
       finalConfig = mergeConfigWithLayeredContext(finalConfig, extendedAssets);
     }
 
-    finalConfig = mergeConfigWithLayeredContext(finalConfig, userConfig);
+    const rootCapabilities = await loadCapabilityRefs(
+      userConfig.capabilities,
+      process.cwd(),
+      userConfig.language,
+      sourceOptions,
+    );
+    finalConfig = mergeConfigWithLayeredContext(
+      finalConfig,
+      rootCapabilities.config,
+    );
+    locks.push(rootCapabilities.lock);
+
+    const { capabilities: _capabilities, ...canonicalUserConfig } = userConfig;
+    finalConfig = mergeConfigWithLayeredContext(
+      finalConfig,
+      canonicalUserConfig as MergedConfig,
+    );
     const normalized = normalizeConfig(finalConfig);
-    return ConfigSchema.parse(normalized);
+    const parsed = ConfigSchema.parse(normalized);
+    const lock = mergeCapabilityLocks(...locks);
+    const lockPath = path.join(process.cwd(), 'ai-jue.lock');
+    if (Object.keys(lock.capabilities).length > 0) {
+      await fs.promises.writeFile(
+        lockPath,
+        `${JSON.stringify(lock, null, 2)}\n`,
+        'utf8',
+      );
+    } else if (fs.existsSync(lockPath)) {
+      // No ai.capabilities were resolved this run. Leaving a previous run's
+      // lock in place would let readers (e.g. `jue capability update`)
+      // mistake it for evidence that something was just resolved.
+      await fs.promises.unlink(lockPath);
+    }
+    return parsed;
 }

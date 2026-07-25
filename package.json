@@ -14,7 +14,7 @@
     "check-consistency": "node scripts/check-consistency.js",
     "check-base-i18n": "node scripts/check-base-i18n.js",
     "smoke-apply": "node scripts/smoke-apply.js",
-    "smoke:ai-assets": "node scripts/smoke-ai-assets.js",
+    "smoke:preset-local": "node scripts/smoke-local-preset.js",
     "release-gate:v1.1": "node scripts/release-gate-v1.1.js",
     "prerelease": "npm run release-gate:v1.1",
     "setup": "npm install && npm dedupe",
@@ -29,6 +29,7 @@
     "packages/*"
   ],
   "devDependencies": {
+    "@iarna/toml": "^2.2.5",
     "@types/node": "^25.0.10",
     "conventional-changelog-cli": "^5.0.0",
     "enquirer": "^2.4.1",

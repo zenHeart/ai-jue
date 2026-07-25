@@ -151,6 +151,7 @@ export default {
 - `agents`：代理定义
 - `mcp`：MCP 服务定义
 - `tools`：工具私有配置透传
+- `capabilities`：Capability Source 引用（见 4.4）
 
 ### 4.1 当前实现中的统一结构约束
 
@@ -158,11 +159,11 @@ export default {
 - `commands`：adapter 最终以 `prompt` 作为正文；当前实现兼容 `content -> prompt`
 - `skills`：`prompt/content` 会在 normalize 后保持镜像
 - `agents`：`prompt/content` 会在 normalize 后保持镜像
+- `prompts`：`prompt/content` 会在 normalize 后保持镜像，与 `skills`/`agents` 一致
 - `hooks`：当前实现接受 `string | object | array`
 
 ### 4.2 当前待收口项
 
-- `prompts` 目前 schema 允许 `content` 与 `prompt`，但并非所有 adapter 都统一消费两种形状
 - `commands` 当前 schema 允许缺失 `prompt/content`，但 adapter 实际不会生成无正文命令
 - `hooks` 的 array 形状目前更接近工具原生输入，还不是稳定的跨 adapter 交集
 
@@ -170,6 +171,33 @@ export default {
 
 - `tools/<tool>/config.json` 是当前 loader 正式读取的工具目录配置入口
 - `hooks/` 目录当前更适合承载脚本型 hook；结构化 hooks 的正式目录协议仍待收口
+
+### 4.4 `capabilities`（Capability Source）
+
+`capabilities` 是 `presets` 的兄弟字段，**同放在 `ai` 命名空间下**——既可以写在项目根 `ai.config.js`
+（或其 `package.json` → `ai`），也可以写在某个 Preset 自己的 `package.json` → `ai`。它解决的问题是
+"引用单条 Capability 并入当前清单的能力集"，而不是像 `presets` 那样引用整包。
+
+首要用途不是拉第三方内容，而是**同仓多个 Preset 共用一份本地 Capability 时去重**：
+
+```js
+export default {
+  presets: [],
+  capabilities: {
+    'shared-review': {
+      source: 'file:./capabilities/skills/shared-review',
+      converter: 'agent-skill',
+    },
+  },
+}
+```
+
+`skill` / `agent` / `command` 默认应直接放进其唯一所属清单自己的目录（零配置），只有被 2 个以上清单
+共用，或内容来自第三方（`github:` / `npm:`），才需要这个字段。完整设计见
+[Capability Source 规格](../specs/capability-source.md)。
+
+**当前状态：`ConfigSchema` 已接受 `capabilities` 字段，解析后的 Source 会在 Adapter 前转换为
+Canonical；无效引用会显式失败。**
 
 ## 5. 非规范输入策略
 

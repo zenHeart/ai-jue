@@ -187,4 +187,89 @@ Create adapter docs first, then implementation.`,
       process.chdir(originalCwd);
     }
   });
+
+  it('merges nested Presets and file: Capability refs before self assets', async () => {
+    const projectDir = makeTempDir();
+    const sharedSkill = path.join(projectDir, 'shared', 'neutral-skill');
+    fs.mkdirSync(sharedSkill, { recursive: true });
+    fs.writeFileSync(
+      path.join(sharedSkill, 'SKILL.md'),
+      '---\ndescription: Shared neutral skill\n---\nShared body',
+    );
+
+    const nodeModules = path.join(projectDir, 'node_modules');
+    const dependency = path.join(nodeModules, 'jue-preset-dependency');
+    const parent = path.join(nodeModules, 'jue-preset-parent');
+    fs.mkdirSync(dependency, { recursive: true });
+    fs.mkdirSync(parent, { recursive: true });
+    fs.writeFileSync(
+      path.join(dependency, 'package.json'),
+      JSON.stringify({
+        name: 'jue-preset-dependency',
+        ai: {
+          capabilities: {
+            'neutral-skill': {
+              source: 'file:../../shared/neutral-skill',
+              converter: 'agent-skill',
+            },
+          },
+        },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(parent, 'package.json'),
+      JSON.stringify({
+        name: 'jue-preset-parent',
+        ai: { presets: ['dependency'] },
+      }),
+    );
+    const parentSkill = path.join(parent, 'skills', 'neutral-skill');
+    fs.mkdirSync(parentSkill, { recursive: true });
+    fs.writeFileSync(
+      path.join(parentSkill, 'SKILL.md'),
+      '---\ndescription: Parent override\n---\nParent body',
+    );
+
+    const originalCwd = process.cwd();
+    process.chdir(projectDir);
+    try {
+      const config = await loadPreset('parent', 'en', {
+        cacheDir: path.join(projectDir, 'cache'),
+      });
+      expect(config.skills?.['neutral-skill']?.description).toBe(
+        'Parent override',
+      );
+      expect(config.skills?.['neutral-skill']?.content).toContain('Parent body');
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
+
+  it('fails explicitly on recursive Preset cycles', async () => {
+    const projectDir = makeTempDir();
+    const nodeModules = path.join(projectDir, 'node_modules');
+    for (const [name, dependency] of [
+      ['one', 'two'],
+      ['two', 'one'],
+    ]) {
+      const packageDir = path.join(nodeModules, `jue-preset-${name}`);
+      fs.mkdirSync(packageDir, { recursive: true });
+      fs.writeFileSync(
+        path.join(packageDir, 'package.json'),
+        JSON.stringify({
+          name: `jue-preset-${name}`,
+          ai: { presets: [dependency] },
+        }),
+      );
+    }
+    const originalCwd = process.cwd();
+    process.chdir(projectDir);
+    try {
+      await expect(loadPreset('one')).rejects.toThrow(
+        'Preset dependency cycle detected',
+      );
+    } finally {
+      process.chdir(originalCwd);
+    }
+  });
 });

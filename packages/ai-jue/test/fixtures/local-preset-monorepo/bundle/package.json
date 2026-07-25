@@ -1,0 +1,13 @@
+{
+  "name": "jue-preset-neutral-bundle",
+  "version": "1.0.0",
+  "private": true,
+  "files": ["AGENTS.md", "mcp.json", "package.json"],
+  "dependencies": {
+    "jue-preset-neutral-foundation": "1.0.0"
+  },
+  "ai": {
+    "presets": ["neutral-foundation"],
+    "capabilities": {}
+  }
+}

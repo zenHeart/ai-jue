@@ -92,6 +92,15 @@ const ContextSchema = z.object({
   global: z.string().optional(),
 }).passthrough();
 
+const CapabilityRefSchema = z.object({
+  source: z.string().regex(/^(file|npm|github):.+/),
+  converter: z.enum(['agent-skill', 'mcp', 'jue-native']),
+  ref: z.string().optional(),
+  path: z.string().optional(),
+  config: z.record(z.string(), z.unknown()).optional(),
+  status: z.never().optional(),
+}).strict();
+
 const ConfigSchema = z
   .object({
     preset: z.string().optional(),
@@ -113,6 +122,7 @@ const ConfigSchema = z
     hooks: z.record(z.string(), HookSchema).optional(),
     agents: z.record(z.string(), AgentSchema).optional(),
     tools: z.record(z.string(), z.any()).optional(),
+    capabilities: z.record(z.string(), CapabilityRefSchema).optional(),
     // Allow other properties for flexibility, but validate core ones
   })
   .passthrough()
@@ -131,6 +141,7 @@ const ConfigSchema = z
       'hooks',
       'agents',
       'tools',
+      'capabilities',
     ]);
 
     for (const key of Object.keys(config)) {
@@ -164,6 +175,7 @@ const ConfigSchema = z
 export type MergedConfig = z.infer<typeof ConfigSchema> & { [key: string]: any };
 export {
   AgentSchema,
+  CapabilityRefSchema,
   CommandSchema,
   ConfigSchema,
   ContextSchema,

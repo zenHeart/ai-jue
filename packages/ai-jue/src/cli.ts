@@ -43,6 +43,12 @@ import {
   describe as formatDescribe,
   command as formatCommandStr,
 } from "./commands/format";
+import {
+  handler as capabilityHandler,
+  builder as capabilityBuilder,
+  describe as capabilityDescribe,
+  command as capabilityCommandStr,
+} from "./commands/capability";
 import { logger, LogLevel } from "./logger";
 import { initI18n, t } from "./i18n";
 import { loadConfig } from "./config";
@@ -134,6 +140,14 @@ async function main() {
       t("commands.format.describe", { defaultValue: "Migrate AI tool configs to .ai directory" }),
       formatBuilder as any,
       formatHandler,
+    )
+    .command(
+      capabilityCommandStr,
+      t("commands.capability.describe", {
+        defaultValue: "Manage ai.capabilities Capability Source references",
+      }),
+      capabilityBuilder as any,
+      capabilityHandler,
     )
     .demandCommand(
       1,

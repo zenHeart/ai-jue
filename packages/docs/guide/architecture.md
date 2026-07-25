@@ -68,6 +68,22 @@
 这也是 `jue format` 存在的原因：  
 它不是附属功能，而是“降低用户迁移成本”的核心一环。
 
+**约束（可验证协议，不是叙事）**：`jue format` 的输出目录/文件形状必须与
+[jue-mvp.md §4 Preset 目录契约](../specs/jue-mvp.md)定义的 Preset /
+`.ai` 目录协议完全一致。任何不一致都是**协议缺陷**，不是"待补功能"，
+必须显式记录，不能隐藏在代码里静默降级。第三方 Capability 内容的引入
+（[Capability Source 规格](../specs/capability-source.md)）不改变这个目录协议，
+解析后的产物仍落回同一套 Preset / `.ai` 结构。
+
+当前已知不一致点（记录为待收口事实，不代表默认接受）：
+
+- `hooks`：`jue format` 逆向解析仍以脚本型输入为主，尚未完全落回
+  `hooks/<name>/index.json` 的结构化协议目标形状。
+- `agents`：`agents/<name>/(prompt.md|AGENTS.md)` 的双重命名兼容尚未收敛为
+  单一目标形状，逆向转换时可能产生歧义。
+- `tools.<tool>`：`tools/<tool>/config.json` 是当前 loader 唯一正式读取的
+  入口，但并非所有工具原生配置都能无损映射回这一个文件形状。
+
 ### 0.4 第四原则：保留逃生舱，但不破坏整体简洁
 
 系统默认优先使用统一能力目录和统一字段，减少用户心智负担。
@@ -183,12 +199,11 @@ graph TD
 - `commands`：以 `prompt` 为规范正文，兼容 `content -> prompt`
 - `skills`：`prompt` 与 `content` 在 normalize 后保持镜像
 - `agents`：`prompt` 与 `content` 在 normalize 后保持镜像
+- `prompts`：`prompt` 与 `content` 在 normalize 后保持镜像，与 `skills`/`agents` 一致
 - `hooks`：当前实现会保留 `string | object | array` 三类形状，不在 normalize 阶段压平成字符串
 - `mcp.servers`：保留 `scope/disabled/autoApprove` 等字段，交由适配器决定原生映射或显式降级
 
 当前待收口差异：
-
-- `prompts` 尚未在 normalize 层做 `prompt/content` 镜像统一，不同 adapter 的消费形状仍有差异
 - `commands` 当前 schema 允许缺失 `prompt/content`，但 adapter 实际仍依赖 `prompt`
 - `hooks` 当前 schema 接受 array，但并非所有 adapter 都原生支持同一 array 语义
 

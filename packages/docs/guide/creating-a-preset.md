@@ -68,6 +68,11 @@ jue-preset-myteam/
 - 同名资产冲突时，自身 preset 覆盖依赖 preset
 - 检测到循环依赖时终止递归并给出错误提示
 
+Preset 嵌套是**两种组合机制之一**；另一种是引用第三方 Capability 内容
+（`ai.capabilities`），见
+[Capability Source 规格](../specs/capability-source.md)。除这两种外，不存在
+第三种独立的 Plugin/Capability 包层。
+
 ## 发布
 
 ```bash

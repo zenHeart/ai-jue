@@ -1,0 +1,9 @@
+{
+  "servers": {
+    "neutral": {
+      "command": "node",
+      "args": ["server.js"],
+      "scope": "project"
+    }
+  }
+}

@@ -2,6 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import fs from 'fs';
 import { generate } from '../src/index';
+import { resolveAdapterAlias } from '../../ai-jue/src/commands/apply';
 
 const TEST_DIR = path.join(__dirname, 'temp_output');
 
@@ -35,6 +36,11 @@ describe('ai-jue-adapter-claude', () => {
     const claudeMdPath = path.join(TEST_DIR, 'CLAUDE.md');
     expect(fs.existsSync(claudeMdPath)).toBe(true);
     expect(fs.readFileSync(claudeMdPath, 'utf8')).toContain('@AGENTS.md');
+  });
+
+  it('supports both Claude Code CLI aliases', () => {
+    expect(resolveAdapterAlias('claude')).toBe('ai-jue-adapter-claude');
+    expect(resolveAdapterAlias('claude-code')).toBe('ai-jue-adapter-claude');
   });
 
   it('should generate native rules in .claude/rules/', async () => {
@@ -239,5 +245,79 @@ describe('ai-jue-adapter-claude', () => {
     expect(settings.hooks.PostToolUse).toBeDefined();
     expect(settings.hooks.PostToolUse[0].matcher).toBe('Write|Edit');
     expect(settings.hooks.PostToolUse[0].hooks[0].async).toBe(true);
+  });
+
+  it('preserves nested UTF-8/base64 files, user context, and deterministic output', async () => {
+    fs.writeFileSync(path.join(TEST_DIR, 'AGENTS.md'), '# User notes\n');
+    fs.writeFileSync(path.join(TEST_DIR, 'CLAUDE.md'), '# Claude user notes\n');
+    const config = {
+      context: { global: 'Managed context' },
+      skills: {
+        review: {
+          prompt: 'Review',
+          references: { 'nested/说明.md': 'UTF-8 reference' },
+          assets: {
+            'fixtures/sample.bin': {
+              content: Buffer.from([0, 255, 128]).toString('base64'),
+              encoding: 'base64',
+            },
+          },
+        },
+      },
+    };
+
+    await generate(config, TEST_DIR);
+    const first = fs.readFileSync(path.join(TEST_DIR, 'AGENTS.md'), 'utf8');
+    await generate(config, TEST_DIR);
+    expect(fs.readFileSync(path.join(TEST_DIR, 'AGENTS.md'), 'utf8')).toBe(first);
+    expect(first).toContain('# User notes');
+    expect(first.match(/<!-- AI-JUE:START -->/g)).toHaveLength(1);
+    expect(
+      fs.readFileSync(
+        path.join(TEST_DIR, '.claude', 'skills', 'review', 'references', 'nested', '说明.md'),
+        'utf8',
+      ),
+    ).toBe('UTF-8 reference');
+    expect(
+      fs.readFileSync(
+        path.join(TEST_DIR, '.claude', 'skills', 'review', 'assets', 'fixtures', 'sample.bin'),
+      ),
+    ).toEqual(Buffer.from([0, 255, 128]));
+    expect(fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8')).toContain(
+      '# Claude user notes',
+    );
+  });
+
+  it('rejects support-file traversal', async () => {
+    await expect(
+      generate(
+        {
+          skills: {
+            review: {
+              prompt: 'Review',
+              references: { '../secret.md': 'nope' },
+            },
+          },
+        },
+        TEST_DIR,
+      ),
+    ).rejects.toThrow('must stay inside');
+  });
+
+  it('handles empty optional collections without runtime output', async () => {
+    await generate(
+      {
+        context: {},
+        rules: null,
+        skills: undefined,
+        commands: {},
+        agents: null,
+        mcp: { servers: {} },
+        hooks: {},
+        tools: { claude: {} },
+      },
+      TEST_DIR,
+    );
+    expect(fs.readdirSync(TEST_DIR)).toEqual([]);
   });
 });

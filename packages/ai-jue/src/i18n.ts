@@ -115,6 +115,21 @@ const resources = {
           assets_found: "Assets found in current configuration:",
           no_presets: "No presets active.",
         },
+        capability: {
+          describe: "Manage ai.capabilities Capability Source references",
+          update: {
+            describe:
+              "Re-resolve Capability Source references and rewrite ai-jue.lock (all references, or a single named one)",
+            name_describe: "Name of a single ai.capabilities entry to update",
+            updating_all: "Re-resolving all Capability Source references...",
+            updating_one: "Re-resolving Capability Source \"{{name}}\"...",
+            none: "No ai.capabilities references were found to update.",
+            unknown: "Unknown Capability \"{{name}}\": not found among resolved ai.capabilities references.",
+            success_all: "✨ Updated {{count}} Capability Source reference(s) and rewrote ai-jue.lock.",
+            success_one: "✨ Updated Capability Source \"{{name}}\" and rewrote ai-jue.lock.",
+            failed: "Failed to update Capability Source references: {{message}}",
+          },
+        },
         validate: {
           describe: "Validate ai.config.js and assets",
           validating: "Validating configuration and assets...",
@@ -270,6 +285,20 @@ const resources = {
           active_presets: "当前活跃预设:",
           assets_found: "当前配置中找到的资产:",
           no_presets: "当前无活跃预设。",
+        },
+        capability: {
+          describe: "管理 ai.capabilities 引用",
+          update: {
+            describe: "重新解析 Capability Source 引用并重写 ai-jue.lock（可只更新单个引用）",
+            name_describe: "要更新的单个 ai.capabilities 引用名称",
+            updating_all: "正在重新解析全部 Capability Source 引用...",
+            updating_one: "正在重新解析 Capability Source \"{{name}}\"...",
+            none: "未找到任何 ai.capabilities 引用，无需更新。",
+            unknown: "未知 Capability \"{{name}}\"：在已解析的 ai.capabilities 引用中未找到。",
+            success_all: "✨ 已更新 {{count}} 个 Capability Source 引用并重写 ai-jue.lock。",
+            success_one: "✨ 已更新 Capability Source \"{{name}}\" 并重写 ai-jue.lock。",
+            failed: "更新 Capability Source 引用失败: {{message}}",
+          },
         },
         validate: {
           describe: "校验 ai.config.js 和资产的合法性",
