@@ -91,7 +91,7 @@ export async function loadSkillFromDir(
 ): Promise<MergedConfig> {
   const contentPath = findLocalizedFile(skillDir, ['SKILL.md'], userLanguage);
   if (!contentPath) {
-    throw new Error(`agent-skill Capability "${skillName}" is missing SKILL.md`);
+    throw new Error(`skill Capability "${skillName}" is missing SKILL.md`);
   }
   const rawContent = await fs.promises.readFile(contentPath, 'utf8');
   const parsed = parseMarkdownWithFrontmatter(rawContent);
@@ -104,6 +104,91 @@ export async function loadSkillFromDir(
       },
     },
   };
+}
+
+async function loadSingleCapabilityFile(
+  sourceDir: string,
+  fileNames: string[],
+  userLanguage?: string,
+): Promise<FrontmatterResult> {
+  const contentPath = findLocalizedFile(sourceDir, fileNames, userLanguage);
+  if (!contentPath) {
+    throw new Error(`Capability source is missing ${fileNames.join(' or ')}`);
+  }
+  const rawContent = await fs.promises.readFile(contentPath, 'utf8');
+  return parseMarkdownWithFrontmatter(rawContent);
+}
+
+/**
+ * Single-leaf loaders for `capabilities` refs. Unlike `loadAssetsFromDir`
+ * (used for whole Preset/`.ai` directory trees), each of these resolves a
+ * CapabilityRef's source directory to exactly one Canonical Capability, per
+ * the "one CapabilityRef -> one leaf Capability" invariant.
+ */
+export async function loadRuleFromDir(
+  ruleName: string,
+  sourceDir: string,
+  userLanguage?: string,
+): Promise<MergedConfig> {
+  const parsed = await loadSingleCapabilityFile(sourceDir, ['prompt.md', 'AGENTS.md'], userLanguage);
+  return {
+    rules: {
+      [ruleName]: { ...parsed.attributes, content: parsed.content, prompt: parsed.content },
+    },
+  };
+}
+
+export async function loadCommandFromDir(
+  commandName: string,
+  sourceDir: string,
+  userLanguage?: string,
+): Promise<MergedConfig> {
+  const parsed = await loadSingleCapabilityFile(sourceDir, ['prompt.md'], userLanguage);
+  return {
+    commands: {
+      [commandName]: { ...parsed.attributes, content: parsed.content, prompt: parsed.content },
+    },
+  };
+}
+
+export async function loadAgentFromDir(
+  agentName: string,
+  sourceDir: string,
+  userLanguage?: string,
+): Promise<MergedConfig> {
+  const meta = await readJsonIfExists(path.join(sourceDir, 'index.json'));
+  const parsed = await loadSingleCapabilityFile(sourceDir, ['prompt.md', 'AGENTS.md'], userLanguage);
+  return {
+    agents: {
+      [agentName]: {
+        ...meta,
+        ...parsed.attributes,
+        content: parsed.content,
+        prompt: parsed.content,
+      },
+    },
+  };
+}
+
+export async function loadHookFromDir(
+  hookName: string,
+  sourceDir: string,
+  userLanguage?: string,
+): Promise<MergedConfig> {
+  const meta = await readJsonIfExists(path.join(sourceDir, 'index.json'));
+  const promptPath = findLocalizedFile(sourceDir, ['prompt.md'], userLanguage);
+  if (promptPath) {
+    const script = (await fs.promises.readFile(promptPath, 'utf8')).trim();
+    return {
+      hooks: {
+        [hookName]: Object.keys(meta).length > 0 ? { ...meta, script } : script,
+      },
+    };
+  }
+  if (typeof meta.script === 'string' && meta.script.trim()) {
+    return { hooks: { [hookName]: meta } };
+  }
+  throw new Error(`hook Capability "${hookName}" is missing prompt.md or a script in index.json`);
 }
 
 // Replaced parseSimpleYamlFrontmatter with a robust YAML parser using js-yaml

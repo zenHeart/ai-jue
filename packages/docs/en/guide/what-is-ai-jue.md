@@ -5,7 +5,7 @@ Jue is an AI capability standardization and Agent adaptation layer.
 It organizes `skills`, `agents`, `commands`, `rules`, `hooks`, and MCP
 configuration scattered across different tools into one stable, general
 capability model, then converts it via Adapters into the native format of
-target Agents such as Claude, Cursor, Gemini, and Copilot.
+target Agents such as Claude, Cursor, and Codex.
 
 ## The Capability → Preset → Adapter model
 
@@ -33,5 +33,5 @@ in the `tools.<tool>` escape hatch.
 
 See [Jue MVP: AI Capability Standard and Agent Adaptation](../specs/jue-mvp.md)
 for the full MVP definition and acceptance boundary, and the
-[Glossary](glossary.md) for one-line definitions of every term with links to
+[Glossary](../reference/glossary.md) for one-line definitions of every term with links to
 their authoritative specs.

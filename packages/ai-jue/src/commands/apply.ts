@@ -12,6 +12,11 @@ import { createInterface } from "readline/promises";
 import { logger } from "../logger";
 import { t } from "../i18n";
 import { runInitFlow } from "./init";
+import {
+  isCoreCapableAdapter,
+  runCoreAdapter,
+  RunCoreAdapterOptions,
+} from "../core-apply";
 
 export const command = "apply";
 export const describe = ""; // Managed in cli.ts for dynamic translation
@@ -44,6 +49,16 @@ export const builder: CommandBuilder = (yargs) => {
       type: "boolean",
       description: "Require immutable Capability Source references",
       default: false,
+    })
+    .option("dry-run", {
+      type: "boolean",
+      description: t("commands.apply.dry_run_describe"),
+      default: false,
+    })
+    .option("check", {
+      type: "boolean",
+      description: t("commands.apply.check_describe"),
+      default: false,
     });
 };
 
@@ -52,8 +67,8 @@ const ADAPTER_ALIAS_MAP: Record<string, string> = {
   claude: "ai-jue-adapter-claude",
   "claude-code": "ai-jue-adapter-claude",
   cursor: "ai-jue-adapter-cursor",
-  gemini: "ai-jue-adapter-gemini",
-  copilot: "ai-jue-adapter-copilot",
+  openclaw: "ai-jue-adapter-openclaw",
+  hermes: "ai-jue-adapter-hermes",
 };
 const KNOWN_ADAPTERS = [...new Set(Object.values(ADAPTER_ALIAS_MAP))];
 
@@ -66,18 +81,15 @@ const ADAPTER_INDICATORS: Record<string, string[]> = {
   "ai-jue-adapter-cursor": [
     ".cursor",
   ],
-  "ai-jue-adapter-gemini": [
-    ".gemini",
-    ".gemini/settings.json",
-    "GEMINI.md",
-  ],
   "ai-jue-adapter-claude": [
     ".claude",
     "CLAUDE.md",
   ],
-  "ai-jue-adapter-copilot": [
-    ".github/copilot-instructions.md",
-    ".github/copilot-settings.json",
+  "ai-jue-adapter-openclaw": [
+    "openclaw.json",
+  ],
+  "ai-jue-adapter-hermes": [
+    "config.yaml",
   ],
 };
 
@@ -378,6 +390,7 @@ async function runSingleAdapter(
   adapterName: string,
   config: MergedConfig,
   outputDir: string,
+  coreOptions: RunCoreAdapterOptions = {},
 ): Promise<void> {
   const adapterSpinner = ora(
     t("commands.apply.running_adapter", { name: adapterName }),
@@ -387,6 +400,19 @@ async function runSingleAdapter(
       paths: [process.cwd(), __dirname],
     });
     const adapter = require(adapterPath);
+    if (isCoreCapableAdapter(adapter)) {
+      adapterSpinner.stop();
+      await runCoreAdapter(adapterName, adapter, config, outputDir, coreOptions);
+      return;
+    }
+    if (coreOptions.dryRun || coreOptions.check) {
+      adapterSpinner.warn(
+        pc.yellow(
+          t("commands.apply.core_unsupported", { name: adapterName }),
+        ),
+      );
+      return;
+    }
     if (adapter.generate && typeof adapter.generate === "function") {
       await adapter.generate(config, outputDir);
       adapterSpinner.succeed(
@@ -416,6 +442,7 @@ async function runAdapterList(
   adapterNames: string[],
   config: MergedConfig,
   outputDir: string,
+  coreOptions: RunCoreAdapterOptions = {},
 ): Promise<void> {
   const readyAdapters = await ensureAdaptersInstalled(adapterNames);
   if (readyAdapters.length === 0) {
@@ -424,15 +451,16 @@ async function runAdapterList(
     return;
   }
   for (const adapterName of readyAdapters) {
-    await runSingleAdapter(adapterName, config, outputDir);
+    await runSingleAdapter(adapterName, config, outputDir, coreOptions);
   }
 }
 
 async function runAdapters(
   config: MergedConfig,
   outputDir: string,
-  options: { all: boolean; requestedAdapters: string[] },
+  options: RunCoreAdapterOptions & { all: boolean; requestedAdapters: string[] },
 ) {
+  const coreOptions: RunCoreAdapterOptions = { dryRun: options.dryRun, check: options.check };
   const spinner = ora(t("commands.apply.finding_adapters")).start();
   const discoveredAdapters = await findAdapters();
   const availableAdapters = discoverAvailableAdapters(discoveredAdapters);
@@ -450,7 +478,7 @@ async function runAdapters(
             }),
           ),
         );
-        await runAdapterList(footprintDetected, config, outputDir);
+        await runAdapterList(footprintDetected, config, outputDir, coreOptions);
         return;
       }
       const manualSelected = await promptManualAdapterSelection(KNOWN_ADAPTERS);
@@ -466,17 +494,17 @@ async function runAdapters(
           }),
         ),
       );
-      await runAdapterList(manualSelected, config, outputDir);
+      await runAdapterList(manualSelected, config, outputDir, coreOptions);
       return;
     }
 
     if (options.requestedAdapters.length > 0) {
-      await runAdapterList(options.requestedAdapters, config, outputDir);
+      await runAdapterList(options.requestedAdapters, config, outputDir, coreOptions);
       return;
     }
 
     if (options.all) {
-      await runAdapterList(KNOWN_ADAPTERS, config, outputDir);
+      await runAdapterList(KNOWN_ADAPTERS, config, outputDir, coreOptions);
       return;
     }
 
@@ -561,7 +589,7 @@ async function runAdapters(
   );
 
   for (const adapterName of runnableAdapters) {
-    await runSingleAdapter(adapterName, config, outputDir);
+    await runSingleAdapter(adapterName, config, outputDir, coreOptions);
   }
 }
 
@@ -583,6 +611,8 @@ export const handler = async (argv: Arguments) => {
   const applyOptions = {
     all: Boolean((argv as Arguments<{ all?: boolean }>).all),
     requestedAdapters: mergedRequestedAdapters,
+    dryRun: Boolean((argv as Arguments<{ "dry-run"?: boolean }>)["dry-run"]),
+    check: Boolean((argv as Arguments<{ check?: boolean }>).check),
   };
 
   const runApply = async () => {

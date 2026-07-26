@@ -23,7 +23,7 @@ describe('resolveFinalConfig Capability Source integration', () => {
           capabilities: {
             'neutral-skill': {
               source: 'file:./vendor/neutral-skill',
-              converter: 'agent-skill',
+              type: 'skill',
             },
           },
         },
@@ -62,7 +62,7 @@ describe('resolveFinalConfig Capability Source integration', () => {
           capabilities: {
             'neutral-skill': {
               source: 'file:./vendor/neutral-skill',
-              converter: 'agent-skill',
+              type: 'skill',
             },
           },
         },

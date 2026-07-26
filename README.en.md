@@ -10,7 +10,7 @@
 
 [English](README.en.md) | [简体中文](README.md)
 
-Standardize project AI capabilities (Prompts, Skills, MCP Servers), automatically adapting to Claude Code / Cursor / Gemini / Copilot.
+Standardize project AI capabilities (Prompts, Skills, MCP Servers), automatically adapting to Claude Code / Cursor / Codex.
 
 [**📖 Why the name ai-jue (AI 诀)?**](#why-the-name-ai-jue-ai-诀)
 
@@ -38,12 +38,12 @@ npx jue apply --all
 ## Why ai-jue?
 
 1. **Configuration Fragmentation**
-   - **Problem**: Every AI editor has separate config surfaces (`.gemini/`, `CLAUDE.md`, `.cursor/rules/`, etc.). Maintaining them manually across projects is costly.
+   - **Problem**: Every AI editor has separate config surfaces (`.codex/`, `CLAUDE.md`, `.cursor/rules/`, etc.). Maintaining them manually across projects is costly.
    - **Solution**: Use one entry file `ai.config.js`; generate multi-tool configs automatically.
 
 2. **Experience Fragmentation**
    - **Problem**: Valuable prompts/skills/context are often scattered in notes and hard to reuse.
-   - **Solution**: Use `.ai/` as a structured asset workspace. Once mature, package assets into npm presets via `jue create-preset`.
+   - **Solution**: Use `.ai/` as a structured asset workspace. Once mature, package assets through the Preset toolchain.
 
 **Mission**: Make AI development capability standardized, engineered, and reusable - like ESLint for AI collaboration.
 
@@ -62,7 +62,7 @@ npm install -D ai-jue jue-preset-base
 ```javascript
 // ai.config.js
 export default {
-  preset: 'base'
+  presets: ['base']
 }
 ```
 
@@ -72,7 +72,7 @@ export default {
 npx jue apply --all
 ```
 
-On first run in a new project, if no `ai.config.js` / `jue.config.js` (or rc variants) is detected, `jue apply` starts an initialization flow first (similar to `eslint init`), then continues apply.
+On first run in a new project, if no `ai.config.js` is detected, `jue apply` starts initialization and then continues.
 This guided flow does not create an empty `.ai` scaffold by default; `.ai` is created later only for progressive local asset enhancement.
 
 Done! `ai-jue` generates tool files automatically:
@@ -80,8 +80,7 @@ Done! `ai-jue` generates tool files automatically:
 ```
 ✓ CLAUDE.md / .claude/*              — Claude Code
 ✓ AGENTS.md / .cursor/*              — Cursor
-✓ .gemini/settings.json              — Gemini CLI
-✓ .github/copilot-instructions.md    — GitHub Copilot
+✓ AGENTS.md / .codex/*               — Codex CLI
 ```
 
 ---
@@ -144,10 +143,9 @@ Semantics:
 ```javascript
 // ai.config.js
 export default {
-  preset: 'base',
-  extends: {
-    prompts: './prompts/custom-rules.md',
-    skills: ['./skills/deploy.md']
+  presets: ['base'],
+  skills: {
+    deploy: { prompt: 'Deploy this project using its documented release process.' }
   }
 }
 ```
@@ -157,7 +155,7 @@ export default {
 ```javascript
 // ai.config.js
 export default {
-  preset: 'base',
+  presets: ['base'],
   mcp: {
     servers: {
       'my-db': { command: 'npx', args: ['@myteam/mcp-server-db'] }
@@ -184,10 +182,10 @@ npx jue apply --all --watch
 ```
 ai.config.js          →  Load Presets & Merge Config  →  Adapter Plugins Generate Files
 ┌──────────────┐       ┌───────────────────┐    ┌─────────────────────────┐
-│ preset: 'base' │ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md + .claude/* │
+│ presets: ['base']│ → │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md + .claude/* │
 │ mcp: {...}    │      │  (Micro-kernel)    │    │ adapter-cursor → AGENTS.md + .cursor/* │
-│ commands: {}  │      │  Merge & Normalize │    │ adapter-gemini → settings.json  │
-└──────────────┘       └───────────────────┘    │ adapter-copilot→ instructions   │
+│ commands: {}  │      │  Merge & Normalize │    │ adapter-codex  → AGENTS.md + .codex/*  │
+└──────────────┘       └───────────────────┘    └─────────────────────────────────────────┘
                                                 └─────────────────────────────────┘
 ```
 
@@ -195,18 +193,22 @@ ai.config.js          →  Load Presets & Merge Config  →  Adapter Plugins Gen
 
 ## CLI Commands
 
+The target CLI uses one conversion flow. Planned behavior is tracked in
+[Implementation Status](packages/docs/en/developer/implementation-status.md).
+
 ```bash
 npx jue init              # Interactive configuration initialization
-npx jue apply --adapter cursor --adapter gemini --adapter claude  # Apply only selected adapters
+npx jue inspect           # Read-only discovery (Planned)
+npx jue apply --target codex --dry-run # Preview changes (Implemented for Claude/Codex/OpenClaw/Hermes via the Core executor; Cursor not yet wired)
+npx jue apply --target codex # Target contract; currently Partial
 npx jue apply -a          # Apply all discovered adapters (same as --all)
 npx jue apply             # Auto-detect adapters from existing tool footprints
 npx jue apply --lang zh   # Runtime language override (same as AI_JUE_LANG=zh)
 npx jue apply --all --watch  # Watch and re-apply with explicit adapters
-npx jue check             # Check if presets have new versions
-npx jue validate          # Validate configuration legality
-npx jue list              # List all loaded presets and assets
-npx jue format            # Normalize existing tool configs (.cursor/.gemini etc) to .ai/
-npx jue create-preset <n> # Create a new preset project structure
+npx jue apply --target codex --check # CI and native confirmation (Implemented for Claude/Codex/OpenClaw/Hermes; Cursor not yet wired)
+npx jue inspect --extension <pkg> --diagnostics # Deep diagnostics (Implemented, requires --extension; bare inspect without it is still Planned)
+npx jue capability update # Update external external Capability references
+npx jue preset create <n> # Create a Preset project (Planned)
 ```
 
 ---
@@ -214,7 +216,7 @@ npx jue create-preset <n> # Create a new preset project structure
 ## Creating Your Own Preset
 
 ```bash
-npx jue create-preset my-team-preset
+npx jue preset create my-team-preset
 ```
 
 Generated preset structure:
@@ -229,7 +231,7 @@ my-team-preset/
 ├── agents/
 ├── hooks/
 └── tools/
-    ├── gemini/
+    ├── codex/
     └── cursor/
 ```
 

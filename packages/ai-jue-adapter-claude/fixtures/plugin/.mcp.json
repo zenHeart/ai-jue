@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "demo": {
+      "command": "node",
+      "args": ["server.js"],
+      "env": {
+        "GREETING": "${user_config.GREETING}"
+      }
+    }
+  }
+}

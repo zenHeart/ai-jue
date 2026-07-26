@@ -1,0 +1,36 @@
+{
+  "name": "ai-jue-adapter-hermes",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Hermes (Nous Research) Adapter for the ai-jue framework (JUE-303). Built off the real cwr:/d/devuser/.hermes install (config.yaml v0.18.0; ~63 top-level keys, 3-level skills/<category>/<name>/SKILL.md convention, real cron/jobs.json).",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "tsc"
+  },
+  "dependencies": {
+    "ai-jue-core": "*",
+    "js-yaml": "^4.1.0"
+  },
+  "peerDependencies": {
+    "ai-jue-core": "*"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "typescript": "^5.0.0"
+  },
+  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/zenHeart/ai-jue.git",
+    "directory": "packages/ai-jue-adapter-hermes"
+  },
+  "bugs": {
+    "url": "https://github.com/zenHeart/ai-jue/issues"
+  },
+  "homepage": "https://github.com/zenHeart/ai-jue/tree/main/packages/ai-jue-adapter-hermes#readme",
+  "files": [
+    "dist"
+  ]
+}

@@ -1,0 +1,6 @@
+{
+  "name": "jue-fixture-conflicts",
+  "version": "1.0.0",
+  "description": "Neutral fixture Plugin with a skill and command sharing one name, to exercise the silent-override collision found in JUE-104.",
+  "author": { "name": "ai-jue fixtures" }
+}

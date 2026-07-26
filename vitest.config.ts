@@ -4,6 +4,7 @@ import { defineConfig } from "vitest/config";
 export default defineConfig({
   resolve: {
     alias: {
+      "ai-jue-core/testkit": path.resolve(__dirname, "packages/ai-jue-core/src/adapter-contract-kit.ts"),
       "ai-jue-core": path.resolve(__dirname, "packages/ai-jue-core/src/index.ts"),
     },
   },

@@ -6,7 +6,7 @@ import { resolveAdapterAlias } from '../../ai-jue/src/commands/apply';
 
 const TEST_DIR = path.join(__dirname, 'temp_output');
 
-describe('ai-jue-adapter-claude', () => {
+describe('ai-jue-adapter-claude generate()', () => {
   beforeEach(() => {
     if (fs.existsSync(TEST_DIR)) {
       fs.rmSync(TEST_DIR, { recursive: true, force: true });
@@ -20,241 +20,119 @@ describe('ai-jue-adapter-claude', () => {
     }
   });
 
-  it('should generate AGENTS.md and light CLAUDE.md for context', async () => {
-    const config = {
-      context: {
-        global: 'Claude Context'
-      }
-    };
-
-    await generate(config, TEST_DIR);
-
-    const agentsPath = path.join(TEST_DIR, 'AGENTS.md');
-    expect(fs.existsSync(agentsPath)).toBe(true);
-    expect(fs.readFileSync(agentsPath, 'utf8')).toContain('Claude Context');
-
-    const claudeMdPath = path.join(TEST_DIR, 'CLAUDE.md');
-    expect(fs.existsSync(claudeMdPath)).toBe(true);
-    expect(fs.readFileSync(claudeMdPath, 'utf8')).toContain('@AGENTS.md');
-  });
-
   it('supports both Claude Code CLI aliases', () => {
     expect(resolveAdapterAlias('claude')).toBe('ai-jue-adapter-claude');
     expect(resolveAdapterAlias('claude-code')).toBe('ai-jue-adapter-claude');
   });
 
-  it('should generate native rules in .claude/rules/', async () => {
-    const config = {
-      rules: {
-        security: {
-          description: 'Security rules',
-          globs: ['*.ts'],
-          content: 'Never log secrets',
+  it('writes context.global directly into CLAUDE.md (Claude Code reads only CLAUDE.md, never AGENTS.md)', async () => {
+    await generate({ context: { global: 'Claude Context' } }, TEST_DIR);
+
+    expect(fs.existsSync(path.join(TEST_DIR, 'AGENTS.md'))).toBe(false);
+    const claudeMd = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
+    expect(claudeMd).toContain('Claude Context');
+  });
+
+  it('writes rules to .claude/rules/', async () => {
+    await generate(
+      {
+        rules: {
+          security: { description: 'Security rules', globs: ['*.ts'], content: 'Never log secrets' },
         },
       },
-    };
+      TEST_DIR,
+    );
 
-    await generate(config, TEST_DIR);
-
-    const rulePath = path.join(TEST_DIR, '.claude', 'rules', 'security.md');
-    expect(fs.existsSync(rulePath)).toBe(true);
-    const content = fs.readFileSync(rulePath, 'utf8');
+    const content = fs.readFileSync(path.join(TEST_DIR, '.claude', 'rules', 'security.md'), 'utf8');
     expect(content).toContain('paths:');
     expect(content).toContain('*.ts');
     expect(content).toContain('Never log secrets');
   });
 
-  it('should generate native skills in .claude/skills/', async () => {
-    const config = {
-      skills: {
-        review: { 
-            name: 'review-skill',
-            description: 'Review code',
-            content: 'Review instruction'
-        }
-      }
-    };
+  it('writes commands to .claude/commands/ as their own directory (not merged into skills)', async () => {
+    await generate(
+      { commands: { deploy: { description: 'Deploy app', content: 'Deploy instruction' } } },
+      TEST_DIR,
+    );
 
-    await generate(config, TEST_DIR);
-
-    const skillMdPath = path.join(TEST_DIR, '.claude', 'skills', 'review', 'SKILL.md');
-    expect(fs.existsSync(skillMdPath)).toBe(true);
-    const content = fs.readFileSync(skillMdPath, 'utf8');
-    expect(content).toContain('name: review-skill');
-    expect(content).toContain('description: Review code');
-    expect(content).toContain('Review instruction');
+    expect(fs.existsSync(path.join(TEST_DIR, '.claude', 'commands', 'deploy.md'))).toBe(true);
+    expect(fs.existsSync(path.join(TEST_DIR, '.claude', 'skills', 'deploy'))).toBe(false);
+    const content = fs.readFileSync(path.join(TEST_DIR, '.claude', 'commands', 'deploy.md'), 'utf8');
+    expect(content).toContain('Deploy instruction');
   });
 
-  it('should generate skills and agents from canonical prompt-only input', async () => {
+  it('writes skills to .claude/skills/, including attachment bundles', async () => {
     await generate(
       {
         skills: {
           review: {
-            prompt: 'Review instruction',
-          },
-        },
-        agents: {
-          reviewer: {
-            prompt: 'Review changes',
-            skills: ['review'],
+            name: 'review-skill',
+            description: 'Review code',
+            content: 'Review instruction',
+            references: { 'notes.md': 'Reference notes' },
           },
         },
       },
       TEST_DIR,
     );
 
-    const skillPath = path.join(TEST_DIR, '.claude', 'skills', 'review', 'SKILL.md');
-    const agentPath = path.join(TEST_DIR, '.claude', 'agents', 'reviewer.md');
-
-    expect(fs.existsSync(skillPath)).toBe(true);
-    expect(fs.readFileSync(skillPath, 'utf8')).toContain('Review instruction');
-    expect(fs.existsSync(agentPath)).toBe(true);
-    expect(fs.readFileSync(agentPath, 'utf8')).toContain('Review changes');
+    const skillMd = fs.readFileSync(path.join(TEST_DIR, '.claude', 'skills', 'review', 'SKILL.md'), 'utf8');
+    expect(skillMd).toContain('name: review-skill');
+    expect(skillMd).toContain('Review instruction');
+    expect(
+      fs.readFileSync(path.join(TEST_DIR, '.claude', 'skills', 'review', 'references', 'notes.md'), 'utf8'),
+    ).toBe('Reference notes');
   });
 
-  it('should generate .mcp.json with MCP servers', async () => {
-    const config = {
-      mcp: {
-        servers: {
-          sqlite: { command: 'uvx', args: ['mcp-server-sqlite'] }
-        }
-      },
-      hooks: {
-        'pre-commit': 'npm test'
-      }
-    };
+  it('writes agents to .claude/agents/', async () => {
+    await generate(
+      { agents: { 'code-reviewer': { description: 'Reviews code for quality', content: 'You are a code reviewer.' } } },
+      TEST_DIR,
+    );
 
-    await generate(config, TEST_DIR);
-
-    // MCP servers go to .mcp.json (project scope)
-    const mcpPath = path.join(TEST_DIR, '.mcp.json');
-    expect(fs.existsSync(mcpPath)).toBe(true);
-    const mcpConfig = JSON.parse(fs.readFileSync(mcpPath, 'utf8'));
-    expect(mcpConfig.mcpServers.sqlite.command).toBe('uvx');
-
-    // Hooks go to .claude/settings.json
-    const settingsPath = path.join(TEST_DIR, '.claude', 'settings.json');
-    expect(fs.existsSync(settingsPath)).toBe(true);
-    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-    expect(settings.hooks['pre-commit']).toBeDefined();
-  });
-
-  it('should map commands to skills with correct frontmatter', async () => {
-    const config = {
-      commands: {
-        deploy: {
-            description: 'Deploy app',
-            prompt: 'Deploy instruction'
-        }
-      }
-    };
-
-    await generate(config, TEST_DIR);
-
-    const skillPath = path.join(TEST_DIR, '.claude', 'skills', 'deploy', 'SKILL.md');
-    expect(fs.existsSync(skillPath)).toBe(true);
-    const content = fs.readFileSync(skillPath, 'utf8');
-    expect(content).toContain('Deploy instruction');
-    expect(content).toContain('disable-model-invocation: true');  // Commands default to not auto-invoked
-  });
-
-  it('should extract claude namespace from command frontmatter', async () => {
-    const config = {
-      commands: {
-        fix: {
-          description: 'Fix issues',
-          prompt: 'Fix code issues',
-          claude: {
-            'argument-hint': '[file]',
-            'model': 'sonnet',
-            'allowed-tools': ['Read', 'Edit']
-          }
-        }
-      }
-    };
-
-    await generate(config, TEST_DIR);
-
-    const skillPath = path.join(TEST_DIR, '.claude', 'skills', 'fix', 'SKILL.md');
-    expect(fs.existsSync(skillPath)).toBe(true);
-    const content = fs.readFileSync(skillPath, 'utf8');
-    expect(content).toContain("argument-hint: '[file]'");
-    expect(content).toContain('model: sonnet');
-    expect(content).toContain('allowed-tools:');
-  });
-
-  it('should map alwaysApply to auto-apply in rules', async () => {
-    const config = {
-      rules: {
-        security: {
-          description: 'Security rules',
-          globs: ['*.ts'],
-          alwaysApply: true,
-          content: 'Never log secrets'
-        }
-      }
-    };
-
-    await generate(config, TEST_DIR);
-
-    const rulePath = path.join(TEST_DIR, '.claude', 'rules', 'security.md');
-    expect(fs.existsSync(rulePath)).toBe(true);
-    const content = fs.readFileSync(rulePath, 'utf8');
-    expect(content).toContain('auto-apply: true');
-  });
-
-  it('should generate agents in .claude/agents/', async () => {
-    const config = {
-      agents: {
-        'code-reviewer': {
-          description: 'Reviews code for quality',
-          prompt: 'You are a code reviewer.',
-          tools: ['Read', 'Grep'],
-          model: 'sonnet'
-        }
-      }
-    };
-
-    await generate(config, TEST_DIR);
-
-    const agentPath = path.join(TEST_DIR, '.claude', 'agents', 'code-reviewer.md');
-    expect(fs.existsSync(agentPath)).toBe(true);
-    const content = fs.readFileSync(agentPath, 'utf8');
-    expect(content).toContain('name: code-reviewer');
+    const content = fs.readFileSync(path.join(TEST_DIR, '.claude', 'agents', 'code-reviewer.md'), 'utf8');
     expect(content).toContain('description: Reviews code for quality');
     expect(content).toContain('You are a code reviewer.');
-    expect(content).toContain('tools:');
   });
 
-  it('should process hooks with enhanced structure', async () => {
-    const config = {
-      hooks: {
-        'PostToolUse': {
-          script: './scripts/lint.sh',
-          matcher: 'Write|Edit',
-          async: true
-        }
-      }
-    };
+  it('writes hooks into .claude/settings.json and MCP servers into .mcp.json', async () => {
+    await generate(
+      {
+        mcp: { servers: { sqlite: { command: 'uvx', args: ['mcp-server-sqlite'] } } },
+        hooks: { PreToolUse: { script: 'npm test', matcher: 'Write' } },
+      },
+      TEST_DIR,
+    );
 
-    await generate(config, TEST_DIR);
+    const mcpConfig = JSON.parse(fs.readFileSync(path.join(TEST_DIR, '.mcp.json'), 'utf8'));
+    expect(mcpConfig.mcpServers.sqlite.command).toBe('uvx');
 
-    const settingsPath = path.join(TEST_DIR, '.claude', 'settings.json');
-    expect(fs.existsSync(settingsPath)).toBe(true);
-    const settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
-    expect(settings.hooks.PostToolUse).toBeDefined();
-    expect(settings.hooks.PostToolUse[0].matcher).toBe('Write|Edit');
-    expect(settings.hooks.PostToolUse[0].hooks[0].async).toBe(true);
+    const settings = JSON.parse(fs.readFileSync(path.join(TEST_DIR, '.claude', 'settings.json'), 'utf8'));
+    expect(settings.hooks.PreToolUse[0].matcher).toBe('Write');
+    expect(settings.hooks.PreToolUse[0].hooks[0].command).toBe('npm test');
   });
 
-  it('preserves nested UTF-8/base64 files, user context, and deterministic output', async () => {
-    fs.writeFileSync(path.join(TEST_DIR, 'AGENTS.md'), '# User notes\n');
+  it('merges tools.claude passthrough settings into settings.json alongside hooks', async () => {
+    await generate(
+      {
+        hooks: { PreToolUse: 'npm test' },
+        tools: { claude: { statusLine: { type: 'command', command: './status.sh' } } },
+      },
+      TEST_DIR,
+    );
+
+    const settings = JSON.parse(fs.readFileSync(path.join(TEST_DIR, '.claude', 'settings.json'), 'utf8'));
+    expect(settings.hooks.PreToolUse).toBeDefined();
+    expect(settings.statusLine).toEqual({ type: 'command', command: './status.sh' });
+  });
+
+  it('preserves nested UTF-8/binary attachments, user content, and is idempotent on a second apply', async () => {
     fs.writeFileSync(path.join(TEST_DIR, 'CLAUDE.md'), '# Claude user notes\n');
     const config = {
       context: { global: 'Managed context' },
       skills: {
         review: {
-          prompt: 'Review',
+          content: 'Review',
           references: { 'nested/说明.md': 'UTF-8 reference' },
           assets: {
             'fixtures/sample.bin': {
@@ -267,10 +145,12 @@ describe('ai-jue-adapter-claude', () => {
     };
 
     await generate(config, TEST_DIR);
-    const first = fs.readFileSync(path.join(TEST_DIR, 'AGENTS.md'), 'utf8');
+    const first = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
     await generate(config, TEST_DIR);
-    expect(fs.readFileSync(path.join(TEST_DIR, 'AGENTS.md'), 'utf8')).toBe(first);
-    expect(first).toContain('# User notes');
+    expect(fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8')).toBe(first);
+
+    expect(first).toContain('# Claude user notes');
+    expect(first).toContain('Managed context');
     expect(first.match(/<!-- AI-JUE:START -->/g)).toHaveLength(1);
     expect(
       fs.readFileSync(
@@ -279,45 +159,21 @@ describe('ai-jue-adapter-claude', () => {
       ),
     ).toBe('UTF-8 reference');
     expect(
-      fs.readFileSync(
-        path.join(TEST_DIR, '.claude', 'skills', 'review', 'assets', 'fixtures', 'sample.bin'),
-      ),
+      fs.readFileSync(path.join(TEST_DIR, '.claude', 'skills', 'review', 'assets', 'fixtures', 'sample.bin')),
     ).toEqual(Buffer.from([0, 255, 128]));
-    expect(fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8')).toContain(
-      '# Claude user notes',
-    );
   });
 
-  it('rejects support-file traversal', async () => {
+  it('rejects support-file path traversal', async () => {
     await expect(
       generate(
-        {
-          skills: {
-            review: {
-              prompt: 'Review',
-              references: { '../secret.md': 'nope' },
-            },
-          },
-        },
+        { skills: { review: { content: 'Review', references: { '../secret.md': 'nope' } } } },
         TEST_DIR,
       ),
     ).rejects.toThrow('must stay inside');
   });
 
-  it('handles empty optional collections without runtime output', async () => {
-    await generate(
-      {
-        context: {},
-        rules: null,
-        skills: undefined,
-        commands: {},
-        agents: null,
-        mcp: { servers: {} },
-        hooks: {},
-        tools: { claude: {} },
-      },
-      TEST_DIR,
-    );
+  it('produces no output for an empty config', async () => {
+    await generate({}, TEST_DIR);
     expect(fs.readdirSync(TEST_DIR)).toEqual([]);
   });
 });

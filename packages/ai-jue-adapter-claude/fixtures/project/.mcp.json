@@ -1,0 +1,9 @@
+{
+  "neutral-fixture-server": {
+    "command": "node",
+    "args": ["server.js"],
+    "env": {
+      "API_TOKEN": "${NEUTRAL_FIXTURE_API_TOKEN}"
+    }
+  }
+}

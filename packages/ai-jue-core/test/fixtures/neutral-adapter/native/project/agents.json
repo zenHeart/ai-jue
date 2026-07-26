@@ -1,0 +1,7 @@
+{
+  "planner": {
+    "description": "Neutral fixture agent",
+    "content": "Plan the work.",
+    "prompt": "Plan the work."
+  }
+}

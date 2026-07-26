@@ -25,12 +25,12 @@ function writeProject(root: string): void {
     JSON.stringify({
       presets: ['base'],
       capabilities: {
-        local: { source: 'file:./capabilities/local-skill', converter: 'agent-skill' },
+        local: { source: 'file:./capabilities/local-skill', type: 'skill' },
         remote: {
           source: 'github:example/neutral-repo',
           ref: 'v1.0.0',
           path: 'skill',
-          converter: 'agent-skill',
+          type: 'skill',
         },
       },
     }),

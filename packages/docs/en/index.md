@@ -27,7 +27,7 @@ titleTemplate: false
     <div class="flow-arrow" aria-hidden="true">→</div>
     <article class="flow-core"><span class="flow-index">STANDARD</span><h3>Jue Canonical Model</h3><p>load · merge · validate · normalize</p></article>
     <div class="flow-arrow" aria-hidden="true">→</div>
-    <article><span class="flow-index">NATIVE</span><h3>Agent Adapters</h3><p>Claude · Cursor · Gemini · Copilot</p></article>
+    <article><span class="flow-index">NATIVE</span><h3>Agent Adapters</h3><p>Claude · Cursor · Codex</p></article>
   </div>
 </section>
 

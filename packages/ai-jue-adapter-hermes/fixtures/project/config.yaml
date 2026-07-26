@@ -1,0 +1,34 @@
+# Minimal Hermes JUE-303 fixture — a subset of the real
+# cwr:/d/devuser/.hermes/config.yaml (v0.18.0, ~63 top-level keys,
+# redacted copy at packages/ai-jue-adapter-hermes/audit/cwr-config-redacted.yaml
+# is the full real shape). This fixture is small enough to keep the
+# contract test deterministic; only the keys the JUE-303 Adapter
+# actually maps to a Canonical Capability are present, with
+# placeholder env values (NO real secrets).
+model:
+  provider: custom:minimax-home
+  default: MiniMax-M3
+  base_url: https://api.example.invalid
+  api_mode: anthropic_messages
+  context_length: 1000000
+providers:
+  minimax-home:
+    name: minimax-home
+    base_url: https://api.example.invalid
+    key_env: MINIMAX_API_KEY_PLACEHOLDER
+    api_mode: anthropic_messages
+    model: MiniMax-M3
+    models:
+      MiniMax-M3:
+        context_length: 1000000
+mcp:
+  servers:
+    demo-mcp:
+      command: node
+      args: ["server.js"]
+      env:
+        TOKEN: "${DEMO_TOKEN}"
+agent:
+  max_turns: 60
+  reasoning_effort: medium
+  verbose: false

@@ -35,20 +35,18 @@ Created .ai directory with AGENTS.md, rules/, commands/, skills/, agents/, hooks
 npx jue apply --all
 ```
 
-`ai-jue` 会读取 `ai.config.js`、加载预设以及本地 `.ai` 目录中的资产；如果项目根目录存在 `AGENTS.md` 也会自动注入，并生成相应配置文件（如 `CLAUDE.md`, `.cursor/rules/*.mdc`, `.gemini/settings.json` 等，Cursor 直接消费根目录 `AGENTS.md`）。
+`ai-jue` 会读取 `ai.config.js`、加载预设以及本地 `.ai` 目录中的资产；如果项目根目录存在 `AGENTS.md` 也会自动注入，并生成相应配置文件（如 `CLAUDE.md`, `.cursor/rules/*.mdc`, `.codex/config.toml` 等，Cursor 直接消费根目录 `AGENTS.md`）。
 
 ## 4. 常用命令
 
-### 检查更新
-检查已安装预设是否有新版本：
-```bash
-npx jue check
-```
+以下命令当前可用。
 
-### 校验配置
-验证 `ai.config.js` 及其引用的资源是否合法：
+### CI 检查
+
+目标命令为 Planned。它同时检查配置、Artifact 漂移和目标确认：
+
 ```bash
-npx jue validate
+npx jue apply --all --check
 ```
 
 ### 实时监听 (Watch Mode)
@@ -58,9 +56,13 @@ npx jue apply --all --watch
 ```
 
 ### 创建新预设
-快速创建一个新的预设项目结构：
+
+目标命令为 Planned：
+
 ```bash
-npx jue create-preset my-preset
+npx jue preset create my-preset
 ```
 
-更多详细配置请参考 [配置指南](./configuration-guide.md)。
+实现前不要在自动化中调用。完整状态见
+[实现状态](../developer/implementation-status.md)，详细配置见
+[配置指南](./configuration-guide.md)。

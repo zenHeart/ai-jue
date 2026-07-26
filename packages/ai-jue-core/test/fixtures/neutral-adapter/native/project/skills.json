@@ -1,0 +1,9 @@
+{
+  "summarize": {
+    "name": "summarize",
+    "description": "Neutral fixture skill",
+    "allowed-tools": ["Read"],
+    "content": "Summarize the content.",
+    "prompt": "Summarize the content."
+  }
+}

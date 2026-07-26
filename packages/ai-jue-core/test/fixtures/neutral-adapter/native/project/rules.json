@@ -1,0 +1,8 @@
+{
+  "style": {
+    "description": "Neutral fixture rule",
+    "globs": ["src/**/*.ts"],
+    "content": "Use two spaces.",
+    "prompt": "Use two spaces."
+  }
+}

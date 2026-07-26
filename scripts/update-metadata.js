@@ -6,9 +6,7 @@ const packages = [
   'ai-jue',
   'ai-jue-core',
   'ai-jue-adapter-claude',
-  'ai-jue-adapter-copilot',
   'ai-jue-adapter-cursor',
-  'ai-jue-adapter-gemini',
   'jue-preset-base',
   'jue-preset-internal'
 ];

@@ -6,7 +6,7 @@ exports[`adapter capability snapshot > matches canonical capability output snaps
 Global context for snapshot
 <!-- AI-JUE:END -->",
   "claude": "<!-- AI-JUE:START -->
-@AGENTS.md
+Global context for snapshot
 <!-- AI-JUE:END -->",
   "claudeMcp": {
     "mcpServers": {
@@ -37,36 +37,6 @@ Global context for snapshot
       ],
     },
   },
-  "copilot": "<!-- AI-JUE:START -->
-# Core Instructions
-
-Global context for snapshot
-
-## Rules
-
-### style
-Common prompt block
-
-## Available Skills
-
-### review
-Review skill
-
-Review skill content
-
-## Workflow Hooks
-
-This project defines the following workflow hooks. Please remind the user to run them when appropriate:
-
-- **pre-commit**: \`npm test\`
-
-## Capability Notes
-
-- **MCP servers** are defined in project config. Treat them as external tool context and ask the user before assuming direct execution support. Configure them manually in your IDE settings.
-<!-- AI-JUE:END -->",
-  "copilotSettings": {
-    "codeReview": true,
-  },
   "cursorCommand": "<!-- AI-JUE:START -->
 # /review
 
@@ -90,41 +60,5 @@ Common prompt block
   "cursorSettings": {
     "temperature": 0.3,
   },
-  "gemini": {
-    "agents": {
-      "reviewer": {
-        "prompt": "Review as agent",
-        "skills": [
-          "review",
-        ],
-      },
-    },
-    "hooks": {
-      "pre-commit": "npm test",
-    },
-    "mcpServers": {
-      "sqlite": {
-        "args": [
-          "mcp-server-sqlite",
-        ],
-        "command": "uvx",
-      },
-    },
-    "temperature": 0.2,
-  },
-  "geminiCommandReview": "description = "Review command"
-prompt = """
-Run review flow
-"""
-",
-  "geminiMd": "<!-- AI-JUE:START -->
-@AGENTS.md
-
-## Rules (Degraded)
-
-### style
-
-Common prompt block
-<!-- AI-JUE:END -->",
 }
 `;

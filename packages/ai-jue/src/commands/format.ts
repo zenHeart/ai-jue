@@ -108,7 +108,7 @@ function detectToolConfigurations(cwd: string): DetectedTool[] {
 /**
  * Parse a tool configuration file and extract migration items
  * @param filePath - Path to the configuration file
- * @param tool - Tool name (cursor, gemini, claude, copilot, trae, opencode)
+ * @param tool - Tool name (cursor, claude, trae, opencode)
  * @returns Array of migration items
  */
 function parseToolConfig(filePath: string, tool: string): MigrationItem[] {
@@ -116,12 +116,7 @@ function parseToolConfig(filePath: string, tool: string): MigrationItem[] {
   const basename = path.basename(filePath);
 
   // Detect file type and create appropriate migration item
-  if (
-    basename === "AGENTS.md" ||
-    basename === "CLAUDE.md" ||
-    basename === "GEMINI.md" ||
-    basename.includes("copilot-instructions")
-  ) {
+  if (basename === "AGENTS.md" || basename === "CLAUDE.md") {
     items.push({
       source: filePath,
       target: ".ai/AGENTS.md",
@@ -178,11 +173,7 @@ function parseToolConfig(filePath: string, tool: string): MigrationItem[] {
       type: "hooks",
       status: "pending",
     });
-  } else if (
-    basename === "mcp.json" ||
-    basename.includes("copilot-settings") ||
-    basename === "config.json"
-  ) {
+  } else if (basename === "mcp.json" || basename === "config.json") {
     items.push({
       source: filePath,
       target: `.ai/tools/${tool}/settings.json`,

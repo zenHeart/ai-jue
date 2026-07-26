@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "NotARealEvent": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "echo should-not-validate"
+          }
+        ]
+      }
+    ]
+  }
+}

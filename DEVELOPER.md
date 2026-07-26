@@ -17,7 +17,7 @@ npm run build
 |---|---|---|
 | `ai-jue` | `packages/ai-jue` | CLI 主包（`jue` 命令） |
 | `ai-jue-core` | `packages/ai-jue-core` | 核心工具库（deepMerge、generateMarkdownFile 等） |
-| `ai-jue-adapter-*` | `packages/ai-jue-adapter-*` | 适配器（Claude / Cursor / Gemini / Copilot） |
+| `ai-jue-adapter-*` | `packages/ai-jue-adapter-*` | 适配器（Claude / Cursor / Codex） |
 | `jue-preset-base` | `packages/jue-preset-base` | 基础预设 |
 | `jue-preset-internal` | `packages/jue-preset-internal` | 内部自举预设 |
 
@@ -72,7 +72,7 @@ cd /path/to/your-project
 npm link ai-jue ai-jue-core jue-preset-base
 
 # 3. 运行 jue apply 验证
-npx jue apply --adapter cursor --adapter gemini --adapter claude
+npx jue apply --adapter cursor --adapter codex --adapter claude
 ```
 
 调试完成后解除 link：

@@ -15,7 +15,7 @@ Capability sources (Preset / .ai / config)
                     ↓
                Agent Adapter
                     ↓
-Claude / Cursor / Gemini / Copilot / future Agents
+Claude Code / Codex / OpenClaw / Hermes / future Agents
 ```
 
 Jue exposes exactly three concepts to users
@@ -26,8 +26,8 @@ Jue exposes exactly three concepts to users
 2. **Preset**: a versionable, composable, and distributable collection of
    Capabilities. A target Agent may present it as a plugin, extension, or native
    configuration, but that does not change the Preset's higher-level semantics.
-3. **Adapter**: converts Jue's shared capability model into the target Agent's
-   native format and explicitly reports unsupported or degraded capabilities.
+3. **Adapter**: the complete integration for one target Agent, encapsulating
+   Adapter conversion and Artifact generation.
 
 The CLI, website, and editor extensions are entry points or interfaces to this
 model; they do not define Jue as a product.
@@ -40,15 +40,16 @@ The MVP must complete one real and repeatably verifiable loop:
 2. Jue loads nested skill resources from the Preset without loss.
 3. Jue converges the Preset, project `.ai/`, and `ai.config.js` into one
    Canonical Model.
-4. At least the Claude and Cursor Adapters generate their native outputs from
-   the same capability set.
-5. The website explains the model, presents the support matrix, and provides an
-   executable onboarding path.
-6. `jue.zenheart.site` points to a production-built and verified website.
+4. The Claude Code Reference Extension generates native output and headless
+   Claude Code confirms it through a real read or execution path.
+5. The same input passes dry-run, Core apply, confirm, check, and a zero-diff
+   second apply.
+6. The Claude loop produces a reusable Extension skeleton and contract tests;
+   other Agents migrate in parallel only after that Scale Gate passes.
 
 ## 3. Canonical Capability set
 
-The shared MVP capability set is fixed to:
+The MVP Canonical document is fixed to:
 
 - `context.global`
 - `skills`
@@ -57,18 +58,18 @@ The shared MVP capability set is fixed to:
 - `rules`
 - `hooks`
 - `mcp.servers`
-- `tools.<tool>`
 
 The six types `skills` / `agents` / `commands` / `rules` / `hooks` /
-`mcp.servers` are atomic Capabilities. `context.global` and `tools.<tool>` are
-**not** atomic Capabilities: `context.global` is layered-append global context,
-and `tools.<tool>` is an escape hatch. A tool-private capability may be proposed
-for promotion into the Canonical Model only after it has stable, similar
-semantics in at least two Agents.
+`mcp.servers` are atomic Capabilities. `context.global` is non-addressable
+document-level context rather than an atomic Capability, but participates in
+provenance, merge, conversion, and round-trip validation. `tools.<tool>` is
+target configuration outside the Canonical DSL. A tool-private capability may
+be proposed for promotion only after it has stable, similar semantics in at
+least two Agents.
 
 For how a Preset references third-party Capability content from GitHub, npm,
 URL, or local sources and converts it into the Canonical Model, see the
-[Capability Source specification](capability-source.md). It adds a reference
+[external Capability reference specification](capability-source.md). It adds a reference
 protocol without changing the Capability set above.
 
 ## 4. Preset directory contract
@@ -97,7 +98,8 @@ because of directory depth. Attachment models for other capability types are
 extended only after at least two Agents establish a stable resource contract.
 
 A Preset may include documentation, evaluation sets, source material, and other
-content; only the directory contract above enters the Canonical Model. Instance
+content. Public directory content enters the Canonical Model, while
+`tools/<tool>` is passed separately as current-target configuration. Instance
 deployment configuration, private local settings, and credentials must not be
 distributed as a general-purpose Preset.
 
@@ -105,12 +107,13 @@ distributed as a general-purpose Preset.
 
 An Adapter:
 
-- consumes only the normalized Canonical Model;
-- does not invent new input fields;
-- preserves semantics supported natively by the target Agent;
-- explicitly degrades or reports unsupported capabilities instead of silently
-  ignoring them;
-- is verified by the same capability contract tests.
+- uses the normalized Canonical DSL as the public semantic source;
+- converts target DSL bidirectionally through Adapter conversion;
+- materializes configuration, Plugin, Bundle, or other outputs through
+  Artifact generation;
+- describes approved install, enable, update, and reload behavior in Artifact plans;
+- reports unsupported, degraded, and native-only behavior explicitly;
+- passes round-trip, idempotency, and target-native verification contracts.
 
 When a target Agent uses terms such as plugin, extension, or skill, the Adapter
 may use that native vocabulary in its output. Internally, Jue still consistently
@@ -118,9 +121,8 @@ uses Preset and Capability.
 
 ## 6. Preset repository boundary
 
-A Preset repository is the source and versioned capability set for Preset
-packages. It does not implement a second installer, Adapter, registry, or sync
-engine.
+A Preset repository is the source and versioned Capability set for Preset
+packages. npm handles installation and versions; Adapters handle Agent output.
 
 Included:
 
@@ -141,17 +143,18 @@ Excluded from a Preset:
 | --- | --- |
 | Protocol consistency | Contract tests for schema, normalization, loader, and documentation |
 | Lossless nested resources | Tests for deep relative paths in loading and Adapter output |
-| Local Preset consumption | Smoke test that packages a user-provided local path and generates outputs for two Agents |
+| Local Preset consumption | Smoke test that packages a user-provided local path and drives the Claude loop |
 | No instance configuration leakage | Package/Preset manifests and sensitive-information checks |
-| Deliverable website | Production build, deployment status, and HTTPS access to `jue.zenheart.site` |
+| First real loop | Headless Claude Code native read or execution evidence in an isolated project |
+| Scalability | A neutral second Adapter passes the same contracts without Core or Canonical changes |
 | No regression of existing capabilities | Full unit tests, monorepo build, and consistency check |
 
 ## 8. After the MVP
 
-The following capabilities enter a later iteration only after the MVP loop is
-stable:
+The following capabilities enter a later iteration only after the Claude Code
+Reference Extension MVP is stable:
 
-- new Agent Adapters;
+- parallel Codex, OpenClaw, and Hermes Extension migration;
 - Preset registry and remote discovery;
 - automatic synchronization services;
 - a visual capability marketplace;

@@ -5,14 +5,21 @@ import path from 'path';
 import { spawnSync } from 'child_process';
 import {
   assertCapabilityRef,
+  assertNoLiteralCredentials,
   CapabilityRef,
 } from 'ai-jue-core';
 import { MergedConfig } from '../config';
 import { mergeConfigWithLayeredContext } from '../merge';
-import { loadAssetsFromDir, loadSkillFromDir } from '../preset';
+import {
+  loadAgentFromDir,
+  loadCommandFromDir,
+  loadHookFromDir,
+  loadRuleFromDir,
+  loadSkillFromDir,
+} from '../preset';
 
 export interface CapabilityLockEntry {
-  converter: CapabilityRef['converter'];
+  type: CapabilityRef['type'];
   contentHash: string;
   locatorHash: string;
   sourceType: 'file' | 'npm' | 'github';
@@ -132,34 +139,6 @@ function hashDirectory(rootDir: string): string {
   };
   visit(rootDir);
   return hash.digest('hex');
-}
-
-function assertNoLiteralCredentials(value: unknown, location: string): void {
-  const serialized = JSON.stringify(value);
-  if (
-    /:\/\/[^/@\s"]+:[^/@\s"]+@/.test(serialized) ||
-    /[?&](?:access_?token|api_?key|auth|password|secret)=/i.test(serialized)
-  ) {
-    throw new Error(`${location} contains a literal credential`);
-  }
-  const record =
-    value && typeof value === 'object' && !Array.isArray(value)
-      ? (value as Record<string, unknown>)
-      : {};
-  const env =
-    record.env && typeof record.env === 'object' && !Array.isArray(record.env)
-      ? (record.env as Record<string, unknown>)
-      : {};
-  for (const [name, envValue] of Object.entries(env)) {
-    if (
-      typeof envValue !== 'string' ||
-      !/^\$\{[A-Z_][A-Z0-9_]*\}$/.test(envValue)
-    ) {
-      throw new Error(
-        `${location} env ${name} must reference a runtime environment variable`,
-      );
-    }
-  }
 }
 
 function resolveFile(ref: CapabilityRef, baseDir: string): string {
@@ -301,19 +280,16 @@ async function resolveSource(
   return selected;
 }
 
-async function convertCapability(
-  name: string,
-  ref: CapabilityRef,
-  sourceDir: string,
-  userLanguage?: string,
-): Promise<MergedConfig> {
-  if (ref.converter === 'jue-native') {
-    return loadAssetsFromDir(sourceDir, userLanguage);
-  }
-  if (ref.converter === 'agent-skill') {
-    return loadSkillFromDir(name, sourceDir, userLanguage);
-  }
+interface CapabilityLoadContext {
+  name: string;
+  ref: CapabilityRef;
+  sourceDir: string;
+  userLanguage?: string;
+}
 
+type CapabilityLoader = (ctx: CapabilityLoadContext) => Promise<MergedConfig>;
+
+async function loadMcpCapability({ name, ref, sourceDir }: CapabilityLoadContext): Promise<MergedConfig> {
   const manifestPath = fs.existsSync(path.join(sourceDir, 'mcp.json'))
     ? path.join(sourceDir, 'mcp.json')
     : path.join(sourceDir, 'package.json');
@@ -337,6 +313,29 @@ async function convertCapability(
   }
   assertNoLiteralCredentials(server, `mcp Capability "${name}"`);
   return { mcp: { servers: { [name]: server } } };
+}
+
+/**
+ * One loader per Canonical leaf type. A lookup table (rather than an
+ * if/else chain) keeps adding a type a single-line change and makes the
+ * "one CapabilityRef -> one leaf Capability" mapping visible at a glance.
+ */
+const CAPABILITY_LOADERS: Record<CapabilityRef['type'], CapabilityLoader> = {
+  skill: ({ name, sourceDir, userLanguage }) => loadSkillFromDir(name, sourceDir, userLanguage),
+  rule: ({ name, sourceDir, userLanguage }) => loadRuleFromDir(name, sourceDir, userLanguage),
+  command: ({ name, sourceDir, userLanguage }) => loadCommandFromDir(name, sourceDir, userLanguage),
+  agent: ({ name, sourceDir, userLanguage }) => loadAgentFromDir(name, sourceDir, userLanguage),
+  hook: ({ name, sourceDir, userLanguage }) => loadHookFromDir(name, sourceDir, userLanguage),
+  mcp: loadMcpCapability,
+};
+
+function convertCapability(
+  name: string,
+  ref: CapabilityRef,
+  sourceDir: string,
+  userLanguage?: string,
+): Promise<MergedConfig> {
+  return CAPABILITY_LOADERS[ref.type]({ name, ref, sourceDir, userLanguage });
 }
 
 export async function loadCapabilityRefs(
@@ -365,7 +364,7 @@ export async function loadCapabilityRefs(
     const converted = await convertCapability(name, value, resolved, userLanguage);
     config = mergeConfigWithLayeredContext(config, converted);
     capabilities[name] = {
-      converter: value.converter,
+      type: value.type,
       contentHash: hashDirectory(resolved),
       locatorHash: sha256(`${value.source}\0${value.ref || ''}\0${value.path || ''}`),
       sourceType: sourceType(value.source),

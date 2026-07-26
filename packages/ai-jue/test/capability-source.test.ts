@@ -45,7 +45,7 @@ describe('Capability Source', () => {
       {
         'neutral-skill': {
           source: 'file:./capabilities/neutral-skill',
-          converter: 'agent-skill',
+          type: 'skill',
         },
       },
       root,
@@ -77,7 +77,7 @@ describe('Capability Source', () => {
       {
         'neutral-skill': {
           source: 'file:./capabilities/neutral-skill',
-          converter: 'agent-skill',
+          type: 'skill',
         },
       },
       root,
@@ -86,7 +86,7 @@ describe('Capability Source', () => {
     );
 
     expect(result.lock.capabilities['neutral-skill']).toMatchObject({
-      converter: 'agent-skill',
+      type: 'skill',
       sourceType: 'file',
     });
     expect(result.lock.capabilities['neutral-skill']).not.toHaveProperty('source');
@@ -125,7 +125,7 @@ describe('Capability Source', () => {
       {
         neutral: {
           source: `npm:file:${path.join(packDir, archiveName)}`,
-          converter: 'mcp',
+          type: 'mcp',
           config: { scope: 'project' },
         },
       },
@@ -164,7 +164,7 @@ describe('Capability Source', () => {
         source: 'github:example/neutral-repo',
         ref: 'v1.0.0',
         path: 'skill',
-        converter: 'agent-skill',
+        type: 'skill',
       },
     } as const;
 
@@ -186,19 +186,19 @@ describe('Capability Source', () => {
   it.each([
     [
       'pending status',
-      { source: 'file:./skill', converter: 'agent-skill', status: 'pending' },
+      { source: 'file:./skill', type: 'skill', status: 'pending' },
       'not loadable',
     ],
     [
-      'unknown converter',
-      { source: 'file:./skill', converter: 'unknown' },
-      'unknown converter',
+      'unknown type',
+      { source: 'file:./skill', type: 'unknown' },
+      'unknown type',
     ],
     [
       'unsafe selected path',
       {
         source: 'file:./skill',
-        converter: 'agent-skill',
+        type: 'skill',
         path: '../outside',
       },
       'must stay inside',
@@ -239,7 +239,7 @@ describe('Capability Source', () => {
           'neutral-skill': {
             source: 'github:example/neutral-repo',
             path: 'skill',
-            converter: 'agent-skill',
+            type: 'skill',
           },
         },
         root,
@@ -278,7 +278,7 @@ describe('Capability Source', () => {
       source: 'github:example/neutral-repo',
       ref: 'v1.0.0',
       path: 'skill',
-      converter: 'agent-skill' as const,
+      type: 'skill' as const,
     };
     const cacheDir = path.join(root, 'cache');
 
@@ -320,7 +320,7 @@ describe('Capability Source', () => {
       source: 'github:example/neutral-repo',
       ref: 'v1.0.0',
       path: 'skill',
-      converter: 'agent-skill' as const,
+      type: 'skill' as const,
     };
     const cacheDir = path.join(root, 'cache');
 
@@ -361,13 +361,13 @@ describe('Capability Source', () => {
         source: 'github:example/neutral-repo-a',
         ref: 'v1.0.0',
         path: 'skill',
-        converter: 'agent-skill' as const,
+        type: 'skill' as const,
       },
       b: {
         source: 'github:example/neutral-repo-b',
         ref: 'v1.0.0',
         path: 'skill',
-        converter: 'agent-skill' as const,
+        type: 'skill' as const,
       },
     };
     const cacheDir = path.join(root, 'cache');
@@ -392,7 +392,7 @@ describe('Capability Source', () => {
     const cacheDir = path.join(root, 'cache');
     const ref = {
       source: 'npm:@ai-jue-test/does-not-exist@9.9.9',
-      converter: 'mcp' as const,
+      type: 'mcp' as const,
     };
     const destination = capabilityCacheDestination(ref, cacheDir);
     fs.mkdirSync(destination, { recursive: true });
@@ -418,7 +418,7 @@ describe('Capability Source', () => {
         {
           neutral: {
             source: 'github:example/neutral-repo',
-            converter: 'agent-skill',
+            type: 'skill',
           },
         },
         root,
@@ -449,7 +449,7 @@ describe('Capability Source', () => {
         {
           neutral: {
             source: 'file:./mcp-source',
-            converter: 'mcp',
+            type: 'mcp',
           },
         },
         root,
@@ -478,7 +478,7 @@ describe('Capability Source', () => {
           neutral: {
             source: 'github:example/neutral-repo',
             ref: 'v1.0.0',
-            converter: 'jue-native',
+            type: 'skill',
           },
         },
         root,
@@ -490,4 +490,72 @@ describe('Capability Source', () => {
       ),
     ).rejects.toThrow('symbolic or hard links');
   }, 60_000);
+
+  it.each([
+    ['rule' as const, 'rules' as const],
+    ['command' as const, 'commands' as const],
+    ['agent' as const, 'agents' as const],
+  ])('loads a file: %s Capability as exactly one leaf', async (type, section) => {
+    const root = tempDir();
+    const sourceDir = path.join(root, 'capabilities', 'neutral');
+    fs.mkdirSync(sourceDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(sourceDir, 'prompt.md'),
+      '---\ndescription: Neutral fixture\n---\nUse the neutral workflow.',
+    );
+
+    const result = await loadCapabilityRefs(
+      { neutral: { source: 'file:./capabilities/neutral', type } },
+      root,
+      undefined,
+      { cacheDir: path.join(root, 'cache') },
+    );
+
+    const leaves = (result.config as any)[section];
+    expect(Object.keys(leaves)).toEqual(['neutral']);
+    expect(leaves.neutral.content).toContain('neutral workflow');
+  });
+
+  it('loads a file: hook Capability as exactly one leaf', async () => {
+    const root = tempDir();
+    const sourceDir = path.join(root, 'capabilities', 'neutral-hook');
+    fs.mkdirSync(sourceDir, { recursive: true });
+    fs.writeFileSync(path.join(sourceDir, 'prompt.md'), 'echo neutral');
+
+    const result = await loadCapabilityRefs(
+      { 'neutral-hook': { source: 'file:./capabilities/neutral-hook', type: 'hook' } },
+      root,
+      undefined,
+      { cacheDir: path.join(root, 'cache') },
+    );
+
+    expect(Object.keys(result.config.hooks ?? {})).toEqual(['neutral-hook']);
+    expect(result.config.hooks?.['neutral-hook']).toBe('echo neutral');
+  });
+
+  it('does not let a single CapabilityRef expand into multiple leaves even when the source directory has sibling asset folders', async () => {
+    const root = tempDir();
+    const sourceDir = path.join(root, 'capabilities', 'neutral');
+    fs.mkdirSync(sourceDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(sourceDir, 'prompt.md'),
+      '---\ndescription: Neutral fixture\n---\nUse the neutral workflow.',
+    );
+    // A sibling capability-shaped directory next to the referenced source must
+    // never be picked up by a single `rule` CapabilityRef.
+    fs.mkdirSync(path.join(root, 'capabilities', 'other'), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, 'capabilities', 'other', 'prompt.md'),
+      'Should not be loaded.',
+    );
+
+    const result = await loadCapabilityRefs(
+      { neutral: { source: 'file:./capabilities/neutral', type: 'rule' } },
+      root,
+      undefined,
+      { cacheDir: path.join(root, 'cache') },
+    );
+
+    expect(Object.keys(result.config.rules ?? {})).toEqual(['neutral']);
+  });
 });

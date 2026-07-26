@@ -1,6 +1,6 @@
 # 规范：共享能力结构
 
-> 状态：Draft
+> 状态：Accepted
 > 版本：1.0.0
 
 ## 1. 目标
@@ -9,14 +9,15 @@
 
 - 用户配置（`ai.config.js`、Preset、`.ai/`）
 - 核心解析（`load -> merge -> validate -> normalize`）
-- Adapter（`Claude`、`Cursor`、`Gemini`、`Copilot`）
+- Adapter（优先为 `claude-code`、`codex`、`openclaw`、`hermes`）
 
 Adapter 必须消费规范化后的共享结构，不得猜测私有输入形状。
 
 注意：
 
 - 本规范描述目标共享内部结构。
-- 当前实现仍有差异时，应以实现作为事实来源，并明确跟踪差异，不得隐藏。
+- 当前实现仍有差异时，本规范保持目标合同，差异记录到
+  [实现状态](../developer/implementation-status.md)，不得用实现反向改写语义。
 
 ## 2. 支持的 Capability 集合
 
@@ -30,17 +31,17 @@ Adapter 必须消费规范化后的共享结构，不得猜测私有输入形状
 - `mcp.servers`
 
 以上六类是仅有的原子 Capability 类型。新增原子能力类别必须经过
-[architecture.md §0.6](../guide/architecture.md) 定义的晋升路径。
+[架构](../architecture/)定义的晋升规则。
 
-### 2.2 非 Capability 顶层字段（2 类）
+### 2.2 文档级上下文
 
 - `context.global`——采用分层追加方式合并的全局上下文，不是原子
   Capability（见 §4.3）。
-- `tools.<tool>`——用于工具私有、非 Canonical 配置的逃生舱，不是原子
-  Capability。
+`CanonicalDocument` 由文档级 `context` 和六类原子 Capability 组成。
+`context.global` 不可独立寻址，但必须参与 provenance、合并、转换和往返验证。
 
-这两个字段属于共享结构，但在校验“是否为受支持的 Capability”时不得计入；
-它们分别服务于全局上下文和工具原生逃生舱。
+`tools.<target>` 属于项目或 Preset 的目标配置，不属于 Canonical DSL。Core 在
+normalize 前将它从 Canonical 输入中分离，并只传给当前目标 Adapter。
 
 ## 3. Canonical 结构
 
@@ -178,7 +179,7 @@ mcp?: {
 
 ### 4.1 结构化 Capability
 
-`rules / commands / skills / agents / hooks / mcp / tools` 使用深度对象合并。
+`rules / commands / skills / agents / hooks / mcp` 使用深度对象合并。
 
 同一键的后置层覆盖前置层。
 
@@ -191,7 +192,7 @@ mcp?: {
 - `agents/<name>/prompt.md` -> `agents.<name>`
 - `hooks/<name>/index.json` -> `hooks.<name>`
 - 根目录 `mcp.json` -> `mcp`
-- `tools/<tool>/config.json` -> `tools.<tool>`
+- `tools/<tool>/config.json` -> 当前目标的非 Canonical 配置
 
 根目录 `mcp.json` 的结构与 Canonical `mcp` 对象一致：
 `{"servers": {...}}`。
@@ -236,7 +237,5 @@ mcp?: {
 - Adapter 不得静默发明不受支持的顶层 Capability。
 - 目标工具不支持的能力必须明确降级，不得静默忽略。
 
-设计说明：`prompts` 会规范化到与 `skills`/`agents` 相同的
-`prompt`/`content` 镜像契约（见
-[architecture.md §3.1](../guide/architecture.md)），但它仍是向后兼容输入，
-不是新的 Canonical Capability。
+历史 `prompts` 不是 Canonical 字段，只允许迁移工具把它显式转换为
+`commands`、`rules` 或 `context.global`；正常配置校验必须拒绝它。

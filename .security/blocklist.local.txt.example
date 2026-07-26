@@ -1,0 +1,9 @@
+# Copy this file to blocklist.local.txt (gitignored, never committed) and
+# list your own machine's sensitive identifiers, one per line: real
+# usernames, hostnames, internal tool paths, employee names — anything that
+# would leak personal or company information if it ended up in a public
+# commit. scripts/security-scan.js checks every staged line against this
+# list case-insensitively and blocks the commit on a match.
+#
+# example-real-username
+# internal-host.corp.example

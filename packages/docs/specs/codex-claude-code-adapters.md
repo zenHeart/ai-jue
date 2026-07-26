@@ -1,22 +1,26 @@
 # Codex / Claude Code Adapter 目标规范
 
-> 状态：**已实现并验证**
+> 状态：**Partial**（历史正向生成路径已验证；完整 Adapter 合同未完成）
 >
 > 优先级：**P0——优先完成 Codex 与 Claude Code**
 >
 > 范围所有者：`ai-jue`
 >
 > 更新日期：2026-07-25
+>
+> [!WARNING]
+> 本页定义目标合同。执行顺序以 Delivery Plan 为准：先完成 headless Claude Code
+> Reference Extension 与 Scale Gate，再并行迁移 Codex；不得同时设计两套流程。
 
 ## 1. 目标
 
 `ai-jue` 必须将一份解析完成的 Canonical 配置转换为 **Codex** 和
 **Claude Code** 的项目级原生产物。
 
-本轮仅完成以下两个运行时：
+本规范覆盖以下两个 Target，但实现顺序固定：
 
-- Codex
-- Claude Code
+1. Claude Code 作为首个真实 Reference Extension；
+2. Codex 在 Scale Gate 后复用同一骨架与合同测试。
 
 Cursor、Gemini、Copilot 和未来运行时保持兼容，但不在本轮扩展或重设计范围内。
 
@@ -38,8 +42,8 @@ Codex 与 Claude Code 是 Adapter 输出，不引入新的资产层或运行时�
 - 私有 Preset 验证必须通过 npm workspace、`file:` 依赖或本地 `npm pack`
   生成的 tarball 消费本地仓库。
 - 本地 tarball 只能写入临时目录，验证后删除或移入废纸篓。
-- `npm:` Capability Source 测试必须使用本地 tarball 或中性本地 fixture。
-- `github:` Capability Source 测试必须使用本地 mock/fixture；禁止 clone、
+- `npm:` external Capability reference 测试必须使用本地 tarball 或中性本地 fixture。
+- `github:` external Capability reference 测试必须使用本地 mock/fixture；禁止 clone、
   fetch 或暴露真实私有仓库。
 - 测试和日志不得无必要复制私有资产正文；优先断言路径、数量、校验和与生成结果。
 - 发布、release 和远程私有仓库验证属于后续独立阶段，必须获得明确授权。
@@ -153,19 +157,18 @@ CLAUDE.md
 
 ## 5. CLI 与发现
 
-`jue apply` 必须识别：
+目标 CLI 必须识别：
 
 ```bash
-jue apply --adapter codex
-jue apply --adapter claude
-jue apply --adapter claude-code
-jue apply --adapter codex --adapter claude-code
+jue apply --target codex
+jue apply --target claude-code
+jue apply --target codex --target claude-code
 ```
 
 要求：
 
 - 在别名映射中增加 `codex -> ai-jue-adapter-codex`。
-- 保持 `claude` 和 `claude-code` 映射到 `ai-jue-adapter-claude`。
+- Target ID 只使用 `claude-code`；`claude` 只作为带迁移诊断的历史输入。
 - 在已知 Adapter 发现中增加 Codex。
 - Codex 项目特征包括 `AGENTS.md`、`.agents/skills` 和 `.codex`。
 - `--all` 必须包含 Codex，且不得移除现有 Adapter。
@@ -233,14 +236,15 @@ git diff --check
 
 ## 8. 完成定义
 
-- [x] 目标文档与实现一致。
-- [x] Codex 与 Claude Code 可通过 CLI 独立选择。
+- [ ] 完整 Adapter 合同与实现一致。
+- [ ] Codex 与 Claude Code 可通过目标 `--target` CLI 独立选择。
 - [x] 本地打包的 Preset 可为两者生成可用的项目原生产物。
 - [x] 现有 Adapter 和测试不回退。
 - [x] 未增加不受支持的运行时。
 - [x] 人工评审仍是最终批准门禁。
 
-2026-07-25 验证结果：
+2026-07-25 历史实现证据（只证明 legacy Write/project Artifact，不证明 Read、
+安装动作或 native/runtime Confirm）：
 
 - Codex / Claude Code / matrix 定向测试：22 项通过
 - 真实 CLI：`--adapter codex` 与 `--adapter claude-code` 分别通过

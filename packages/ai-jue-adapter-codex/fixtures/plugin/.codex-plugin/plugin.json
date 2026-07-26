@@ -1,0 +1,11 @@
+{
+  "name": "jue-301-fixture",
+  "version": "0.1.0",
+  "description": "Neutral Codex Adapter Plugin fixture for JUE-301",
+  "author": {
+    "name": "ai-jue fixtures"
+  },
+  "interface": {
+    "displayName": "JUE-301 Codex Plugin fixture"
+  }
+}

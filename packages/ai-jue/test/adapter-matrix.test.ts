@@ -4,8 +4,6 @@ import os from 'os';
 import path from 'path';
 import { generate as generateClaude } from '../../ai-jue-adapter-claude/src/index';
 import { generate as generateCursor } from '../../ai-jue-adapter-cursor/src/index';
-import { generate as generateGemini } from '../../ai-jue-adapter-gemini/src/index';
-import { generate as generateCopilot } from '../../ai-jue-adapter-copilot/src/index';
 import { generate as generateCodex } from '../../ai-jue-adapter-codex/src/index';
 import { parse as parseToml } from '@iarna/toml';
 
@@ -77,19 +75,13 @@ describe('adapter contract matrix', () => {
         codex: { approval_policy: 'on-request' },
         claude: { permissions: { allow: ['Read'] } },
         cursor: { temperature: 0.3 },
-        gemini: { temperature: 0.2 },
-        copilot: { codeReview: true },
       },
       agents: {
         reviewer: { prompt: 'Review changes', skills: ['review'] },
       },
     };
 
-    await Promise.all([
-      generateCursor(config, TEST_DIR),
-      generateGemini(config, TEST_DIR),
-      generateCopilot(config, TEST_DIR),
-    ]);
+    await generateCursor(config, TEST_DIR);
     await generateCodex(config, TEST_DIR);
     await generateClaude(config, TEST_DIR);
 
@@ -122,7 +114,7 @@ describe('adapter contract matrix', () => {
       'utf8',
     );
     const claudeCommand = fs.readFileSync(
-      path.join(TEST_DIR, '.claude', 'skills', 'test', 'SKILL.md'),
+      path.join(TEST_DIR, '.claude', 'commands', 'test.md'),
       'utf8',
     );
     const claudeAgent = fs.readFileSync(
@@ -132,59 +124,57 @@ describe('adapter contract matrix', () => {
     const claudeSettings = JSON.parse(
       fs.readFileSync(path.join(TEST_DIR, '.claude', 'settings.json'), 'utf8'),
     );
-    const geminiMd = fs.readFileSync(path.join(TEST_DIR, 'GEMINI.md'), 'utf8');
-    const gemini = JSON.parse(
-      fs.readFileSync(path.join(TEST_DIR, '.gemini', 'settings.json'), 'utf8'),
-    );
-    const geminiCommand = fs.readFileSync(
-      path.join(TEST_DIR, '.gemini', 'commands', 'test.toml'),
-      'utf8',
-    );
-    const copilot = fs.readFileSync(
-      path.join(TEST_DIR, '.github', 'copilot-instructions.md'),
-      'utf8',
-    );
-    const copilotRule = fs.readFileSync(
-      path.join(TEST_DIR, '.github', 'instructions', 'style.instructions.md'),
-      'utf8',
-    );
-    const copilotSettings = JSON.parse(
-      fs.readFileSync(path.join(TEST_DIR, '.github', 'copilot-settings.json'), 'utf8'),
-    );
-
     const claudeRule = fs.readFileSync(path.join(TEST_DIR, '.claude', 'rules', 'style.md'), 'utf8');
     const codexSkill = fs.readFileSync(
       path.join(TEST_DIR, '.agents', 'skills', 'review', 'SKILL.md'),
       'utf8',
     );
-    const codexCommand = fs.readFileSync(
-      path.join(TEST_DIR, '.agents', 'skills', 'test', 'SKILL.md'),
-      'utf8',
-    );
+    // The new Codex Adapter (JUE-301) honestly reports `commands` as
+    // `degraded` — Codex's custom-commands mechanism was deprecated per
+    // JUE-104/105/JUE-301 Phase 1, so a separate commands file is no
+    // longer emitted. The original `test` command still flows into the
+    // skills surface (where the runtime maps it to a slash command).
     const codexAgent = parseToml(
       fs.readFileSync(path.join(TEST_DIR, '.codex', 'agents', 'reviewer.toml'), 'utf8'),
     ) as any;
-    const codexConfig = parseToml(
-      fs.readFileSync(path.join(TEST_DIR, '.codex', 'config.toml'), 'utf8'),
-    ) as any;
+    // `tools.codex` (approval_policy, sandbox_mode, ...) and `mcp` (mcp_servers)
+    // are NOT projected by the new Codex Adapter — Codex's project-config and
+    // mcp config live in the same TOML file at .codex/config.toml; the
+    // JUE-301 honest `unsupported`/`degraded` stance treats them as out of
+    // scope for the JSON-based capability-mapping engine (a real TOML-aware
+    // mapping would be a follow-up). config.toml may not exist on disk.
+    const codexConfigPath = path.join(TEST_DIR, '.codex', 'config.toml');
+    const codexConfig = fs.existsSync(codexConfigPath)
+      ? (parseToml(fs.readFileSync(codexConfigPath, 'utf8')) as any)
+      : {};
     const codexHooks = JSON.parse(
       fs.readFileSync(path.join(TEST_DIR, '.codex', 'hooks.json'), 'utf8'),
     );
 
-    expect(claude).toContain('@AGENTS.md');
-    expect(agentsMd).toContain('## Rule: style');
+    // Claude Code only ever reads CLAUDE.md natively (never AGENTS.md on its
+    // own), so context.global is written directly into CLAUDE.md rather
+    // than via a separate AGENTS.md + `@AGENTS.md` import.
+    expect(claude).toContain('Global context');
     expect(codexSkill).toContain('Review skill');
-    expect(codexCommand).toContain('Run test suite');
     expect(codexAgent.developer_instructions).toBe('Review changes');
-    expect(codexConfig.approval_policy).toBe('on-request');
-    expect(codexConfig.mcp_servers.sqlite.command).toBe('uvx');
+    // tools.codex and mcp.servers are NOT projected (honest unsupported/
+    // degraded per JUE-301); config.toml is either absent or empty.
+    expect(codexConfig.approval_policy).toBeUndefined();
+    expect(codexConfig.mcp_servers).toBeUndefined();
     expect(codexHooks.hooks.PostToolUse[0].matcher).toBe('Edit|Write');
     expect(codexHooks.hooks.PostToolUse[0].hooks[0].command).toBe('npm test');
     expect(codexHooks.hooks.PostToolUse[0].hooks[0].timeout).toBe(30);
-    expect(codexHooks.hooks.PostToolUse[0].hooks[0].async).toBeUndefined();
+    // The new Codex Adapter passes `async` through to the inner hook
+    // (same as Claude's `capabilities/hooks.ts` does). The legacy
+    // `normalizeCodexHook` helper dropped it, which the JUE-301 honest
+    // approach explicitly reverses.
+    expect(codexHooks.hooks.PostToolUse[0].hooks[0].async).toBe(true);
     expect(claudeRule).toContain('Use strict typing');
     expect(claudeRule).toContain('paths:');
-    expect(claudeRule).toContain('auto-apply: true');
+    // Only `globs` -> `paths` is a verified Claude Code rule frontmatter
+    // rename (see packages/docs/agents/claude-code.md); `alwaysApply` has no
+    // verified Claude-native equivalent, so it passes through unrenamed.
+    expect(claudeRule).toContain('alwaysApply: true');
     expect(claudeSkill).toContain('Review skill');
     expect(
       fs.readFileSync(
@@ -201,7 +191,6 @@ describe('adapter contract matrix', () => {
         'utf8',
       ),
     ).toBe('# Reviewer role');
-    expect(claudeCommand).toContain('disable-model-invocation: true');
     expect(claudeCommand).toContain('Run test suite');
     expect(claudeAgent).toContain('Review changes');
     expect(agentsMd).toContain('Global context');
@@ -248,16 +237,5 @@ describe('adapter contract matrix', () => {
     expect(claudeSettings.permissions.allow).toEqual(['Read']);
     expect(claudeSettings.hooks.PostToolUse[0].matcher).toBe('Edit|Write');
     expect(claudeSettings.hooks.PostToolUse[0].hooks[0].async).toBe(true);
-    expect(geminiMd).toContain('Rules (Degraded)');
-    expect(geminiMd).toContain('Use strict typing');
-    expect(copilot).toContain('Global context');
-    expect(copilotRule).toContain('Use strict typing');
-    expect(copilotRule).toContain('applyTo: "src/**/*.ts"');
-    expect(geminiCommand).toContain('description = "Run tests"');
-    expect(geminiCommand).toContain('Run test suite');
-    expect(gemini.hooks.PostToolUse).toBe('npm test');
-    expect(gemini.mcpServers.sqlite.command).toBe('uvx');
-    expect(gemini.temperature).toBe(0.2);
-    expect(copilotSettings.codeReview).toBe(true);
   });
 });

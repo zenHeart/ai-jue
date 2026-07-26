@@ -6,6 +6,8 @@
   "description": "Monorepo for the ai-jue project",
   "main": "index.js",
   "scripts": {
+    "prepare": "git config core.hooksPath .githooks",
+    "security-scan": "node scripts/security-scan.js",
     "test": "vitest run",
     "build": "turbo run build",
     "docs:dev": "npm run docs:dev -w docs",

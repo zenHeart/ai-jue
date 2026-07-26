@@ -16,7 +16,7 @@ const resources = {
           describe: "Apply AI configurations based on ai.config.js",
           watch_describe: "Watch for changes and re-apply automatically",
           adapter_describe:
-            "Specify adapters to run (repeatable or comma-separated), e.g. --adapter cursor --adapter gemini",
+            "Specify adapters to run (repeatable or comma-separated), e.g. --adapter cursor --adapter claude",
           adapter_typo_option:
             "Detected --adpater option typo. Treated as --adapter.",
           all_describe: "Run all discovered adapters (-a)",
@@ -46,7 +46,7 @@ const resources = {
           manual_selection_intro:
             "No local tool footprint found. Please select adapters to run:",
           manual_selection_hint:
-            "Multiple selection supported. Enter numbers or adapter names separated by commas/spaces (for example: 1,3 or cursor gemini). Enter \"all\" to select all.",
+            "Multiple selection supported. Enter numbers or adapter names separated by commas/spaces (for example: 1,3 or cursor claude). Enter \"all\" to select all.",
           manual_selection_hint_inquirer:
             "Use ↑/↓ to navigate, <space> to select, <enter> to confirm.",
           manual_selection_prompt: "Adapter selection>",
@@ -66,6 +66,22 @@ const resources = {
           adapter_no_generate:
             'Adapter {{name}} does not export a "generate" function.',
           adapter_failed: "Error running adapter {{name}}: {{message}}",
+          dry_run_describe:
+            "Preview the Artifact changes without writing anything",
+          check_describe:
+            "Read-only: exit non-zero if changes, drift, or unauthorized actions would be needed",
+          core_unsupported:
+            "Adapter {{name}} does not support --dry-run/--check yet (no write() export). Skipped.",
+          core: {
+            pending: "{{name}}: {{count}} change(s) would be written:",
+            conflict:
+              "{{name}}: blocked — on-disk state no longer matches what was last applied:",
+            unauthorized:
+              "{{name}}: blocked — the following change(s) require authorization:",
+            no_change: "{{name}}: already up to date, no changes needed",
+            rolled_back:
+              "{{name}}: apply failed partway and was rolled back: {{message}}",
+          },
           loaded_config: "Loaded user config.",
           finished: "✨ Apply command finished.",
           failed: "Failed to apply configuration: {{message}}",
@@ -136,6 +152,33 @@ const resources = {
           valid: "✨ Configuration and assets are valid.",
           invalid: "❌ Validation failed:",
         },
+        extension: {
+          describe: "Author commands for Extension packages",
+          validate: {
+            describe: "Validate an Extension package's npm metadata, optionally loading it",
+            path_describe: "Path or npm package name of the Extension to validate",
+            load_describe:
+              "Load the default export in a guarded import and validate its Adapters",
+            fixtures_describe:
+              "Directory whose immediate subdirectories are native fixtures; runs the first Adapter's read() against each and checks the result against CanonicalDocumentSchema (implies --load)",
+            valid: "✨ Extension package metadata is valid.",
+            loaded: "✨ Extension loaded. Adapter id(s): {{ids}}",
+            invalid: "❌ Extension package metadata is invalid:",
+            failed: "Failed to load Extension: {{message}}",
+          },
+        },
+        inspect: {
+          describe: "Read-only inspection of Presets, Capabilities, Adapters, and Artifacts",
+          extension_describe: "Path or npm package name of the Extension to inspect",
+          diagnostics_describe:
+            "Also report loaded Adapter capabilities and apply-readiness against the current project (--capability/--preset/--target/--artifact filters are not implemented yet)",
+          no_target: "Specify --extension <path> (--capability/--preset/--target are not implemented yet).",
+          invalid_extension: "❌ Extension package metadata is invalid:",
+          adapter_line: "Adapter: {{id}}",
+          apply_readiness:
+            "Apply readiness for {{id}}: {{status}} (pending: {{pending}}, conflicts: {{conflicts}}, unauthorized: {{unauthorized}})",
+          failed: "Failed to inspect: {{message}}",
+        },
         "create-preset": {
           describe: "Create a new AI-Jue preset project structure",
           running: "Creating new preset: {{name}}...",
@@ -150,7 +193,7 @@ const resources = {
           scanning: "🔍 Scanning for AI tool configurations...",
           detecting: "Detecting configurations...",
           no_configs: "No AI tool configurations detected.",
-          supported_tools: "Supported tools: cursor, gemini, claude, copilot, trae, opencode",
+          supported_tools: "Supported tools: cursor, claude, trae, opencode",
           detected_count: "Detected {{count}} tool(s): {{names}}",
           plan_header: "\n📋 Migration Plan\n",
           detected_tools_header: "Detected Tools:",
@@ -189,7 +232,7 @@ const resources = {
           describe: "基于 ai.config.js 应用 AI 配置",
           watch_describe: "监听文件变化并自动重新应用",
           adapter_describe:
-            "指定要执行的适配器（可重复或逗号分隔），例如 --adapter cursor --adapter gemini",
+            "指定要执行的适配器（可重复或逗号分隔），例如 --adapter cursor --adapter claude",
           adapter_typo_option:
             "检测到 --adpater 参数拼写错误，已按 --adapter 处理。",
           all_describe: "执行全部已发现的适配器（-a）",
@@ -219,7 +262,7 @@ const resources = {
           manual_selection_intro:
             "未发现本地工具环境痕迹，请手动选择要执行的适配器：",
           manual_selection_hint:
-            "支持多选。请输入编号或适配器名称，多个可用逗号或空格分隔（例如：1,3 或 cursor gemini）。输入 all 表示全部。",
+            "支持多选。请输入编号或适配器名称，多个可用逗号或空格分隔（例如：1,3 或 cursor claude）。输入 all 表示全部。",
           manual_selection_hint_inquirer:
             "使用 ↑/↓ 移动，空格选择，回车确认。",
           manual_selection_prompt: "适配器选择>",
@@ -238,6 +281,19 @@ const resources = {
           adapter_success: "适配器 {{name}} 成功完成",
           adapter_no_generate: '适配器 {{name}} 未导出 "generate" 函数。',
           adapter_failed: "运行适配器 {{name}} 出错: {{message}}",
+          dry_run_describe: "预览将写入的 Artifact 变更，不实际写入任何内容",
+          check_describe:
+            "只读检查：如需变更、存在漂移或存在未授权动作则以非零码退出",
+          core_unsupported:
+            "适配器 {{name}} 尚未支持 --dry-run/--check（未导出 write()），已跳过。",
+          core: {
+            pending: "{{name}}：以下 {{count}} 项变更将被写入：",
+            conflict:
+              "{{name}}：已阻塞——磁盘上的内容与上次应用后的状态不一致：",
+            unauthorized: "{{name}}：已阻塞——以下变更需要授权：",
+            no_change: "{{name}}：已是最新状态，无需变更",
+            rolled_back: "{{name}}：apply 执行到一半失败，已回滚：{{message}}",
+          },
           loaded_config: "已加载用户配置。",
           finished: "✨ Apply 命令执行完毕。",
           failed: "应用配置失败: {{message}}",
@@ -306,6 +362,32 @@ const resources = {
           valid: "✨ 配置和资产有效。",
           invalid: "❌ 校验失败:",
         },
+        extension: {
+          describe: "面向 Extension 包作者的命令",
+          validate: {
+            describe: "校验 Extension 包的 npm 元数据，可选择性加载入口",
+            path_describe: "要校验的 Extension 路径或 npm 包名",
+            load_describe: "在隔离导入中加载默认导出并校验其 Adapter",
+            fixtures_describe:
+              "目录，其直接子目录均为原生 fixture；对每个子目录调用首个 Adapter 的 read() 并按 CanonicalDocumentSchema 校验结果（隐含 --load）",
+            valid: "✨ Extension 包元数据有效。",
+            loaded: "✨ Extension 已加载。Adapter id：{{ids}}",
+            invalid: "❌ Extension 包元数据无效：",
+            failed: "加载 Extension 失败: {{message}}",
+          },
+        },
+        inspect: {
+          describe: "只读查看 Preset、Capability、Adapter 和 Artifact",
+          extension_describe: "要查看的 Extension 路径或 npm 包名",
+          diagnostics_describe:
+            "同时报告已加载 Adapter 的能力支持级别，以及对当前项目的 apply 就绪状态（--capability/--preset/--target/--artifact 筛选尚未实现）",
+          no_target: "请指定 --extension <path>（--capability/--preset/--target 尚未实现）。",
+          invalid_extension: "❌ Extension 包元数据无效：",
+          adapter_line: "Adapter：{{id}}",
+          apply_readiness:
+            "{{id}} 的 apply 就绪状态：{{status}}（待处理：{{pending}}，冲突：{{conflicts}}，未授权：{{unauthorized}}）",
+          failed: "查看失败: {{message}}",
+        },
         "create-preset": {
           describe: "创建一个新的 AI-Jue 预设项目结构",
           running: "正在创建新预设: {{name}}...",
@@ -320,7 +402,7 @@ const resources = {
           scanning: "🔍 正在扫描 AI 工具配置...\n",
           detecting: "正在检测配置...",
           no_configs: "未检测到 AI 工具配置。",
-          supported_tools: "支持的工具：cursor, gemini, claude, copilot, trae, opencode",
+          supported_tools: "支持的工具：cursor, claude, trae, opencode",
           detected_count: "检测到 {{count}} 个工具：{{names}}",
           plan_header: "\n📋 迁移计划\n",
           detected_tools_header: "检测到的工具：",

@@ -1,0 +1,12 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          { "type": "command", "command": "echo neutral-fixture-plugin-hook" }
+        ]
+      }
+    ]
+  }
+}

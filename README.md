@@ -10,7 +10,7 @@
 
 [English](README.en.md) | **简体中文**
 
-标准化项目的 AI 能力（Prompt、Skills、MCP Server），自动适配 Claude Code / Cursor / Gemini / Copilot 等编辑器。
+标准化项目的 AI 能力（Prompt、Skills、MCP Server），自动适配 Claude Code / Cursor / Codex 等编辑器。
 
 [**📖 为什么叫 ai-jue (AI 诀)？**](#为什么叫-ai-jue-ai-诀)
 
@@ -71,12 +71,12 @@ npx jue apply
 `ai-jue` 项目的诞生，是为了解决 AI 辅助开发时代下，开发者经验无法有效沉淀、复用和共享的核心痛点。
 
 1. **配置碎片化 (Configuration Fragmentation)**
-    - **问题**: 每个 AI 编辑器都有自己独立的配置文件（`.gemini/`, `CLAUDE.md`, `.cursor/rules/` 等）。跨项目、跨工具维护这些零散的配置，繁琐且容易不同步。
+    - **问题**: 每个 AI 编辑器都有自己独立的配置文件（`.codex/`, `CLAUDE.md`, `.cursor/rules/` 等）。跨项目、跨工具维护这些零散的配置，繁琐且容易不同步。
     - **解法**: 提供一个统一的入口 `ai.config.js`，一次配置，自动生成各编辑器的配置文件。
 
 2. **经验碎片化 (Experience Fragmentation)**
     - **问题**: 开发者在使用 AI 的过程中积累的高价值经验（优质 Prompt、Skills、上下文指令），大多散落在个人笔记中，无法结构化沉淀，更难以在团队间高效共享和同步。
-    - **解法**: 通过 `.ai` 目录实现配置的**自循环**——开发者在项目中积累的 Prompt、Skills 等资产天然以结构化形式沉淀在 `.ai/` 目录中，当积累到一定程度后，可通过 `jue create-preset` 一键打包为 npm 预设包发布，大幅降低从"个人经验"到"团队标准"的发布成本。
+    - **解法**: 通过 `.ai` 目录实现配置的**自循环**——开发者在项目中积累的 Commands、Skills 等资产天然以结构化形式沉淀在 `.ai/` 目录中，成熟后通过 Preset 工具链打包为 npm 预设。
 
 **总结：`ai-jue` 的使命是将开发者高价值的"AI 开发能力"进行标准化、工程化和资产化，成为 AI 开发领域的 ESLint。**
 
@@ -95,7 +95,7 @@ npm install -D ai-jue jue-preset-base
 ```javascript
 // ai.config.js
 export default {
-  preset: 'base'
+  presets: ['base']
 }
 ```
 
@@ -105,7 +105,7 @@ export default {
 npx jue apply --all
 ```
 
-首次在新项目执行 `jue apply` 时，如果未检测到 `ai.config.js` / `jue.config.js`（及对应 rc），会先进入初始化引导（类似 `eslint init`），完成最小配置后再继续 apply。
+首次在新项目执行 `jue apply` 时，如果未检测到 `ai.config.js`，会先进入初始化引导，完成最小配置后再继续 apply。
 该引导默认不会创建 `.ai` 空目录；`.ai` 仅在后续需要本地资产渐进增强时再创建。
 
 完成！ai-jue 会根据项目的 AI 配置策略，自动为各编辑器生成对应的配置文件：
@@ -113,8 +113,7 @@ npx jue apply --all
 ```
 ✓ CLAUDE.md / .claude/*              — Claude Code
 ✓ AGENTS.md / .cursor/*              — Cursor
-✓ .gemini/settings.json              — Gemini CLI
-✓ .github/copilot-instructions.md    — GitHub Copilot
+✓ AGENTS.md / .codex/*               — Codex CLI
 ```
 
 ---
@@ -132,7 +131,7 @@ npx jue apply --all
 - `rules/`：项目规则（主流实践）
 - `agents/`：自定义代理（规范名称）
 - `hooks/`：生命周期钩子（主流实践）
-- `tools/<tool>/`：工具特定配置逃生舱（如 `tools/gemini/`、`tools/cursor/`）
+- `tools/<tool>/`：工具特定配置逃生舱（如 `tools/codex/`、`tools/cursor/`）
 - `ai.config.js`：ai-jue 统一配置入口（含 MCP/运行策略）
 - `.ai/`：本地资产工作区，支持映射并发布为 preset
 
@@ -150,7 +149,7 @@ npx jue apply --all
 因此：
 
 - 新项目可以直接从 `.ai/` 和 `ai.config.js` 开始
-- 已有 `.cursor` / `.gemini` / `.claude` 配置的项目，也可以先通过 `jue format` 低成本收回统一资产
+- 已有 Agent 配置的项目，通过 `apply --dry-run → apply → apply --check` 收回统一资产；当前实现状态见 Developer 文档
 - 后续无论扩展新工具还是扩展新通用能力，都尽量不增加用户侧心智负担
 
 ### 🎯 多预设组合
@@ -192,10 +191,9 @@ export default {
 ```javascript
 // ai.config.js
 export default {
-  preset: 'base',
-  extends: {
-    prompts: './prompts/custom-rules.md',
-    skills: ['./skills/deploy.md']
+  presets: ['base'],
+  skills: {
+    deploy: { prompt: 'Deploy this project using its documented release process.' }
   }
 }
 ```
@@ -205,7 +203,7 @@ export default {
 ```javascript
 // ai.config.js
 export default {
-  preset: 'base',
+  presets: ['base'],
   mcp: {
     servers: {
       'my-db': { command: 'npx', args: ['@myteam/mcp-server-db'] }
@@ -227,8 +225,8 @@ npx jue apply --all --watch
 
 ### 🔄 正反向低成本转换
 
-- 正向：从 `.ai/` / `ai.config.js` 分发到 `.claude`、`.cursor`、`.gemini`、`.github`
-- 反向：从已有 `.claude` / `.cursor` / `.gemini` 等配置收敛回 `.ai/`
+- 正向：从 `.ai/` / `ai.config.js` 分发到 `.claude`、`.cursor`、`.codex`
+- 反向：从已有 `.claude` / `.cursor` 等配置收敛回 `.ai/`
 
 这使得：
 
@@ -251,31 +249,35 @@ npx jue apply --all --watch
 ```
 ai.config.js          →  加载预设 & 合并配置  →  适配器插件生成文件
 ┌──────────────┐       ┌───────────────────┐    ┌──────────────────────┐
-│ preset: 'base' │ →  │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md + .claude/* │
+│ presets: ['base']│ → │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md + .claude/* │
 │ mcp: {...}    │      │  (微内核)          │    │ adapter-cursor → AGENTS.md + .cursor/* │
-│ commands: {}  │      │  配置合并 & 规范化  │    │ adapter-gemini → settings.json│
-└──────────────┘       └───────────────────┘    │ adapter-copilot→ instructions │
-                                                 └──────────────────────────────┘
+│ commands: {}  │      │  配置合并 & 规范化  │    │ adapter-codex  → AGENTS.md + .codex/*  │
+└──────────────┘       └───────────────────┘    └─────────────────────────────────────────┘
 ```
 
-> 详细架构见 [architecture.md](packages/docs/guide/architecture.md)
+> 详细架构见 [architecture/index.md](packages/docs/architecture/index.md)
 
 ---
 
 ## CLI 命令
 
+目标 CLI 统一采用一条转换流程；未实现能力在
+[实现状态](packages/docs/developer/implementation-status.md)中标记，不能据此
+假定运行时已经可用。
+
 ```bash
 npx jue init              # 交互式初始化配置
-npx jue apply --adapter cursor --adapter gemini --adapter claude  # 仅生成指定适配器
+npx jue inspect           # 只读发现来源、目标与产物（规划）
+npx jue apply --target codex --dry-run # 预览变化（Claude/Codex/OpenClaw/Hermes 已实现，经 Core 执行器；Cursor 尚未接入）
+npx jue apply --target codex  # 生成指定目标（目标合同，当前部分实现）
 npx jue apply -a          # 生成全部已发现适配器（等同 --all）
-npx jue apply             # 未显式传参时，按 .cursor/.gemini/.claude 等痕迹自动识别
+npx jue apply             # 未显式传参时，按 .cursor/.codex/.claude 等痕迹自动识别
 npx jue apply --lang zh   # 运行时覆盖语言（等同 AI_JUE_LANG=zh）
 npx jue apply --all --watch  # 监听变化自动重新生成（显式适配器）
-npx jue check             # 检查预设是否有新版本
-npx jue validate          # 校验配置合法性
-npx jue list              # 列出已加载的预设和资产
-npx jue format            # 将现有工具配置（.cursor/.gemini 等）规整到 .ai 目录
-npx jue create-preset <n> # 创建新的预设项目结构
+npx jue apply --target codex --check # CI 校验、漂移和确认（Claude/Codex/OpenClaw/Hermes 已实现；Cursor 尚未接入）
+npx jue inspect --extension <pkg> --diagnostics # 深度诊断（已实现，需指定 --extension；不带 --extension 的裸 inspect 仍是规划）
+npx jue capability update # 更新外部 external Capability reference
+npx jue preset create <n> # 创建新的预设项目结构（规划）
 ```
 
 ---
@@ -283,7 +285,7 @@ npx jue create-preset <n> # 创建新的预设项目结构
 ## 创建自己的预设
 
 ```bash
-npx jue create-preset my-team-preset
+npx jue preset create my-team-preset
 ```
 
 生成的预设结构：
@@ -298,7 +300,7 @@ my-team-preset/
 ├── agents/              # 自定义代理
 ├── hooks/               # 生命周期钩子
 └── tools/
-    ├── gemini/
+    ├── codex/
     └── cursor/          # 工具特定配置（MCP 等）
 ```
 
@@ -306,7 +308,7 @@ my-team-preset/
 
 ```bash
 npm install -D jue-preset-my-team
-# ai.config.js → preset: 'my-team'
+# ai.config.js → presets: ['my-team']
 npx jue apply --all
 ```
 

@@ -1,95 +1,60 @@
-# Specification: jue-preset-base
+# jue-preset-base 规范
 
-> Status: Draft
-> Version: 1.2.0
+> 状态：Draft
+> 版本：1.2.0
 
-## 1. Positioning
+## 1. 定位
 
-`jue-preset-base` is the default user-facing engineering preset in the ai-jue ecosystem.
-It is scenario-first and command-minimal: solve high-frequency agentic coding pain points with the smallest stable command set.
+`jue-preset-base` 是默认通用工程 Preset，以最少稳定 command 解决高频 Agent
+编码任务，不包含仓库私有治理。
 
-## 2. Canonical Structure
+## 2. Canonical 结构
 
 ```text
 packages/jue-preset-base/
 ├── AGENTS.md
 ├── AGENTS.en.md
-├── commands/
-│   └── <command-id>/
-│       ├── prompt.md
-│       └── prompt.en.md
+├── commands/<command-id>/prompt.md
+├── commands/<command-id>/prompt.en.md
 └── package.json
 ```
 
-Notes:
-- `AGENTS.md` is the single global context and hard-constraint entry.
-- `commands/*` is implementation storage; user-facing command names are defined in section 3.2.
-- command metadata (for example `description` and `triggers`) is defined in YAML frontmatter in `prompt.md` / `prompt.en.md`.
+Command 元数据写入 prompt frontmatter，不使用第二份 index manifest。
 
-## 3. Core Capabilities
+## 3. 核心能力
 
-### 3.1 Global Meta-Rules
+### 3.1 全局元规则
 
-`AGENTS.md` enforces the default engineering behavior:
+`AGENTS.md` 规定意图澄清、架构优先、完整验证和可审查交付。
 
-- intent clarification before coding
-- architecture-first implementation discipline
-- verification completeness (code + tests + docs)
-- review-ready, auditable delivery
+### 3.2 用户 Command 集合
 
-### 3.2 User-Facing Command Set (Canonical Interface)
+| Command | 结果 |
+| --- | --- |
+| `impl` | 澄清、设计、实现、验证 |
+| `fix` | 复现、根因、修复、回归 |
+| `review` | 功能与非功能评审 |
+| `refactor` | 保持行为的重构 |
+| `explain` | 解释架构、数据流和约束 |
+| `test` | 边界与失败路径测试 |
+| `doc` | 面向用户的低负担文档 |
 
-| Command | Primary Pain Point | Required Outcome |
-| :--- | :--- | :--- |
-| `jue:impl` | Requirement ambiguity causes rework | Clarify intent, design first, then implement and verify |
-| `jue:fix` | Bug fix without root cause creates regressions | Reproduce, identify root cause, fix and run regression checks |
-| `jue:rev` | Reviews only cover functionality | Cover functional and non-functional quality systematically |
-| `jue:ref` | Refactor changes behavior unexpectedly | Preserve behavior, keep idempotent and rollback-friendly changes |
-| `jue:exp` | Onboarding is slow | Explain architecture intent, data flow, and key constraints |
-| `jue:test` | Boundary cases are missed | Generate high-value tests including edge and failure paths |
-| `jue:doc` | Docs follow implementation, not user tasks | Produce user-oriented docs with low cognitive load |
+存储 ID 就是 Canonical command ID，不维护 `jue:impl` 等第二套别名。
 
-### 3.3 User Interface vs. Current Asset Mapping
+### 3.3 扩展 Command
 
-During migration, user-facing names remain canonical while storage paths can differ:
+`optimize` 和 `security` 可以作为普通 command 分发，但不改变 Canonical 类型。
 
-| User Interface | Current Asset Path |
-| :--- | :--- |
-| `jue:exp` | `commands/explain` |
-| `jue:ref` | `commands/refactor` |
-| `jue:rev` | `commands/review` |
-| `jue:test` | `commands/test` |
-| `jue:doc` | `commands/doc` |
-| `jue:impl` | `commands/impl` |
-| `jue:fix` | `commands/fix` |
+### 3.4 Commit 建议
 
-`optimize` and `security` are treated as extension commands, not part of the current 7-command canonical interface.
+Commit type 只是 command 输出建议，不是 Capability 或执行副作用。是否提交始终由
+用户决定。
 
-### 3.4 Conventional Commits Alignment Layer
+## 4. 双语一致性
 
-The preset keeps the 7-command user interface unchanged and adds a commit suggestion layer aligned with Conventional Commits 1.0.0:
+`AGENTS.md`/`AGENTS.en.md` 和 prompt 语言变体必须语义等价；语言不能改变行为、
+权限或验收标准。
 
-| User Command | Suggested Commit Type |
-| :--- | :--- |
-| `jue:impl` | `feat` |
-| `jue:fix` | `fix` |
-| `jue:ref` | `refactor` |
-| `jue:test` | `test` |
-| `jue:doc` | `docs` |
-| `jue:rev` | `chore` (only when code changes exist) |
-| `jue:exp` | `docs` (only when doc changes exist) |
+## 5. 质量目标
 
-Suggested commit header format:
-- `<type>(<scope>): <description>`
-- breaking changes use `!` or `BREAKING CHANGE:` footer.
-
-## 4. Bilingual Consistency Requirements
-
-- `AGENTS.md` and `AGENTS.en.md` must remain semantically equivalent.
-- `prompt.md` and `prompt.en.md` must align on behavior, not literal wording.
-- Language variants should not change command intent or constraints.
-
-## 5. Quality Goal Statement
-
-"Review 零修改" / "zero-edit review" is a direction target, not a guaranteed baseline for every output.
-Docs and release notes must not present it as already guaranteed.
+“Review 零修改”是方向，不是保证。文档和输出不得把它描述为已达成事实。

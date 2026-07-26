@@ -21,17 +21,11 @@ describe("format command integration", () => {
     }
   });
 
-  it("should migrate Cursor and Gemini configs to .ai directory", async () => {
+  it("should migrate Cursor configs to .ai directory", async () => {
     // 1. Setup fixtures
     const cursorDir = path.join(testDir, ".cursor");
     fs.mkdirSync(cursorDir);
     fs.writeFileSync(path.join(cursorDir, "hooks.json"), '{"hooks": []}');
-    
-    const geminiDir = path.join(testDir, ".gemini");
-    fs.mkdirSync(geminiDir);
-    const geminiCmdDir = path.join(geminiDir, "commands");
-    fs.mkdirSync(geminiCmdDir);
-    fs.writeFileSync(path.join(geminiCmdDir, "test.toml"), 'prompt = "test"');
 
     fs.writeFileSync(path.join(testDir, "AGENTS.md"), "# Global Agents");
 
@@ -41,7 +35,6 @@ describe("format command integration", () => {
     // 3. Verify results
     expect(fs.existsSync(path.join(testDir, ".ai", "AGENTS.md"))).toBe(true);
     expect(fs.existsSync(path.join(testDir, ".ai", "hooks.json"))).toBe(true);
-    expect(fs.existsSync(path.join(testDir, ".ai", "commands", "test", "prompt.md"))).toBe(true);
 
     const migratedAgents = fs.readFileSync(path.join(testDir, ".ai", "AGENTS.md"), "utf8");
     expect(migratedAgents).toContain("Migrated from AGENTS.md");

@@ -1,103 +1,29 @@
 import { cosmiconfig } from 'cosmiconfig';
 import { z } from 'zod';
-import { logger } from './logger';
-
-const StringListSchema = z.array(z.string());
-
-const McpServerSchema = z.object({
-  command: z.string(),
-  args: z.array(z.string()).optional(),
-  env: z.record(z.string(), z.string()).optional(),
-  disabled: z.boolean().optional(),
-  autoApprove: StringListSchema.optional(),
-  scope: z.enum(['local', 'project', 'user']).optional(),
-}).passthrough();
-
-const SupportFileSchema = z.union([
-  z.string(),
-  z.object({
-    content: z.string(),
-    encoding: z.enum(['utf8', 'base64']),
-  }).strict(),
-]);
-
-const AssetBundleSchema = z.object({
-  references: z.record(z.string(), SupportFileSchema).optional(),
-  scripts: z.record(z.string(), SupportFileSchema).optional(),
-  assets: z.record(z.string(), SupportFileSchema).optional(),
-}).passthrough();
-
-const PromptLikeAssetSchema = z.object({
-  content: z.string().optional(),
-  prompt: z.string().optional(),
-  description: z.string().optional(),
-}).passthrough();
-
-function requireCapabilityBody(
-  value: { content?: string; prompt?: string },
-  ctx: z.RefinementCtx,
-): void {
-  const body = value.prompt ?? value.content;
-  if (typeof body !== 'string' || body.trim().length === 0) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      path: ['prompt'],
-      message: 'Capability must define a non-empty prompt or content body.',
-    });
-  }
-}
-
-const RuleSchema = PromptLikeAssetSchema.extend({
-  globs: z.union([z.string(), StringListSchema]).optional(),
-  alwaysApply: z.boolean().optional(),
-}).superRefine(requireCapabilityBody);
-
-const SkillSchema = PromptLikeAssetSchema.extend({
-  name: z.string().optional(),
-  description: z.string().optional(),
-  "allowed-tools": StringListSchema.optional(),
-  allowedTools: StringListSchema.optional(),
-  disableModelInvocation: z.boolean().optional(),
-  userInvocable: z.boolean().optional(),
-}).merge(AssetBundleSchema).superRefine(requireCapabilityBody);
-
-const CommandSchema = PromptLikeAssetSchema.extend({
-  triggers: z.array(z.string()).optional(),
-  disableModelInvocation: z.boolean().optional(),
-  userInvocable: z.boolean().optional(),
-}).superRefine(requireCapabilityBody);
-
-const HookObjectSchema = z.object({
-  script: z.string(),
-  matcher: z.string().optional(),
-  tools: StringListSchema.optional(),
-  type: z.string().optional(),
-  async: z.boolean().optional(),
-  timeout: z.number().int().positive().optional(),
-}).passthrough();
-
-const HookSchema = z.union([
-  z.string(),
+import {
+  AgentSchema,
+  CanonicalDocumentSchema,
+  CommandSchema,
+  ContextSchema,
   HookObjectSchema,
-  z.array(HookObjectSchema).min(1),
-]);
-
-const AgentSchema = PromptLikeAssetSchema.extend({
-  name: z.string().optional(),
-  description: z.string().optional(),
-  skills: StringListSchema.optional(),
-}).superRefine(requireCapabilityBody);
-
-const ContextSchema = z.object({
-  global: z.string().optional(),
-}).passthrough();
+  HookSchema,
+  McpServerSchema,
+  PromptLikeAssetSchema,
+  RuleSchema,
+  SkillSchema,
+  SupportFileSchema,
+  toCanonicalDocument,
+} from 'ai-jue-core';
+import type { CanonicalDocument } from 'ai-jue-core';
+import { logger } from './logger';
 
 const CapabilityRefSchema = z.object({
   source: z.string().regex(/^(file|npm|github):.+/),
-  converter: z.enum(['agent-skill', 'mcp', 'jue-native']),
+  type: z.enum(['rule', 'command', 'skill', 'agent', 'hook', 'mcp']),
   ref: z.string().optional(),
   path: z.string().optional(),
   config: z.record(z.string(), z.unknown()).optional(),
+  integrity: z.string().optional(),
   status: z.never().optional(),
 }).strict();
 
@@ -108,6 +34,7 @@ const ConfigSchema = z
     extends: z
       .record(z.string(), z.union([z.string(), z.array(z.string())]))
       .optional(),
+    extensions: z.array(z.string()).optional(),
     language: z.string().optional(),
     mcp: z
       .object({
@@ -131,6 +58,7 @@ const ConfigSchema = z
       'preset',
       'presets',
       'extends',
+      'extensions',
       'language',
       'mcp',
       'context',
@@ -173,8 +101,11 @@ const ConfigSchema = z
   });
 
 export type MergedConfig = z.infer<typeof ConfigSchema> & { [key: string]: any };
+
+export type { CanonicalDocument };
 export {
   AgentSchema,
+  CanonicalDocumentSchema,
   CapabilityRefSchema,
   CommandSchema,
   ConfigSchema,
@@ -186,6 +117,7 @@ export {
   RuleSchema,
   SkillSchema,
   SupportFileSchema,
+  toCanonicalDocument,
 };
 
 const explorer = cosmiconfig('ai', {

@@ -21,9 +21,7 @@ const codePackages = [
     'packages/ai-jue',
     'packages/ai-jue-core',
     'packages/ai-jue-adapter-claude',
-    'packages/ai-jue-adapter-copilot',
-    'packages/ai-jue-adapter-cursor',
-    'packages/ai-jue-adapter-gemini'
+    'packages/ai-jue-adapter-cursor'
 ];
 
 const presetPackages = [

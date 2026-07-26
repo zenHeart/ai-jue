@@ -49,6 +49,18 @@ import {
   describe as capabilityDescribe,
   command as capabilityCommandStr,
 } from "./commands/capability";
+import {
+  handler as extensionHandler,
+  builder as extensionBuilder,
+  describe as extensionDescribe,
+  command as extensionCommandStr,
+} from "./commands/extension";
+import {
+  handler as inspectHandler,
+  builder as inspectBuilder,
+  describe as inspectDescribe,
+  command as inspectCommandStr,
+} from "./commands/inspect";
 import { logger, LogLevel } from "./logger";
 import { initI18n, t } from "./i18n";
 import { loadConfig } from "./config";
@@ -148,6 +160,22 @@ async function main() {
       }),
       capabilityBuilder as any,
       capabilityHandler,
+    )
+    .command(
+      extensionCommandStr,
+      t("commands.extension.describe", {
+        defaultValue: "Author commands for Extension packages",
+      }),
+      extensionBuilder as any,
+      extensionHandler,
+    )
+    .command(
+      inspectCommandStr,
+      t("commands.inspect.describe", {
+        defaultValue: "Read-only inspection of Presets, Capabilities, Adapters, and Artifacts",
+      }),
+      inspectBuilder as any,
+      inspectHandler,
     )
     .demandCommand(
       1,

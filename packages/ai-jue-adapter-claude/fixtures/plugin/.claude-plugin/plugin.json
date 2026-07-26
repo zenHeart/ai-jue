@@ -1,0 +1,15 @@
+{
+  "name": "jue-fixture-demo",
+  "version": "1.0.0",
+  "description": "Neutral fixture Plugin covering every Canonical Capability plus Claude-private fields.",
+  "author": { "name": "ai-jue fixtures" },
+  "dependencies": ["jue-fixture-dependency-example@^1.0.0"],
+  "userConfig": {
+    "GREETING": {
+      "type": "string",
+      "title": "Greeting",
+      "description": "Neutral fixture greeting injected into the MCP server env.",
+      "default": "hello-from-fixture"
+    }
+  }
+}

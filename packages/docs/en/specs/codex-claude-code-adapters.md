@@ -1,22 +1,27 @@
 # Codex / Claude Code Adapter Target
 
-> Status: **Implemented and verified**
+> Status: **Partial** (legacy forward generation verified; complete Adapter contract pending)
 >
 > Priority: **P0 — Codex and Claude Code first**
 >
 > Scope owner: `ai-jue`
 >
 > Updated: 2026-07-25
+>
+> [!WARNING]
+> This page defines the target contract. Delivery Plan fixes the implementation
+> order: complete the headless Claude Code Reference Extension and Scale Gate,
+> then migrate Codex without designing a second workflow.
 
 ## 1. Goal
 
 `ai-jue` SHALL turn one resolved Canonical configuration into native,
 project-scoped assets for **Codex** and **Claude Code**.
 
-This iteration completes only these two runtimes:
+This specification covers two Targets in a fixed implementation order:
 
-- Codex
-- Claude Code
+1. Claude Code is the first real Reference Extension.
+2. Codex reuses the same skeleton and contract tests after the Scale Gate.
 
 Cursor, Gemini, Copilot and future runtimes remain compatible, but extending or
 redesigning them is out of scope.
@@ -44,9 +49,9 @@ workflow**, not public distribution.
   workspaces, `file:` dependencies or tarballs created by local `npm pack`.
 - Local tarballs MUST be written only to a temporary directory and removed or
   moved to Trash after validation.
-- `npm:` Capability Source tests SHALL use local tarballs or neutral local
+- `npm:` external Capability reference tests SHALL use local tarballs or neutral local
   fixtures.
-- `github:` Capability Source tests SHALL use a local mock/fixture. They MUST
+- `github:` external Capability reference tests SHALL use a local mock/fixture. They MUST
   NOT clone, fetch or expose a real private repository.
 - Tests and logs MUST NOT copy private asset bodies unnecessarily. Prefer path,
   count, checksum and generated-output assertions.
@@ -168,19 +173,18 @@ forking or renaming it:
 
 ## 5. CLI and discovery
 
-`jue apply` SHALL recognize:
+The target CLI SHALL recognize:
 
 ```bash
-jue apply --adapter codex
-jue apply --adapter claude
-jue apply --adapter claude-code
-jue apply --adapter codex --adapter claude-code
+jue apply --target codex
+jue apply --target claude-code
+jue apply --target codex --target claude-code
 ```
 
 Requirements:
 
 - Add `codex -> ai-jue-adapter-codex` to the alias map.
-- Keep `claude` and `claude-code` mapped to `ai-jue-adapter-claude`.
+- Use `claude-code` as the Target ID; accept `claude` only as diagnosed legacy input.
 - Add Codex to known Adapter discovery.
 - Codex project footprints include `AGENTS.md`, `.agents/skills`, and `.codex`.
 - `--all` includes Codex without removing existing Adapters.
@@ -250,14 +254,15 @@ be weakened merely to obtain green output.
 
 ## 8. Definition of done
 
-- [x] The target document and implementation agree.
-- [x] Codex and Claude Code can be selected independently from the CLI.
+- [ ] The complete Adapter contract and implementation agree.
+- [ ] Codex and Claude Code are independently selectable through target `--target`.
 - [x] A locally packed Preset generates usable native project assets for both.
 - [x] Existing Adapters and tests do not regress.
 - [x] No unsupported runtime is added.
 - [x] Human review remains the final approval gate.
 
-Verified on 2026-07-25:
+Historical implementation evidence from 2026-07-25 (proves legacy Write and
+project Artifact only, not Read, install actions, or native/runtime Confirm):
 
 - targeted Codex / Claude Code / matrix tests: 22 passed
 - real CLI: `--adapter codex` and `--adapter claude-code` passed independently

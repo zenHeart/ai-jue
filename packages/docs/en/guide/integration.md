@@ -24,10 +24,10 @@ If you maintain an internal company project template (e.g., based on Vite or Nex
     Add `ai.config.js` to the template root directory:
 
     ```javascript
-    module.exports = {
-      preset: 'react',
+    export default {
+      presets: ['react'],
       // Other company standard configurations...
-    };
+    }
     ```
 
 3. **Configure `postinstall` Script (Optional)**:

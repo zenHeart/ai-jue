@@ -1,6 +1,6 @@
 # Specification: Shared Capability Structure
 
-> Status: Draft
+> Status: Accepted
 > Version: 1.0.0
 
 ## 1. Goal
@@ -9,14 +9,15 @@ This document defines the single shared internal structure used between:
 
 - user config (`ai.config.js`, presets, `.ai/`)
 - core resolution (`load -> merge -> validate -> normalize`)
-- adapters (`Claude`, `Cursor`, `Gemini`, `Copilot`)
+- adapters (prioritizing `claude-code`, `codex`, `openclaw`, `hermes`)
 
 Adapters must consume the normalized shared structure instead of guessing private input shapes.
 
 Note:
 
 - This spec describes the target shared internal structure.
-- When current implementation still differs, the implementation should be treated as the factual source, and the gap should be tracked explicitly rather than hidden.
+- When implementation differs, this specification remains the target contract;
+  track the gap in [Implementation Status](../developer/implementation-status.md).
 
 ## 2. Supported Capability Set
 
@@ -31,18 +32,19 @@ Note:
 
 These six are the only atomic Capability types. No additional atomic
 capability categories are allowed without going through the promotion path
-in [architecture.md §0.6](../guide/architecture.md).
+in [Architecture](../architecture/).
 
-### 2.2 Non-capability top-level fields (2)
+### 2.2 Document-level context
 
 - `context.global` — layered-append global context, not an atomic
   Capability (see §4.3).
-- `tools.<tool>` — escape hatch for tool-private, non-canonical
-  configuration, not an atomic Capability.
+A `CanonicalDocument` contains document-level `context` plus the six atomic
+Capability collections. `context.global` is not independently addressable, but
+it participates in provenance, merge, conversion, and round-trip validation.
 
-These two fields are part of the shared structure but must not be counted
-when validating "is this a supported capability" — they exist for global
-context and tool-native escape hatches respectively.
+`tools.<target>` is project or Preset target configuration, not Canonical DSL.
+Core separates it before normalization and passes it only to the current target
+Adapter.
 
 ## 3. Canonical Shapes
 
@@ -180,7 +182,7 @@ mcp?: {
 
 ### 4.1 Structured Capabilities
 
-`rules / commands / skills / agents / hooks / mcp / tools` use deep object merge.
+`rules / commands / skills / agents / hooks / mcp` use deep object merge.
 
 Later layers override earlier layers for the same key.
 
@@ -193,7 +195,7 @@ Later layers override earlier layers for the same key.
 - `agents/<name>/prompt.md` -> `agents.<name>`
 - `hooks/<name>/index.json` -> `hooks.<name>`
 - root `mcp.json` -> `mcp`
-- `tools/<tool>/config.json` -> `tools.<tool>`
+- `tools/<tool>/config.json` -> non-Canonical configuration for that target
 
 The root `mcp.json` shape is identical to the canonical `mcp` object:
 `{"servers": {...}}`.
@@ -238,6 +240,5 @@ This is additive, not replace semantics.
 - adapters must not silently invent unsupported top-level capabilities
 - unsupported target-tool features must be degraded explicitly, not ignored silently
 
-Design note: `prompts` is normalized to the same `prompt`/`content` mirror contract as
-`skills`/`agents` (see [architecture.md §3.1](../guide/architecture.md)), but it remains a
-backward-compatibility input, not a new canonical capability.
+Legacy `prompts` is not Canonical. Migration tooling may explicitly convert it
+to `commands`, `rules`, or `context.global`; normal config validation rejects it.

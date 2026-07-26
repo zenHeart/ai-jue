@@ -1,0 +1,24 @@
+{
+  "name": "jue-fixture-marketplace",
+  "owner": {
+    "name": "ai-jue fixtures"
+  },
+  "plugins": [
+    {
+      "name": "jue-fixture-demo",
+      "source": "../plugin",
+      "description": "Neutral fixture Plugin with its own plugin.json."
+    },
+    {
+      "name": "jue-fixture-auto-discovered",
+      "source": "../plugin-auto-discovered",
+      "description": "Neutral fixture Plugin with no plugin.json of its own; this marketplace entry carries the field that would otherwise live in one.",
+      "lspServers": {
+        "neutral-language": {
+          "command": "neutral-language-server",
+          "args": ["--stdio"]
+        }
+      }
+    }
+  ]
+}

@@ -3,7 +3,7 @@
 This section indexes Jue's public protocols and implementation contracts.
 Specifications define valid inputs, outputs, and compatibility boundaries. For
 design rationale and runtime flow, start with
-[Architecture](../guide/architecture.md).
+[Architecture](../architecture/).
 
 ## Recommended reading order
 
@@ -12,11 +12,15 @@ design rationale and runtime flow, start with
    Preset directory contract.
 2. [Canonical Model](canonical-model.md) defines the normalized
    structure shared by resolution, validation, and Adapters.
-3. [Capability Source](capability-source.md) defines how
-   a Preset references external Capability content through `ai.capabilities`.
+3. [External Capability references](capability-source.md) defines how
+   a Preset references canonical directories through `ai.capabilities`.
 4. [Codex / Claude Code Adapter](codex-claude-code-adapters.md)
    defines native outputs and verification boundaries for the prioritized
    runtimes.
+
+Extensions have no duplicate Specification. Implementers follow the
+[Adapter standard](../architecture/adapter-standardization.md),
+[Extension API](../reference/extension-api.md).
 
 ## Status labels
 

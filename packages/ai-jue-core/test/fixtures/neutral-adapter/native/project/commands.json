@@ -1,0 +1,7 @@
+{
+  "review": {
+    "description": "Neutral fixture command",
+    "content": "Review the diff.",
+    "prompt": "Review the diff."
+  }
+}

@@ -1,72 +1,55 @@
 # Creating a Preset
 
-The core of `ai-jue` is a reusable preset ecosystem. A preset is an independent npm package that encapsulates reusable AI collaboration assets.
+A Preset is a declarative Capability set without executable Extension code or
+target lifecycle state.
 
-## Quick Creation
+## 1. Create the directory
 
-```bash
-npx jue create-preset myteam
-```
+Use only needed paths: `package.json`, `README.md`, `AGENTS.md`, `skills/`,
+`commands/`, `rules/`, `agents/`, `hooks/`, `mcp.json`, and `tools/`.
 
-This generates `jue-preset-myteam`.
-
-## Recommended Directory Protocol
-
-Follow the Minimal Knowledge Principle and align with mainstream tool conventions:
-
-```text
-jue-preset-myteam/
-├── package.json
-├── README.md
-├── AGENTS.md
-├── skills/
-├── commands/
-├── rules/
-├── agents/
-├── hooks/
-└── tools/
-    ├── gemini/
-    └── cursor/
-```
-
-Notes:
-
-- `AGENTS.md`: global system context and hard constraints
-- `skills/`: skill assets
-- `commands/`: custom commands
-- `rules/`: project rules
-- `agents/`: custom agents
-- `hooks/`: lifecycle hooks
-- `tools/<tool>/`: tool-specific configuration
-
-## Relation to `.ai`
-
-Preset structure is isomorphic to local `.ai/`, so teams can first accumulate assets in a project and then package them with minimal reshaping.
-
-## Preset Nesting (Preset depends on Preset)
-
-You can declare preset dependencies in `package.json` (similar to eslint extends), so users do not need to repeat base presets in project config:
+## 2. Write the manifest
 
 ```json
 {
-  "name": "jue-preset-internal",
+  "name": "jue-preset-team",
+  "version": "1.0.0",
   "ai": {
-    "presets": ["base"]
+    "presets": ["base"],
+    "capabilities": {}
   }
 }
 ```
 
-Rules:
+See [Preset Manifest Reference](../reference/preset-manifest.md).
 
-- `ai.presets` (or `jue.presets`) accepts short names (`base`) or full package names (`jue-preset-base`)
-- Load order is dependencies first, then the current preset
-- On conflicts, the current preset overrides dependency presets
-- Cyclic dependencies are detected and recursion is stopped with an explicit error
+## 3. Add capabilities
 
-## Publish
+Place owned capabilities directly in their directories. Use `ai.capabilities`
+for shared or third-party content. Put target-private configuration under
+`tools/<target>/config.json`. Runtime code belongs in a separate Jue Extension.
+
+## 4. Validate and package
 
 ```bash
-npm publish
+jue preset validate .
+jue preset inspect .
+jue preset pack .
 ```
 
-Most presets are consumed directly as file assets without a build step.
+Validation covers manifests, Canonical directories, dependency cycles, path
+traversal, credentials, and sensitive data. Pack emits an explicit inventory.
+
+## 5. Consume
+
+```js
+export default {
+  presets: ["team"],
+  targets: {
+    codex: { artifact: "plugin" },
+    openclaw: { artifact: "compatible-bundle" }
+  }
+};
+```
+
+The Adapter selects and produces the target Artifact without duplicating Presets.

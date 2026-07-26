@@ -39,7 +39,7 @@ titleTemplate: false
     <article>
       <span class="flow-index">NATIVE</span>
       <h3>Agent Adapters</h3>
-      <p>Claude · Cursor · Gemini · Copilot</p>
+      <p>Claude · Cursor · Codex</p>
     </article>
   </div>
 </section>
@@ -73,8 +73,7 @@ titleTemplate: false
   <div class="adapter-grid">
     <article><span class="adapter-mark">C</span><h3>Claude</h3><p>Skills、Agents、Rules、Hooks 与 MCP</p></article>
     <article><span class="adapter-mark">↗</span><h3>Cursor</h3><p>Rules、Commands、Skills、Agents 与 MCP</p></article>
-    <article><span class="adapter-mark">G</span><h3>Gemini</h3><p>GEMINI.md、Commands、Skills 与 Settings</p></article>
-    <article><span class="adapter-mark">∞</span><h3>Copilot</h3><p>Instructions、Prompts 与工具配置</p></article>
+    <article><span class="adapter-mark">X</span><h3>Codex</h3><p>AGENTS.md、Skills、Agents、Hooks 与 MCP</p></article>
   </div>
 </section>
 

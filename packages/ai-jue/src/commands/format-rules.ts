@@ -16,16 +16,6 @@ export const TOOL_PATTERNS: Record<string, { adapter: string; files: string[] }>
       "AGENTS.md",
     ],
   },
-  gemini: {
-    adapter: "ai-jue-adapter-gemini",
-    files: [
-      ".gemini/settings.json",
-      ".gemini/commands/**/*.toml",
-      ".gemini/skills/*/SKILL.md",
-      "GEMINI.md",
-      "AGENTS.md",
-    ],
-  },
   claude: {
     adapter: "ai-jue-adapter-claude",
     files: [
@@ -37,15 +27,6 @@ export const TOOL_PATTERNS: Record<string, { adapter: string; files: string[] }>
       "CLAUDE.md",
       ".mcp.json",
       "AGENTS.md",
-    ],
-  },
-  copilot: {
-    adapter: "ai-jue-adapter-copilot",
-    files: [
-      ".github/copilot-instructions.md",
-      ".github/copilot-settings.json",
-      ".github/instructions/*.instructions.md",
-      ".github/prompts/*.prompt.md",
     ],
   },
   trae: {

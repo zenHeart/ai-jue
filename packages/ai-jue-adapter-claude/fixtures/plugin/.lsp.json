@@ -1,0 +1,8 @@
+{
+  "lspServers": {
+    "neutral-language": {
+      "command": "neutral-language-server",
+      "args": ["--stdio"]
+    }
+  }
+}

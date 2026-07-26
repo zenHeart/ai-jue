@@ -1,0 +1,6 @@
+{
+  "name": "jue-fixture-unsafe-path-reference",
+  "version": "1.0.0",
+  "description": "Neutral fixture Plugin whose hook command references a path outside the plugin boundary.",
+  "author": { "name": "ai-jue fixtures" }
+}

@@ -10,6 +10,7 @@
   "files": [
     "AGENTS.md",
     "commands",
+    "rules",
     "skills",
     "README.md"
   ],

@@ -5,8 +5,6 @@ import path from 'path';
 import { resolveFinalConfig } from '../src/resolver';
 import { generate as generateClaude } from '../../ai-jue-adapter-claude/src/index';
 import { generate as generateCursor } from '../../ai-jue-adapter-cursor/src/index';
-import { generate as generateGemini } from '../../ai-jue-adapter-gemini/src/index';
-import { generate as generateCopilot } from '../../ai-jue-adapter-copilot/src/index';
 
 const CORE_COMMANDS = [
   'impl',
@@ -50,16 +48,10 @@ describe('jue-preset-base integration', () => {
     await Promise.all([
       generateClaude(config, outDir),
       generateCursor(config, outDir),
-      generateGemini(config, outDir),
-      generateCopilot(config, outDir),
     ]);
 
     expect(fs.existsSync(path.join(outDir, 'CLAUDE.md'))).toBe(true);
     expect(fs.existsSync(path.join(outDir, 'AGENTS.md'))).toBe(true);
-    expect(fs.existsSync(path.join(outDir, 'GEMINI.md'))).toBe(true);
-    expect(fs.existsSync(path.join(outDir, '.github', 'copilot-instructions.md'))).toBe(
-      true,
-    );
   });
 
   it('checks bilingual completeness of AGENTS and commands in base preset', () => {

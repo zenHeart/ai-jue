@@ -210,7 +210,7 @@ Create adapter docs first, then implementation.`,
           capabilities: {
             'neutral-skill': {
               source: 'file:../../shared/neutral-skill',
-              converter: 'agent-skill',
+              type: 'skill',
             },
           },
         },

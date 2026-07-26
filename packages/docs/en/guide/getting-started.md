@@ -35,24 +35,19 @@ Run the `apply` command to generate AI tool configuration files based on your se
 npx jue apply --all
 ```
 
-`ai-jue` will read `ai.config.js`, load presets and local `.ai` assets; if root `AGENTS.md` exists, it is auto-injected as global context, then generate target files (for example `CLAUDE.md`, `.cursor/rules/*.mdc`, `.gemini/settings.json`; Cursor consumes root `AGENTS.md` natively).
+`ai-jue` will read `ai.config.js`, load presets and local `.ai` assets; if root `AGENTS.md` exists, it is auto-injected as global context, then generate target files (for example `CLAUDE.md`, `.cursor/rules/*.mdc`, `.codex/config.toml`; Cursor consumes root `AGENTS.md` natively).
 
 ## 4. Common Commands
 
-### Check for Updates
+The following commands are currently available.
 
-Check if installed presets have newer versions:
+### CI Check
 
-```bash
-npx jue check
-```
-
-### Validate Configuration
-
-Validate `ai.config.js` and referenced assets for correctness:
+The target option is Planned. It checks config, Artifact drift, and native
+confirmation:
 
 ```bash
-npx jue validate
+npx jue apply --all --check
 ```
 
 ### Watch Mode
@@ -65,10 +60,12 @@ npx jue apply --all --watch
 
 ### Create New Preset
 
-Quickly scaffold a new preset project structure:
+The target command is Planned:
 
 ```bash
-npx jue create-preset my-preset
+npx jue preset create my-preset
 ```
 
-For more detailed configuration, please refer to the [Configuration Guide](./configuration-guide.md).
+Do not use it in automation before implementation. See
+[Implementation Status](../developer/implementation-status.md) and the
+[Configuration Guide](./configuration-guide.md).

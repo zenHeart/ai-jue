@@ -1,23 +1,11 @@
-# 创建预设 (Preset)
+# 创建 Preset
 
-`ai-jue` 的核心是可复用的预设生态。一个预设是一个独立 npm 包，用来封装团队可复用的 AI 能力资产。
+Preset 是声明式 Capability 集合，不包含可执行 Extension 或目标安装状态。
 
-## 快速创建
-
-```bash
-npx jue create-preset myteam
-```
-
-这会生成 `jue-preset-myteam` 目录。
-
-> 当前实现说明：`create-preset` 命令会生成 `AGENTS.md`、`commands/`、`rules/`、`skills/`、`agents/`、`hooks/`、`tools/`，以及一个 `commands/example/prompt.md` 示例命令。它当前不会自动生成 `tools/gemini/`、`tools/cursor/` 子目录。
-
-## 目录协议（推荐）
-
-遵循最小知识原则，优先复用主流工具常见组织方式：
+## 1. 创建目录
 
 ```text
-jue-preset-myteam/
+jue-preset-team/
 ├── package.json
 ├── README.md
 ├── AGENTS.md
@@ -26,62 +14,67 @@ jue-preset-myteam/
 ├── rules/
 ├── agents/
 ├── hooks/
+├── mcp.json
 └── tools/
 ```
 
-说明：
+按需创建目录，不生成空能力或示例噪声。
 
-- `AGENTS.md`：全局系统上下文与强约束
-- `skills/`：技能资产
-- `commands/`：自定义命令
-- `rules/`：项目规则
-- `agents/`：自定义代理
-- `hooks/`：生命周期钩子
-- `tools/<tool>/config.json`：当前 loader 正式读取的工具特定配置入口
-
-## 与 `.ai` 的关系
-
-预设目录与本地 `.ai/` 目录在核心能力目录上保持同构，便于“先在项目沉淀，再打包发布”。
-
-当前待收口说明：
-
-- `hooks/` 的目录协议仍偏脚本型输入，还未完全升级到结构化 hooks
-- `tools/<tool>` 当前在实现上等价于 `tools/<tool>/config.json`
-
-## 预设嵌套（Preset 依赖 Preset）
-
-可在 preset 的 `package.json` 中声明依赖其他 preset（类似 eslint extends），无需用户在项目侧重复声明：
+## 2. 编写 manifest
 
 ```json
 {
-  "name": "jue-preset-internal",
+  "name": "jue-preset-team",
+  "version": "1.0.0",
+  "files": [
+    "README.md",
+    "AGENTS.md",
+    "skills",
+    "commands",
+    "rules",
+    "agents",
+    "hooks",
+    "mcp.json",
+    "tools"
+  ],
   "ai": {
-    "presets": ["base"]
+    "presets": ["base"],
+    "capabilities": {}
   }
 }
 ```
 
-规则：
+完整字段见 [Preset Manifest Reference](../reference/preset-manifest.md)。
 
-- `ai.presets`（或 `jue.presets`）支持 `base` 或完整包名 `jue-preset-base`
-- 加载顺序为“先依赖、后自身”
-- 同名资产冲突时，自身 preset 覆盖依赖 preset
-- 检测到循环依赖时终止递归并给出错误提示
+## 3. 添加能力
 
-Preset 嵌套是**两种组合机制之一**；另一种是引用第三方 Capability 内容
-（`ai.capabilities`），见
-[Capability Source 规格](../specs/capability-source.md)。除这两种外，不存在
-第三种独立的 Plugin/Capability 包层。
+- 只属于当前 Preset：直接写入对应能力目录。
+- 被多个 Preset 共用：通过 `ai.capabilities` 引用单一来源。
+- 第三方 skill/MCP：使用 外部 Capability 引用与显式 format。
+- 目标私有配置：写入 `tools/<target>/config.json`。
+- 运行时代码：不要放进 Preset；创建独立 Jue Extension。
 
-## 发布
+## 4. 验证和打包
 
 ```bash
-npm publish
+jue preset validate .
+jue preset inspect .
+jue preset pack .
 ```
 
-通常不需要构建步骤，预设按文件资产直接消费。
+验证必须覆盖 manifest、Canonical 目录、嵌套依赖、循环、路径穿越、凭据和敏感
+信息。Pack 输出文件 inventory；不得因为文件存在于仓库就自动进入包。
 
-补充说明：
+## 5. 消费
 
-- `create-preset` 当前生成的 `package.json` 仍带有 `main: "index.js"` 字段，这是模板残留而不是 loader 必需项
-- 下一轮计划会将脚手架模板进一步收口到“仅反映实际消费结构”
+```js
+export default {
+  presets: ["team"],
+  targets: {
+    codex: { artifact: "plugin" },
+    openclaw: { artifact: "compatible-bundle" }
+  }
+};
+```
+
+Preset 不因目标不同而复制。Artifact 由对应 Adapter 选择和生成。

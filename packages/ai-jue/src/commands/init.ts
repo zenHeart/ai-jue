@@ -129,7 +129,7 @@ module.exports = {
   // Language for generated artifacts (en, zh)
   language: 'en',
 
-  // MCP Servers configuration (Distributed to Cursor, Claude Code, Gemini etc.)
+  // MCP Servers configuration (distributed to Cursor, Claude Code, etc.)
   mcp: {
     servers: {
       // Example: SQLite MCP Server

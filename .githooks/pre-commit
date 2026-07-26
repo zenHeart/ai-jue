@@ -1,0 +1,6 @@
+#!/bin/sh
+# Installed via `core.hooksPath` (see package.json's "prepare" script).
+# Blocks commits containing literal secrets, private-network addresses, or
+# locally-declared sensitive identifiers; runs `npm audit` when a
+# manifest/lockfile is staged. See scripts/security-scan.js for the rules.
+node "$(git rev-parse --show-toplevel)/scripts/security-scan.js"

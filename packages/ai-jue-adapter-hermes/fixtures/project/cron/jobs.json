@@ -1,0 +1,15 @@
+{
+  "demo-job-1": {
+    "name": "demo-fixture-job",
+    "prompt": "cd /tmp/jue-303-fixture && echo demo",
+    "schedule": "0 12 * * *",
+    "repeat": 1,
+    "deliver": "origin",
+    "enabled": true,
+    "model": null,
+    "provider": null,
+    "base_url": null,
+    "skills": [],
+    "created_at": "2026-07-26T00:00:00"
+  }
+}

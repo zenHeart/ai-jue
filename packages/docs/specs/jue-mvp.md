@@ -15,7 +15,7 @@ Jue 不是一个“生成 AI 工具配置文件”的单点工具。Jue 是位�
               ↓
          Agent Adapter
               ↓
-Claude / Cursor / Gemini / Copilot / 后续 Agent
+Claude Code / Codex / OpenClaw / Hermes / 后续 Agent
 ```
 
 Jue 对用户暴露且仅暴露三层概念（`Capability → Preset → Adapter`）：
@@ -24,8 +24,8 @@ Jue 对用户暴露且仅暴露三层概念（`Capability → Preset → Adapter
    command、rule、hook 或 MCP server。
 2. **Preset（能力集）**：一组可版本化、可组合、可分发的 Capability。目标
    Agent 可能把它呈现为插件、扩展或原生配置，但这不改变 Preset 的上层语义。
-3. **Adapter（适配器）**：只负责把 Jue 的统一能力模型转换为目标 Agent 的
-   原生格式，并显式报告不支持或降级的能力。
+3. **Adapter（适配器）**：一个目标 Agent 的完整集成，同时封装 Capability
+   适配与 Artifact 生成，并显式报告不支持或降级。
 
 CLI、网站和编辑器扩展都是这套模型的入口或界面，不是 Jue 的产品定义本身。
 
@@ -36,13 +36,15 @@ MVP 必须跑通一条真实、可重复验证的闭环：
 1. 本地 Preset 包以标准 Preset 身份提供真实能力。
 2. Jue 无损加载 Preset 中的嵌套 skill 资源。
 3. Jue 把 Preset、项目 `.ai/` 和 `ai.config.js` 收敛为同一 canonical model。
-4. 至少 Claude 与 Cursor 两个 adapter 能从同一能力集生成各自的原生产物。
-5. 官网能解释模型、展示支持矩阵，并提供可执行的入门路径。
-6. `jue.zenheart.site` 指向经过生产构建和验证的官网。
+4. Claude Code Reference Extension 能从同一能力集生成原生产物，并由 headless
+   Claude Code 的真实读取或执行路径确认。
+5. 同一输入通过 dry-run、Core apply、confirm、check 和二次 apply 零差异。
+6. Claude 闭环沉淀出可复用的 Extension 骨架与合同测试；其他 Agent 只有在该
+   Scale Gate 通过后才并行迁移。
 
 ## 3. Canonical Capability Set
 
-MVP 的通用能力集合固定为：
+MVP 的 Canonical 文档固定为：
 
 - `context.global`
 - `skills`
@@ -51,17 +53,16 @@ MVP 的通用能力集合固定为：
 - `rules`
 - `hooks`
 - `mcp.servers`
-- `tools.<tool>`
 
 其中 `skills` / `agents` / `commands` / `rules` / `hooks` / `mcp.servers`
-六类是原子 Capability。`context.global` 与 `tools.<tool>` **不是**原子
-Capability：`context.global` 是分层追加的全局上下文，`tools.<tool>` 是
-逃生舱。工具私有能力只有在至少两个 Agent 中具有稳定、相近语义后，才可以
-提议提升到 canonical model 成为新的原子 Capability。
+六类是原子 Capability。`context.global` 是不可独立寻址的文档级上下文，不是
+原子 Capability，但参与 provenance、合并、转换和往返验证。`tools.<tool>` 是
+Canonical 之外的目标配置；工具私有能力只有在至少两个 Agent 中具有稳定、相近
+语义后，才可以提议提升为新的原子 Capability。
 
 第三方来源的 Capability 内容（GitHub / npm / URL / 本地）如何被 Preset
 引用并转换进 canonical model，见
-[Capability Source 规格](capability-source.md)——它新增的是引用协议，不改变
+[external Capability reference 规格](capability-source.md)——它新增的是引用协议，不改变
 上面这个 Capability 集合本身。
 
 ## 4. Preset 目录契约
@@ -87,26 +88,28 @@ Skill 的 `references/`、`scripts/`、`assets/` 下的所有嵌套文件必须�
 相对路径。Jue 不得因为目录深度而静默丢失能力资源。其他能力类型只有形成
 至少两个 Agent 的稳定资源契约后，才扩展附件模型。
 
-Preset 可以有文档、评测集或源材料等额外内容；只有上述目录契约进入
-canonical model。实例部署配置、私有本地设置和凭据不得作为通用 Preset 分发。
+Preset 可以有文档、评测集或源材料等额外内容；公共目录契约进入 canonical
+model，`tools/<tool>` 作为当前目标配置独立传入 Adapter。实例部署配置、私有
+本地设置和凭据不得作为通用 Preset 分发。
 
 ## 5. Adapter 契约
 
 Adapter：
 
-- 只消费 normalize 后的 canonical model；
-- 不自行发明新的输入字段；
-- 保留目标 Agent 原生支持的语义；
-- 对不支持的能力显式降级或报告，不静默忽略；
-- 通过同一套 capability contract tests 验证。
+- 只以 normalize 后的 Canonical DSL 作为公共语义事实源；
+- 通过 Adapter 转换实现目标 DSL 与 Canonical 的正反转换；
+- 通过 Artifact 生成物化配置、Plugin、Bundle 或其他目标产物；
+- 在 Artifact 计划中描述需授权的安装、启用、更新和重载；
+- 对不支持、降级和仅原生保留的能力显式报告，不静默忽略；
+- 通过 round-trip、幂等和目标原生验证合同验收。
 
 目标 Agent 使用“插件”“扩展”“skill”或其他名称时，Adapter 可按其原生术语
 输出；Jue 内部仍统一称为 Preset 和 Capability。
 
 ## 6. Preset 仓库边界
 
-Preset 仓库是 Preset 包的源码与版本化能力集，不再承担第二套
-安装器、adapter、registry 或同步引擎。
+Preset 仓库是 Preset 包的源码与版本化能力集。npm 负责安装和版本管理，Adapter
+负责 Agent 输出。
 
 包含：
 
@@ -129,14 +132,15 @@ Preset 仓库是 Preset 包的源码与版本化能力集，不再承担第二�
 | 嵌套资源无损 | 加载与 adapter 输出深层相对路径测试 |
 | 本地 Preset 可消费 | 从用户提供的本地路径打包安装并生成两类 Agent 产物的 smoke test |
 | 不泄露实例配置 | package/preset 清单和敏感信息校验 |
-| 官网可交付 | production build、部署状态、`jue.zenheart.site` HTTPS 访问 |
+| 首个真实闭环 | 隔离项目中的 headless Claude Code 原生读取或执行证据 |
+| 可扩展性 | 第二个中性 Adapter 不修改 Core 或 Canonical 即通过同一合同测试 |
 | 旧能力不回归 | 全量单元测试、monorepo build、consistency check |
 
 ## 8. MVP 之后
 
-以下能力只有在 MVP 闭环稳定后再进入下一迭代：
+以下能力只有在 Claude Code Reference Extension MVP 闭环稳定后再进入下一迭代：
 
-- 新的 Agent adapter；
+- Codex、OpenClaw、Hermes 的并行 Extension 迁移；
 - Preset registry 与远程发现；
 - 自动同步服务；
 - 可视化能力市场；

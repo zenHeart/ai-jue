@@ -4,8 +4,6 @@ import os from 'os';
 import path from 'path';
 import { generate as generateClaude } from '../../ai-jue-adapter-claude/src/index';
 import { generate as generateCursor } from '../../ai-jue-adapter-cursor/src/index';
-import { generate as generateGemini } from '../../ai-jue-adapter-gemini/src/index';
-import { generate as generateCopilot } from '../../ai-jue-adapter-copilot/src/index';
 
 describe('adapter capability snapshot', () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-capability-snapshot-'));
@@ -49,8 +47,6 @@ describe('adapter capability snapshot', () => {
       tools: {
         claude: { permissions: { allow: ['Read'] } },
         cursor: { temperature: 0.3 },
-        gemini: { temperature: 0.2 },
-        copilot: { codeReview: true },
       },
       agents: {
         reviewer: { prompt: 'Review as agent', skills: ['review'] },
@@ -60,8 +56,6 @@ describe('adapter capability snapshot', () => {
     await Promise.all([
       generateClaude(config, outDir),
       generateCursor(config, outDir),
-      generateGemini(config, outDir),
-      generateCopilot(config, outDir),
     ]);
 
     const snapshotPayload = {
@@ -77,16 +71,6 @@ describe('adapter capability snapshot', () => {
       ),
       claudeMcp: JSON.parse(
         fs.readFileSync(path.join(outDir, '.mcp.json'), 'utf8'),
-      ),
-      geminiMd: fs.readFileSync(path.join(outDir, 'GEMINI.md'), 'utf8'),
-      gemini: JSON.parse(fs.readFileSync(path.join(outDir, '.gemini', 'settings.json'), 'utf8')),
-      geminiCommandReview: fs.readFileSync(
-        path.join(outDir, '.gemini', 'commands', 'review.toml'),
-        'utf8',
-      ),
-      copilot: fs.readFileSync(path.join(outDir, '.github', 'copilot-instructions.md'), 'utf8'),
-      copilotSettings: JSON.parse(
-        fs.readFileSync(path.join(outDir, '.github', 'copilot-settings.json'), 'utf8'),
       ),
     };
 

@@ -24,10 +24,10 @@
     在模板根目录添加 `ai.config.js`：
 
     ```javascript
-    module.exports = {
-      preset: 'react',
+    export default {
+      presets: ['react'],
       // 其他公司标准配置...
-    };
+    }
     ```
 
 3.  **配置 `postinstall` 脚本 (可选)**:

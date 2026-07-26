@@ -1,53 +1,38 @@
-# Specification: jue-preset-internal
+# jue-preset-internal 规范
 
-> Status: Draft
-> Version: 1.0.0
+> 状态：Draft
+> 版本：1.0.0
 
-## 1. Positioning and Scope Boundary
+## 1. 定位与边界
 
-`jue-preset-internal` is a repository-governance preset for maintaining the ai-jue monorepo itself.
+`jue-preset-internal` 只服务 ai-jue 仓库治理、自举、发布纪律和架构约束。
+通用工程能力必须回到 `jue-preset-base`。
 
-Boundary definition:
-
-- `jue-preset-base`: reusable, stack-agnostic engineering capabilities for general projects.
-- `jue-preset-internal`: project-specific governance, release discipline, architecture constraints, and repo-level collaboration rules.
-
-Internal must not become a generic replacement for base.
-
-## 2. Minimal Directory Protocol
-
-Internal preset should provide only required assets, enabled on demand:
+## 2. 最小目录
 
 ```text
 jue-preset-internal/
 ├── AGENTS.md
-├── commands/   # optional, when repo-specific commands are needed
-├── rules/      # optional, when repo rule assets are needed
-├── hooks/      # optional, when workflow hooks are needed
-└── tools/      # optional, tool-specific escape hatch
+├── commands/   # 按需
+├── rules/      # 按需
+├── skills/     # 按需
+├── hooks/      # 按需
+└── tools/      # 目标私有逃生舱
 ```
 
-Additional assets can be added only when there is clear repository governance value.
+Command 元数据写入 `commands/*/prompt.md` frontmatter。
 
-Command metadata must be defined in `commands/*/prompt.md` YAML frontmatter (for example `description`, `triggers`), without `index.json`.
+## 3. 自举 Runbook
 
-## 3. Self-Bootstrap Runbook
+1. 根 `ai.config.js` 配置 `presets: ["internal"]`。
+2. 执行当前可用的 `npx jue apply --all`。
+3. 检查生成文件和第二次执行零 diff。
+4. 不把生成文件称为唯一事实源；Preset 与 Canonical 输入才是事实源。
 
-The repository must be able to bootstrap itself through internal preset:
+最低证据是全局上下文可加载、至少一类结构化能力可生成、干净 checkout 可重复。
 
-1. Configure root `ai.config.js` with `preset: "internal"`.
-2. Run `npx jue apply`.
-3. Verify generated outputs are produced by all active adapters.
-4. Use generated files as the single source for repo-level assistant behavior.
+## 4. 演进策略
 
-Minimal closure criteria:
-
-- Global context is loadable from `AGENTS.md`.
-- At least one verifiable asset category is loadable (for example commands or rules).
-- Generated outputs are reproducible after clean checkout.
-
-## 4. Evolution Policy
-
-- Keep internal focused and minimal; push generic capabilities back to base.
-- Every new internal rule should include justification tied to monorepo governance.
-- Avoid introducing ai-jue-specific concepts that increase user cognitive load.
+- internal 保持仓库专用且最小。
+- 每项新增规则说明治理价值。
+- internal 直接采用公共 Architecture/Specification 语义。

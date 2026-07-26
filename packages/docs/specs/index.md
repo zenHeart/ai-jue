@@ -2,7 +2,7 @@
 
 这里集中列出 Jue 的公开协议与实现契约。规范回答“什么输入和输出是合法的”，
 属于查询型参考；如果你想了解设计动机与运行流程，请先阅读
-[架构与运行流程](../guide/architecture.md)。
+[架构与运行流程](../architecture/)。
 
 ## 推荐阅读顺序
 
@@ -10,10 +10,14 @@
    能力边界和 Preset 目录契约。
 2. [Canonical Model](canonical-model.md)：定义解析、合并、校验和 Adapter
    共同使用的标准结构。
-3. [Capability Source](capability-source.md)：定义 Preset 如何通过
-   `ai.capabilities` 引用外部 Capability。
+3. [外部 Capability 引用](capability-source.md)：定义 Preset 如何通过
+   `ai.capabilities` 引用规范目录。
 4. [Codex / Claude Code Adapter](codex-claude-code-adapters.md)：定义当前
    优先运行时的原生产物和验证边界。
+
+Extension 实现者遵循
+[Adapter 标准](../architecture/adapter-standardization.md)、
+[Extension API](../reference/extension-api.md)。
 
 ## 状态说明
 
@@ -28,5 +32,5 @@
 
 ## 维护者设计文档
 
-`format-design.md`、`preset-base.md` 和 `preset-internal.md` 记录具体功能或
-仓库维护设计，不属于面向所有用户的稳定公共协议，因此不进入主规范导航。
+`preset-base.md` 和 `preset-internal.md` 记录具体仓库维护设计，不属于面向
+所有用户的稳定公共协议，因此不进入主规范导航。

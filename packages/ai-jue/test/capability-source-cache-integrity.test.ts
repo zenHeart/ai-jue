@@ -51,7 +51,7 @@ describe('Capability Source cache integrity', () => {
       source: 'github:example/neutral-repo',
       ref: 'v1.0.0',
       path: 'skill',
-      converter: 'agent-skill' as const,
+      type: 'skill' as const,
     };
 
     vi.doMock('child_process', async (importOriginal) => {
@@ -109,7 +109,7 @@ describe('Capability Source cache integrity', () => {
       source: 'github:example/neutral-repo',
       ref: 'v1.0.0',
       path: 'skill',
-      converter: 'agent-skill' as const,
+      type: 'skill' as const,
     };
     const mockFetch = vi.fn(async () =>
       new Response(archive, { status: 200, headers: { 'content-type': 'application/gzip' } }),

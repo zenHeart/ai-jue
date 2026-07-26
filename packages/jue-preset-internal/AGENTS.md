@@ -34,3 +34,20 @@
 - 规范目录：`AGENTS.md`、`commands/`、`rules/`、`hooks/`、`tools/`（按需启用）。
 - `commands` 元数据统一写入 `prompt.md` YAML frontmatter。
 - 不使用历史冗余概念与中间字段。
+
+## 6. 架构语义门禁
+
+1. 稳定概念只允许 `Capability`、`Preset`、`Canonical DSL`、`Extension`、
+   `Adapter`、`Artifact`；新增概念必须先由 RFC 证明不可合并。
+2. Canonical DSL 是唯一中间层；Extension 是唯一可执行扩展机制；Adapter 是
+   单个 Agent 的完整正反转换单元；Plugin、Bundle 和配置统一视为 Artifact。
+3. 优先复用 npm、Node.js 和 Agent 原生机制，不创建独立 Extension manifest 或
+   重复 inventory。
+4. 核心 CLI 只允许 `init`、`apply`、`inspect`；内部阶段使用选项或 Adapter
+   方法表达，不扩张用户命令面。
+5. 任何 README、Guide、Architecture、Reference、Spec、Developer 或实现变更都
+   必须通过旧术语、旧命令和中英文一致性扫描。
+6. 稳定文档只写当前模型的正向合同。不得用否定句继续介绍已删除或未采用的
+   概念、命令和抽象；取舍历史仅进入 RFC。
+7. 如果删除一句“系统没有什么”的文字不影响用户操作或实现者完成合同，该句必须
+   删除。

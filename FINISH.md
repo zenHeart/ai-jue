@@ -49,7 +49,7 @@
 
 - [x] **B2: 文档与规范收口**
   - [x] B2.1 更新 `README.md` / `README.en.md` 中关于 Claude/Cursor 的支持说明
-  - [x] B2.2 更新 `packages/docs/guide/architecture.md` 中统一能力模型叙述
+  - [x] B2.2 更新 `packages/docs/architecture/index.md` 中统一能力模型叙述
   - [x] B2.3 修正 `packages/docs/specs/*` 中 canonical model 和 Claude/Cursor 映射规范
   - [x] B2.4 将 `_drafts/features.md` 中本轮采纳的能力沉淀到正式 docs/spec
 

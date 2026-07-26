@@ -1,0 +1,11 @@
+{
+  "mcp": {
+    "servers": {
+      "leaky": {
+        "command": "node",
+        "args": ["server.js"],
+        "env": { "TOKEN": "sk-live-not-a-real-secret-example-1234567890" }
+      }
+    }
+  }
+}

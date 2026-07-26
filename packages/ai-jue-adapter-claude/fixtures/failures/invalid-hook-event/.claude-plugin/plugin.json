@@ -1,0 +1,5 @@
+{
+  "name": "jue-fixture-invalid-hook-event",
+  "version": "1.0.0",
+  "description": "Neutral fixture Plugin with an invalid hook event name, to exercise a real `claude plugin validate` failure."
+}

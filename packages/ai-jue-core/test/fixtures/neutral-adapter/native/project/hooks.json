@@ -1,0 +1,7 @@
+{
+  "PreToolUse": {
+    "matcher": "Write",
+    "type": "command",
+    "script": "echo hook"
+  }
+}

@@ -10,6 +10,7 @@
     "target": "es2020",
     "sourceMap": true,
     "outDir": "./dist",
+    "rootDir": "./src",
     "baseUrl": "./",
     "incremental": false,
     "skipLibCheck": true,
@@ -19,5 +20,6 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": false
   },
-  "exclude": ["node_modules", "dist", "src/**/*.test.ts"]
+  "include": ["src/**/*"],
+  "exclude": ["node_modules", "dist", "test"]
 }
