@@ -208,6 +208,13 @@ async function main() {
       const mirrorDir = path.join(tempRoot, 'mirror');
       createOfflineMirror(packagesDir, mirrorDir);
       process.env.AI_JUE_SOURCE_MIRROR_DIR = mirrorDir;
+      // The offline mirror serves synthetic stub archives keyed by the same
+      // sha256(source+ref+path) locator hash a real capability ref would
+      // use. Without redirecting the cache root too, those stubs would
+      // extract into the real, globally-shared `~/.cache/ai-jue` and
+      // permanently shadow the real content for every future real
+      // resolution of that same locator on this machine.
+      process.env.AI_JUE_CACHE_DIR = path.join(tempRoot, 'capability-cache');
     }
     const archives = packPresetDirectories(packagesDir, packDir);
     fs.writeFileSync(

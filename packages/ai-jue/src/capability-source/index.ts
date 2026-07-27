@@ -255,8 +255,14 @@ async function resolveSource(
   baseDir: string,
   options: CapabilitySourceOptions,
 ): Promise<string> {
+  // `AI_JUE_CACHE_DIR` mirrors `AI_JUE_SOURCE_MIRROR_DIR`: without it, a test
+  // run using an offline mirror (synthetic/stub archives) still extracts
+  // into the real, globally-shared `~/.cache/ai-jue`, keyed only by
+  // sha256(source+ref+path) — a real npm/github locator used by a stubbed
+  // test run would then permanently shadow the real content for every
+  // future real resolution of that same locator on this machine.
   const cacheRoot =
-    options.cacheDir || path.join(os.homedir(), '.cache', 'ai-jue');
+    options.cacheDir || process.env.AI_JUE_CACHE_DIR || path.join(os.homedir(), '.cache', 'ai-jue');
   const destination = capabilityCacheDestination(ref, cacheRoot);
   const mirrorDir = options.mirrorDir || process.env.AI_JUE_SOURCE_MIRROR_DIR;
   const mirrorArchive = mirrorDir

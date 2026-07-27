@@ -558,4 +558,55 @@ describe('Capability Source', () => {
 
     expect(Object.keys(result.config.rules ?? {})).toEqual(['neutral']);
   });
+
+  it('honors AI_JUE_CACHE_DIR when options.cacheDir is not supplied, so an offline-mirror smoke test cannot leak stub content into the real ~/.cache/ai-jue', async () => {
+    const root = tempDir();
+    const archiveRoot = path.join(root, 'archive', 'neutral-repo-main', 'skill');
+    writeSkill(archiveRoot);
+    const archivePath = path.join(root, 'fixture.tgz');
+    execFileSync('tar', [
+      '-czf',
+      archivePath,
+      '-C',
+      path.join(root, 'archive'),
+      'neutral-repo-main',
+    ]);
+    const archive = fs.readFileSync(archivePath);
+    const mockFetch = async () =>
+      new Response(archive, {
+        status: 200,
+        headers: { 'content-type': 'application/gzip' },
+      });
+    const envCacheDir = path.join(root, 'env-cache');
+    const previousEnv = process.env.AI_JUE_CACHE_DIR;
+    process.env.AI_JUE_CACHE_DIR = envCacheDir;
+
+    try {
+      const result = await loadCapabilityRefs(
+        {
+          'neutral-skill': {
+            source: 'github:example/neutral-repo',
+            ref: 'main',
+            path: 'skill',
+            type: 'skill',
+          },
+        },
+        root,
+        undefined,
+        // No `cacheDir` here — this is the default-resolution path a real
+        // `jue apply`/`jue capability update` invocation takes, exactly the
+        // path that used to always fall back to `~/.cache/ai-jue` even when
+        // `AI_JUE_SOURCE_MIRROR_DIR` pointed resolution at synthetic stub
+        // content.
+        { fetch: mockFetch as typeof fetch },
+      );
+
+      expect(result.config.skills?.['neutral-skill']).toBeDefined();
+      expect(fs.existsSync(envCacheDir)).toBe(true);
+      expect(fs.readdirSync(path.join(envCacheDir, 'github')).length).toBeGreaterThan(0);
+    } finally {
+      if (previousEnv === undefined) delete process.env.AI_JUE_CACHE_DIR;
+      else process.env.AI_JUE_CACHE_DIR = previousEnv;
+    }
+  }, 30_000);
 });

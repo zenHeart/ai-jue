@@ -368,6 +368,25 @@
   `ai.capabilities.filesystem` 仍用已废弃的 `converter` 字段名（JUE-101 已把
   该字段迁移为 `type`），在 ai-assets 侧改为 `"type": "mcp"` 后才能通过
   `CapabilityRefSchema` 校验。
+- 修正一处真实的 Capability Source 缓存隔离 bug（`packages/ai-jue/src/
+  capability-source/index.ts`）：`resolveSource` 的默认缓存根目录固定是
+  `~/.cache/ai-jue`，缓存 key 只由 `sha256(source+ref+path)` 决定、与消费方
+  项目无关；但 `AI_JUE_SOURCE_MIRROR_DIR`（供 `scripts/smoke-local-preset.js
+  --offline-mirror` 等测试场景用合成 stub 内容替身真实抓取）此前没有对应的
+  缓存根目录隔离开关，一次带 `--offline-mirror` 的测试运行会把虚构内容
+  （如 `neutral-filesystem`）写进这个全局共享缓存，此后任何项目对完全相同
+  `source`/`ref`/`path` 的真实解析都会静默复用这份虚构内容，而不是真正抓取
+  ——本任务在对真实 ai-assets 仓库跑验收时曾被这个问题掩盖了 ai-assets 自身
+  `presets/mcp/package.json` 里一个真实存在的错误（`npm:@modelcontextprotocol/
+  server-filesystem@1.2.0` 从未发布过 `1.2.0` 版本，真实抓取会以 `ETARGET`
+  失败，但被之前一次 `--offline-mirror` 测试运行污染的缓存条目掩盖成"成功"）。
+  已新增 `AI_JUE_CACHE_DIR` 环境变量（与 `AI_JUE_SOURCE_MIRROR_DIR` 对称）
+  覆盖缓存根目录，`smoke-local-preset.js` 在 `--offline-mirror true` 时一并
+  设置到临时目录，不再触碰真实缓存；已清理本机被污染的 `~/.cache/ai-jue`
+  并在 ai-assets 侧把版本改为真实存在的 `2026.7.10`，复核 `.mcp.json` 输出
+  确认指向真实包名而非虚构 stub。新增回归测试
+  `packages/ai-jue/test/capability-source.test.ts`"honors AI_JUE_CACHE_DIR
+  when options.cacheDir is not supplied"（`npm test` 293 通过，净增 1）。
 
 ## 尚未实现的关键合同
 

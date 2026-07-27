@@ -465,6 +465,33 @@ Partial means local code or tests exist, not complete Agent support. See
   name for `ai.capabilities.filesystem` (JUE-101 migrated this field to
   `type`) — fixed on the ai-assets side to `"type": "mcp"` so it passes
   `CapabilityRefSchema`.
+- Fixed a real Capability Source cache-isolation bug
+  (`packages/ai-jue/src/capability-source/index.ts`): `resolveSource`'s
+  default cache root is a fixed `~/.cache/ai-jue`, keyed purely by
+  `sha256(source+ref+path)` with no per-consumer scoping; but
+  `AI_JUE_SOURCE_MIRROR_DIR` (used by test scenarios like
+  `scripts/smoke-local-preset.js --offline-mirror` to substitute synthetic
+  stub content for a real fetch) had no matching cache-root isolation knob —
+  a single test run using `--offline-mirror` would write fabricated content
+  (e.g. `neutral-filesystem`) into this globally-shared cache, after which
+  any project's real resolution of the exact same `source`/`ref`/`path`
+  would silently reuse that fabricated content instead of actually fetching.
+  This masked a real, pre-existing bug while running the ai-assets
+  acceptance pass in this task: ai-assets' own `presets/mcp/package.json`
+  referenced `npm:@modelcontextprotocol/server-filesystem@1.2.0`, a version
+  that was never published (a real fetch fails with `ETARGET`), but a prior
+  `--offline-mirror` test run had already poisoned the cache entry for that
+  exact locator, so it looked like it "succeeded." Added an `AI_JUE_CACHE_DIR`
+  environment variable (symmetric with `AI_JUE_SOURCE_MIRROR_DIR`) to
+  override the cache root; `smoke-local-preset.js` now also points it at a
+  temp directory whenever `--offline-mirror true` is used, so it never
+  touches the real cache. Cleaned up this machine's poisoned
+  `~/.cache/ai-jue` and fixed the ai-assets version to the real, published
+  `2026.7.10`; re-verified `.mcp.json` now points at the real package name,
+  not the synthetic stub. Added a regression test in
+  `packages/ai-jue/test/capability-source.test.ts` ("honors AI_JUE_CACHE_DIR
+  when options.cacheDir is not supplied") — `npm test` now passes 293 (net
+  +1).
 
 ## Critical gaps
 
