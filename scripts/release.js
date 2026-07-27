@@ -12,6 +12,12 @@ const IS_YES = ARGS.includes('--yes');
 const SKIP_TEST = ARGS.includes('--skip-test');
 const SKIP_LINT = ARGS.includes('--skip-lint');
 const IS_VERBOSE = ARGS.includes('--verbose');
+const BUMP_ARG = ARGS.find((a) => a.startsWith('--bump='));
+const BUMP_TYPE = BUMP_ARG ? BUMP_ARG.slice('--bump='.length) : 'patch';
+if (!['patch', 'minor', 'major'].includes(BUMP_TYPE)) {
+  console.error(`--bump must be one of patch|minor|major, got "${BUMP_TYPE}"`);
+  process.exit(1);
+}
 const BATCH_TAG_PREFIX = 'release-batch@v';
 
 // --- Utils ---
@@ -243,8 +249,8 @@ async function main() {
       return {
         name,
         currentVersion: current,
-        nextVersion: semver.inc(current, 'patch'),
-        releaseType: 'patch'
+        nextVersion: semver.inc(current, BUMP_TYPE),
+        releaseType: BUMP_TYPE
       };
     });
   } else {
