@@ -1,8 +1,7 @@
 {
   "name": "ai-jue-adapter-openclaw",
   "version": "0.1.0",
-  "private": true,
-  "description": "Synthetic, test-only Adapter for a fictional OpenClaw-shaped Agent (JUE-302). Built off the real OpenClaw 2026.5.5 native shape (workspace skills, workspace hooks, global-only MCP via openclaw.json) but declares itself honestly with `degraded` capabilities where the real surface has no first-class Canonical equivalent (no separate rules directory, no per-workspace MCP, no `commands` directory, no separate agents directory).",
+  "description": "Adapter for generating OpenClaw configurations.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "scripts": {
