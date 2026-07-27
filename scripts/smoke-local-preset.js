@@ -235,25 +235,40 @@ async function main() {
     const cli = path.resolve(__dirname, '../packages/ai-jue/dist/cli.js');
     run(process.execPath, [cli, 'apply', '--adapter', 'codex'], consumerDir);
     run(process.execPath, [cli, 'apply', '--adapter', 'claude-code'], consumerDir);
+    run(process.execPath, [cli, 'apply', '--adapter', 'openclaw'], consumerDir);
+    run(process.execPath, [cli, 'apply', '--adapter', 'hermes'], consumerDir);
 
     const [skillName, skill] = skillEntry;
     const [agentName] = agentEntry;
     for (const required of [
       'AGENTS.md',
       'CLAUDE.md',
+      'MEMORY.md',
       path.join('.agents', 'skills', skillName, 'SKILL.md'),
       path.join('.codex', 'agents', `${agentName}.toml`),
-      path.join('.codex', 'config.toml'),
+      // Not `.codex/config.toml`: Codex's `mcp` capability is honestly
+      // `degraded` (JUE-301) — `write()` never persists MCP servers to the
+      // real TOML file (a hand-rolled TOML writer is out of scope), so no
+      // file is produced even when the Preset declares MCP servers.
       path.join('.claude', 'skills', skillName, 'SKILL.md'),
       path.join('.claude', 'agents', `${agentName}.md`),
+      // OpenClaw has no per-workspace `agents/` directory (honest `degraded`,
+      // no-op write) and shares the project-root `skills/` tree with Hermes,
+      // one level shallower — see ai-jue-adapter-openclaw/src/capabilities/skills.ts.
+      path.join('skills', skillName, 'SKILL.md'),
+      // Hermes requires a "<category>/<name>" skill key; a flat portable key
+      // (as produced by Claude/Codex/OpenClaw-shaped Presets) falls back to a
+      // "general" category rather than failing — see
+      // ai-jue-adapter-hermes/src/capabilities/skills.ts.
+      path.join('skills', 'general', skillName, 'SKILL.md'),
     ]) {
       if (!fs.existsSync(path.join(consumerDir, required))) {
-        throw new Error('A required native Adapter output is missing');
+        throw new Error(`A required native Adapter output is missing: ${required}`);
       }
     }
     verifySupportFiles(skillName, skill, consumerDir);
     console.log(
-      `[OK] isolated local Preset install -> Codex/Claude Code (${archives.length} packages)`,
+      `[OK] isolated local Preset install -> Codex/Claude Code/OpenClaw/Hermes (${archives.length} packages)`,
     );
   } finally {
     process.chdir(originalCwd);

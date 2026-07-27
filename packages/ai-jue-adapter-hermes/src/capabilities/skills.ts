@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import * as yaml from "js-yaml";
-import { hashArtifactContent, splitFrontmatter } from "ai-jue-core";
+import { hashArtifactContent, resolveSupportFilePath, splitFrontmatter } from "ai-jue-core";
 import type { ArtifactChange, CapabilityMapping } from "ai-jue-core";
 
 const SAFE_SEGMENT = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
@@ -111,11 +111,18 @@ export function skills(): CapabilityMapping<Record<string, any>> {
       const changes: ArtifactChange[] = [];
       for (const [key, rawEntry] of Object.entries(value)) {
         const slash = key.indexOf("/");
-        if (slash <= 0 || slash === key.length - 1) {
-          throw new Error(`Hermes skill key must be "<category>/<name>": ${key}`);
-        }
-        const category = key.slice(0, slash);
-        const name = key.slice(slash + 1);
+        // Canonical's `skills` schema is `record(string, SkillSchema)` with no
+        // format constraint on the key. A flat key (no `/`) is normal, portable
+        // input coming from a shared Preset that other Adapters (Claude/Codex/
+        // OpenClaw all use 1-level `skills/<name>/SKILL.md`) also consume —
+        // throwing here would make any such Preset fail `jue apply --adapter
+        // hermes` outright. Fall back to a default "general" category instead
+        // of rejecting valid Canonical input; a properly-categorized
+        // `"<category>/<name>"` key (Hermes's own native shape) still round-trips
+        // exactly as before.
+        const hasCategory = slash > 0 && slash < key.length - 1;
+        const category = hasCategory ? key.slice(0, slash) : "general";
+        const name = hasCategory ? key.slice(slash + 1) : key;
         assertSafeSegment("category", category);
         assertSafeSegment("name", name);
         const itemDir = path.join(skillsDir, category, name);
@@ -134,11 +141,17 @@ export function skills(): CapabilityMapping<Record<string, any>> {
 
         for (const [bundleKey, files] of Object.entries(bundles)) {
           for (const [fileName, fileContent] of Object.entries(files ?? {})) {
-            assertSafeSegment("reference file", fileName);
+            // Reference files may be nested (e.g. "nested/guide.md", as
+            // produced by Claude/Codex/OpenClaw-shaped Presets); reject
+            // path traversal but otherwise allow subdirectories, matching
+            // the shared `resolveSupportFilePath` used by the other
+            // Adapters' `directoryPerItem` factory rather than the
+            // single-segment restriction this file uses for skill
+            // category/name.
             const bundleChange = buildTextChange(
               target,
               root,
-              path.join(itemDir, bundleKey, fileName),
+              resolveSupportFilePath(path.join(itemDir, bundleKey), fileName),
               String(fileContent),
             );
             if (bundleChange) changes.push(bundleChange);

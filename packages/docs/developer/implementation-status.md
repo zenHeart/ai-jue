@@ -27,7 +27,7 @@
 | Claude Code | 已实现 | 已实现 | 已实现（`confirm()` 已导出并组装为 `defineExtension()`，JUE-203；Plugin 走真实 `claude plugin validate --strict`，project 无原生校验工具故如实返回 `unconfirmed`） |
 | Codex | 已实现 | 已实现 | 已实现（`packages/ai-jue-adapter-codex/`，JUE-301）——能力声明如实标注三个"不支持"边界：`commands: "degraded"`（Codex 旧 custom-commands 机制已废弃，见 JUE-104/105/JUE-301 Phase 1）、`mcp: "degraded"`（Codex MCP 配在 `[mcp_servers.*]` TOML 表里，超出 JSON 工厂范围）、`rules: "degraded"`（无独立 rules 目录，rules 归入 AGENTS.md 通过 `context` 映射实现）。原生确认：Codex 0.145.0 无 `codex plugin validate`，用真实 `codex plugin marketplace add <local> --marketplace <name>` + `codex plugin add <name> --marketplace <name>` + `codex plugin list --json`（隔离 CODEX_HOME）确认 Plugin 真被 codex 装上、出现在 inventory 且 `installed: true, enabled: true`，是 Codex 0.145.0 提供的最强原生确认路径。`scripts/verify-codex-native.js`（可重放）跑完整 read→write→applyChangesOrThrow→confirm 链路，对真实 codex 0.145.0 验证通过 |
 | OpenClaw | 已实现 | 已实现 | 已实现（`packages/ai-jue-adapter-openclaw/`，JUE-302）——`capabilities` 公开声明 `rules/commands/agents/mcp: "degraded"` 四个真实的"unsupported"边界（OpenClaw 无 per-workspace `commands/`/`agents/`/`rules/` 目录，`openclaw agents add/list/delete` 管理 user home 下的隔离 workspace；MCP 全局唯一在 `openclaw.json` 上），仅 `skills`/`hooks` 是 `supported`（`~/.openclaw/workspace-jue-probe/` 已实测确认的 `skills/<name>/SKILL.md` + `hooks/<name>/HOOK.md+handler.js` 形式）。原生确认走真实 `openclaw --profile jue-302-verify-<pid>-<ts> config validate --json`（隔离 `--profile` 防全局污染，实测通过），独立脚本 `scripts/verify-openclaw-native.js` 跑。**已发现并记录 openclaw 0.145.0 的一个怪癖**：`spawnSync`/`execFileSync` 在 vitest worker 里调 `openclaw config validate --json` 会产生空 stdout（手工 shell 调用正常），所以合同套件里**不**调用 `confirmNatively`（按 honest-degraded 原则），把真实原生确认放到了独立脚本里。`npm test`（285 通过，新增 5 项） |
-| Hermes | 已实现 | 已实现 | 已实现（`packages/ai-jue-adapter-hermes/`，JUE-303）——`capabilities` 如实标注 `rules: "unsupported"`、`hooks: "unsupported"`（真实安装的 `~/.hermes/hooks/` 为空目录，证据不足）、`commands: "degraded"`、`agents: "degraded"`（均为 no-op 直通，`config.yaml` 同名块是全局运行时策略）、`skills: "supported"`、`mcp: "supported"`。原生确认：真实 `tirith config validate <projectRoot>`（`tirith` 二进制，隔离临时 `HOME`），`scripts/verify-hermes-native.js` 可重放，但需要真实 `tirith` 二进制在 `PATH` 上。修正一处真实实现 bug：`confirm.ts` 此前把可执行文件名与参数拼成一个字符串传给 `execFileSync(cmd, options)`——`execFileSync` 从不调用 shell 分词，会把整个含空格的字符串当作字面可执行文件名，无论 `tirith` 是否存在都必然 `ENOENT`；已改为 `execFileSync("tirith", ["config", "validate", projectRoot], options)`。另有一个未决架构问题：Adapter 在 `CanonicalDocumentSchema` 上新增了 `cron` 字段（`cron/jobs.json` 整文件直通），不属于六类原子 Capability 中的任何一类，是否需要正式收编（第七类原子 Capability，或改走 `tools.hermes` target-private 字段）尚未经 RFC 决定，见下方"尚未实现的关键合同" |
+| Hermes | 已实现 | 已实现 | 已实现（`packages/ai-jue-adapter-hermes/`，JUE-303）——`capabilities` 如实标注 `rules: "unsupported"`、`hooks: "unsupported"`（真实安装的 `~/.hermes/hooks/` 为空目录，证据不足）、`commands: "degraded"`、`agents: "degraded"`（均为 no-op 直通，`config.yaml` 同名块是全局运行时策略）、`skills: "supported"`、`mcp: "supported"`。原生确认：真实 `tirith config validate <projectRoot>`（`tirith` 二进制，隔离临时 `HOME`），`scripts/verify-hermes-native.js` 可重放，但需要真实 `tirith` 二进制在 `PATH` 上。修正三处真实实现 bug：①`confirm.ts` 此前把可执行文件名与参数拼成一个字符串传给 `execFileSync(cmd, options)`——`execFileSync` 从不调用 shell 分词，会把整个含空格的字符串当作字面可执行文件名，无论 `tirith` 是否存在都必然 `ENOENT`；已改为 `execFileSync("tirith", ["config", "validate", projectRoot], options)`。②`capabilities/skills.ts` 的 `write()` 此前对不含 `<category>/<name>` 斜杠的 Canonical skill key 直接抛错——但 Canonical 的 `skills` schema 就是无格式约束的 `record(string, SkillSchema)`，任何来自 Claude/Codex/OpenClaw 风格 Preset 的扁平 key（这三者的原生 skills 目录都是一层）都会让 `jue apply --adapter hermes` 直接崩溃；已改为无斜杠时回退到 `general` 分类而不是拒绝，真实 `ai-assets` 仓库（27 个 agent、9 个 skill）以此验证通过。③同一文件里 `references` 附件文件名此前要求单一安全路径段，遇到嵌套路径（如 `references/nested/guide.md`，Claude/Codex 的 `bundleKeys` 机制支持这种嵌套）会拒绝写入；已复用 `ai-jue-core` 已导出的 `resolveSupportFilePath`（与其余 Adapter 的 `directoryPerItem` 工厂同一份防路径穿越逻辑）允许安全的嵌套子目录。另有一个未决架构问题：Adapter 在 `CanonicalDocumentSchema` 上新增了 `cron` 字段（`cron/jobs.json` 整文件直通），不属于六类原子 Capability 中的任何一类，是否需要正式收编（第七类原子 Capability，或改走 `tools.hermes` target-private 字段）尚未经 RFC 决定，见下方"尚未实现的关键合同" |
 
 “部分实现”只表示已有局部代码和测试，不表示该 Agent 已完整支持。逐项证据见
 [Agent 支持画像](../agents/)。
@@ -353,6 +353,21 @@
   `npm test` 当前 292 通过。JUE-401（四 Adapter 可移植子集矩阵）也已完成，
   详见 delivery-plan.md R4 与 `packages/ai-jue-adapter-hermes/audit/
   JUE-401-portable-canonical.md`。
+- 真实 ai-assets 仓库四 Agent 验收：`scripts/smoke-local-preset.js`（此前只跑
+  Codex/Claude Code）扩展为同时对 OpenClaw/Hermes 跑 `apply` 并校验各自的
+  必需原生输出；对内置 `local-preset-monorepo` fixture 与真实
+  `~/code/github/ai-assets` 仓库（`presets/{mcp,meta,coding,content,
+  agent-os,personal}` 六个 workspace 包，`personal` 组合其余五个，含 27 个
+  agent、9 个 skill）均已用 `npm run smoke:preset-local` 实测通过，四个
+  Adapter 全部零错误完成 apply，真实文件正确落盘（含 Hermes 分类回退与嵌套
+  references）。过程中发现并修复两处与本仓库无关但阻塞该验收的环境/外部
+  问题：仓库自身 `node_modules` 符号链接过期（仍指向已删除的
+  `ai-jue-adapter-copilot`/`ai-jue-adapter-gemini`，缺失新增的
+  `ai-jue-adapter-openclaw`/`ai-jue-adapter-hermes`），已 `npm install`
+  重新同步；ai-assets 仓库 `presets/mcp/package.json` 的
+  `ai.capabilities.filesystem` 仍用已废弃的 `converter` 字段名（JUE-101 已把
+  该字段迁移为 `type`），在 ai-assets 侧改为 `"type": "mcp"` 后才能通过
+  `CapabilityRefSchema` 校验。
 
 ## 尚未实现的关键合同
 
