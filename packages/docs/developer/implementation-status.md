@@ -387,6 +387,17 @@
   确认指向真实包名而非虚构 stub。新增回归测试
   `packages/ai-jue/test/capability-source.test.ts`"honors AI_JUE_CACHE_DIR
   when options.cacheDir is not supplied"（`npm test` 293 通过，净增 1）。
+- 修正两处 `packages/ai-jue/src/commands/apply.ts` 里 OpenClaw/Hermes 短名解析
+  的真实 bug：①`ADAPTER_ALIAS_MAP` 此前没有 `openclaw`/`hermes` 条目，
+  `jue apply --adapter openclaw` 会把短名直接当 npm 包名去装——在全新项目里
+  实测真的从公共 npm registry 装并加载了一个同名但完全无关的第三方包
+  （`openclaw@2026.7.1-2`，一个消息网关工具），触发 ESM/CJS 冲突崩溃；已补
+  齐别名映射。②`ADAPTER_INDICATORS` 给 Hermes 用的 footprint 探测文件最初
+  选了裸 `config.yaml`——这个文件名在 Docusaurus、mkdocs、Ansible、
+  Serverless 等大量无关工具里都很常见，会让 `jue apply`（未显式传
+  `--adapter`）在毫不相关的项目里误判并静默触发
+  `npm install -D ai-jue-adapter-hermes` 与一次错误的 apply；已改为
+  `MEMORY.md`，与其余 Adapter 探测文件（如 `CLAUDE.md`）的特异性对齐。
 
 ## 尚未实现的关键合同
 

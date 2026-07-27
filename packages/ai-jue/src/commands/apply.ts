@@ -89,7 +89,13 @@ const ADAPTER_INDICATORS: Record<string, string[]> = {
     "openclaw.json",
   ],
   "ai-jue-adapter-hermes": [
-    "config.yaml",
+    // Not `config.yaml`: that filename is common across many unrelated
+    // tools (Docusaurus, mkdocs, Ansible, Serverless, etc.) and would
+    // false-positive-detect Hermes on unrelated projects, silently
+    // triggering an `npm install -D ai-jue-adapter-hermes` and an apply
+    // run against files it was never meant to read. `MEMORY.md` matches
+    // the specificity of the other Adapters' indicators (e.g. `CLAUDE.md`).
+    "MEMORY.md",
   ],
 };
 

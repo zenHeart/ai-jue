@@ -492,6 +492,22 @@ Partial means local code or tests exist, not complete Agent support. See
   `packages/ai-jue/test/capability-source.test.ts` ("honors AI_JUE_CACHE_DIR
   when options.cacheDir is not supplied") — `npm test` now passes 293 (net
   +1).
+- Fixed two real short-name-resolution bugs in
+  `packages/ai-jue/src/commands/apply.ts` for OpenClaw/Hermes: (1)
+  `ADAPTER_ALIAS_MAP` previously had no `openclaw`/`hermes` entries, so
+  `jue apply --adapter openclaw` treated the short name as a literal npm
+  package name to install — verified in a fresh project that this really
+  installed and loaded an unrelated third-party package of the same name
+  from the public npm registry (`openclaw@2026.7.1-2`, a messaging
+  gateway), crashing on an ESM/CJS conflict; the alias map now has both
+  entries. (2) `ADAPTER_INDICATORS`'s Hermes footprint file was originally
+  a bare `config.yaml` — a filename common to many unrelated tools
+  (Docusaurus, mkdocs, Ansible, Serverless, etc.) that would
+  false-positive-detect Hermes on unrelated projects and silently trigger
+  `npm install -D ai-jue-adapter-hermes` plus an incorrect apply run when
+  `jue apply` is invoked without an explicit `--adapter`; changed to
+  `MEMORY.md`, matching the specificity of the other Adapters' indicator
+  files (e.g. `CLAUDE.md`).
 
 ## Critical gaps
 
