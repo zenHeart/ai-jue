@@ -1,3 +1,17 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v1.2.0...ai-jue-adapter-claude@1.0.0) (2026-07-27)
+
+
+### Bug Fixes
+
+* 完成修改 ([6efba0b](https://github.com/zenHeart/ai-jue/commit/6efba0bf413b8fbf4c48c311360a9b5ac6a2abb7))
+* 完成草 ([4f67f35](https://github.com/zenHeart/ai-jue/commit/4f67f354cbe14c0e8b551a25ca2c6f1cd064bb0b))
+
+
+### Features
+
+* add Capability Source (ai.capabilities) resolver and Codex adapter ([18166e2](https://github.com/zenHeart/ai-jue/commit/18166e2a784d70630223123dd17bcd045c3e3846))
+* close Jue capability protocol gaps ([e188507](https://github.com/zenHeart/ai-jue/commit/e1885078b620e644968ec195cf867aead57de0af))
+* **JUE-301/302/303/401:** Codex, OpenClaw, Hermes Adapters + portable Canonical fixture ([00f19f6](https://github.com/zenHeart/ai-jue/commit/00f19f611c902293a3ccf0c2a0f386d066c8848f))
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v1.1.0...ai-jue-adapter-claude@1.0.0) (2026-02-15)
 
 

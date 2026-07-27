@@ -1,3 +1,16 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.3.0...ai-jue-adapter-cursor@1.0.0) (2026-07-27)
+
+
+### Bug Fixes
+
+* 完成修改 ([6efba0b](https://github.com/zenHeart/ai-jue/commit/6efba0bf413b8fbf4c48c311360a9b5ac6a2abb7))
+* 完成草 ([4f67f35](https://github.com/zenHeart/ai-jue/commit/4f67f354cbe14c0e8b551a25ca2c6f1cd064bb0b))
+
+
+### Features
+
+* close Jue capability protocol gaps ([e188507](https://github.com/zenHeart/ai-jue/commit/e1885078b620e644968ec195cf867aead57de0af))
+* standardize Jue capabilities and launch site MVP ([9e1fd2f](https://github.com/zenHeart/ai-jue/commit/9e1fd2fd55b2ecaa4f2f4a69163a62a22361dd15))
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.2.0...ai-jue-adapter-cursor@1.0.0) (2026-02-16)
 
 

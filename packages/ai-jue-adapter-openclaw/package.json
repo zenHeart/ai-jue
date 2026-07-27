@@ -1,6 +1,6 @@
 {
   "name": "ai-jue-adapter-openclaw",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Adapter for generating OpenClaw configurations.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",

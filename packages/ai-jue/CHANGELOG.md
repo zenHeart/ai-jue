@@ -1,3 +1,19 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.3.2...ai-jue@1.0.0) (2026-07-27)
+
+
+### Bug Fixes
+
+* **apply:** tighten Hermes auto-detect footprint away from config.yaml ([eac1b0e](https://github.com/zenHeart/ai-jue/commit/eac1b0ef28a672df424d5e4ba7367b07a16b70d4))
+* **capability-source:** isolate the offline-mirror test path from the real cache ([d0d7d91](https://github.com/zenHeart/ai-jue/commit/d0d7d91d12a6699997aede2453d87854c7bcf53b))
+* resolve project-local presets in real consumers ([aab6fc8](https://github.com/zenHeart/ai-jue/commit/aab6fc895a2cdf610d0856f12a12baad7ce761b7))
+
+
+### Features
+
+* add Capability Source (ai.capabilities) resolver and Codex adapter ([18166e2](https://github.com/zenHeart/ai-jue/commit/18166e2a784d70630223123dd17bcd045c3e3846))
+* close Jue capability protocol gaps ([e188507](https://github.com/zenHeart/ai-jue/commit/e1885078b620e644968ec195cf867aead57de0af))
+* **JUE-301/302/303/401:** Codex, OpenClaw, Hermes Adapters + portable Canonical fixture ([00f19f6](https://github.com/zenHeart/ai-jue/commit/00f19f611c902293a3ccf0c2a0f386d066c8848f))
+* standardize Jue capabilities and launch site MVP ([9e1fd2f](https://github.com/zenHeart/ai-jue/commit/9e1fd2fd55b2ecaa4f2f4a69163a62a22361dd15))
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.3.1...ai-jue@1.0.0) (2026-03-19)
 
 

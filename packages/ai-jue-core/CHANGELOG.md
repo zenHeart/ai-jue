@@ -1,3 +1,11 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.2.1...ai-jue-core@1.0.0) (2026-07-27)
+
+
+### Features
+
+* add Capability Source (ai.capabilities) resolver and Codex adapter ([18166e2](https://github.com/zenHeart/ai-jue/commit/18166e2a784d70630223123dd17bcd045c3e3846))
+* **JUE-301/302/303/401:** Codex, OpenClaw, Hermes Adapters + portable Canonical fixture ([00f19f6](https://github.com/zenHeart/ai-jue/commit/00f19f611c902293a3ccf0c2a0f386d066c8848f))
+* standardize Jue capabilities and launch site MVP ([9e1fd2f](https://github.com/zenHeart/ai-jue/commit/9e1fd2fd55b2ecaa4f2f4a69163a62a22361dd15))
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.2.0...ai-jue-core@1.0.0) (2026-03-19)
 
 
