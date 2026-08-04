@@ -14,12 +14,16 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 2) {
     const key = argv[index];
     if (!key.startsWith('--') || argv[index + 1] === undefined) {
-      throw new Error('Arguments must use --packages-dir, --entry and optional --cleanup');
+      throw new Error(
+        'Arguments must use --packages-dir, --entry and optional --cleanup / --artifact',
+      );
     }
     args[key.slice(2)] = argv[index + 1];
   }
   if (!args['packages-dir'] || !args.entry) {
-    throw new Error('Usage: smoke-local-preset --packages-dir <dir> --entry <preset> [--cleanup delete|trash]');
+    throw new Error(
+      'Usage: smoke-local-preset --packages-dir <dir> --entry <preset> [--cleanup delete|trash] [--artifact project|plugin]',
+    );
   }
   return args;
 }
@@ -240,42 +244,65 @@ async function main() {
     }
 
     const cli = path.resolve(__dirname, '../packages/ai-jue/dist/cli.js');
-    run(process.execPath, [cli, 'apply', '--adapter', 'codex'], consumerDir);
-    run(process.execPath, [cli, 'apply', '--adapter', 'claude-code'], consumerDir);
-    run(process.execPath, [cli, 'apply', '--adapter', 'openclaw'], consumerDir);
+    const artifact = typeof args.artifact === 'string' ? args.artifact.trim().toLowerCase() : '';
+    const artifactArgs = artifact && artifact !== 'project' && artifact !== 'workspace'
+      ? ['--artifact', artifact]
+      : [];
+
+    // Project/workspace mode (default): four adapters into one consumer dir.
+    // Plugin mode: Claude/Codex/OpenClaw get --artifact plugin; Hermes stays
+    // workspace (skill-plugin not implemented — RFC-0002 Phase B).
+    run(process.execPath, [cli, 'apply', '--adapter', 'codex', ...artifactArgs], consumerDir);
+    run(process.execPath, [cli, 'apply', '--adapter', 'claude-code', ...artifactArgs], consumerDir);
+    run(process.execPath, [cli, 'apply', '--adapter', 'openclaw', ...artifactArgs], consumerDir);
     run(process.execPath, [cli, 'apply', '--adapter', 'hermes'], consumerDir);
 
     const [skillName, skill] = skillEntry;
     const [agentName] = agentEntry;
-    for (const required of [
-      'AGENTS.md',
-      'CLAUDE.md',
-      'MEMORY.md',
-      path.join('.agents', 'skills', skillName, 'SKILL.md'),
-      path.join('.codex', 'agents', `${agentName}.toml`),
-      // Not `.codex/config.toml`: Codex's `mcp` capability is honestly
-      // `degraded` (JUE-301) — `write()` never persists MCP servers to the
-      // real TOML file (a hand-rolled TOML writer is out of scope), so no
-      // file is produced even when the Preset declares MCP servers.
-      path.join('.claude', 'skills', skillName, 'SKILL.md'),
-      path.join('.claude', 'agents', `${agentName}.md`),
-      // OpenClaw has no per-workspace `agents/` directory (honest `degraded`,
-      // no-op write) and shares the project-root `skills/` tree with Hermes,
-      // one level shallower — see ai-jue-adapter-openclaw/src/capabilities/skills.ts.
-      path.join('skills', skillName, 'SKILL.md'),
-      // Hermes requires a "<category>/<name>" skill key; a flat portable key
-      // (as produced by Claude/Codex/OpenClaw-shaped Presets) falls back to a
-      // "general" category rather than failing — see
-      // ai-jue-adapter-hermes/src/capabilities/skills.ts.
-      path.join('skills', 'general', skillName, 'SKILL.md'),
-    ]) {
-      if (!fs.existsSync(path.join(consumerDir, required))) {
-        throw new Error(`A required native Adapter output is missing: ${required}`);
+    const required = artifact === 'plugin' || artifact === 'compatible-bundle'
+      ? [
+          path.join('.claude-plugin', 'plugin.json'),
+          path.join('.codex-plugin', 'plugin.json'),
+          // OpenClaw bundle delegates to Claude (no hooks) → skills at bundle root.
+          path.join('skills', skillName, 'SKILL.md'),
+          // Hermes remains workspace.
+          'MEMORY.md',
+          path.join('skills', 'general', skillName, 'SKILL.md'),
+        ]
+      : [
+          'AGENTS.md',
+          'CLAUDE.md',
+          'MEMORY.md',
+          path.join('.agents', 'skills', skillName, 'SKILL.md'),
+          path.join('.codex', 'agents', `${agentName}.toml`),
+          // Not `.codex/config.toml`: Codex's `mcp` capability is honestly
+          // `degraded` (JUE-301) — `write()` never persists MCP servers to the
+          // real TOML file (a hand-rolled TOML writer is out of scope), so no
+          // file is produced even when the Preset declares MCP servers.
+          path.join('.claude', 'skills', skillName, 'SKILL.md'),
+          path.join('.claude', 'agents', `${agentName}.md`),
+          // OpenClaw has no per-workspace `agents/` directory (honest `degraded`,
+          // no-op write) and shares the project-root `skills/` tree with Hermes,
+          // one level shallower — see ai-jue-adapter-openclaw/src/capabilities/skills.ts.
+          path.join('skills', skillName, 'SKILL.md'),
+          // Hermes requires a "<category>/<name>" skill key; a flat portable key
+          // (as produced by Claude/Codex/OpenClaw-shaped Presets) falls back to a
+          // "general" category rather than failing — see
+          // ai-jue-adapter-hermes/src/capabilities/skills.ts.
+          path.join('skills', 'general', skillName, 'SKILL.md'),
+        ];
+    for (const relative of required) {
+      if (!fs.existsSync(path.join(consumerDir, relative))) {
+        throw new Error(`A required native Adapter output is missing: ${relative}`);
       }
     }
-    verifySupportFiles(skillName, skill, consumerDir);
+    if (!artifact || artifact === 'project' || artifact === 'workspace') {
+      verifySupportFiles(skillName, skill, consumerDir);
+    }
     console.log(
-      `[OK] isolated local Preset install -> Codex/Claude Code/OpenClaw/Hermes (${archives.length} packages)`,
+      `[OK] isolated local Preset install -> Codex/Claude Code/OpenClaw/Hermes`
+      + (artifact ? ` artifact=${artifact}` : '')
+      + ` (${archives.length} packages)`,
     );
   } finally {
     process.chdir(originalCwd);

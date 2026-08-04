@@ -1,8 +1,12 @@
 # 项目配置指南
 
-> [!WARNING]
-> 本页定义目标合同。`targets`、Artifact 选择和下方迁移命令尚未全部实现；当前
-> 可用状态见[实现状态](../developer/implementation-status.md)。
+> [!NOTE]
+> `targets.<adapter>.artifact` 与 CLI `--artifact` / `--artifact-kind` 已接线
+> （RFC-0002）。默认仍是 project/workspace；`plugin` 对 Claude/Codex 生成原生
+> Plugin，对 OpenClaw 表示 Claude/Codex **compatible bundle**。Hermes 的
+> `skill-plugin` 尚未实现，请继续用 workspace。细节见
+> [RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) 与
+> [实现状态](../developer/implementation-status.md)。
 
 大多数项目只需要选择 Preset 和目标 Agent：
 

@@ -2,14 +2,12 @@ import fs from "fs";
 import path from "path";
 
 /**
- * JUE-302 OpenClaw Adapter supports exactly one native Artifact kind:
- * a per-workspace directory tree (no separate "plugin" or "bundle"
- * aggregate — OpenClaw's skills/hooks are all workspace-scoped; MCP is
- * global-only and lives in the user-level `openclaw.json`, not a
- * project-scoped file). The "context" capability maps to the workspace's
- * `AGENTS.md`.
+ * OpenClaw Artifact kinds (RFC-0002):
+ * - `workspace`: project tree (AGENTS.md / skills / hooks) — JUE-302
+ * - `compatible-bundle`: Claude or Codex plugin directory installable via
+ *   `openclaw plugins install` (Format: bundle). No third dialect.
  */
-export type OpenClawArtifactKind = "workspace";
+export type OpenClawArtifactKind = "workspace" | "compatible-bundle";
 
 export function isWorkspaceLayout(root: string): boolean {
   return (
@@ -17,4 +15,18 @@ export function isWorkspaceLayout(root: string): boolean {
     fs.existsSync(path.join(root, "skills")) ||
     fs.existsSync(path.join(root, "hooks"))
   );
+}
+
+export function isCompatibleBundleLayout(root: string): boolean {
+  return (
+    fs.existsSync(path.join(root, ".claude-plugin", "plugin.json")) ||
+    fs.existsSync(path.join(root, ".codex-plugin", "plugin.json")) ||
+    fs.existsSync(path.join(root, ".cursor-plugin", "plugin.json"))
+  );
+}
+
+export function detectArtifactKind(root: string): OpenClawArtifactKind {
+  // Native/bundle markers win over workspace when both exist (OpenClaw precedence).
+  if (isCompatibleBundleLayout(root)) return "compatible-bundle";
+  return "workspace";
 }

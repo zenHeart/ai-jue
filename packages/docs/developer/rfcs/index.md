@@ -19,7 +19,7 @@ RFC 记录会改变公共合同、Canonical、Adapter 或 Extension 机制的方
 | RFC | 状态 | 决策 |
 | --- | --- | --- |
 | [RFC-0001：最小转换模型](0001-minimal-conversion-model.md) | Accepted | 单一管线、两类适配职责、Extension 注册 Adapter |
-| [RFC-0002：Plugin / Bundle Artifact 的 apply 合同](0002-plugin-artifact-apply.md) | Proposed | 配置优先 + CLI 覆盖；OpenClaw `compatible-bundle` 委托 Claude/Codex plugin；Hermes 以 workspace 为主、可选 thin `skill-plugin` |
+| [RFC-0002：Plugin / Bundle Artifact 的 apply 合同](0002-plugin-artifact-apply.md) | Implementing | 配置优先 + CLI 覆盖；OpenClaw `compatible-bundle` 委托 Claude/Codex plugin；Hermes 以 workspace 为主、可选 thin `skill-plugin` |
 
 ## 新 RFC 必需章节
 

@@ -7,6 +7,12 @@ import {
   type DriftConflict,
   type ExecutionStatus,
 } from "ai-jue-core";
+import {
+  resolveArtifactKind,
+  resolvePluginManifest,
+  shortAdapterName,
+  UnsupportedArtifactKindError,
+} from "./artifact-kind";
 import { MergedConfig } from "./config";
 import { logger } from "./logger";
 import { t } from "./i18n";
@@ -14,7 +20,12 @@ import { t } from "./i18n";
 export interface CoreCapableAdapterModule {
   write(
     canonical: unknown,
-    context: { projectRoot: string; artifactKind: "project"; toolsConfig?: Record<string, unknown> },
+    context: {
+      projectRoot: string;
+      artifactKind?: string;
+      toolsConfig?: Record<string, unknown>;
+      pluginManifest?: { name: string; version: string; description?: string };
+    },
   ): Promise<ArtifactChange[]>;
 }
 
@@ -33,6 +44,8 @@ export function isCoreCapableAdapter(adapterModule: unknown): adapterModule is C
 export interface RunCoreAdapterOptions {
   dryRun?: boolean;
   check?: boolean;
+  /** CLI --artifact / --artifact-kind override for the current run. */
+  artifactKind?: string;
 }
 
 const EXIT_CODE_BY_STATUS: Record<ExecutionStatus, number> = {
@@ -81,12 +94,6 @@ function reportPlan(
   }
 }
 
-function shortAdapterName(adapterName: string): string {
-  return adapterName.startsWith("ai-jue-adapter-")
-    ? adapterName.slice("ai-jue-adapter-".length)
-    : adapterName;
-}
-
 /**
  * Runs `jue apply`'s Core-driven path for a `write()`-capable Adapter:
  * computes the Artifact from the resolved config, then either previews it
@@ -103,13 +110,47 @@ export async function runCoreAdapter(
   outputDir: string,
   options: RunCoreAdapterOptions,
 ): Promise<void> {
+  const short = shortAdapterName(adapterName);
+  let artifactKind: string;
+  try {
+    artifactKind = resolveArtifactKind({
+      adapterName,
+      cliArtifact: options.artifactKind,
+      config,
+    });
+  } catch (error) {
+    if (error instanceof UnsupportedArtifactKindError) {
+      logger.error(pc.red(error.message));
+      process.exitCode = 2;
+      return;
+    }
+    throw error;
+  }
+
+  logger.info(
+    pc.dim(
+      t("commands.apply.artifact_kind_resolved", {
+        name: adapterName,
+        kind: artifactKind,
+      }),
+    ),
+  );
+
   const canonical = toCanonicalDocument(config as unknown as Record<string, unknown>);
-  const toolsConfig = (config as Record<string, any>)?.tools?.[shortAdapterName(adapterName)];
+  const toolsConfig = (config as Record<string, any>)?.tools?.[short];
+  const pluginManifest =
+    artifactKind === "plugin" || artifactKind === "compatible-bundle"
+      ? resolvePluginManifest(config as Record<string, unknown>, short) ??
+        // OpenClaw may write via Claude/Codex — use those tool keys too.
+        resolvePluginManifest(config as Record<string, unknown>, "claude") ??
+        resolvePluginManifest(config as Record<string, unknown>, "codex")
+      : undefined;
 
   const changes = await adapterModule.write(canonical, {
     projectRoot: outputDir,
-    artifactKind: "project",
+    artifactKind,
     toolsConfig: toolsConfig && Object.keys(toolsConfig).length > 0 ? toolsConfig : undefined,
+    pluginManifest,
   });
 
   if (options.dryRun) {

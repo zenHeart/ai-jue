@@ -1,8 +1,8 @@
 # Project Configuration Reference
 
-> [!WARNING]
-> This page defines the target contract. `targets`, `extensions`, and complete
-> Artifact selection are not fully implemented. See
+> [!NOTE]
+> `targets.<adapter>.artifact` is wired (with CLI `--artifact`; see RFC-0002).
+> `extensions` and some advanced Target fields still follow
 > [Implementation Status](../developer/implementation-status.md).
 
 The only project configuration file is root `ai.config.js`. It selects Presets,

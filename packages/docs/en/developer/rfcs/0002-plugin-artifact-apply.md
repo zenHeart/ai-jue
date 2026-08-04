@@ -1,6 +1,6 @@
 # RFC-0002: Plugin / Bundle Artifact apply contract
 
-> Status: Proposed  
+> Status: Implementing  
 > Related: Epic [#5](https://github.com/zenHeart/ai-jue/issues/5); [#2](https://github.com/zenHeart/ai-jue/issues/2), [#3](https://github.com/zenHeart/ai-jue/issues/3), [#6](https://github.com/zenHeart/ai-jue/issues/6); R5  
 > Consumer evidence: private composition entry `jue-preset-ai-assets` (ai-assets `presets/personal`)  
 > Official sources (verified 2026-08):  

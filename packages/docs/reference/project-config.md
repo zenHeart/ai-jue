@@ -1,8 +1,8 @@
 # 项目配置 Reference
 
-> [!WARNING]
-> 本页定义目标合同。`targets`、`extensions` 与完整 Artifact 选择尚未全部实现；
-> 当前可用状态见[实现状态](../developer/implementation-status.md)。
+> [!NOTE]
+> `targets.<adapter>.artifact` 已接线（与 CLI `--artifact` 组合，见 RFC-0002）。
+> `extensions` 与部分高级 Target 字段仍以[实现状态](../developer/implementation-status.md)为准。
 
 项目唯一配置文件是根目录 `ai.config.js`。它选择 Preset、Extension 和 Target，并
 提供项目最高优先级覆盖；Preset 包的 `package.json#ai` 是另一种容器，见

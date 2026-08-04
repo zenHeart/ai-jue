@@ -12,7 +12,13 @@
     "js-yaml": "^4.1.0"
   },
   "peerDependencies": {
-    "ai-jue-core": "*"
+    "ai-jue-core": "*",
+    "ai-jue-adapter-claude": "*",
+    "ai-jue-adapter-codex": "*"
+  },
+  "peerDependenciesMeta": {
+    "ai-jue-adapter-claude": { "optional": true },
+    "ai-jue-adapter-codex": { "optional": true }
   },
   "author": "AI-Jue Team <contact@ai-jue.dev>",
   "license": "MIT",

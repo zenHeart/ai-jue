@@ -50,6 +50,19 @@ const ConfigSchema = z
     agents: z.record(z.string(), AgentSchema).optional(),
     tools: z.record(z.string(), z.any()).optional(),
     capabilities: z.record(z.string(), CapabilityRefSchema).optional(),
+    /** Per-adapter Artifact selection (RFC-0002). */
+    targets: z
+      .record(
+        z.string(),
+        z
+          .object({
+            enabled: z.boolean().optional(),
+            artifact: z.string().optional(),
+            scope: z.enum(['project', 'local', 'user']).optional(),
+          })
+          .strict(),
+      )
+      .optional(),
     // Allow other properties for flexibility, but validate core ones
   })
   .passthrough()
@@ -70,6 +83,7 @@ const ConfigSchema = z
       'agents',
       'tools',
       'capabilities',
+      'targets',
     ]);
 
     for (const key of Object.keys(config)) {

@@ -1,6 +1,6 @@
 # RFC-0002：Plugin / Bundle Artifact 的 apply 合同
 
-> 状态：Proposed  
+> 状态：Implementing  
 > 关联：Epic [#5](https://github.com/zenHeart/ai-jue/issues/5)；[#2](https://github.com/zenHeart/ai-jue/issues/2)、[#3](https://github.com/zenHeart/ai-jue/issues/3)、[#6](https://github.com/zenHeart/ai-jue/issues/6)；R5  
 > 消费者证据：私有 Preset 组合入口 `jue-preset-ai-assets`（ai-assets `presets/personal`）  
 > 官方依据（2026-08 核验）：  

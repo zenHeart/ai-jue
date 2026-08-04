@@ -21,7 +21,10 @@ export type { ConfirmContext } from "./confirm";
  */
 export async function generate(config: any, outputDir: string): Promise<void> {
   const canonical = toCanonicalDocument(config);
-  const changes = await write(canonical, { projectRoot: outputDir });
+  const changes = await write(canonical, {
+    projectRoot: outputDir,
+    artifactKind: "workspace",
+  });
   applyChangesOrThrow(outputDir, changes);
 }
 

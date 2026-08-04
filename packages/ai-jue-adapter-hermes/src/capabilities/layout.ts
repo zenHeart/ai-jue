@@ -2,18 +2,17 @@ import fs from "fs";
 import path from "path";
 
 /**
- * JUE-303 Hermes Adapter supports exactly one native Artifact kind: a
- * per-workspace directory tree (the global `~/.hermes/` config lives at
- * the user home and is NOT a project-scoped surface this Adapter
- * targets). Three-level skills shape (`<workspace>/skills/<cat>/<name>/SKILL.md`)
- * confirmed by reading the real cwr:/d/devuser/.hermes/skills tree.
+ * Hermes Artifact kinds (RFC-0002):
+ * - `workspace`: MEMORY.md / skills/<cat>/<name> / config.yaml / cron — JUE-303
+ * - `skill-plugin`: thin plugin.yaml + register_skill (Phase B — not implemented yet)
  */
-export type HermesArtifactKind = "workspace";
+export type HermesArtifactKind = "workspace" | "skill-plugin";
 
 export function isWorkspaceLayout(root: string): boolean {
   return (
     fs.existsSync(path.join(root, "config.yaml")) ||
     fs.existsSync(path.join(root, "skills")) ||
-    fs.existsSync(path.join(root, "cron"))
+    fs.existsSync(path.join(root, "cron")) ||
+    fs.existsSync(path.join(root, "MEMORY.md"))
   );
 }

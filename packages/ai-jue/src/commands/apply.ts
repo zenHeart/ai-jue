@@ -59,6 +59,11 @@ export const builder: CommandBuilder = (yargs) => {
       type: "boolean",
       description: t("commands.apply.check_describe"),
       default: false,
+    })
+    .option("artifact", {
+      alias: "artifact-kind",
+      type: "string",
+      description: t("commands.apply.artifact_describe"),
     });
 };
 
@@ -392,6 +397,14 @@ function discoverAvailableAdapters(discoveredAdapters: string[]): string[] {
   return [...new Set([...discoveredAdapters, ...resolvableKnownAdapters])];
 }
 
+function parseCliArtifact(argv: Arguments): string | undefined {
+  const typed = argv as Arguments<{ artifact?: string; "artifact-kind"?: string }>;
+  const raw = typed.artifact ?? typed["artifact-kind"];
+  if (typeof raw !== "string") return undefined;
+  const trimmed = raw.trim();
+  return trimmed.length > 0 ? trimmed : undefined;
+}
+
 async function runSingleAdapter(
   adapterName: string,
   config: MergedConfig,
@@ -466,7 +479,11 @@ async function runAdapters(
   outputDir: string,
   options: RunCoreAdapterOptions & { all: boolean; requestedAdapters: string[] },
 ) {
-  const coreOptions: RunCoreAdapterOptions = { dryRun: options.dryRun, check: options.check };
+  const coreOptions: RunCoreAdapterOptions = {
+    dryRun: options.dryRun,
+    check: options.check,
+    artifactKind: options.artifactKind,
+  };
   const spinner = ora(t("commands.apply.finding_adapters")).start();
   const discoveredAdapters = await findAdapters();
   const availableAdapters = discoverAvailableAdapters(discoveredAdapters);
@@ -619,6 +636,7 @@ export const handler = async (argv: Arguments) => {
     requestedAdapters: mergedRequestedAdapters,
     dryRun: Boolean((argv as Arguments<{ "dry-run"?: boolean }>)["dry-run"]),
     check: Boolean((argv as Arguments<{ check?: boolean }>).check),
+    artifactKind: parseCliArtifact(argv),
   };
 
   const runApply = async () => {
