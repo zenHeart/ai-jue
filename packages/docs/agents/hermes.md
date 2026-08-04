@@ -1,18 +1,18 @@
 # Hermes
 
 > Jue 状态：Read、Write、Confirm 均已实现（JUE-303，
-> `packages/ai-jue-adapter-hermes/`）；Artifact 仅实现单一 workspace 目录
-> 形态，未覆盖 Hermes Plugin。`capabilities` 如实声明
-> `rules/hooks: "unsupported"`（无对应 per-workspace 承载面）、
-> `commands/agents: "degraded"`（no-op 直通）、`skills/mcp: "supported"`。
-> Adapter 还额外承载了一个 `cron` 字段（`cron/jobs.json` 整文件直通）——这不属于
-> 六类原子 Capability 中的任何一类，是 `CanonicalDocumentSchema` 上新增的
-> Hermes 专属可选字段，架构层面尚待 RFC 决定是否需要正式收编或改走别的机制
-> （见 implementation-status.md"尚未实现的关键合同"一节）
+> `packages/ai-jue-adapter-hermes/`）；**workspace** Artifact 已落地。  
+> 官方 Hermes「plugin」是 `plugin.yaml` + Python `register(ctx)` 的运行时扩展
+> （可附带 `ctx.register_skill` 打包 skills），**不是** Claude 式
+> `.xxx-plugin/plugin.json`。Canonical 能力包默认仍走 workspace；可选薄封装
+> `skill-plugin` 见 RFC-0002（Phase B）。完整 Python 工具/平台插件不在范围内。  
+> `capabilities` 如实声明 `rules/hooks: "unsupported"`、
+> `commands/agents: "degraded"`、`skills/mcp: "supported"`。  
+> 额外 `cron`（`cron/jobs.json`）尚非六类原子 Capability，见 implementation-status。
 >
-> 官方依据：[Hermes Agent](https://github.com/NousResearch/hermes-agent)、
-> [Hermes example plugins](https://github.com/NousResearch/hermes-example-plugins)、
-> [Programmatic Integration](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/programmatic-integration.md)
+> 官方依据：[Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins)、
+> [Build a Hermes Plugin](https://hermes-agent.nousresearch.com/docs/guides/build-a-hermes-plugin)、
+> [Hermes Agent](https://github.com/NousResearch/hermes-agent)
 
 ## 1. 官方能力表面
 
@@ -37,13 +37,15 @@ Artifact 表面，本 Adapter 尚未覆盖。
 | `rules` / `hooks` | 诚实 `unsupported`：无 per-workspace 承载面 |
 | `commands` / `agents` | 诚实 `degraded`：`config.yaml` 里的同名块是全局运行时策略，读写均为 no-op |
 | target-specific settings | `tools.hermes` |
-| Artifact | 单一 workspace 目录形态；Hermes Plugin 尚未覆盖 |
-| Confirm | 真实 `tirith config validate <projectRoot>`（`tirith` 二进制，隔离临时 HOME） |
+| Artifact | `workspace`（主路径）；可选 `skill-plugin`（RFC-0002 Phase B：yaml + 仅 register_skill 的 `__init__.py` + flat skills/） |
+| Confirm | Workspace：`tirith config validate`；skill-plugin：结构校验 + 可选隔离 `hermes plugins list`（不得用 tirith 冒充 plugin 安装） |
 
 ## 3. 转换边界
 
-- Hermes Plugin 可能注册运行时代码、工具、平台或 UI，不可自动跨 Agent 转换；
-  本 Adapter 目前也未生成 Plugin 形态的 Artifact。
+- Hermes general plugin 可注册 Python tools/hooks/commands/platforms；不可从
+  Canonical 文本能力自动「变成」完整运行时插件。能力包不要走这条高代价路径。
+- 若只需分发 skills：Phase B `skill-plugin` 仅生成 `register_skill` 样板；
+  mcp/context 仍留在 workspace。
 - ACP、Gateway 和 HTTP API 是目标运行接口，不进入 Capability 集合。
 - Hermes 自学习、memory、profile 和 session 状态不进入通用 Preset。
 - `cron` 是本 Adapter 唯一超出六类原子 Capability 的直通字段；在架构层面

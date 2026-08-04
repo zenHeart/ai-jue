@@ -1,57 +1,73 @@
 # OpenClaw
 
 > Jue 状态：Read、Write、Confirm 均已实现（JUE-302，
-> `packages/ai-jue-adapter-openclaw/`）；Artifact 仅实现单一
-> per-workspace 目录形态，OpenClaw 没有可安装的 Plugin/Bundle 聚合体
-> （见下方"官方能力表面"实测结论，修正了本页此前假设的 native
-> plugin/compatible bundle 双形态）。`capabilities` 如实声明
-> `rules/commands/agents/mcp: "degraded"` 四个边界
+> `packages/ai-jue-adapter-openclaw/`）；**workspace** Artifact 已落地。  
+> **Compatible bundle**（安装 Claude/Codex/Cursor 布局）见 RFC-0002，实现上应
+> **委托**已有 Claude/Codex plugin writer，而不是发明第三种目录。  
+> Native OpenClaw plugin（`openclaw.plugin.json` + 进程内运行时）不在 Canonical
+> 能力包转换范围内。  
+> `capabilities` 对 workspace 路径如实声明 `rules/commands/agents/mcp: "degraded"`。
 >
-> 官方依据：[Capabilities Overview](https://docs.openclaw.ai/tools)、
-> [Plugin Bundles](https://docs.openclaw.ai/plugins/bundles)、
+> 官方依据：[Plugin bundles](https://docs.openclaw.ai/plugins/bundles)、
+> [Plugins](https://docs.openclaw.ai/tools/plugin)、
+> [Building plugins](https://docs.openclaw.ai/plugins/building-plugins)、
 > [Plugin Manifest](https://docs.openclaw.ai/plugins/manifest)
 
-## 1. 官方能力表面
+## 1. 官方能力表面（两层）
 
-经 JUE-302 对真实 `~/.openclaw/workspace-jue-probe/` 与
-`~/.openclaw/openclaw.json` 的直接读取核验：OpenClaw 的项目级（workspace）
-表面只有 `AGENTS.md`（共享指令）、`skills/<name>/SKILL.md`（一层，非嵌套）
-与 `hooks/<name>/HOOK.md`+`handler.js`。不存在 per-workspace 的
-`commands/`/`agents/` 目录：`openclaw.json` 顶层的 `commands` 键配置的是
-OpenClaw 自身的原生 shell 命令行为（`commands.native`/`commands.restart`
-等），不是用户可编写的 slash-command；`openclaw agents add/list/delete`
-管理的是 user home 下 `~/.openclaw/agents/<name>/` 的隔离运行时环境，不是
-项目内文件。MCP 配置全局唯一位于 `~/.openclaw/openclaw.json`
-的 `mcp.servers`，没有项目级文件。OpenClaw 没有 Plugin 或 Bundle 一类的可
-安装聚合 Artifact——项目级配置就是唯一的原生 Artifact 形态。
+### 1.1 Workspace（项目树，JUE-302 已核验）
+
+`AGENTS.md`、`skills/<name>/SKILL.md`、`hooks/<name>/HOOK.md`+`handler.js`。  
+无 per-workspace `commands/`/`agents/`；`openclaw agents *` 管理的是
+`~/.openclaw/agents/<name>/` 运行时；MCP 在全局 `openclaw.json`。
+
+### 1.2 可安装 Plugin（官方现文档）
+
+| 格式 | 标记 | 用途 |
+| --- | --- | --- |
+| Compatible bundle | `.claude-plugin/` / `.codex-plugin/` / `.cursor-plugin/`（或 Claude 默认布局） | 内容包；映射 skills/hooks/MCP 等；**窄信任边界** |
+| Native plugin | `openclaw.plugin.json` + `package.json#openclaw.extensions` | 进程内工具/通道/provider |
+
+安装：
+
+```bash
+openclaw plugins install ./my-bundle
+openclaw plugins list    # bundles 显示 Format: bundle + Bundle format
+openclaw plugins inspect <id>
+```
+
+检测优先：若同时存在 native 与 bundle 标记，走 **native**。
+
+Bundle 映射要点（官方）：
+
+- skills：全格式  
+- Claude/Cursor `commands/` → 当 skill 根  
+- hooks：**仅** OpenClaw 式 `HOOK.md`+handler（今日主要是 Codex 兼容包）可执行；Claude `hooks/hooks.json` detect-only  
+- agents：Claude/Cursor 多为 detect-only  
+- MCP：合并进 embedded settings（stdio/HTTP）
 
 ## 2. 理想 Jue 映射
 
 | Canonical / Adapter 职责 | OpenClaw |
 | --- | --- |
-| `context.global` | `AGENTS.md`（managed block） |
-| `skills` | `skills/<name>/SKILL.md`（一层） |
-| `hooks` | `hooks/<name>/HOOK.md` + `handler.js` |
-| `commands` / `agents` / `mcp.servers` | 均为诚实 `degraded`：无 per-workspace 承载面，读写均为 no-op（避免误写用户全局 `openclaw.json`） |
-| target-specific settings | `tools.openclaw` |
-| Artifact | project/workspace 目录（无 Plugin/Bundle 聚合体） |
-| Confirm | `openclaw --profile <isolated> config validate --json` |
+| `context.global` | Workspace：`AGENTS.md`（managed block） |
+| `skills` | Workspace：`skills/<name>/`；Bundle：随 Claude/Codex plugin 布局 |
+| `hooks` | Workspace：`HOOK.md`+`handler.js`；Bundle：优先 Codex 基底才能执行 |
+| `commands` / `agents` / `mcp.servers` | Workspace：诚实 `degraded`（无安全的项目级写入面）；Bundle：按上表映射或 detect-only |
+| Artifact | `workspace` \| `compatible-bundle`（RFC-0002） |
+| Confirm | Workspace：`openclaw --profile … config validate`；Bundle：`plugins install` + `inspect`（Format: bundle） |
 
 ## 3. 转换边界
 
-- `commands`/`agents`/`mcp` 三类的 write 均为 no-op：OpenClaw 没有对应的
-  per-workspace 原生承载面，写入会误改用户全局配置，因此选择诚实
-  `degraded` 而非伪造支持。
-- Jue 不从普通 skill 或 rule 推断可执行代码；OpenClaw 也没有暴露这样的
-  Plugin 加载机制供 Adapter 生成。
-- hooks 的 `HOOK.md` frontmatter 用 `metadata.openclaw.events` 数组表达触发
-  事件，与 Claude/Codex 的扁平事件名字段形状不同，按目标原生形状手写解析。
+- Workspace 路径不写全局 `openclaw.json` MCP（避免误改用户环境）。
+- `compatible-bundle` **不得**新造目录方言；委托 Claude/Codex `artifactKind: "plugin"`。
+- 不为 Canonical 能力包生成 native `openclaw.plugin.json` 运行时插件（成本与信任模型都不匹配）。
+- hooks 若需在 OpenClaw 执行，bundle 基底选 Codex，而非 Claude。
 
 ## 4. 当前差距
 
 | 层级 | 状态 | 缺口 |
 | --- | --- | --- |
-| Read | Implemented | JUE-302，`packages/ai-jue-adapter-openclaw/src/read.ts` |
-| Write | Implemented | JUE-302，经 Core 执行器驱动，`jue apply --adapter openclaw --dry-run/--check` 已实测通过 |
-| Artifact | Partial | 仅 workspace 目录形态；OpenClaw 本身没有 Plugin/Bundle 概念，非本 Adapter 缺口 |
-| Confirm | Implemented | 真实 `openclaw --profile <isolated> config validate --json`（`scripts/verify-openclaw-native.js` 可重放）；vitest worker 内调用会产生空 stdout 的实测怪癖，因此合同套件内不调用 `confirmNatively`，原生确认放在独立脚本 |
+| Read / Write / Confirm（workspace） | Implemented | JUE-302 |
+| Artifact `compatible-bundle` | Planned（RFC-0002 / #3） | 委托 Claude/Codex plugin writer + install 确认 |
+| Native plugin Artifact | Out of scope | 非 Canonical 包路径 |

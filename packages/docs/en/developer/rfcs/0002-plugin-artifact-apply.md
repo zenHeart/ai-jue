@@ -1,155 +1,164 @@
 # RFC-0002: Plugin / Bundle Artifact apply contract
 
 > Status: Proposed  
-> Related: Epic [#5](https://github.com/zenHeart/ai-jue/issues/5); [#2](https://github.com/zenHeart/ai-jue/issues/2), [#3](https://github.com/zenHeart/ai-jue/issues/3), [#6](https://github.com/zenHeart/ai-jue/issues/6); R5 (ai-assets final consumer loop)  
-> Consumer evidence: private composition entry `jue-preset-ai-assets` (ai-assets `presets/personal`)
+> Related: Epic [#5](https://github.com/zenHeart/ai-jue/issues/5); [#2](https://github.com/zenHeart/ai-jue/issues/2), [#3](https://github.com/zenHeart/ai-jue/issues/3), [#6](https://github.com/zenHeart/ai-jue/issues/6); R5  
+> Consumer evidence: private composition entry `jue-preset-ai-assets` (ai-assets `presets/personal`)  
+> Official sources (verified 2026-08):  
+> - OpenClaw [Plugin bundles](https://docs.openclaw.ai/plugins/bundles) · [Plugins](https://docs.openclaw.ai/tools/plugin) · [Building plugins](https://docs.openclaw.ai/plugins/building-plugins)  
+> - Hermes [Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins) · [Build a Hermes Plugin](https://hermes-agent.nousresearch.com/docs/guides/build-a-hermes-plugin)
 
 ## Background
 
-RFC-0001 already treats Plugin, Bundle, and config as **Artifact shapes** produced
-by Adapters. Claude Code / Codex `write()` already supports
-`artifactKind: "plugin"`, but `jue apply`'s Core path hardcodes
-`artifactKind: "project"` (`packages/ai-jue/src/core-apply.ts`). Documented
-`targets.<adapter>.artifact` (`"plugin"` / `"compatible-bundle"` / `"auto"`)
-is still a target contract, not wired.
+RFC-0001 treats Plugin, Bundle, and config as **Artifact shapes**. Claude/Codex
+`write()` already supports `artifactKind: "plugin"`, but `jue apply` hardcodes
+`"project"`. `targets.*.artifact` remains unwired.
 
-Private final Presets (e.g. ai-assets `presets: ['ai-assets']`) therefore only
-reliably land as **project/workspace configs**, not installable Plugin/Bundle
-artifacts across four agents.
+JUE-302 concluded “OpenClaw has no Plugin/Bundle” for the **workspace project
+tree**. Current OpenClaw docs add a second surface:
 
-OpenClaw / Hermes currently declare workspace-only artifacts (OpenClaw explicitly
-no-ops Plugin/Bundle). Their aggregate distribution shape must be defined
-honestly — do not invent a Claude-style plugin API.
+| OpenClaw surface | Meaning | Jue stance |
+| --- | --- | --- |
+| Workspace | In-project skills/hooks/AGENTS | Implemented today |
+| **Compatible bundle** | Install Claude/Codex/Cursor layouts | **Reuse existing plugin writers — no new tree** |
+| Native plugin | `openclaw.plugin.json` + in-process TS | Out of scope for Canonical packs |
+
+Hermes “plugin” is a different product:
+
+| Hermes surface | Meaning | Jue stance |
+| --- | --- | --- |
+| Workspace | Categorized skills, MCP in `config.yaml`, MEMORY | Primary path for capability packs |
+| General plugin | `plugin.yaml` + Python `register(ctx)` | Runtime extension — not default for Canonical text packs |
+| Plugin-bundled skills | Flat `skills/<name>/` + `ctx.register_skill` | Optional thin wrapper |
+| `~/.hermes/plugins` registry | Install index | Not a distributable Artifact by itself |
 
 ## Goals
 
-1. Users can select Artifact shape via CLI and/or `ai.config.js#targets` for:
-   - Claude Code: `project` | `plugin`
-   - Codex: `project` | `plugin`
-   - OpenClaw: `workspace` | `compatible-bundle` (name per this RFC)
-   - Hermes: `workspace` | natively verified aggregate shape
-2. Private / locally packed Presets work end-to-end without public publish.
-3. `smoke:preset-local --entry ai-assets` (or equivalent) can assert the chosen
-   Artifact shape, not only project files.
+1. Select Artifact shape via CLI / `targets` (defaults unchanged).
+2. Private / `npm pack` Presets work without registry publish.
+3. **Minimal cost:** reuse Claude/Codex plugin writers; do not invent an OpenClaw
+   directory dialect; do not generate full Hermes Python tool plugins by default.
+4. Smoke can natively confirm the chosen shape (or honest `unsupported`).
 
 ## Non-goals
 
-- Marketplace / multi-plugin aggregate publishing (explicitly later).
-- Changing Canonical DSL or adding a seventh public concept.
-- Forcing all `degraded`/`unsupported` to zero in this RFC (R5 tracks that).
-- Implementing any adapter compatibility layer inside ai-assets.
+- OpenClaw **native** plugins (`openclaw.plugin.json` + `definePluginEntry`).
+- Full Hermes Python tool / platform / memory / provider plugins.
+- Marketplace / ClawHub / pip publish pipelines.
+- Canonical DSL changes; zeroing all `degraded`; adapters inside ai-assets.
 
-## Options
+## Official mapping
 
-### A. CLI only: `--artifact-kind <kind>`
+### OpenClaw compatible bundles
 
-Small change; unlocks existing Claude/Codex plugin writers. Dual-track vs
-documented `targets`; weak for `--all` per-adapter selection.
+```bash
+openclaw plugins install ./my-bundle
+openclaw plugins list          # Format: bundle; Bundle format: claude|codex|cursor
+openclaw plugins inspect <id>
+```
 
-### B. Config only: `targets.<adapter>.artifact`
+| Format | Marker | Mapped today (supported) |
+| --- | --- | --- |
+| Codex | `.codex-plugin/plugin.json` | skills; hooks (`HOOK.md`+handler); MCP |
+| Claude | `.claude-plugin/plugin.json` or default layout | skills; `commands/` as skill roots; MCP; agents/hooks.json detect-only |
+| Cursor | `.cursor-plugin/plugin.json` | skills; commands as skills; much detect-only |
 
-Matches Reference/Guide; good for multi-target. Worse for one-off debugging.
+Bundles intentionally do **not** load arbitrary in-process modules — ideal for
+Jue content packs.
 
-### C. Config first + CLI override (recommended)
+### Hermes plugins
 
-Resolution order:
+```text
+~/.hermes/plugins/<name>/
+├── plugin.yaml
+├── __init__.py
+└── skills/<name>/SKILL.md   # optional via ctx.register_skill
+```
 
-1. CLI `--artifact-kind` / `--artifact` overrides the current adapter;
-2. else `targets.<adapter>.artifact`;
-3. else `"auto"` / adapter default (today ≈ `project`/`workspace`).
-
-On `--all`, resolve per adapter. Unsupported kinds must **fail before write**
-with the adapter's declared kinds — never silently fall back to project.
+Project-local `./.hermes/plugins/` requires `HERMES_ENABLE_PROJECT_PLUGINS=true`.
+Default delivery for Canonical skill packs remains **workspace**.
 
 ## Decision (Proposed)
 
-Adopt **option C**.
+**Config-first + CLI override**, with these kinds:
 
-| Adapter | Stable kind names | Meaning |
+| Adapter | Kind | Minimal implementation |
 | --- | --- | --- |
-| `claude-code` | `project`, `plugin` | `plugin` → `.claude-plugin/plugin.json` + components at artifact root |
-| `codex` | `project`, `plugin` | `plugin` → `.codex-plugin/plugin.json` + marketplace confirm path |
-| `openclaw` | `workspace`, `compatible-bundle` | Distributable directory package; **do not** invent a missing official Plugin API |
-| `hermes` | `workspace`, `plugin` (if native proof exists) or `compatible-bundle` | Must follow real Hermes/tirith surface; `~/.hermes/plugins` registry ≠ distributable Artifact |
+| `claude-code` | `project`, `plugin` | Wire existing writer/confirm |
+| `codex` | `project`, `plugin` | Same |
+| `openclaw` | `workspace`, **`compatible-bundle`** | **Delegate** to Claude or Codex `write({ artifactKind: "plugin" })`; confirm with `openclaw plugins install` + `inspect` (`Format: bundle`) |
+| `hermes` | `workspace`, optional **`skill-plugin`** | Phase A: `skill-plugin` unsupported. Phase B: generate `plugin.yaml` + stub `__init__.py` that only `register_skill`s + flat `skills/` |
 
-This only adds selection of existing Artifact shapes. Kind strings must be
-declared by the Adapter so `jue inspect` can list them.
+### OpenClaw `compatible-bundle`
 
-## Contract details
+1. Default base format: **`claude`** (skills/commands-heavy presets).
+2. If Canonical has hooks that must **run** in OpenClaw → base **`codex`**
+   (only Codex-style hook packs execute; Claude `hooks.json` is detect-only).
+3. `tools.openclaw.bundleFormat: "claude" | "codex" | "auto"`.
+4. No duplicated layout code — call existing adapters/helpers.
+5. Success criterion is compatible **bundle**, not native `openclaw.plugin.json`.
 
-### CLI
+### Hermes `skill-plugin` (Phase B)
 
-```bash
-jue apply --adapter claude-code --artifact-kind plugin
-jue apply --adapter openclaw --artifact-kind compatible-bundle
-jue apply --all
-```
+Pack **skills only**. MCP/context stay on workspace. Generated `__init__.py` may
+only loop `register_skill` — never embed Canonical text as executable logic.
 
-Illegal kind: same exit behavior as other validation failures; no partial write.
+### Resolution order
 
-### ProjectConfig
+CLI `--artifact-kind` → `targets.*.artifact` → default `project`/`workspace`.  
+Unsupported kind fails **before write**.
 
-```js
-export default {
-  presets: ["ai-assets"],
-  targets: {
-    "claude-code": { artifact: "plugin" },
-    codex: { artifact: "plugin" },
-    openclaw: { artifact: "compatible-bundle" },
-    hermes: { artifact: "auto" }
-  }
-};
-```
+## Capability honesty (aggregate kinds)
 
-### Core
+| Canonical | Via Claude bundle (OpenClaw) | Via Codex bundle (OpenClaw) | Hermes skill-plugin |
+| --- | --- | --- | --- |
+| skills | mapped | mapped | `register_skill` |
+| commands | skill roots | degraded | not packed |
+| agents | detect-only | Codex-dependent | not packed |
+| hooks | detect-only | runnable OpenClaw layout | not packed |
+| mcp | embedded merge | embedded merge | workspace only |
+| context.global | usually omitted | usually omitted | workspace only |
 
-`runCoreAdapter` must pass the resolved kind into `write` and `confirm` —
-no hardcoded `"project"`.
-
-### Adapters
-
-- Claude/Codex: reuse existing `write`/`confirm`; wire CLI/config + integration tests.
-- OpenClaw/Hermes: freeze minimal aggregate tree + honest capabilities + native
-  confirm (or explicit `unsupported`) before implementing `write`.
-
-### Private Presets
-
-Local npm paths / `npm pack` + `smoke:preset-local` remain the dogfood path;
-acceptance must not require registry publish.
+Detect-only / not-packed must surface as degraded/unsupported or preflight
+warnings — never silent drop.
 
 ## Security
 
-No secrets/PII in plugin artifacts; keep confirm evidence redaction; user-scope
-writes still require authorization. Default remains project/output directory.
+No secrets/PII in artifacts. Prefer OpenClaw bundle trust boundary over native
+plugins for Canonical packs. Hermes generated Python is fixed skill-registration
+boilerplate only. Install confirms use isolated HOME/profile.
 
 ## Compatibility
 
-Default behavior unchanged when neither CLI nor `targets` selects a kind. After
-wiring, clear the WARNING on configuration-guide / project-config that marks
-`targets` as unimplemented.
+Defaults unchanged. Fix agent docs that claimed OpenClaw has no bundle surface
+at all — clarify workspace vs compatible bundle vs native plugin.
+Keep the string `compatible-bundle` (already in Guides) with the frozen meaning
+“Claude/Codex-compatible pack”.
 
 ## Acceptance
 
-1. Claude Code plugin apply validates via existing confirm / `claude plugin validate`.
-2. Codex plugin apply validates via existing marketplace confirm.
-3. OpenClaw/Hermes: minimal verifiable aggregate + contract tests, or honest `unsupported` visible in inspect.
-4. Per-adapter `targets` honored under `--all`; illegal kinds fail pre-write.
-5. `smoke:preset-local` against ai-assets `presets` + entry `ai-assets` can assert plugin/bundle mode offline.
-6. Second apply stays idempotent for the same plugin artifact.
+1. #2: Claude/Codex plugin apply + existing confirm.
+2. OpenClaw: `compatible-bundle` installs as `Format: bundle`; hooks use Codex base when needed.
+3. Hermes Phase A: clear unsupported for `skill-plugin`; workspace green. Phase B: thin skill-plugin + optional CLI evidence.
+4. `--all` honors per-adapter targets; illegal kinds fail pre-write.
+5. `smoke:preset-local --entry ai-assets` supports artifact mode offline.
+6. Idempotent second apply.
 
-## Open questions
+## Open questions (narrowed)
 
-1. Final OpenClaw `compatible-bundle` shape vs which CLI version?
-2. Hermes aggregate kind name: `plugin` or `compatible-bundle`?
-3. Extend `smoke-local-preset.js` vs new artifact-kind matrix flag?
-4. Adapters still on `generate()` only (e.g. Cursor) stay out of scope?
+1. Must OpenClaw confirm always run real `plugins install`, or structure assert + CLI version floor when CLI missing?
+2. Is Hermes Phase B in R5 gate, or is workspace + three-agent plugin/bundle enough?
+3. Cursor bundle as third base? Default **no** (no Cursor plugin writer yet).
 
 ## Implementation slices
 
-1. CLI + Core wiring for Claude/Codex — #2  
-2. OpenClaw / Hermes aggregate Artifact — #3  
-3. ai-assets private final Preset dogfood — #6  
-4. Tracking epic — #5  
+| Order | Issue | Work | Cost |
+| --- | --- | --- | --- |
+| 1 | #2 | CLI/Core/`targets` | Small |
+| 2 | #3 OpenClaw | Delegate to Claude/Codex writers + confirm | **Small** |
+| 3 | #3 Hermes A | Honest unsupported + docs | Tiny |
+| 4 | #3 Hermes B (optional) | Thin skill-plugin generator | Medium |
+| 5 | #6 | Smoke matrix | Small–medium |
+| — | Explicitly skip | OpenClaw native plugin; Hermes business Python tools | Avoid large cost |
 
-Implementation issues must link this RFC; do not document examples as shipped
+Link this RFC from implementation issues; do not mark Guide examples as shipped
 before Accepted + Implemented.
