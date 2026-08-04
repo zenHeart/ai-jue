@@ -1,20 +1,19 @@
 # Hermes
 
-> Jue status: Read, Write, and Confirm are all Implemented (JUE-303,
-> `packages/ai-jue-adapter-hermes/`); Artifact only implements a single
-> workspace directory form and does not cover the Hermes Plugin. `capabilities`
-> honestly declares `rules/hooks: "unsupported"` (no equivalent per-workspace
-> surface), `commands/agents: "degraded"` (no-op pass-through), and
-> `skills/mcp: "supported"`. The Adapter also carries an extra `cron` field
-> (a full-file pass-through of `cron/jobs.json`) that is not one of the six
-> atomic Capability types — it is a Hermes-specific optional field newly added
-> to `CanonicalDocumentSchema`, and whether it should be formally adopted (or
-> handled some other way) is still an open architecture question pending an
-> RFC (see the "Not yet implemented" section of implementation-status.md)
+> Jue status: Read, Write, and Confirm are Implemented for the **workspace**
+> Artifact (JUE-303, `packages/ai-jue-adapter-hermes/`).  
+> Official Hermes “plugins” are `plugin.yaml` + Python `register(ctx)` runtime
+> extensions (optionally bundling skills via `ctx.register_skill`) — **not** a
+> Claude-style `.xxx-plugin/plugin.json`. Canonical capability packs default to
+> workspace; optional thin `skill-plugin` is RFC-0002 Phase B. Full Python
+> tool/platform plugins are out of scope.  
+> `capabilities` honestly declare `rules/hooks: "unsupported"`,
+> `commands/agents: "degraded"`, `skills/mcp: "supported"`. Extra `cron`
+> remains outside the six atomic types (see implementation-status).
 >
-> Official sources: [Hermes Agent](https://github.com/NousResearch/hermes-agent),
-> [Hermes example plugins](https://github.com/NousResearch/hermes-example-plugins),
-> [Programmatic Integration](https://github.com/NousResearch/hermes-agent/blob/main/website/docs/developer-guide/programmatic-integration.md)
+> Official sources: [Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins),
+> [Build a Hermes Plugin](https://hermes-agent.nousresearch.com/docs/guides/build-a-hermes-plugin),
+> [Hermes Agent](https://github.com/NousResearch/hermes-agent)
 
 ## 1. Official surface
 
@@ -42,14 +41,16 @@ yet cover.
 | `rules` / `hooks` | Honestly `unsupported`: no per-workspace surface |
 | `commands` / `agents` | Honestly `degraded`: the like-named block in `config.yaml` is global runtime policy; read/write are no-ops |
 | target-specific settings | `tools.hermes` |
-| Artifact | Single workspace directory form; the Hermes Plugin is not yet covered |
-| Confirm | Real `tirith config validate <projectRoot>` (the `tirith` binary, run against an isolated temp HOME) |
+| Artifact | `workspace` (primary); optional `skill-plugin` (RFC-0002 Phase B: yaml + register_skill-only `__init__.py` + flat skills/) |
+| Confirm | Workspace: `tirith config validate`; skill-plugin: structure checks + optional isolated `hermes plugins list` (do not treat tirith as plugin-install proof) |
 
 ## 3. Conversion boundary
 
-- Hermes Plugin runtime code, tools, platform adapters, and UI cannot be
-  converted automatically across Agents; this Adapter also does not yet
-  generate a Plugin-form Artifact.
+- Hermes general plugins may register Python tools/hooks/commands/platforms;
+  Canonical text capabilities must not be auto-converted into full runtime
+  plugins (high cost, wrong surface).
+- To distribute skills only: Phase B `skill-plugin` generates `register_skill`
+  boilerplate; mcp/context stay on workspace.
 - ACP, Gateway, and HTTP are Transport/Runtime facets, not part of the
   Capability set.
 - Self-learning, memory, profile, and session state do not enter a reusable
@@ -67,5 +68,5 @@ yet cover.
 | --- | --- | --- |
 | Read | Implemented | JUE-303, `packages/ai-jue-adapter-hermes/src/read.ts` |
 | Write | Implemented | JUE-303, driven by the Core executor |
-| Artifact | Partial | Workspace directory form only; the Hermes Plugin aggregate is not yet implemented |
+| Artifact | Partial | Workspace done; `skill-plugin` planned in RFC-0002 (thin skill registration only) |
 | Confirm | Implemented | Real `tirith config validate` (replayable via `scripts/verify-hermes-native.js`, requires the real `tirith` binary on PATH); honestly reports `unconfirmed` when there is no aggregate to confirm at project scope |
