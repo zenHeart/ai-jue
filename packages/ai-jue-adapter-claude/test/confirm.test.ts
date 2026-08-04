@@ -3,9 +3,12 @@ import os from "os";
 import path from "path";
 import { afterEach, describe, expect, it } from "vitest";
 import { applyChangesOrThrow } from "ai-jue-core";
+import { hasCli } from "../../ai-jue-core/test/has-cli";
 import { confirm } from "../src/confirm";
 import { write } from "../src/write";
 import type { CanonicalDocument } from "ai-jue-core";
+
+const hasClaudeCli = hasCli("claude");
 
 const tempDirs: string[] = [];
 function tempDir(): string {
@@ -35,35 +38,43 @@ describe("confirm()", () => {
     expect(confirmation).toEqual({ target: "claude-code", status: "unconfirmed" });
   });
 
-  it("reports 'confirmed' with real evidence for a Plugin that passes claude plugin validate --strict", async () => {
-    const root = tempDir();
-    applyChangesOrThrow(
-      root,
-      await write(CANONICAL, {
-        projectRoot: root,
-        artifactKind: "plugin",
-        pluginManifest: {
-          name: "jue-confirm-test-plugin",
-          version: "1.0.0",
-          description: "Neutral fixture Plugin for confirm() native verification.",
-          author: { name: "ai-jue fixtures" },
-        },
-      }),
-    );
+  it.skipIf(!hasClaudeCli)(
+    "reports 'confirmed' with real evidence for a Plugin that passes claude plugin validate --strict",
+    async () => {
+      const root = tempDir();
+      applyChangesOrThrow(
+        root,
+        await write(CANONICAL, {
+          projectRoot: root,
+          artifactKind: "plugin",
+          pluginManifest: {
+            name: "jue-confirm-test-plugin",
+            version: "1.0.0",
+            description: "Neutral fixture Plugin for confirm() native verification.",
+            author: { name: "ai-jue fixtures" },
+          },
+        }),
+      );
 
-    const confirmation = await confirm([], { projectRoot: root, artifactKind: "plugin" });
-    expect(confirmation.target).toBe("claude-code");
-    expect(confirmation.status).toBe("confirmed");
-    expect(confirmation.evidence).toContain("Validation passed");
-  }, 30_000);
+      const confirmation = await confirm([], { projectRoot: root, artifactKind: "plugin" });
+      expect(confirmation.target).toBe("claude-code");
+      expect(confirmation.status).toBe("confirmed");
+      expect(confirmation.evidence).toContain("Validation passed");
+    },
+    30_000,
+  );
 
-  it("reports 'failed' with evidence for a Plugin missing a manifest", async () => {
-    const root = tempDir();
-    applyChangesOrThrow(root, await write(CANONICAL, { projectRoot: root, artifactKind: "plugin" }));
+  it.skipIf(!hasClaudeCli)(
+    "reports 'failed' with evidence for a Plugin missing a manifest",
+    async () => {
+      const root = tempDir();
+      applyChangesOrThrow(root, await write(CANONICAL, { projectRoot: root, artifactKind: "plugin" }));
 
-    const confirmation = await confirm([], { projectRoot: root, artifactKind: "plugin" });
-    expect(confirmation.target).toBe("claude-code");
-    expect(confirmation.status).toBe("failed");
-    expect(confirmation.evidence).toBeTruthy();
-  }, 30_000);
+      const confirmation = await confirm([], { projectRoot: root, artifactKind: "plugin" });
+      expect(confirmation.target).toBe("claude-code");
+      expect(confirmation.status).toBe("failed");
+      expect(confirmation.evidence).toBeTruthy();
+    },
+    30_000,
+  );
 });
