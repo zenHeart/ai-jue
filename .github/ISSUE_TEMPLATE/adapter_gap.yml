@@ -1,0 +1,92 @@
+name: Adapter capability gap
+description: A target Agent is missing or degrading an Artifact kind or Capability mapping
+title: "[ADAPTER] "
+labels: ["enhancement"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when a specific Adapter cannot express a needed Artifact or Capability honestly.
+        Large cross-adapter contract changes should also link an
+        [RFC](https://github.com/zenHeart/ai-jue/blob/main/packages/docs/developer/rfcs/index.md)
+        (see RFC-0002 for Plugin/Bundle apply selection).
+  - type: dropdown
+    id: adapter
+    attributes:
+      label: Adapter
+      options:
+        - claude-code
+        - codex
+        - openclaw
+        - hermes
+        - cursor
+        - other
+    validations:
+      required: true
+  - type: dropdown
+    id: gap-type
+    attributes:
+      label: Gap type
+      options:
+        - Missing Artifact kind (e.g. plugin / compatible-bundle)
+        - Capability marked degraded/unsupported incorrectly
+        - Capability honestly unsupported but needs a defined fallback
+        - Native confirm / validate path missing
+        - Docs claim support that code does not implement
+        - Other
+    validations:
+      required: true
+  - type: input
+    id: artifact-kind
+    attributes:
+      label: Artifact kind(s)
+      description: e.g. `plugin`, `compatible-bundle`, `workspace`
+      placeholder: compatible-bundle
+    validations:
+      required: true
+  - type: textarea
+    id: current
+    attributes:
+      label: Current behavior
+      description: What the Adapter declares and what `jue apply` actually writes.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected native shape
+      description: Minimal directory/files and how the target Agent discovers/installs them. Cite official docs or CLI evidence.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: Paths in this repo (`capabilities/layout.ts`, manifest no-ops, fixtures) and external CLI versions probed.
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Adapter declares the new kind
+        - [ ] write()/confirm() covered by contract tests
+        - [ ] `jue apply --adapter … --artifact-kind …` documented
+        - [ ] Honest degraded/unsupported remains for real gaps
+    validations:
+      required: true
+  - type: textarea
+    id: rfc
+    attributes:
+      label: RFC / Epic links
+      description: Required if the gap changes shared apply selection or public Artifact naming.
+  - type: checkboxes
+    id: validations
+    attributes:
+      label: Checks
+      options:
+        - label: I will not invent an official Plugin API the target Agent does not have
+          required: true
+        - label: No secrets or private asset bodies are pasted into this issue
+          required: true

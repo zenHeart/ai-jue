@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: RFC process
+    url: https://github.com/zenHeart/ai-jue/blob/main/packages/docs/developer/rfcs/index.md
+    about: Changes to Canonical, Adapter, Artifact, or Extension public contracts need an RFC first.
+  - name: Implementation status
+    url: https://github.com/zenHeart/ai-jue/blob/main/packages/docs/en/developer/implementation-status.md
+    about: Check what is already implemented before filing a feature or adapter gap.
