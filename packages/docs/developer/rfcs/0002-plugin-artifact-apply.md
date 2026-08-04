@@ -235,8 +235,7 @@ Guide 中旧示例 `hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`�
 | --- | --- | --- | --- |
 | 1 | #2 | CLI/Core/`targets` 接线 | 小 |
 | 2 | #3（OpenClaw） | `compatible-bundle` 委托 Claude/Codex writer + confirm | **小**（无新布局） |
-| 3 | #3（Hermes Phase A） | 诚实 unsupported + 文档 | 极小 |
-| 4 | #3（Hermes Phase B，可选） | thin skill-plugin 生成器 | 中 |
+| 3 | #3（Hermes skill-plugin） | thin skill-plugin（skills；mcp 仍 workspace） | 中 |
 | 5 | #6 | smoke 矩阵 | 小–中 |
 | — | 明确不做 | OpenClaw native plugin、Hermes 业务 Python tools | 避免大代价 |
 

@@ -26,10 +26,22 @@ describe("openclaw compatible-bundle", () => {
     roots.length = 0;
   });
 
-  it("delegates to Claude plugin writer by default (no hooks)", async () => {
+  it("delegates to Claude plugin writer by default (no hooks) with skills + mcp", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-openclaw-bundle-claude-"));
     roots.push(root);
-    const changes = await write(CANONICAL, {
+    const withMcp: CanonicalDocument = {
+      ...CANONICAL,
+      mcp: {
+        servers: {
+          filesystem: {
+            command: "npx",
+            args: ["-y", "@modelcontextprotocol/server-filesystem", "/tmp"],
+            scope: "project",
+          },
+        },
+      },
+    };
+    const changes = await write(withMcp, {
       projectRoot: root,
       artifactKind: "compatible-bundle",
       pluginManifest: { name: "jue-openclaw-bundle", version: "0.1.0" },
@@ -37,6 +49,7 @@ describe("openclaw compatible-bundle", () => {
     applyChangesOrThrow(root, changes);
     expect(fs.existsSync(path.join(root, ".claude-plugin", "plugin.json"))).toBe(true);
     expect(fs.existsSync(path.join(root, "skills", "summarize", "SKILL.md"))).toBe(true);
+    expect(JSON.parse(fs.readFileSync(path.join(root, ".mcp.json"), "utf8")).mcpServers.filesystem).toBeTruthy();
     // Workspace AGENTS.md must not be required for bundle mode.
     expect(fs.existsSync(path.join(root, "AGENTS.md"))).toBe(false);
   });

@@ -139,7 +139,9 @@ export async function runCoreAdapter(
   const canonical = toCanonicalDocument(config as unknown as Record<string, unknown>);
   const toolsConfig = (config as Record<string, any>)?.tools?.[short];
   const pluginManifest =
-    artifactKind === "plugin" || artifactKind === "compatible-bundle"
+    artifactKind === "plugin" ||
+    artifactKind === "compatible-bundle" ||
+    artifactKind === "skill-plugin"
       ? resolvePluginManifest(config as Record<string, unknown>, short) ??
         // OpenClaw may write via Claude/Codex — use those tool keys too.
         resolvePluginManifest(config as Record<string, unknown>, "claude") ??

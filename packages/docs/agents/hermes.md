@@ -37,15 +37,15 @@ Artifact 表面，本 Adapter 尚未覆盖。
 | `rules` / `hooks` | 诚实 `unsupported`：无 per-workspace 承载面 |
 | `commands` / `agents` | 诚实 `degraded`：`config.yaml` 里的同名块是全局运行时策略，读写均为 no-op |
 | target-specific settings | `tools.hermes` |
-| Artifact | `workspace`（主路径）；可选 `skill-plugin`（RFC-0002 Phase B：yaml + 仅 register_skill 的 `__init__.py` + flat skills/） |
-| Confirm | Workspace：`tirith config validate`；skill-plugin：结构校验 + 可选隔离 `hermes plugins list`（不得用 tirith 冒充 plugin 安装） |
+| Artifact | `workspace`（skills+mcp）；`skill-plugin`（`plugin.yaml` + 仅 `register_skill` 的 `__init__.py` + flat `skills/`；mcp 仍走 workspace） |
+| Confirm | Workspace：`tirith config validate`；skill-plugin：结构校验 + 可选隔离 `hermes plugins list` |
 
 ## 3. 转换边界
 
 - Hermes general plugin 可注册 Python tools/hooks/commands/platforms；不可从
   Canonical 文本能力自动「变成」完整运行时插件。能力包不要走这条高代价路径。
-- 若只需分发 skills：Phase B `skill-plugin` 仅生成 `register_skill` 样板；
-  mcp/context 仍留在 workspace。
+- 分发 skills：`skill-plugin` 生成 `register_skill` 样板 + flat `skills/`；
+  mcp/context 仍留在 workspace apply。
 - ACP、Gateway 和 HTTP API 是目标运行接口，不进入 Capability 集合。
 - Hermes 自学习、memory、profile 和 session 状态不进入通用 Preset。
 - `cron` 是本 Adapter 唯一超出六类原子 Capability 的直通字段；在架构层面

@@ -91,15 +91,9 @@ const IMPLEMENTED: Record<string, string[]> = {
   claude: ["project", "plugin"],
   codex: ["project", "plugin"],
   openclaw: ["workspace", "compatible-bundle"],
-  hermes: ["workspace"],
+  hermes: ["workspace", "skill-plugin"],
   cursor: ["project"],
 };
-
-const HERMES_SKILL_PLUGIN_HINT =
-  'Hermes "plugin" is a Python runtime (plugin.yaml + register()). ' +
-  "Canonical capability packs use workspace apply today. " +
-  "Thin skill-plugin export is planned (RFC-0002 Phase B). " +
-  "Use --artifact workspace (default) or omit --artifact.";
 
 export interface ResolveArtifactKindInput {
   /** Full package name or short id. */
@@ -133,10 +127,6 @@ export function resolveArtifactKind(input: ResolveArtifactKindInput): string {
 
   const raw = fromCli ?? fromTargets ?? "auto";
   const resolved = aliases?.[raw] ?? (raw === "auto" ? defaultKind : raw);
-
-  if (key === "hermes" && resolved === "skill-plugin") {
-    throw new UnsupportedArtifactKindError(short, raw, implemented, HERMES_SKILL_PLUGIN_HINT);
-  }
 
   if (!implemented.includes(resolved)) {
     throw new UnsupportedArtifactKindError(short, raw, implemented);

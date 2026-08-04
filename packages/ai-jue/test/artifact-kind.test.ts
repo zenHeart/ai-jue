@@ -49,13 +49,13 @@ describe("resolveArtifactKind", () => {
     ).toBe("project");
   });
 
-  it("rejects Hermes plugin/skill-plugin with a guided error", () => {
-    expect(() =>
-      resolveArtifactKind({ adapterName: "hermes", cliArtifact: "plugin" }),
-    ).toThrow(UnsupportedArtifactKindError);
-    expect(() =>
+  it("maps Hermes plugin to skill-plugin", () => {
+    expect(resolveArtifactKind({ adapterName: "hermes", cliArtifact: "plugin" })).toBe(
+      "skill-plugin",
+    );
+    expect(
       resolveArtifactKind({ adapterName: "hermes", cliArtifact: "skill-plugin" }),
-    ).toThrow(/workspace apply/i);
+    ).toBe("skill-plugin");
   });
 });
 

@@ -33,7 +33,8 @@ const codexAdapter: Adapter = {
     skills: "supported",
     agents: "supported",
     hooks: "supported",
-    mcp: "degraded", // Codex MCP config is TOML, out of scope for the JSON-based factory
+    // Project MCP stays TOML-degraded; Plugin Artifacts write portable `.mcp.json`.
+    mcp: "degraded",
   },
   read,
   write,

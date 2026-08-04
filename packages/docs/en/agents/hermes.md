@@ -41,16 +41,16 @@ yet cover.
 | `rules` / `hooks` | Honestly `unsupported`: no per-workspace surface |
 | `commands` / `agents` | Honestly `degraded`: the like-named block in `config.yaml` is global runtime policy; read/write are no-ops |
 | target-specific settings | `tools.hermes` |
-| Artifact | `workspace` (primary); optional `skill-plugin` (RFC-0002 Phase B: yaml + register_skill-only `__init__.py` + flat skills/) |
-| Confirm | Workspace: `tirith config validate`; skill-plugin: structure checks + optional isolated `hermes plugins list` (do not treat tirith as plugin-install proof) |
+| Artifact | `workspace` (skills+mcp); `skill-plugin` (`plugin.yaml` + register_skill-only `__init__.py` + flat `skills/`; mcp stays on workspace) |
+| Confirm | Workspace: `tirith config validate`; skill-plugin: structure checks + optional isolated `hermes plugins list` |
 
 ## 3. Conversion boundary
 
 - Hermes general plugins may register Python tools/hooks/commands/platforms;
   Canonical text capabilities must not be auto-converted into full runtime
   plugins (high cost, wrong surface).
-- To distribute skills only: Phase B `skill-plugin` generates `register_skill`
-  boilerplate; mcp/context stay on workspace.
+- To distribute skills: `skill-plugin` generates `register_skill` boilerplate
+  plus flat `skills/`; mcp/context stay on workspace apply.
 - ACP, Gateway, and HTTP are Transport/Runtime facets, not part of the
   Capability set.
 - Self-learning, memory, profile, and session state do not enter a reusable
