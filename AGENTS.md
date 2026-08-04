@@ -103,7 +103,9 @@
    `apply --dry-run`，CI 使用 `apply --check`，诊断使用
    `inspect --diagnostics`；内部阶段不得各自变成命令。
 7. 架构与 Reference 定义理想合同；Developer 文档记录实现状态和 Roadmap。未
-   实现能力必须明确标记，禁止以示例暗示可用。
+   实现能力必须明确标记，禁止以示例暗示可用。可导航文档/RFC 必须同步
+   `.vitepress/config.mts` 中英文侧栏与 `docs-contract` 测试；见
+   `.cursor/rules/docs-vitepress-nav.mdc`。
 8. 稳定文档只做正向定义。已删除、未采用或不存在的术语、命令和抽象不得以
    “不支持”“不再使用”“不会拆分”等否定句出现在 README、Guide、Architecture、
    Specification、Reference 或 Agent profile。确需保留的取舍原因只写入 RFC 的

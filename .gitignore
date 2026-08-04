@@ -10,7 +10,10 @@ cache
 /CLAUDE.md
 /GEMINI.md
 /.gemini/
-/.cursor/
+# Cursor local state; keep shared agent rules tracked
+/.cursor/*
+!/.cursor/rules/
+!/.cursor/rules/**
 /.claude/
 /.agents/
 .turbo

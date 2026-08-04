@@ -26,8 +26,9 @@
 | --- | --- | --- | --- | --- |
 | [Claude Code](claude-code.md) | Implemented | Implemented | Implemented | Implemented |
 | [Codex](codex.md) | Implemented | Implemented | Implemented | Implemented |
-| [OpenClaw](openclaw.md) | Implemented | Implemented | Partial | Implemented |
-| [Hermes](hermes.md) | Implemented | Implemented | Partial | Implemented |
+| [OpenClaw](openclaw.md) | Implemented | Implemented | Implemented | Implemented |
+| [Hermes](hermes.md) | Implemented | Implemented | Implemented | Implemented |
 
-“Partial”表示对应 Agent 只有单一 Artifact 形态（project/workspace），未覆盖
-Plugin/Bundle 一类的聚合体；不表示 Read/Write/Confirm 本身未完成。
+OpenClaw / Hermes 的 Artifact 已覆盖 workspace 与可安装聚合形态
+（`compatible-bundle` / thin `skill-plugin`）；完整原生运行时插件仍 Out of
+scope，见各 Agent 画像缺口表。

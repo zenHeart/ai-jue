@@ -100,6 +100,10 @@ const zhDeveloperSidebar = [
         text: "RFC-0001 最小转换模型",
         link: "/developer/rfcs/0001-minimal-conversion-model",
       },
+      {
+        text: "RFC-0002 Plugin Artifact apply",
+        link: "/developer/rfcs/0002-plugin-artifact-apply",
+      },
     ],
   },
 ];
@@ -214,6 +218,10 @@ const enDeveloperSidebar = [
       {
         text: "RFC-0001 Minimal Conversion Model",
         link: "/en/developer/rfcs/0001-minimal-conversion-model",
+      },
+      {
+        text: "RFC-0002 Plugin Artifact apply",
+        link: "/en/developer/rfcs/0002-plugin-artifact-apply",
       },
     ],
   },

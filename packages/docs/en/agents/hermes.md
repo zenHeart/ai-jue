@@ -1,12 +1,11 @@
 # Hermes
 
-> Jue status: Read, Write, and Confirm are Implemented for the **workspace**
-> Artifact (JUE-303, `packages/ai-jue-adapter-hermes/`).  
-> Official Hermes “plugins” are `plugin.yaml` + Python `register(ctx)` runtime
-> extensions (optionally bundling skills via `ctx.register_skill`) — **not** a
-> Claude-style `.xxx-plugin/plugin.json`. Canonical capability packs default to
-> workspace; optional thin `skill-plugin` is RFC-0002 Phase B. Full Python
-> tool/platform plugins are out of scope.  
+> Jue status: Read, Write, and Confirm are Implemented (JUE-303,
+> `packages/ai-jue-adapter-hermes/`). **workspace** ships; optional thin
+> `skill-plugin` (RFC-0002 Phase B) also ships. Official Hermes “plugins” are
+> `plugin.yaml` + Python `register(ctx)` runtime extensions — **not** a
+> Claude-style `.xxx-plugin/plugin.json`. Full Python tool/platform plugins are
+> out of scope.  
 > `capabilities` honestly declare `rules/hooks: "unsupported"`,
 > `commands/agents: "degraded"`, `skills/mcp: "supported"`. Extra `cron`
 > remains outside the six atomic types (see implementation-status).
@@ -68,5 +67,5 @@ yet cover.
 | --- | --- | --- |
 | Read | Implemented | JUE-303, `packages/ai-jue-adapter-hermes/src/read.ts` |
 | Write | Implemented | JUE-303, driven by the Core executor |
-| Artifact | Partial | Workspace done; `skill-plugin` planned in RFC-0002 (thin skill registration only) |
-| Confirm | Implemented | Real `tirith config validate` (replayable via `scripts/verify-hermes-native.js`, requires the real `tirith` binary on PATH); honestly reports `unconfirmed` when there is no aggregate to confirm at project scope |
+| Artifact | Implemented | `workspace` + thin `skill-plugin` (skills / `plugin.yaml` / `register_skill`; MCP stays on workspace); full Python plugin Out of scope |
+| Confirm | Implemented | Workspace: real `tirith config validate` (needs `tirith` on PATH); skill-plugin: structural checks primarily, optional local `hermes plugins list` |

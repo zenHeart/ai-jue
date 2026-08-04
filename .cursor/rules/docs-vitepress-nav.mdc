@@ -1,0 +1,28 @@
+---
+description: New docs/RFC pages must sync VitePress sidebar and locale pairs
+globs: packages/docs/**/*
+alwaysApply: false
+---
+
+# Documentation navigation gate
+
+When adding or renaming a **navigable** public docs page (Guide / Architecture /
+Reference / Developer / Agents / RFCs):
+
+1. Add or update the matching file under `packages/docs/en/` (locale pair).
+2. Register the route in `packages/docs/.vitepress/config.mts` sidebar (and `nav`
+   if it is a top-level entry) for **both** `zh` and `en`.
+3. If it is an RFC: also add a row to `developer/rfcs/index.md` and
+   `en/developer/rfcs/index.md`, and a sidebar item under the RFCs group
+   (mirror RFC-0001 / RFC-0002).
+4. Extend `packages/ai-jue/test/docs-contract.test.ts` locale-pair / sidebar
+   assertions when the page is part of the frozen public set.
+5. After implementation lands, update Agent profiles and Guide warnings so they
+   do not still say Planned / “尚未实现” for shipped Artifact kinds.
+
+A markdown file alone is **not** enough — without the VitePress config entry the
+page is orphaned from site navigation (reachable only by direct URL or index
+links).
+
+Do not remove existing sidebar entries without updating inbound links and the
+docs-contract test.

@@ -4,7 +4,9 @@
 >
 > 当前实现主线：R1（Claude）与 R2（Scale Gate）已完成；R3 并行迁移
 > （Codex、OpenClaw、Hermes）与 R4 的 JUE-401 可移植子集矩阵均已完成，详见
-> delivery-plan.md。下一步是 R4 剩余任务（JUE-402 两两交叉转换起）。
+> delivery-plan.md。RFC-0002：`jue apply --artifact` / `targets.*.artifact` 已接线；
+> OpenClaw `compatible-bundle` 与 Hermes thin `skill-plugin` 已落地（见 Agent 画像）。
+> 下一步是 R4 剩余任务（JUE-402 两两交叉转换起）。
 
 ## CLI
 

@@ -4,8 +4,8 @@
 > `targets.<adapter>.artifact` and CLI `--artifact` / `--artifact-kind` are
 > wired (RFC-0002). Defaults remain project/workspace. `plugin` means a native
 > Plugin for Claude/Codex, and a Claude/Codex **compatible bundle** for
-> OpenClaw. Hermes `skill-plugin` is not implemented yet — keep using
-> workspace. See [RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md)
+> OpenClaw. Hermes may use `skill-plugin` (skills only; MCP stays on
+> workspace). See [RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md)
 > and [Implementation Status](../developer/implementation-status.md).
 
 Most projects select Presets and targets:

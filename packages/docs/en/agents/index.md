@@ -20,9 +20,9 @@ Statuses are Implemented, Partial, Planned, Unsupported, or Unverified.
 | --- | --- | --- | --- | --- |
 | [Claude Code](claude-code.md) | Implemented | Implemented | Implemented | Implemented |
 | [Codex](codex.md) | Implemented | Implemented | Implemented | Implemented |
-| [OpenClaw](openclaw.md) | Implemented | Implemented | Partial | Implemented |
-| [Hermes](hermes.md) | Implemented | Implemented | Partial | Implemented |
+| [OpenClaw](openclaw.md) | Implemented | Implemented | Implemented | Implemented |
+| [Hermes](hermes.md) | Implemented | Implemented | Implemented | Implemented |
 
-Partial means that Agent only has a single Artifact form (project/workspace)
-and does not cover a Plugin/Bundle-style aggregate — it does not mean
-Read/Write/Confirm themselves are incomplete.
+OpenClaw / Hermes Artifact covers workspace plus an installable aggregate
+(`compatible-bundle` / thin `skill-plugin`). Full native runtime plugins remain
+Out of scope — see each Agent profile gap table.

@@ -1,9 +1,9 @@
 # OpenClaw
 
 > Jue 状态：Read、Write、Confirm 均已实现（JUE-302，
-> `packages/ai-jue-adapter-openclaw/`）；**workspace** Artifact 已落地。  
-> **Compatible bundle**（安装 Claude/Codex/Cursor 布局）见 RFC-0002，实现上应
-> **委托**已有 Claude/Codex plugin writer，而不是发明第三种目录。  
+> `packages/ai-jue-adapter-openclaw/`）；**workspace** 与
+> **`compatible-bundle`**（RFC-0002）均已落地——后者**委托** Claude/Codex
+> plugin writer，不发明第三种目录。  
 > Native OpenClaw plugin（`openclaw.plugin.json` + 进程内运行时）不在 Canonical
 > 能力包转换范围内。  
 > `capabilities` 对 workspace 路径如实声明 `rules/commands/agents/mcp: "degraded"`。
@@ -69,5 +69,5 @@ Bundle 映射要点（官方）：
 | 层级 | 状态 | 缺口 |
 | --- | --- | --- |
 | Read / Write / Confirm（workspace） | Implemented | JUE-302 |
-| Artifact `compatible-bundle` | Planned（RFC-0002 / #3） | 委托 Claude/Codex plugin writer + install 确认 |
+| Artifact `compatible-bundle` | Implemented | 委托 Claude/Codex `artifactKind: "plugin"`；安装确认依赖本机 `openclaw` CLI（CI 常 skip） |
 | Native plugin Artifact | Out of scope | 非 Canonical 包路径 |

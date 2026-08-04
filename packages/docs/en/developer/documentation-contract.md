@@ -36,6 +36,10 @@ six concepts cannot express it. Planned behavior uses a `> [!WARNING]` block
 linked to Implementation Status; runnable examples use implemented behavior
 only, and the warning is removed when implementation completes.
 
+Navigable pages must also update `packages/docs/.vitepress/config.mts` (zh and
+en sidebar/nav) and `packages/ai-jue/test/docs-contract.test.ts`. RFCs need an
+index row plus an RFCs sidebar item. Markdown alone creates an orphan URL.
+
 Stable documentation describes the current contract positively. Rejected or
 removed alternatives stay in RFC decision history and do not flow back into
 README, Guides, Architecture, Specifications, Reference, or Agent profiles. If

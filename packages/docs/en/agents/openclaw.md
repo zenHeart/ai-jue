@@ -1,10 +1,9 @@
 # OpenClaw
 
-> Jue status: Read, Write, and Confirm are Implemented for the **workspace**
-> Artifact (JUE-302, `packages/ai-jue-adapter-openclaw/`).  
-> **Compatible bundles** (install Claude/Codex/Cursor layouts) are specified in
-> RFC-0002 and should **delegate** to existing Claude/Codex plugin writers —
-> not invent a third directory dialect.  
+> Jue status: Read, Write, and Confirm are Implemented (JUE-302,
+> `packages/ai-jue-adapter-openclaw/`). **workspace** and
+> **`compatible-bundle`** (RFC-0002) both ship — the latter **delegates** to
+> Claude/Codex plugin writers and does not invent a third directory dialect.  
 > Native OpenClaw plugins (`openclaw.plugin.json` + in-process runtime) are out
 > of scope for Canonical capability packs.  
 > Workspace `capabilities` honestly declare
@@ -71,5 +70,5 @@ Bundle mapping highlights:
 | Level | Status | Gap |
 | --- | --- | --- |
 | Read / Write / Confirm (workspace) | Implemented | JUE-302 |
-| Artifact `compatible-bundle` | Planned (RFC-0002 / #3) | Delegate to Claude/Codex plugin writers + install confirm |
+| Artifact `compatible-bundle` | Implemented | Delegates to Claude/Codex `artifactKind: "plugin"`; install confirm needs local `openclaw` CLI (often skipped in CI) |
 | Native plugin Artifact | Out of scope | Not a Canonical pack path |

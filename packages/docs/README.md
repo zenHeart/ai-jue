@@ -26,5 +26,7 @@ concepts.
 - Put status, Roadmap, RFCs, and executable work in Developer.
 - Link to the canonical page instead of duplicating definitions.
 - Add or update the matching file under `en/` for every public Chinese page.
-- Update `.vitepress/config.mts` and
+- Update `.vitepress/config.mts` (zh **and** en sidebar/nav) and
   `packages/ai-jue/test/docs-contract.test.ts` when adding a navigable page.
+  An RFC needs: locale pair + `rfcs/index.md` row + RFCs sidebar item +
+  docs-contract locale assertion. Markdown alone leaves an orphan URL.

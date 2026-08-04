@@ -5,7 +5,8 @@
 > 官方 Hermes「plugin」是 `plugin.yaml` + Python `register(ctx)` 的运行时扩展
 > （可附带 `ctx.register_skill` 打包 skills），**不是** Claude 式
 > `.xxx-plugin/plugin.json`。Canonical 能力包默认仍走 workspace；可选薄封装
-> `skill-plugin` 见 RFC-0002（Phase B）。完整 Python 工具/平台插件不在范围内。  
+> 可选薄封装 `skill-plugin`（RFC-0002 Phase B）已落地。完整 Python 工具/平台
+> 插件不在范围内。  
 > `capabilities` 如实声明 `rules/hooks: "unsupported"`、
 > `commands/agents: "degraded"`、`skills/mcp: "supported"`。  
 > 额外 `cron`（`cron/jobs.json`）尚非六类原子 Capability，见 implementation-status。
@@ -59,5 +60,5 @@ Artifact 表面，本 Adapter 尚未覆盖。
 | --- | --- | --- |
 | Read | Implemented | JUE-303，`packages/ai-jue-adapter-hermes/src/read.ts` |
 | Write | Implemented | JUE-303，经 Core 执行器驱动 |
-| Artifact | Partial | 仅 workspace 目录形态；Hermes Plugin 聚合体尚未实现 |
-| Confirm | Implemented | 真实 `tirith config validate`（`scripts/verify-hermes-native.js` 可重放，需要真实 `tirith` 二进制在 PATH 上）；project 无对应聚合体可确认时如实返回 `unconfirmed` |
+| Artifact | Implemented | `workspace` + thin `skill-plugin`（skills/`plugin.yaml`/`register_skill`；MCP 仍 workspace）；完整 Python plugin 明确 Out of scope |
+| Confirm | Implemented | Workspace：真实 `tirith config validate`（需 PATH 上有 `tirith`）；skill-plugin：结构校验为主，可选本机 `hermes plugins list` |

@@ -20,7 +20,7 @@ jue apply \
   [--from <canonical|agent>] \
   [--target <agent>...] \
   [--all] \
-  [--artifact <kind>] \
+  [--artifact <kind> | --artifact-kind <kind>] \
   [--scope <project|user>] \
   [--dry-run | --check] \
   [--approve <action>...] \
@@ -52,7 +52,7 @@ jue inspect \
   [--preset <id>] \
   [--extension <id>] \
   [--target <agent>] \
-  [--artifact <kind>] \
+  [--artifact <kind> | --artifact-kind <kind>] \
   [--diagnostics]
 ```
 

@@ -5,8 +5,10 @@
 >
 > Current implementation path: R1 (Claude) and R2 (Scale Gate) are done; the
 > R3 parallel migration (Codex, OpenClaw, Hermes) and R4's JUE-401 portable
-> subset matrix are also done — see delivery-plan.md. Next up is the rest of
-> R4 (starting with JUE-402 cross-conversion).
+> subset matrix are also done — see delivery-plan.md. RFC-0002: `jue apply
+> --artifact` / `targets.*.artifact` are wired; OpenClaw `compatible-bundle`
+> and Hermes thin `skill-plugin` have landed (see Agent profiles). Next up is
+> the rest of R4 (starting with JUE-402 cross-conversion).
 
 ## CLI
 
