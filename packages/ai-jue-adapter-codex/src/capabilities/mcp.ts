@@ -21,7 +21,12 @@ function toNativeMcp(canonical: CanonicalMcp): { mcpServers: Record<string, any>
   const projectScoped: Record<string, any> = {};
   for (const [name, server] of Object.entries(canonical.servers ?? {})) {
     const scope = server.scope ?? "project";
-    if (scope !== "project") continue;
+    if (scope !== "project") {
+      throw new Error(
+        `Codex Plugin MCP server "${name}" uses scope "${scope}". ` +
+          'Plugin Artifacts only support "project" scope; refusing to drop the server silently.',
+      );
+    }
     const { scope: _scope, ...rest } = server;
     projectScoped[name] = rest;
   }

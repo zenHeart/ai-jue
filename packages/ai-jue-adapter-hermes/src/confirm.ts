@@ -1,11 +1,13 @@
 import { execFileSync } from "child_process";
-import { existsSync, mkdtempSync, rmSync } from "fs";
+import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "fs";
 import os from "os";
 import path from "path";
 import type { ArtifactResult, Confirmation } from "ai-jue-core";
+import { detectArtifactKind, type HermesArtifactKind } from "./capabilities/layout";
 
 export interface ConfirmContext {
   projectRoot: string;
+  artifactKind?: HermesArtifactKind;
 }
 
 const TARGET = "hermes";
@@ -25,17 +27,52 @@ const TARGET = "hermes";
  * machine, even though in this contract test we use a freshly-built
  * workspace).
  *
- * For project scope (no Plugin/Bundle aggregate to install+verify),
- * we report `unconfirmed` — there's nothing Hermes offers that
- * "confirms" a project-scoped workspace beyond `tirith` validating
- * the config tree; that path is exercised in the
- * `cwr-real-config` round-trip test (out of in-suite scope per
- * JUE-301/JUE-302's openclaw-spawnSync quirk discovery).
+ * For workspace scope, `tirith` validates the config tree. For the thin
+ * skill-plugin Artifact, the generated plugin surface provides structural
+ * confirmation without executing generated Python.
  */
 export async function confirm(
   _results: ArtifactResult[],
   context: ConfirmContext,
 ): Promise<Confirmation> {
+  if ((context.artifactKind ?? detectArtifactKind(context.projectRoot)) === "skill-plugin") {
+    const manifest = path.join(context.projectRoot, "plugin.yaml");
+    const initializer = path.join(context.projectRoot, "__init__.py");
+    if (!existsSync(manifest) || !existsSync(initializer)) {
+      return {
+        target: TARGET,
+        status: "failed",
+        evidence: "skill-plugin requires plugin.yaml and __init__.py",
+      };
+    }
+    const initSource = readFileSync(initializer, "utf8");
+    if (!initSource.includes("register_skill")) {
+      return {
+        target: TARGET,
+        status: "failed",
+        evidence: "skill-plugin __init__.py does not register skills",
+      };
+    }
+    const skillsRoot = path.join(context.projectRoot, "skills");
+    if (existsSync(skillsRoot)) {
+      for (const entry of readdirSync(skillsRoot, { withFileTypes: true })) {
+        if (!entry.isDirectory()) continue;
+        if (!existsSync(path.join(skillsRoot, entry.name, "SKILL.md"))) {
+          return {
+            target: TARGET,
+            status: "failed",
+            evidence: `skill-plugin skill ${entry.name} is missing SKILL.md`,
+          };
+        }
+      }
+    }
+    return {
+      target: TARGET,
+      status: "confirmed",
+      evidence: "Hermes skill-plugin structure validated: plugin.yaml, register_skill initializer, and skill roots",
+    };
+  }
+
   if (!existsSync(context.projectRoot)) {
     return { target: TARGET, status: "failed", evidence: "projectRoot does not exist" };
   }

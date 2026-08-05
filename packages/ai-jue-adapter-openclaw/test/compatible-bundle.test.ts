@@ -78,6 +78,9 @@ describe("openclaw compatible-bundle", () => {
     });
     applyChangesOrThrow(root, changes);
     expect(fs.existsSync(path.join(root, ".codex-plugin", "plugin.json"))).toBe(true);
+    expect(fs.existsSync(path.join(root, ".codex", "hooks.json"))).toBe(false);
+    expect(fs.existsSync(path.join(root, "hooks", "command_new", "HOOK.md"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "hooks", "command_new", "handler.js"))).toBe(true);
   });
 
   it("keeps workspace write as the default kind", async () => {
@@ -88,5 +91,17 @@ describe("openclaw compatible-bundle", () => {
     expect(fs.existsSync(path.join(root, "AGENTS.md"))).toBe(true);
     expect(fs.existsSync(path.join(root, "skills", "summarize", "SKILL.md"))).toBe(true);
     expect(fs.existsSync(path.join(root, ".claude-plugin"))).toBe(false);
+  });
+
+  it("rejects an unknown bundle format before producing changes", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-openclaw-bundle-format-"));
+    roots.push(root);
+    await expect(
+      write(CANONICAL, {
+        projectRoot: root,
+        artifactKind: "compatible-bundle",
+        toolsConfig: { bundleFormat: "invalid" },
+      }),
+    ).rejects.toThrow("tools.bundleFormat must be one of: auto, claude, codex");
   });
 });

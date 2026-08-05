@@ -2,11 +2,9 @@
 
 > Jue 状态：Read、Write、Confirm 均已实现（JUE-303，
 > `packages/ai-jue-adapter-hermes/`）；**workspace** Artifact 已落地。  
-> 官方 Hermes「plugin」是 `plugin.yaml` + Python `register(ctx)` 的运行时扩展
-> （可附带 `ctx.register_skill` 打包 skills），**不是** Claude 式
-> `.xxx-plugin/plugin.json`。Canonical 能力包默认仍走 workspace；可选薄封装
-> 可选薄封装 `skill-plugin`（RFC-0002 Phase B）已落地。完整 Python 工具/平台
-> 插件不在范围内。  
+> 官方 Hermes「plugin」是 `plugin.yaml` + Python `register(ctx)` 的运行时扩展，
+> 可附带 `ctx.register_skill` 打包 skills。Canonical 能力包默认走 workspace；可选薄封装
+> `skill-plugin`（RFC-0002 Phase B）已落地，并沿用 Hermes 的官方 plugin.yaml surface。
 > `capabilities` 如实声明 `rules/hooks: "unsupported"`、
 > `commands/agents: "degraded"`、`skills/mcp: "supported"`。  
 > 额外 `cron`（`cron/jobs.json`）尚非六类原子 Capability，见 implementation-status。
@@ -21,11 +19,10 @@
 `MEMORY.md`（共享上下文，语义类似 Claude 的 `CLAUDE.md`）、
 `skills/<category>/<name>/SKILL.md`（三层，比 Claude/Codex/OpenClaw 的一层
 更深）、`config.yaml` 里的 `mcp.servers` 与 `cron/jobs.json`。真实安装的
-`~/.hermes/hooks/` 目录是空的——hooks 表面证据不足，`hooks_auto_accept` 是
-会话级策略而非 per-workspace hook；`agent:`/`commands:` 均只存在于全局
-`config.yaml`，不是项目内可编写文件。Hermes 另提供 plugins、ACP、TUI Gateway
-JSON-RPC 与 OpenAI-compatible HTTP API，这些是运行集成协议或未核验的聚合
-Artifact 表面，本 Adapter 尚未覆盖。
+`~/.hermes/hooks/` 目录属于已观测的 runtime surface；`hooks_auto_accept` 属于
+会话级策略。`agent:`/`commands:` 位于全局 `config.yaml` runtime surface。Hermes
+另提供 plugins、ACP、TUI Gateway JSON-RPC 与 OpenAI-compatible HTTP API，这些
+运行集成面按 Agent-specific surface 记录，Adapter 实现状态见 implementation-status。
 
 ## 2. 理想 Jue 映射
 
@@ -43,16 +40,15 @@ Artifact 表面，本 Adapter 尚未覆盖。
 
 ## 3. 转换边界
 
-- Hermes general plugin 可注册 Python tools/hooks/commands/platforms；不可从
-  Canonical 文本能力自动「变成」完整运行时插件。能力包不要走这条高代价路径。
+- Hermes general plugin 可注册 Python tools/hooks/commands/platforms；`skill-plugin`
+  选择其中的 `register_skill` 能力作为轻量分发面，Canonical 文本能力保持与该边界一致。
 - 分发 skills：`skill-plugin` 生成 `register_skill` 样板 + flat `skills/`；
   mcp/context 仍留在 workspace apply。
 - ACP、Gateway 和 HTTP API 是目标运行接口，不进入 Capability 集合。
-- Hermes 自学习、memory、profile 和 session 状态不进入通用 Preset。
-- `cron` 是本 Adapter 唯一超出六类原子 Capability 的直通字段；在架构层面
-  正式收编（是否需要成为第七类原子 Capability，或改以 `tools.hermes`
-  target-private 字段承载）尚未经 RFC 决定，当前实现只是先诚实暴露真实
-  存在的原生表面，不代表已冻结的架构决策。
+- Hermes 自学习、memory、profile 和 session 状态属于 Agent runtime state，通用 Preset
+  继续聚焦可迁移 Capability。
+- `cron` 是本 Adapter 的 Agent-specific pass-through 字段；当前 implementation-status
+  记录其映射边界，后续 RFC 可进一步冻结其长期归属。
 
 ## 4. 当前差距
 
@@ -60,5 +56,5 @@ Artifact 表面，本 Adapter 尚未覆盖。
 | --- | --- | --- |
 | Read | Implemented | JUE-303，`packages/ai-jue-adapter-hermes/src/read.ts` |
 | Write | Implemented | JUE-303，经 Core 执行器驱动 |
-| Artifact | Implemented | `workspace` + thin `skill-plugin`（skills/`plugin.yaml`/`register_skill`；MCP 仍 workspace）；完整 Python plugin 明确 Out of scope |
-| Confirm | Implemented | Workspace：真实 `tirith config validate`（需 PATH 上有 `tirith`）；skill-plugin：结构校验为主，可选本机 `hermes plugins list` |
+| Artifact | Implemented | `workspace` + thin `skill-plugin`（skills/`plugin.yaml`/`register_skill`；MCP 仍 workspace）；runtime extension surface 遵循 Hermes 官方 Plugin 规范 |
+| Confirm | Implemented | Workspace：真实 `tirith config validate`；skill-plugin：`plugin.yaml`、`register_skill` initializer 与 skill roots 的结构证据 |

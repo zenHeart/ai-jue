@@ -1,9 +1,10 @@
 # Project Configuration Reference
 
 > [!NOTE]
-> `targets.<adapter>.artifact` is wired (with CLI `--artifact`; see RFC-0002).
-> `extensions` and some advanced Target fields still follow
-> [Implementation Status](../developer/implementation-status.md).
+> `targets.<adapter>` `artifact`, `enabled`, and `scope` values participate in
+> apply selection (with CLI `--artifact`; see RFC-0002). The current Artifact
+> execution path uses project scope; local/user selections return an explicit
+> scope error before writing.
 
 The only project configuration file is root `ai.config.js`. It selects Presets,
 Extensions, and Targets and supplies highest-priority project overrides.
@@ -55,12 +56,13 @@ Unknown fields fail.
 
 | Field | Type | Default | Rule |
 | --- | --- | --- | --- |
-| `enabled` | `boolean` | `true` | Disabled Targets do not join `--all` |
+| `enabled` | `boolean` | `true` | `false` skips auto-discovery and `--all`; an explicit `--adapter` remains an explicit user selection |
 | `artifact` | `string \| "auto"` | `"auto"` | Declared by the Adapter |
-| `scope` | `"project" \| "local" \| "user"` | `"project"` | User writes require approval |
+| `scope` | `"project" \| "local" \| "user"` | `"project"` | `project` uses the current Artifact root; local/user selections return a scope error before writing |
 
-`auto` prefers an existing Jue-managed Artifact, then the Adapter's unique
-default, and otherwise fails with candidates.
+`auto` first asks the Adapter to detect an existing Jue-managed Artifact, then
+uses the Adapter's unique default. The detection result stays in the Artifact
+conversion environment and never enters Canonical DSL.
 
 ## Extension loading
 

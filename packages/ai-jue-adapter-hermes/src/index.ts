@@ -10,6 +10,7 @@ export { write } from "./write";
 export type { WriteContext } from "./write";
 export { confirm } from "./confirm";
 export type { ConfirmContext } from "./confirm";
+export { detectArtifactKind } from "./capabilities/layout";
 
 /**
  * `jue apply`'s Hermes entry point: thin wrapper, parallel to Claude

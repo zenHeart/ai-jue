@@ -2,10 +2,11 @@
 
 > Jue status: Read, Write, and Confirm are Implemented (JUE-302,
 > `packages/ai-jue-adapter-openclaw/`). **workspace** and
-> **`compatible-bundle`** (RFC-0002) both ship — the latter **delegates** to
-> Claude/Codex plugin writers and does not invent a third directory dialect.  
-> Native OpenClaw plugins (`openclaw.plugin.json` + in-process runtime) are out
-> of scope for Canonical capability packs.  
+> **`compatible-bundle`** (RFC-0002) both ship. The latter delegates to
+> Claude/Codex plugin writers and follows OpenClaw's official Bundle discovery path.
+> The OpenClaw native runtime surface remains an Agent-specific Artifact surface
+> in the official capability table; Jue's Canonical mapping focuses on workspace
+> and compatible-bundle.
 > Workspace `capabilities` honestly declare
 > `rules`/`commands`/`agents`/`mcp: "degraded"`.
 >
@@ -19,8 +20,9 @@
 ### 1.1 Workspace (project tree — JUE-302 verified)
 
 `AGENTS.md`, `skills/<name>/SKILL.md`, `hooks/<name>/HOOK.md`+`handler.js`.  
-No per-workspace `commands/`/`agents/`; `openclaw agents *` manages
-`~/.openclaw/agents/<name>/`; MCP lives in global `openclaw.json`.
+OpenClaw's global Agent surface manages `commands`/`agents` runtime entry points;
+the project tree contains `AGENTS.md`, skills, and hooks, while MCP lives in the
+global `openclaw.json`.
 
 ### 1.2 Installable plugins (current docs)
 
@@ -35,7 +37,8 @@ openclaw plugins list    # bundles show Format: bundle + Bundle format
 openclaw plugins inspect <id>
 ```
 
-Detection precedence: native markers win over bundle markers when both exist.
+Jue's compatible-bundle detection reads the Bundle markers above; the native
+runtime surface is handled independently by OpenClaw's official loader.
 
 Bundle mapping highlights:
 
@@ -58,12 +61,14 @@ Bundle mapping highlights:
 
 ## 3. Conversion boundary
 
-- Workspace path must not write global `openclaw.json` MCP.
-- `compatible-bundle` must not invent a new tree; delegate to Claude/Codex
-  `artifactKind: "plugin"`.
-- Do not generate native `openclaw.plugin.json` runtimes for Canonical packs
-  (wrong trust model and high cost).
-- If hooks must run under OpenClaw, choose the Codex bundle base.
+- Workspace MCP remains project-scoped, protecting the user's global
+  `openclaw.json`.
+- `compatible-bundle` reuses the official Claude/Codex
+  `artifactKind: "plugin"` layouts.
+- Canonical packs keep the Bundle's narrow trust boundary; the OpenClaw native
+  runtime surface stays described by the Agent's official capability table.
+- When hooks run under OpenClaw, choose the Codex bundle base; without runnable
+  hooks, the Claude base is the default.
 
 ## 4. Current gaps
 
@@ -71,4 +76,4 @@ Bundle mapping highlights:
 | --- | --- | --- |
 | Read / Write / Confirm (workspace) | Implemented | JUE-302 |
 | Artifact `compatible-bundle` | Implemented | Delegates to Claude/Codex `artifactKind: "plugin"`; install confirm needs local `openclaw` CLI (often skipped in CI) |
-| Native plugin Artifact | Out of scope | Not a Canonical pack path |
+| Native plugin Artifact | Reference | OpenClaw's official runtime surface is documented separately from Canonical bundles |

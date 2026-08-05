@@ -27,7 +27,7 @@ export async function write(
 ): Promise<ArtifactChange[]> {
   const kind = writeContext.artifactKind ?? "workspace";
 
-  if (kind === "skill-plugin" || kind === "plugin" || kind === "bundle") {
+  if (kind === "skill-plugin" || kind === "plugin") {
     return writeSkillPlugin(canonical, writeContext.projectRoot, writeContext.pluginManifest);
   }
   if (kind === "compatible-bundle") {

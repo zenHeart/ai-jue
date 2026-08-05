@@ -71,7 +71,7 @@ const resources = {
           check_describe:
             "Read-only: exit non-zero if changes, drift, or unauthorized actions would be needed",
           artifact_describe:
-            "Artifact shape: project|workspace|plugin (alias of --artifact-kind). Defaults keep today's project/workspace apply. For OpenClaw, plugin means a Claude/Codex-compatible bundle.",
+            "Artifact shape: project|workspace|plugin|compatible-bundle|skill-plugin (alias of --artifact-kind). Defaults keep today's project/workspace apply. OpenClaw plugin means a Claude/Codex-compatible bundle; Hermes plugin means skill-plugin.",
           artifact_kind_resolved: "{{name}}: artifact={{kind}}",
           core_unsupported:
             "Adapter {{name}} does not support --dry-run/--check yet (no write() export). Skipped.",
@@ -288,7 +288,7 @@ const resources = {
           check_describe:
             "只读检查：如需变更、存在漂移或存在未授权动作则以非零码退出",
           artifact_describe:
-            "Artifact 形态：project|workspace|plugin（--artifact-kind 别名）。默认保持现有 project/workspace 行为。OpenClaw 下 plugin 表示 Claude/Codex 兼容 bundle。",
+            "Artifact 形态：project|workspace|plugin|compatible-bundle|skill-plugin（--artifact-kind 别名）。默认保持现有 project/workspace 行为。OpenClaw 下 plugin 表示 Claude/Codex 兼容 bundle；Hermes 下 plugin 表示 skill-plugin。",
           artifact_kind_resolved: "{{name}}：artifact={{kind}}",
           core_unsupported:
             "适配器 {{name}} 尚未支持 --dry-run/--check（未导出 write()），已跳过。",

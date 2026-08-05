@@ -13,7 +13,7 @@ export interface ReadContext {
 }
 
 export async function read({ projectRoot }: ReadContext): Promise<CanonicalDocument> {
-  const artifactKind = detectArtifactKind(projectRoot);
+  const artifactKind = detectArtifactKind(projectRoot) ?? "project";
   const canonical = readCapabilities(
     {
       context: context(),

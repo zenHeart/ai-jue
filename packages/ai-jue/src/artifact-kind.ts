@@ -12,6 +12,7 @@ export class UnsupportedArtifactKindError extends Error {
   readonly adapter: string;
   readonly requested: string;
   readonly supported: string[];
+  readonly exitCode = 2;
 
   constructor(adapter: string, requested: string, supported: string[], detail?: string) {
     const supportedList = supported.join(", ");
@@ -23,6 +24,23 @@ export class UnsupportedArtifactKindError extends Error {
     this.adapter = adapter;
     this.requested = requested;
     this.supported = supported;
+  }
+}
+
+export class UnsupportedArtifactScopeError extends Error {
+  readonly adapter: string;
+  readonly scope: string;
+  readonly exitCode = 2;
+
+  constructor(adapter: string, scope: string) {
+    super(
+      `Adapter "${adapter}" cannot apply target scope "${scope}" yet. ` +
+        'Only "project" scope has a safe project-relative execution path; ' +
+        "local and user scopes require an explicit authorization/root mapping.",
+    );
+    this.name = "UnsupportedArtifactScopeError";
+    this.adapter = adapter;
+    this.scope = scope;
   }
 }
 
@@ -78,11 +96,8 @@ const ALIASES: Record<string, Record<string, string>> = {
     workspace: "workspace",
     project: "workspace",
     auto: "workspace",
-    // Accepted names that are not implemented yet — rejected with a guided message.
     plugin: "skill-plugin",
     "skill-plugin": "skill-plugin",
-    "compatible-bundle": "skill-plugin",
-    bundle: "skill-plugin",
   },
 };
 
@@ -102,13 +117,55 @@ export interface ResolveArtifactKindInput {
   cliArtifact?: string | null;
   /** Merged project config (may include targets). */
   config?: {
-    targets?: Record<string, { artifact?: string; enabled?: boolean } | undefined>;
+    targets?: Record<
+      string,
+      { artifact?: string; enabled?: boolean; scope?: ArtifactScope } | undefined
+    >;
   } | null;
+  /** Adapter-owned detection of an existing managed Artifact at the output root. */
+  existingArtifactKind?: string | null;
+}
+
+export type ArtifactScope = "project" | "local" | "user";
+export type TargetSelection = {
+  artifact?: string;
+  enabled?: boolean;
+  scope?: ArtifactScope;
+};
+
+/**
+ * Resolve target-private selection without moving it into Canonical DSL.
+ * The first configured alias is authoritative so `targets` remains one
+ * conversion-environment input rather than a second merge layer.
+ */
+export function resolveTargetSelection(
+  config: ResolveArtifactKindInput["config"],
+  adapterName: string,
+): TargetSelection | undefined {
+  const short = shortAdapterName(adapterName);
+  const key = normalizeAdapterKey(short);
+  const targets = config?.targets;
+  if (!targets) return undefined;
+
+  const candidateKeys = [short, key];
+  if (key === "claude") candidateKeys.push("claude-code");
+  for (const candidate of [...new Set(candidateKeys)]) {
+    const selection = targets[candidate];
+    if (selection) return selection;
+  }
+  return undefined;
+}
+
+export function isTargetEnabled(
+  config: ResolveArtifactKindInput["config"],
+  adapterName: string,
+): boolean {
+  return resolveTargetSelection(config, adapterName)?.enabled !== false;
 }
 
 /**
  * Resolve the Artifact kind for one adapter.
- * Order: CLI → targets.<adapter>.artifact → adapter default.
+ * Order: CLI → targets.<adapter>.artifact → detected Artifact for `auto` → default.
  */
 export function resolveArtifactKind(input: ResolveArtifactKindInput): string {
   const short = shortAdapterName(input.adapterName);
@@ -118,15 +175,15 @@ export function resolveArtifactKind(input: ResolveArtifactKindInput): string {
   const defaultKind = DEFAULT_KIND[key] ?? "project";
 
   const fromCli = normalizeRaw(input.cliArtifact);
-  const fromTargets = normalizeRaw(input.config?.targets?.[short]?.artifact)
-    ?? normalizeRaw(input.config?.targets?.[key]?.artifact)
-    // claude-code key in targets
-    ?? (key === "claude"
-      ? normalizeRaw(input.config?.targets?.["claude-code"]?.artifact)
-      : undefined);
+  const targetSelection = resolveTargetSelection(input.config, input.adapterName);
+  const fromTargets = normalizeRaw(targetSelection?.artifact);
 
   const raw = fromCli ?? fromTargets ?? "auto";
-  const resolved = aliases?.[raw] ?? (raw === "auto" ? defaultKind : raw);
+  const detected = normalizeRaw(input.existingArtifactKind);
+  const resolved =
+    raw === "auto" && detected && implemented.includes(detected)
+      ? detected
+      : aliases?.[raw] ?? (raw === "auto" ? defaultKind : raw);
 
   if (!implemented.includes(resolved)) {
     throw new UnsupportedArtifactKindError(short, raw, implemented);
@@ -163,7 +220,16 @@ export function resolvePluginManifest(
     (Array.isArray(presets) && typeof presets[0] === "string" && presets[0]) ||
     (typeof config?.preset === "string" && config.preset) ||
     undefined;
-  if (!presetName) return undefined;
+  if (!presetName) {
+    if (normalizeAdapterKey(adapterShort) === "codex") {
+      return {
+        name: "jue-plugin",
+        version: "0.1.0",
+        description: "Generated by ai-jue",
+      };
+    }
+    return undefined;
+  }
 
   const name = String(presetName)
     .replace(/^jue-preset-/, "")
@@ -182,10 +248,26 @@ export function resolveOpenClawBundleFormat(
   toolsOpenclaw: Record<string, unknown> | undefined,
   canonical: { hooks?: Record<string, unknown> },
 ): "claude" | "codex" {
-  const raw = typeof toolsOpenclaw?.bundleFormat === "string"
-    ? toolsOpenclaw.bundleFormat.trim().toLowerCase()
-    : "auto";
+  const configuredValue = toolsOpenclaw?.bundleFormat;
+  if (
+    configuredValue !== undefined &&
+    configuredValue !== null &&
+    typeof configuredValue !== "string"
+  ) {
+    throw new Error(
+      `OpenClaw tools.bundleFormat must be a string: auto, claude, or codex; received ${typeof configuredValue}.`,
+    );
+  }
+  const configured = typeof configuredValue === "string"
+    ? configuredValue.trim().toLowerCase()
+    : "";
+  const raw = configured || "auto";
   if (raw === "claude" || raw === "codex") return raw;
+  if (raw !== "auto") {
+    throw new Error(
+      `OpenClaw tools.bundleFormat must be one of: auto, claude, codex; received "${raw}".`,
+    );
+  }
   const hooks = canonical.hooks ?? {};
   return Object.keys(hooks).length > 0 ? "codex" : "claude";
 }

@@ -22,11 +22,31 @@ function resolveBundleFormat(
   toolsConfig: Record<string, unknown> | undefined,
   canonical: CanonicalDocument,
 ): "claude" | "codex" {
-  const raw =
-    typeof toolsConfig?.bundleFormat === "string"
-      ? toolsConfig.bundleFormat.trim().toLowerCase()
-      : "auto";
+  const configuredValue = toolsConfig?.bundleFormat;
+  if (
+    configuredValue !== undefined &&
+    configuredValue !== null &&
+    typeof configuredValue !== "string"
+  ) {
+    const error = new Error(
+      `OpenClaw tools.bundleFormat must be a string: auto, claude, or codex; received ${typeof configuredValue}.`,
+    ) as Error & { exitCode?: number };
+    error.exitCode = 2;
+    throw error;
+  }
+  const configured =
+    typeof configuredValue === "string"
+      ? configuredValue.trim().toLowerCase()
+      : "";
+  const raw = configured || "auto";
   if (raw === "claude" || raw === "codex") return raw;
+  if (raw !== "auto") {
+    const error = new Error(
+      `OpenClaw tools.bundleFormat must be one of: auto, claude, codex; received "${raw}".`,
+    ) as Error & { exitCode?: number };
+    error.exitCode = 2;
+    throw error;
+  }
   // OpenClaw only executes OpenClaw-style hook packs (Codex-compatible).
   return canonical.hooks && Object.keys(canonical.hooks).length > 0 ? "codex" : "claude";
 }
@@ -63,11 +83,21 @@ async function writeCompatibleBundle(
 ): Promise<ArtifactChange[]> {
   const format = resolveBundleFormat(writeContext.toolsConfig, canonical);
   const writer = loadBundleWriter(format);
-  return writer.write(canonical, {
+  // Codex's project hook file is not an OpenClaw bundle hook surface. Keep
+  // the delegated writer for shared skills/MCP/manifest logic, then use the
+  // OpenClaw Adapter's own verified HOOK.md + handler.js mapping.
+  const delegatedCanonical =
+    format === "codex" ? { ...canonical, hooks: undefined } : canonical;
+  const delegatedChanges = await writer.write(delegatedCanonical, {
     projectRoot: writeContext.projectRoot,
     artifactKind: "plugin",
     pluginManifest: writeContext.pluginManifest,
   });
+  const changes = delegatedChanges.map((change) => ({ ...change, target: TARGET }));
+  if (format === "codex" && canonical.hooks && Object.keys(canonical.hooks).length > 0) {
+    changes.push(...hooks().write(writeContext.projectRoot, canonical.hooks, TARGET));
+  }
+  return changes;
 }
 
 async function writeWorkspace(

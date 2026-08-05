@@ -1,6 +1,6 @@
 # RFC-0002：Plugin / Bundle Artifact 的 apply 合同
 
-> 状态：Implementing  
+> 状态：Accepted · Implemented
 > 关联：Epic [#5](https://github.com/zenHeart/ai-jue/issues/5)；[#2](https://github.com/zenHeart/ai-jue/issues/2)、[#3](https://github.com/zenHeart/ai-jue/issues/3)、[#6](https://github.com/zenHeart/ai-jue/issues/6)；R5  
 > 消费者证据：私有 Preset 组合入口 `jue-preset-ai-assets`（ai-assets `presets/personal`）  
 > 官方依据（2026-08 核验）：  
@@ -10,9 +10,9 @@
 ## 背景
 
 RFC-0001 已规定 Plugin、Bundle 与配置都是 **Artifact 形态**。Claude / Codex Adapter
-的 `write()` 已支持 `artifactKind: "plugin"`，但 `jue apply` 把 kind 硬编码为
-`"project"`（`packages/ai-jue/src/core-apply.ts`）。`targets.*.artifact` 仍是未接线
-的目标合同。
+的 `write()` 已支持 `artifactKind: "plugin"`；本 RFC 将 Artifact 选择、Adapter-owned
+layout detection 与 Core 执行路径统一接线。`targets.*.artifact`、`enabled` 与 `scope`
+属于转换环境，不进入 Canonical DSL。
 
 JUE-302 曾结论「OpenClaw 没有 Plugin/Bundle」——那是对 **workspace 项目树** 的实测
 （`AGENTS.md` / `skills/` / `hooks/`）。当前官方文档已明确第二表面：
@@ -98,7 +98,7 @@ Jue 从 Canonical 导出的内容包。
 
 见决策。
 
-## 决策（Proposed）
+## 决策（Accepted）
 
 采用 **方案 C**，并冻结 kind 名与实现策略：
 
@@ -106,8 +106,8 @@ Jue 从 Canonical 导出的内容包。
 | --- | --- | --- |
 | `claude-code` | `project`, `plugin` | 已有 `write`/`confirm`；只接 CLI/config |
 | `codex` | `project`, `plugin` | 同上 |
-| `openclaw` | `workspace`, **`compatible-bundle`** | **不写新布局**。`compatible-bundle` = 调用 Claude 或 Codex 的 `write(..., { artifactKind: "plugin" })` 产出目录，再以 `openclaw plugins install` / `inspect` 确认 `Format: bundle` |
-| `hermes` | `workspace`, **`skill-plugin`**（可选 Phase B） | 默认只保证 `workspace`。`skill-plugin` = 生成 `plugin.yaml` + 最小 `__init__.py`（仅 `register_skill`）+ flat `skills/<name>/`；agents/commands/hooks/mcp **不**塞进该 kind（mcp 仍走 workspace/`config.yaml`） |
+| `openclaw` | `workspace`, **`compatible-bundle`** | `compatible-bundle` 复用 Claude 或 Codex 的 `write(..., { artifactKind: "plugin" })` 产出目录，再以 `openclaw plugins install` / `inspect` 确认 `Format: bundle` |
+| `hermes` | `workspace`, **`skill-plugin`** | `skill-plugin` 生成 `plugin.yaml` + 最小 `__init__.py`（仅 `register_skill`）+ flat `skills/<name>/`；mcp 继续走 workspace/`config.yaml` |
 
 ### OpenClaw `compatible-bundle` 细节
 
@@ -116,12 +116,13 @@ Jue 从 Canonical 导出的内容包。
 3. 选择来源：`tools.openclaw.bundleFormat: "claude" | "codex" | "auto"`（`auto` = 有 runnable hooks → codex，否则 claude）。
 4. Adapter 代码路径：OpenClaw `write` 在 `compatible-bundle` 分支 **委托**  
    `ai-jue-adapter-claude` / `ai-jue-adapter-codex` 的 `write`（或抽共享 helper），禁止复制粘贴第二套目录逻辑。
-5. Confirm：隔离目录上  
-   `openclaw plugins install <dir>` → `openclaw plugins inspect <id>` 断言  
-   `Format: bundle` 与 `Bundle format: claude|codex`。不把 native `openclaw.plugin.json` 当作成功标准。
+5. Confirm：隔离目录上优先执行
+   `openclaw plugins install <dir>` → `openclaw plugins inspect <id>`，断言
+   `Format: bundle` 与 `Bundle format: claude|codex`；CLI 不可用时保留结构证据并返回
+   `unconfirmed`。native `openclaw.plugin.json` 不作为 Canonical bundle 的确认证据。
 6. Workspace 与 bundle **分离**：`workspace` 继续写 AGENTS/skills/hooks 到项目树；bundle 不替代 workspace，除非用户显式选 kind。
 
-### Hermes `skill-plugin` 细节（Phase B，可后置）
+### Hermes `skill-plugin` 细节
 
 1. 仅打包 `canonical.skills`；其余 Capability 保持 workspace / degraded 诚实声明。
 2. 树：
@@ -133,16 +134,16 @@ Jue 从 Canonical 导出的内容包。
 └── skills/<skill-name>/SKILL.md (+ references 等)
 ```
 
-3. Confirm：`plugin.yaml`+`__init__.py` 结构校验；若本机有 `hermes`，可选  
-   复制/install 到临时 `HERMES_HOME` 后 `hermes plugins list`。  
-   **不得**把 `tirith config validate` 冒充 plugin 安装证明。
-4. Phase A（可与 #2 并行关闭 #3 的 Hermes 部分）：`skill-plugin` 声明 `unsupported`，inspect 可见；文档指向 workspace 主路径。
+3. Confirm：`plugin.yaml`、`__init__.py`、`register_skill` 与 skill roots 提供结构证据；
+   `tirith config validate` 继续只用于 workspace。
+4. `skill-plugin` 结构已实现；workspace 继续作为 Hermes 能力包主路径。
 
 ### 选择解析（不变）
 
 1. CLI `--artifact-kind` / `--artifact`  
 2. 否则 `targets.<adapter>.artifact`  
-3. 否则默认 `project` / `workspace`  
+3. `auto` 时由 Adapter 检测当前输出根的已托管 Artifact
+4. 否则默认 `project` / `workspace`
 
 非法 / 未实现 kind：**写入前失败**，不得静默降级。
 
@@ -153,7 +154,7 @@ Jue 从 Canonical 导出的内容包。
 ```bash
 jue apply --adapter claude-code --artifact-kind plugin
 jue apply --adapter openclaw --artifact-kind compatible-bundle
-jue apply --adapter hermes --artifact-kind skill-plugin   # Phase B
+jue apply --adapter hermes --artifact-kind skill-plugin
 jue apply --all
 ```
 
@@ -164,7 +165,7 @@ export default {
     "claude-code": { artifact: "plugin" },
     codex: { artifact: "plugin" },
     openclaw: { artifact: "compatible-bundle" },
-    hermes: { artifact: "workspace" } // 或 Phase B: "skill-plugin"
+    hermes: { artifact: "workspace" } // 或 "skill-plugin"
   },
   tools: {
     openclaw: { bundleFormat: "auto" } // "claude" | "codex" | "auto"
@@ -217,17 +218,19 @@ Guide 中旧示例 `hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`�
 2. **OpenClaw**：`compatible-bundle` 产物可被  
    `openclaw plugins install <dir>` 识别为 `Format: bundle`；  
    有 hooks 时 `bundleFormat=codex`（或 auto）且 hooks 可执行面符合官方表。
-3. **Hermes Phase A**：`skill-plugin` 请求 → 清晰失败 / unsupported；workspace 仍绿。  
-   **Phase B**：thin skill-plugin 结构 + 可选 `hermes plugins list` 证据。
-4. `--all` + `targets` 分端生效；非法 kind 预检失败。
+3. **Hermes**：`skill-plugin` 生成 thin skill-plugin 结构，并通过 `plugin.yaml`、
+    `register_skill` initializer 与 skill roots 提供确认证据；workspace 仍绿。
+4. `--all` + `targets.enabled/artifact/scope` 分端生效；非法 kind 与未实现 scope 预检失败。
 5. `smoke:preset-local --entry ai-assets` 支持 artifact 模式；离线 pack。
 6. 二次 apply 幂等。
 
 ## 未决问题（收窄后）
 
-1. OpenClaw confirm 是否必须真实 `plugins install`，还是结构检测 + 文档化 CLI 版本下限即可？（建议：有 CLI 则 install+inspect，无则结构断言 + skip 标记。）
-2. Hermes Phase B 是否进入 R5 门禁，还是 R5 仅要求 workspace + 三端 plugin/bundle？
-3. Cursor bundle 是否第三优先（本 RFC 默认不做；OpenClaw 支持但 Jue 无 Cursor plugin writer）。
+1. OpenClaw CLI 是否在所有 CI 环境提供；当前合同为 CLI 可用时 install+inspect，
+   CLI 缺席时返回结构化 `unconfirmed`。
+2. Hermes skill-plugin 是否增加真实 `hermes plugins install/list` headless 证据。
+3. Cursor bundle 是否第三优先（OpenClaw 可发现 Cursor Bundle，但 Jue 当前 Adapter
+   的 Artifact kind 仍为 project）。
 
 ## 实施切片
 

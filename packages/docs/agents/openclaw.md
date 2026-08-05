@@ -2,10 +2,10 @@
 
 > Jue 状态：Read、Write、Confirm 均已实现（JUE-302，
 > `packages/ai-jue-adapter-openclaw/`）；**workspace** 与
-> **`compatible-bundle`**（RFC-0002）均已落地——后者**委托** Claude/Codex
-> plugin writer，不发明第三种目录。  
-> Native OpenClaw plugin（`openclaw.plugin.json` + 进程内运行时）不在 Canonical
-> 能力包转换范围内。  
+> **`compatible-bundle`**（RFC-0002）均已落地。后者复用 Claude/Codex
+> plugin writer，并沿用 OpenClaw 官方 Bundle 发现路径。
+> OpenClaw native runtime surface 作为 Agent-specific Artifact 表面保留在官方
+> 能力表中；Jue 的 Canonical 映射合同集中于 workspace 与 compatible-bundle。
 > `capabilities` 对 workspace 路径如实声明 `rules/commands/agents/mcp: "degraded"`。
 >
 > 官方依据：[Plugin bundles](https://docs.openclaw.ai/plugins/bundles)、
@@ -18,8 +18,8 @@
 ### 1.1 Workspace（项目树，JUE-302 已核验）
 
 `AGENTS.md`、`skills/<name>/SKILL.md`、`hooks/<name>/HOOK.md`+`handler.js`。  
-无 per-workspace `commands/`/`agents/`；`openclaw agents *` 管理的是
-`~/.openclaw/agents/<name>/` 运行时；MCP 在全局 `openclaw.json`。
+`commands`/`agents` 的运行时入口由 OpenClaw 全局 Agent surface 管理；项目树
+包含 `AGENTS.md`、skills 与 hooks，MCP 由全局 `openclaw.json` 管理。
 
 ### 1.2 可安装 Plugin（官方现文档）
 
@@ -36,7 +36,8 @@ openclaw plugins list    # bundles 显示 Format: bundle + Bundle format
 openclaw plugins inspect <id>
 ```
 
-检测优先：若同时存在 native 与 bundle 标记，走 **native**。
+Jue 的 compatible-bundle 检测只读取上述 Bundle marker；native runtime surface 由
+OpenClaw 官方 loader 独立处理。
 
 Bundle 映射要点（官方）：
 
@@ -59,10 +60,11 @@ Bundle 映射要点（官方）：
 
 ## 3. 转换边界
 
-- Workspace 路径不写全局 `openclaw.json` MCP（避免误改用户环境）。
-- `compatible-bundle` **不得**新造目录方言；委托 Claude/Codex `artifactKind: "plugin"`。
-- 不为 Canonical 能力包生成 native `openclaw.plugin.json` 运行时插件（成本与信任模型都不匹配）。
-- hooks 若需在 OpenClaw 执行，bundle 基底选 Codex，而非 Claude。
+- Workspace MCP 保持在项目级 Artifact 之外，保护用户的全局 `openclaw.json`。
+- `compatible-bundle` 复用 Claude/Codex `artifactKind: "plugin"` 的官方兼容布局。
+- Canonical 能力包沿用 Bundle 的窄信任边界；OpenClaw native runtime surface 继续
+  由 Agent 官方能力表管理。
+- hooks 需要在 OpenClaw 执行时，bundle 基底选 Codex；无 runnable hooks 时使用 Claude 基底。
 
 ## 4. 当前差距
 
@@ -70,4 +72,4 @@ Bundle 映射要点（官方）：
 | --- | --- | --- |
 | Read / Write / Confirm（workspace） | Implemented | JUE-302 |
 | Artifact `compatible-bundle` | Implemented | 委托 Claude/Codex `artifactKind: "plugin"`；安装确认依赖本机 `openclaw` CLI（CI 常 skip） |
-| Native plugin Artifact | Out of scope | 非 Canonical 包路径 |
+| Native plugin Artifact | Reference | OpenClaw 官方 runtime surface 与 Canonical bundle surface 分开记录 |

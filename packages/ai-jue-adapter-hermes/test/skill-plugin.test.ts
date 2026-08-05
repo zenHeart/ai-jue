@@ -48,4 +48,35 @@ describe("hermes skill-plugin", () => {
     expect(fs.existsSync(path.join(root, "config.yaml"))).toBe(false);
     expect(fs.existsSync(path.join(root, "MEMORY.md"))).toBe(false);
   });
+
+  it("rejects category collisions during flat skill-plugin conversion", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-hermes-skill-plugin-collision-"));
+    roots.push(root);
+    await expect(
+      write(
+        {
+          skills: {
+            "general/check": { content: "General", prompt: "General" },
+            "ops/check": { content: "Ops", prompt: "Ops" },
+          },
+        },
+        { projectRoot: root, artifactKind: "skill-plugin" },
+      ),
+    ).rejects.toThrow('flatten multiple Canonical skills to "check"');
+  });
+
+  it("rejects unsafe flattened skill names", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-hermes-skill-plugin-path-"));
+    roots.push(root);
+    await expect(
+      write(
+        {
+          skills: {
+            "../bad name": { content: "Escape", prompt: "Escape" },
+          },
+        },
+        { projectRoot: root, artifactKind: "skill-plugin" },
+      ),
+    ).rejects.toThrow("safe single path segment");
+  });
 });

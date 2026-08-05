@@ -30,5 +30,5 @@
 | [Hermes](hermes.md) | Implemented | Implemented | Implemented | Implemented |
 
 OpenClaw / Hermes 的 Artifact 已覆盖 workspace 与可安装聚合形态
-（`compatible-bundle` / thin `skill-plugin`）；完整原生运行时插件仍 Out of
-scope，见各 Agent 画像缺口表。
+（`compatible-bundle` / thin `skill-plugin`）。各 Agent 的 native runtime surface
+与 Canonical 映射边界见对应画像表。

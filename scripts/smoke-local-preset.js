@@ -15,26 +15,42 @@ function parseArgs(argv) {
     const key = argv[index];
     if (!key.startsWith('--') || argv[index + 1] === undefined) {
       throw new Error(
-        'Arguments must use --packages-dir, --entry and optional --cleanup / --artifact',
+      'Arguments must use --packages-dir, --entry and optional --cleanup / --artifact',
       );
     }
     args[key.slice(2)] = argv[index + 1];
   }
   if (!args['packages-dir'] || !args.entry) {
     throw new Error(
-      'Usage: smoke-local-preset --packages-dir <dir> --entry <preset> [--cleanup delete|trash] [--artifact project|plugin]',
+      'Usage: smoke-local-preset --packages-dir <dir> --entry <preset> [--cleanup delete|trash] [--artifact project|plugin|compatible-bundle|skill-plugin]',
     );
   }
   return args;
 }
 
 function run(command, args, cwd) {
-  const result = spawnSync(command, args, {
+  const spawnOptions = {
     cwd,
     encoding: 'utf8',
     env: process.env,
     stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  };
+  let result = spawnSync(command, args, spawnOptions);
+  // On Windows, PowerShell can resolve an App Paths/npm shim that Node's
+  // spawnSync cannot find through PATH. Use the npm CLI bundled beside the
+  // current Node binary as a deterministic fallback for this offline smoke.
+  if (result.error && command === 'npm' && process.platform === 'win32') {
+    const bundledNpm = path.join(
+      path.dirname(process.execPath),
+      'node_modules',
+      'npm',
+      'bin',
+      'npm-cli.js',
+    );
+    if (fs.existsSync(bundledNpm)) {
+      result = spawnSync(process.execPath, [bundledNpm, ...args], spawnOptions);
+    }
+  }
   if (result.status !== 0) {
     const rawError = String(result.stderr || result.stdout || '');
     let structuredSummary = '';
@@ -68,9 +84,10 @@ function run(command, args, cwd) {
     const summary = structuredSummary || (firstError >= 0
       ? sanitizedLines.slice(firstError, firstError + 12).join(' ').trim()
       : '');
+    const spawnError = result.error ? `: ${result.error.message}` : '';
     throw new Error(
-      `${path.basename(command)} failed with exit code ${result.status}`
-      + (summary ? `: ${summary.trim()}` : ''),
+      `${path.basename(command)} failed with exit code ${result.status ?? 'unavailable'}`
+      + (summary ? `: ${summary.trim()}` : spawnError),
     );
   }
   return result.stdout;
@@ -289,6 +306,19 @@ async function main() {
       }
     }
 
+    function expectedOpenClawBundleMarker() {
+      const configured = config.tools?.openclaw?.bundleFormat;
+      const configuredFormat = typeof configured === 'string'
+        ? configured.trim().toLowerCase()
+        : 'auto';
+      const format = configuredFormat === 'claude' || configuredFormat === 'codex'
+        ? configuredFormat
+        : Object.keys(config.hooks || {}).length > 0 ? 'codex' : 'claude';
+      return format === 'codex'
+        ? path.join('.codex-plugin', 'plugin.json')
+        : path.join('.claude-plugin', 'plugin.json');
+    }
+
     if (pluginMode) {
       // Separate output dirs — plugin roots collide if written into one tree.
       const outs = {};
@@ -324,8 +354,8 @@ async function main() {
       assertSkillTree(outs.claude, 'claude plugin');
       assertMcpJson(outs.claude, 'claude plugin');
 
-      // OpenClaw compatible-bundle (no hooks → Claude base).
-      assertExists(outs.openclaw, path.join('.claude-plugin', 'plugin.json'), 'openclaw bundle');
+      // OpenClaw compatible-bundle follows the configured/auto-selected base.
+      assertExists(outs.openclaw, expectedOpenClawBundleMarker(), 'openclaw bundle');
       assertSkillTree(outs.openclaw, 'openclaw bundle');
       assertMcpJson(outs.openclaw, 'openclaw bundle');
 

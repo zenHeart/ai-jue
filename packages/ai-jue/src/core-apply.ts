@@ -10,8 +10,9 @@ import {
 import {
   resolveArtifactKind,
   resolvePluginManifest,
+  resolveTargetSelection,
   shortAdapterName,
-  UnsupportedArtifactKindError,
+  UnsupportedArtifactScopeError,
 } from "./artifact-kind";
 import { MergedConfig } from "./config";
 import { logger } from "./logger";
@@ -27,6 +28,8 @@ export interface CoreCapableAdapterModule {
       pluginManifest?: { name: string; version: string; description?: string };
     },
   ): Promise<ArtifactChange[]>;
+  /** Adapter-owned layout detection used by `artifact: "auto"`. */
+  detectArtifactKind?(projectRoot: string): string | undefined;
 }
 
 /**
@@ -109,23 +112,19 @@ export async function runCoreAdapter(
   config: MergedConfig,
   outputDir: string,
   options: RunCoreAdapterOptions,
-): Promise<void> {
+): Promise<number> {
   const short = shortAdapterName(adapterName);
-  let artifactKind: string;
-  try {
-    artifactKind = resolveArtifactKind({
-      adapterName,
-      cliArtifact: options.artifactKind,
-      config,
-    });
-  } catch (error) {
-    if (error instanceof UnsupportedArtifactKindError) {
-      logger.error(pc.red(error.message));
-      process.exitCode = 2;
-      return;
-    }
-    throw error;
+  const targetSelection = resolveTargetSelection(config, adapterName);
+  const targetScope = targetSelection?.scope ?? "project";
+  if (targetScope !== "project") {
+    throw new UnsupportedArtifactScopeError(short, targetScope);
   }
+  const artifactKind = resolveArtifactKind({
+    adapterName,
+    cliArtifact: options.artifactKind,
+    config,
+    existingArtifactKind: adapterModule.detectArtifactKind?.(outputDir),
+  });
 
   logger.info(
     pc.dim(
@@ -159,14 +158,15 @@ export async function runCoreAdapter(
     const preview = checkExecution(outputDir, changes);
     reportPlan(adapterName, preview);
     process.exitCode = 0; // a preview never fails on its own findings
-    return;
+    return 0;
   }
 
   if (options.check) {
     const result = checkExecution(outputDir, changes);
     reportPlan(adapterName, result);
-    process.exitCode = EXIT_CODE_BY_STATUS[result.status];
-    return;
+    const exitCode = EXIT_CODE_BY_STATUS[result.status];
+    process.exitCode = exitCode;
+    return exitCode;
   }
 
   const result = applyExecution(outputDir, changes);
@@ -178,5 +178,7 @@ export async function runCoreAdapter(
   } else if (result.status === "applied" || result.status === "no-change") {
     logger.success(pc.green(t("commands.apply.adapter_success", { name: adapterName })));
   }
-  process.exitCode = EXIT_CODE_BY_STATUS[result.status];
+  const exitCode = EXIT_CODE_BY_STATUS[result.status];
+  process.exitCode = exitCode;
+  return exitCode;
 }

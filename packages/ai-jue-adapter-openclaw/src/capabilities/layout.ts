@@ -26,7 +26,7 @@ export function isCompatibleBundleLayout(root: string): boolean {
 }
 
 export function detectArtifactKind(root: string): OpenClawArtifactKind {
-  // Native/bundle markers win over workspace when both exist (OpenClaw precedence).
+  // A compatible-bundle marker wins over the workspace fallback.
   if (isCompatibleBundleLayout(root)) return "compatible-bundle";
   return "workspace";
 }

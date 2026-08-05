@@ -2,10 +2,9 @@
 
 > Jue status: Read, Write, and Confirm are Implemented (JUE-303,
 > `packages/ai-jue-adapter-hermes/`). **workspace** ships; optional thin
-> `skill-plugin` (RFC-0002 Phase B) also ships. Official Hermes “plugins” are
-> `plugin.yaml` + Python `register(ctx)` runtime extensions — **not** a
-> Claude-style `.xxx-plugin/plugin.json`. Full Python tool/platform plugins are
-> out of scope.  
+> `skill-plugin` (RFC-0002 Phase B) also ships. Official Hermes “plugins” use
+> `plugin.yaml` + Python `register(ctx)` runtime extensions, and the thin Artifact
+> follows that official plugin.yaml surface.
 > `capabilities` honestly declare `rules/hooks: "unsupported"`,
 > `commands/agents: "degraded"`, `skills/mcp: "supported"`. Extra `cron`
 > remains outside the six atomic types (see implementation-status).
@@ -20,14 +19,12 @@ Verified in JUE-303 against a real Hermes install (`~/.hermes/`): the
 project-level surface is `MEMORY.md` (shared context, semantically similar to
 Claude's `CLAUDE.md`), `skills/<category>/<name>/SKILL.md` (three levels deep,
 deeper than the one level used by Claude/Codex/OpenClaw), `config.yaml`'s
-`mcp.servers`, and `cron/jobs.json`. The real install's `~/.hermes/hooks/`
-directory is empty — there is insufficient evidence for a hooks surface, and
-`hooks_auto_accept` is a session-level policy rather than a per-workspace
-hook; `agent:`/`commands:` only exist in the global `config.yaml`, not as
-project-authorable files. Hermes also offers plugins, ACP, TUI Gateway
-JSON-RPC, and an OpenAI-compatible HTTP API — these are runtime integration
-protocols or unverified aggregate-Artifact surfaces that this Adapter does not
-yet cover.
+`mcp.servers`, and `cron/jobs.json`. The installed `~/.hermes/hooks/` directory
+is part of the observed runtime surface; `hooks_auto_accept` is a session-level
+policy. `agent:`/`commands:` are global `config.yaml` runtime blocks. Hermes also
+offers plugins, ACP, TUI Gateway JSON-RPC, and an OpenAI-compatible HTTP API;
+these runtime integration surfaces are tracked as Agent-specific surfaces, with
+implementation status recorded by the Adapter documentation.
 
 ## 2. Intended Jue mapping
 
@@ -36,30 +33,26 @@ yet cover.
 | `context.global` | `MEMORY.md` (managed block) |
 | `skills` | `skills/<category>/<name>/SKILL.md` (three levels) |
 | `mcp.servers` | `config.yaml`'s `mcp.servers` |
-| `cron` (Hermes-specific extra field, not one of the six atomic Capability types) | Full-file pass-through of `cron/jobs.json` |
+| `cron` (Hermes-specific extra field alongside the six atomic Capability types) | Full-file pass-through of `cron/jobs.json` |
 | `rules` / `hooks` | Honestly `unsupported`: no per-workspace surface |
 | `commands` / `agents` | Honestly `degraded`: the like-named block in `config.yaml` is global runtime policy; read/write are no-ops |
 | target-specific settings | `tools.hermes` |
 | Artifact | `workspace` (skills+mcp); `skill-plugin` (`plugin.yaml` + register_skill-only `__init__.py` + flat `skills/`; mcp stays on workspace) |
-| Confirm | Workspace: `tirith config validate`; skill-plugin: structure checks + optional isolated `hermes plugins list` |
+| Confirm | Workspace: `tirith config validate`; skill-plugin: structural evidence from `plugin.yaml`, the `register_skill` initializer, and skill roots |
 
 ## 3. Conversion boundary
 
 - Hermes general plugins may register Python tools/hooks/commands/platforms;
-  Canonical text capabilities must not be auto-converted into full runtime
-  plugins (high cost, wrong surface).
+  `skill-plugin` selects the `register_skill` capability as a lightweight
+  distribution surface for Canonical skills.
 - To distribute skills: `skill-plugin` generates `register_skill` boilerplate
   plus flat `skills/`; mcp/context stay on workspace apply.
-- ACP, Gateway, and HTTP are Transport/Runtime facets, not part of the
-  Capability set.
-- Self-learning, memory, profile, and session state do not enter a reusable
-  Preset.
-- `cron` is the only field this Adapter carries beyond the six atomic
-  Capability types. Whether to formally adopt it (as a seventh atomic
-  Capability, or as a `tools.hermes` target-private field instead) has not
-  been decided via an RFC — the current implementation just honestly exposes
-  a real native surface that exists, and should not be read as a settled
-  architecture decision.
+- ACP, Gateway, and HTTP are Transport/Runtime facets alongside the Capability set.
+- Self-learning, memory, profile, and session state remain Agent runtime state;
+  reusable Presets focus on portable Capability data.
+- `cron` is the Adapter's Agent-specific pass-through field beyond the six atomic
+  Capability types. The implementation-status page records its mapping boundary;
+  a future RFC can freeze its long-term ownership.
 
 ## 4. Current gaps
 
@@ -67,5 +60,5 @@ yet cover.
 | --- | --- | --- |
 | Read | Implemented | JUE-303, `packages/ai-jue-adapter-hermes/src/read.ts` |
 | Write | Implemented | JUE-303, driven by the Core executor |
-| Artifact | Implemented | `workspace` + thin `skill-plugin` (skills / `plugin.yaml` / `register_skill`; MCP stays on workspace); full Python plugin Out of scope |
-| Confirm | Implemented | Workspace: real `tirith config validate` (needs `tirith` on PATH); skill-plugin: structural checks primarily, optional local `hermes plugins list` |
+| Artifact | Implemented | `workspace` + thin `skill-plugin` (skills / `plugin.yaml` / `register_skill`; MCP stays on workspace); runtime extensions follow the official Hermes surface |
+| Confirm | Implemented | Workspace: real `tirith config validate`; skill-plugin: structural evidence from the generated plugin surface |
