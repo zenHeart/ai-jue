@@ -306,6 +306,17 @@ async function main() {
       }
     }
 
+    function assertNoHermesMcp(root, label) {
+      // Hermes skill-plugin keeps MCP on the workspace: the pack must never
+      // carry a .mcp.json or config.yaml even when the config defines servers.
+      if (mcpServerNames.length === 0) return;
+      for (const file of ['.mcp.json', 'config.yaml']) {
+        if (fs.existsSync(path.join(root, file))) {
+          throw new Error(`${label}: ${file} must stay on workspace`);
+        }
+      }
+    }
+
     function assertCursorSkillTree(root, label) {
       for (const name of skillNames) {
         const flat = name.includes('/') ? name.split('/').pop() : name;
@@ -414,6 +425,7 @@ async function main() {
       assertExists(outs.hermes, 'plugin.yaml', 'hermes skill-plugin');
       assertExists(outs.hermes, '__init__.py', 'hermes skill-plugin');
       assertSkillTree(outs.hermes, 'hermes skill-plugin');
+      assertNoHermesMcp(outs.hermes, 'hermes skill-plugin');
     } else {
       run(process.execPath, [cli, 'apply', '--adapter', 'codex'], consumerDir);
       run(process.execPath, [cli, 'apply', '--adapter', 'claude-code'], consumerDir);

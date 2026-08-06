@@ -1,9 +1,14 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { afterEach, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it } from "vitest";
 import { runAdapterList } from "../../src/commands/apply";
 import type { MergedConfig } from "../../src/config";
+import { initI18n } from "../../src/i18n";
+
+beforeAll(async () => {
+  await initI18n("en");
+});
 
 describe("runAdapterList per-adapter isolation", () => {
   afterEach(() => {

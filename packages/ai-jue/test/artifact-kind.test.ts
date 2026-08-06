@@ -79,6 +79,23 @@ describe("resolveArtifactKind", () => {
       resolveArtifactKind({ adapterName: "hermes", cliArtifact: "compatible-bundle" }),
     ).toThrow(UnsupportedArtifactKindError);
   });
+
+  it("maps Cursor plugin/workspace aliases onto project/plugin", () => {
+    expect(resolveArtifactKind({ adapterName: "cursor", cliArtifact: "plugin" })).toBe("plugin");
+    expect(resolveArtifactKind({ adapterName: "cursor", cliArtifact: "bundle" })).toBe("plugin");
+    expect(resolveArtifactKind({ adapterName: "cursor", cliArtifact: "workspace" })).toBe(
+      "project",
+    );
+    expect(resolveArtifactKind({ adapterName: "cursor" })).toBe("project");
+  });
+
+  it("rejects an unimplemented kind for an unknown adapter", () => {
+    // Unknown adapters default to project; any other kind is unsupported.
+    expect(resolveArtifactKind({ adapterName: "unknown-adapter" })).toBe("project");
+    expect(() =>
+      resolveArtifactKind({ adapterName: "unknown-adapter", cliArtifact: "plugin" }),
+    ).toThrow(UnsupportedArtifactKindError);
+  });
 });
 
 describe("target selection", () => {
