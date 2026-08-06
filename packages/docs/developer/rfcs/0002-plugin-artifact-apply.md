@@ -1,6 +1,6 @@
 # RFC-0002：Plugin / Bundle Artifact 的 apply 合同
 
-> 状态：Accepted · Implemented
+> 状态：Implemented
 > 关联：Epic [#5](https://github.com/zenHeart/ai-jue/issues/5)；[#2](https://github.com/zenHeart/ai-jue/issues/2)、[#3](https://github.com/zenHeart/ai-jue/issues/3)、[#6](https://github.com/zenHeart/ai-jue/issues/6)；R5  
 > 消费者证据：私有 Preset 组合入口 `jue-preset-ai-assets`（ai-assets `presets/personal`）  
 > 官方依据（2026-08 核验）：  
@@ -129,7 +129,7 @@ Jue 从 Canonical 导出的内容包。
 
 ```text
 <output>/
-├── plugin.yaml                 # name/version/description（来自 Preset 元数据）
+├── plugin.yaml                 # name 取 Preset 引用名（去 jue-preset- 前缀）；version 恒 0.1.0；description 有默认值；均可被 tools.hermes.pluginManifest 覆盖
 ├── __init__.py                 # 生成：遍历 skills/ 调用 ctx.register_skill
 └── skills/<skill-name>/SKILL.md (+ references 等)
 ```
@@ -187,7 +187,7 @@ Guide 中旧示例 `hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`�
 | skills | 支持 | 支持 | 映射为 skills | 映射为 skills | `register_skill` |
 | commands | 支持 | degraded | **当 skill 根** | degraded/不映射 | 不打包 |
 | agents | 支持 | 支持(TOML) | **detect-only** | 视 Codex 映射 | 不打包 |
-| hooks | hooks.json | HOOK.md+handler | detect-only | **可执行**（OpenClaw 布局） | 不打包（Hermes hooks 另面） |
+| hooks | hooks.json | `.codex/hooks.json` | detect-only | **可执行**（OpenClaw 布局） | 不打包（Hermes hooks 另面） |
 | mcp | .mcp.json | .mcp.json | 合并到 embedded | 合并到 embedded | 不打包（用 workspace） |
 | context.global | project 专用 | project 专用 | 通常不进 bundle | 通常不进 bundle | 不打包 |
 
@@ -214,7 +214,7 @@ Guide 中旧示例 `hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`�
 
 ## 验收标准
 
-1. **#2**：Claude/Codex `jue apply --artifact-kind plugin` + 现有 native confirm。
+1. **#2**：Claude/Codex `jue apply --artifact-kind plugin`；native 确认能力由 `--check` 模式探测（Core 路径不调用 confirm）。
 2. **OpenClaw**：`compatible-bundle` 产物可被  
    `openclaw plugins install <dir>` 识别为 `Format: bundle`；  
    有 hooks 时 `bundleFormat=codex`（或 auto）且 hooks 可执行面符合官方表。
@@ -224,7 +224,7 @@ Guide 中旧示例 `hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`�
 5. `smoke:preset-local --entry ai-assets` 支持 artifact 模式；离线 pack。
 6. 二次 apply 幂等。
 
-## 未决问题（收窄后）
+## 已知边界（已实现后遗留）
 
 1. OpenClaw CLI 是否在所有 CI 环境提供；当前合同为 CLI 可用时 install+inspect，
    CLI 缺席时返回结构化 `unconfirmed`。
@@ -239,7 +239,7 @@ Guide 中旧示例 `hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`�
 | 1 | #2 | CLI/Core/`targets` 接线 | 小 |
 | 2 | #3（OpenClaw） | `compatible-bundle` 委托 Claude/Codex writer + confirm | **小**（无新布局） |
 | 3 | #3（Hermes skill-plugin） | thin skill-plugin（skills；mcp 仍 workspace） | 中 |
-| 5 | #6 | smoke 矩阵 | 小–中 |
+| 4 | #6 | smoke 矩阵 | 小–中 |
 | — | 明确不做 | OpenClaw native plugin、Hermes 业务 Python tools | 避免大代价 |
 
 实现 Issue 必须链接本 RFC；Accepted 前不得把 Guide 示例标成已实现。

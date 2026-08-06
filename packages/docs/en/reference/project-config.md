@@ -83,4 +83,4 @@ overrides record provenance. Target, Extension, Artifact selection, and
 
 Core loads project configuration only from `--config` or `<cwd>/ai.config.js`.
 Load failure, unknown fields, duplicate IDs, invalid Targets, or incompatible
-Extension APIs exit `2` and prevent partial apply.
+Extension APIs exit `1` and prevent partial apply.

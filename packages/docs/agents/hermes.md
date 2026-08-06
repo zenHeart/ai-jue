@@ -7,7 +7,7 @@
 > `skill-plugin`（RFC-0002 Phase B）已落地，并沿用 Hermes 的官方 plugin.yaml surface。
 > `capabilities` 如实声明 `rules/hooks: "unsupported"`、
 > `commands/agents: "degraded"`、`skills/mcp: "supported"`。  
-> 额外 `cron`（`cron/jobs.json`）尚非六类原子 Capability，见 implementation-status。
+> 额外 `cron`（`cron/jobs.json`）作为 Hermes 专属 pass-through 字段提供，映射边界见 implementation-status。
 >
 > 官方依据：[Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins)、
 > [Build a Hermes Plugin](https://hermes-agent.nousresearch.com/docs/guides/build-a-hermes-plugin)、
@@ -31,12 +31,12 @@
 | `context.global` | `MEMORY.md`（managed block） |
 | `skills` | `skills/<category>/<name>/SKILL.md`（三层） |
 | `mcp.servers` | `config.yaml` 的 `mcp.servers` |
-| `cron`（Hermes 专属附加字段，非六类原子 Capability 之一） | `cron/jobs.json` 整文件直通 |
+| `cron`（Hermes 专属附加字段，与六类原子 Capability 并列） | `cron/jobs.json` 整文件直通 |
 | `rules` / `hooks` | 诚实 `unsupported`：无 per-workspace 承载面 |
 | `commands` / `agents` | 诚实 `degraded`：`config.yaml` 里的同名块是全局运行时策略，读写均为 no-op |
 | target-specific settings | `tools.hermes` |
 | Artifact | `workspace`（skills+mcp）；`skill-plugin`（`plugin.yaml` + 仅 `register_skill` 的 `__init__.py` + flat `skills/`；mcp 仍走 workspace） |
-| Confirm | Workspace：`tirith config validate`；skill-plugin：结构校验 + 可选隔离 `hermes plugins list` |
+| Confirm | Workspace：`tirith config validate`；skill-plugin：结构校验（`plugin.yaml` / `register_skill` initializer / skill 目录） |
 
 ## 3. 转换边界
 
@@ -44,7 +44,7 @@
   选择其中的 `register_skill` 能力作为轻量分发面，Canonical 文本能力保持与该边界一致。
 - 分发 skills：`skill-plugin` 生成 `register_skill` 样板 + flat `skills/`；
   mcp/context 仍留在 workspace apply。
-- ACP、Gateway 和 HTTP API 是目标运行接口，不进入 Capability 集合。
+- ACP、Gateway 和 HTTP API 是 Transport/Runtime 面，与 Capability 集合并列。
 - Hermes 自学习、memory、profile 和 session 状态属于 Agent runtime state，通用 Preset
   继续聚焦可迁移 Capability。
 - `cron` 是本 Adapter 的 Agent-specific pass-through 字段；当前 implementation-status

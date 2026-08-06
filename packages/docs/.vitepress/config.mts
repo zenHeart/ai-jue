@@ -101,7 +101,7 @@ const zhDeveloperSidebar = [
         link: "/developer/rfcs/0001-minimal-conversion-model",
       },
       {
-        text: "RFC-0002 Plugin Artifact apply",
+        text: "RFC-0002 Plugin / Bundle Artifact 的 apply 合同",
         link: "/developer/rfcs/0002-plugin-artifact-apply",
       },
     ],

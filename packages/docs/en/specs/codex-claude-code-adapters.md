@@ -176,9 +176,9 @@ forking or renaming it:
 The target CLI SHALL recognize:
 
 ```bash
-jue apply --target codex
-jue apply --target claude-code
-jue apply --target codex --target claude-code
+jue apply --adapter codex
+jue apply --adapter claude-code
+jue apply --adapter codex --adapter claude-code
 ```
 
 Requirements:
@@ -255,7 +255,7 @@ be weakened merely to obtain green output.
 ## 8. Definition of done
 
 - [ ] The complete Adapter contract and implementation agree.
-- [ ] Codex and Claude Code are independently selectable through target `--target`.
+- [ ] Codex and Claude Code are independently selectable through `--adapter`.
 - [x] A locally packed Preset generates usable native project assets for both.
 - [x] Existing Adapters and tests do not regress.
 - [x] No unsupported runtime is added.

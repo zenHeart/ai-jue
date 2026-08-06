@@ -56,10 +56,14 @@ jue-preset-team/
 
 ## 4. 验证和打包
 
+当前 CLI 不提供 Preset 包级校验与打包命令；目标合同 `jue preset
+validate/pack` 尚在规划中（见[实现状态](../developer/implementation-status.md)）。
+发布前可用 `jue validate` 校验当前项目配置（`presets` 数组、预设安装与
+`extends` 路径），并用 `npm pack` 预览包内容：
+
 ```bash
-jue preset validate .
-jue preset inspect .
-jue preset pack .
+jue validate
+npm pack --dry-run
 ```
 
 验证必须覆盖 manifest、Canonical 目录、嵌套依赖、循环、路径穿越、凭据和敏感

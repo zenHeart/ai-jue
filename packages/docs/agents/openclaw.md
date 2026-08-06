@@ -72,4 +72,4 @@ Bundle 映射要点（官方）：
 | --- | --- | --- |
 | Read / Write / Confirm（workspace） | Implemented | JUE-302 |
 | Artifact `compatible-bundle` | Implemented | 委托 Claude/Codex `artifactKind: "plugin"`；安装确认依赖本机 `openclaw` CLI（CI 常 skip） |
-| Native plugin Artifact | Reference | OpenClaw 官方 runtime surface 与 Canonical bundle surface 分开记录 |
+| Native plugin Artifact | Unsupported | 明确不纳入生成（官方 loader 独立处理）；官方 runtime surface 与 Canonical bundle surface 分开记录（非缺口） |

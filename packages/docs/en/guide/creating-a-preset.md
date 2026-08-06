@@ -31,10 +31,16 @@ for shared or third-party content. Put target-private configuration under
 
 ## 4. Validate and package
 
+The current CLI does not provide Preset-package validation or packaging; the
+target contract `jue preset validate/pack` is still planned (see
+[Implementation Status](../developer/implementation-status.md)). Before
+publishing, use `jue validate` to check the current project config (`presets`
+array, preset installation, `extends` paths) and `npm pack` to preview the
+package contents:
+
 ```bash
-jue preset validate .
-jue preset inspect .
-jue preset pack .
+jue validate
+npm pack --dry-run
 ```
 
 Validation covers manifests, Canonical directories, dependency cycles, path

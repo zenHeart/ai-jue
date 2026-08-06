@@ -1,13 +1,15 @@
 # Hermes
 
 > Jue status: Read, Write, and Confirm are Implemented (JUE-303,
-> `packages/ai-jue-adapter-hermes/`). **workspace** ships; optional thin
-> `skill-plugin` (RFC-0002 Phase B) also ships. Official Hermes “plugins” use
-> `plugin.yaml` + Python `register(ctx)` runtime extensions, and the thin Artifact
-> follows that official plugin.yaml surface.
+> `packages/ai-jue-adapter-hermes/`). **workspace** ships as the default for
+> Canonical packs; the optional thin `skill-plugin` (RFC-0002 Phase B) also
+> ships. Official Hermes “plugins” use `plugin.yaml` + Python `register(ctx)`
+> runtime extensions that can bundle skills via `ctx.register_skill`; the thin
+> Artifact follows that official plugin.yaml surface.
 > `capabilities` honestly declare `rules/hooks: "unsupported"`,
 > `commands/agents: "degraded"`, `skills/mcp: "supported"`. Extra `cron`
-> remains outside the six atomic types (see implementation-status).
+> (`cron/jobs.json`) ships as a Hermes-specific pass-through field (see
+> implementation-status).
 >
 > Official sources: [Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins),
 > [Build a Hermes Plugin](https://hermes-agent.nousresearch.com/docs/guides/build-a-hermes-plugin),
@@ -44,7 +46,8 @@ implementation status recorded by the Adapter documentation.
 
 - Hermes general plugins may register Python tools/hooks/commands/platforms;
   `skill-plugin` selects the `register_skill` capability as a lightweight
-  distribution surface for Canonical skills.
+  distribution surface for Canonical skills, keeping the distributed text
+  capabilities aligned with that boundary.
 - To distribute skills: `skill-plugin` generates `register_skill` boilerplate
   plus flat `skills/`; mcp/context stay on workspace apply.
 - ACP, Gateway, and HTTP are Transport/Runtime facets alongside the Capability set.

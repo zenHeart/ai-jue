@@ -61,8 +61,8 @@ Bundle mapping highlights:
 
 ## 3. Conversion boundary
 
-- Workspace MCP remains project-scoped, protecting the user's global
-  `openclaw.json`.
+- Workspace MCP stays outside the project-level Artifact, protecting the
+  user's global `openclaw.json`.
 - `compatible-bundle` reuses the official Claude/Codex
   `artifactKind: "plugin"` layouts.
 - Canonical packs keep the Bundle's narrow trust boundary; the OpenClaw native
@@ -76,4 +76,4 @@ Bundle mapping highlights:
 | --- | --- | --- |
 | Read / Write / Confirm (workspace) | Implemented | JUE-302 |
 | Artifact `compatible-bundle` | Implemented | Delegates to Claude/Codex `artifactKind: "plugin"`; install confirm needs local `openclaw` CLI (often skipped in CI) |
-| Native plugin Artifact | Reference | OpenClaw's official runtime surface is documented separately from Canonical bundles |
+| Native plugin Artifact | Unsupported | Explicitly out of scope (OpenClaw's official loader handles it); official runtime surface documented separately from Canonical bundles (not a gap) |

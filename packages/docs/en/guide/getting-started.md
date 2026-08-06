@@ -43,8 +43,7 @@ The following commands are currently available.
 
 ### CI Check
 
-The target option is Planned. It checks config, Artifact drift, and native
-confirmation:
+The target option is Planned. It checks config and Artifact drift:
 
 ```bash
 npx jue apply --all --check
@@ -60,12 +59,11 @@ npx jue apply --all --watch
 
 ### Create New Preset
 
-The target command is Planned:
-
 ```bash
-npx jue preset create my-preset
+npx jue create-preset my-preset
 ```
 
-Do not use it in automation before implementation. See
+The `jue preset create` author namespace is Planned; do not use it in automation
+before implementation. See
 [Implementation Status](../developer/implementation-status.md) and the
 [Configuration Guide](./configuration-guide.md).

@@ -6,16 +6,16 @@
 > [Implementation Status](../developer/implementation-status.md).
 
 Jue converts Agent-native config into the Canonical DSL and emits target-native
-Artifacts. Every migration is previewed before writes and confirmed by apply.
+Artifacts. Every migration is previewed before writes.
 
 ## 1. User workflow
 
 The intended workflow is:
 
 ```bash
-jue apply --from claude-code --target codex --dry-run
-jue apply --from claude-code --target codex
-jue apply --from claude-code --target codex --check
+jue apply --adapter codex --dry-run
+jue apply --adapter codex
+jue apply --adapter codex --check
 ```
 
 Migration reuses Jue's single conversion pipeline rather than defining another

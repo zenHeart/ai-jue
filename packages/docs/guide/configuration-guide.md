@@ -47,9 +47,9 @@ export default {
 ## 3. 迁移
 
 ```bash
-jue apply --target codex --dry-run
-jue apply --target codex
-jue apply --target codex --check
+jue apply --adapter codex --dry-run
+jue apply --adapter codex
+jue apply --adapter codex --check
 ```
 
 所有 `degraded`、`unsupported` 和 `blocked` 必须在写入

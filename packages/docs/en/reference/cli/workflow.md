@@ -2,60 +2,69 @@
 
 ## `jue init`
 
-```bash
-jue init [--preset <ref>...] [--target <id>...] [--yes]
-```
+`jue init` takes no options. It prompts interactively: whether to create a config file, which preset to use (default `base`), whether to install the preset package via npm/pnpm/yarn, and whether to create the `.ai/` directory structure. It then writes a minimal `ai.config.js` (`ai.config.cjs` in ESM projects).
 
-Creates minimal `ai.config.js` and never silently overwrites existing config.
-Existing package managers install Presets and Extensions.
+If a config already exists, `init` skips creation and prints a warning; it never silently overwrites.
+
+```bash
+jue init
+```
 
 ## `jue apply`
 
 ```bash
-jue apply \
-  [--from <canonical|agent>] \
-  [--target <agent>...] \
-  [--all] \
-  [--artifact <kind> | --artifact-kind <kind>] \
-  [--scope <project|user>] \
-  [--dry-run | --check] \
-  [--approve <action>...] \
-  [--watch]
+jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
+          [--dry-run | --check] [--artifact <kind> | --artifact-kind <kind>]
 ```
 
-One invocation reads and validates input, converts it to the Canonical DSL,
-computes Artifact changes, shows risk, writes, and confirms through a
-target-native read path.
+| Option | Description |
+| --- | --- |
+| `--watch`, `-w` | Re-run apply whenever the config or `.ai/` files change |
+| `--adapter <name>...` | Target specific adapters; repeatable. Accepts aliases like `codex`, `claude`, `claude-code`, `cursor`, `openclaw`, `hermes` |
+| `--all`, `-a` | Apply to every available target in the config |
+| `--frozen` | Require immutable Capability Source references |
+| `--dry-run` | Preview changes without writing; always exits 0 |
+| `--check` | Check configuration, drift, and confirmation availability without writing |
+| `--artifact <kind>`, `--artifact-kind <kind>` | Artifact kind: `project`, `workspace`, `plugin`, `compatible-bundle`, `skill-plugin`, depending on what the adapter supports |
+
+One invocation reads and validates the config, converts it to the Canonical DSL, resolves the plugin manifest, computes changes through the adapter's `write()`, then handles the chosen mode. A failure in any stage must not report success.
 
 | Mode | Writes | Purpose |
 | --- | --- | --- |
-| default | Yes | Apply changes and confirm |
-| `--dry-run` | No | Preview changes, degradation, and approval |
-| `--check` | No | CI check for validity, drift, and confirmation availability |
+| default | Yes | Apply changes atomically |
+| `--dry-run` | No | Preview Artifact changes; always exits 0 |
+| `--check` | No | CI check for configuration, drift, and confirmation availability; non-zero exit if anything is outstanding |
 
-`--from <agent>` imports or migrates from an Agent; conversion still passes
-through the Canonical DSL. Network access, dependency installation, processes,
-and user-level writes require an exact visible action and approval.
+`apply` requires no interactive authorization; use `--dry-run` and `--check` for previews and CI validation. When no config is detected, `apply` asks whether to run `init` first; when no target can be detected, it asks for a manual selection. The misspelled `--adpater` is still accepted and prints a warning.
+
+Exit codes: no change or applied 0, pending or blocked by drift 3, unauthorized 4, rolled back 1. A target scope other than project, or a requested Artifact kind the adapter does not support, exits 2.
 
 ## `jue inspect`
 
 ```bash
-jue inspect \
-  [--capability <id>] \
-  [--preset <id>] \
-  [--extension <id>] \
-  [--target <agent>] \
-  [--artifact <kind> | --artifact-kind <kind>] \
-  [--diagnostics]
+jue inspect [--extension <id>] [--diagnostics]
 ```
 
-Without filters it summarizes configuration, Presets, Capabilities, target
-Adapters, and Artifacts. `--diagnostics` also checks Extension API compatibility,
-npm resolution, permission ceilings, target runtime, ownership conflicts, and
-native confirmation paths. It never writes configuration, locks, or Artifacts.
+`--extension <id>` selects the Extension package to inspect; `--diagnostics` appends diagnostics. Without `--extension`, it prints a warning and exits, with no summary.
+
+`--diagnostics` reports the Extension's npm resolution issues, the capability-support levels of its declared Adapters, and the current project's apply readiness (pending changes, drift conflicts, unauthorized changes). The command never writes configuration, locks, or Artifacts.
 
 ## JSON output
 
-`--json` writes one stable envelope to stdout and logs to stderr. Diagnostics
-include stable `code`, `severity`, `message`, and actionable `remediation`, with
-credentials and personal data removed.
+There is no unified `--json` option. The only command with `--json` is `jue check`, which prints a preset-list JSON to stdout:
+
+```json
+{
+  "presets": [
+    {
+      "preset": "base",
+      "packageName": "jue-preset-base",
+      "installedVersion": "1.0.0",
+      "latestVersion": "1.1.0",
+      "hasUpdate": true
+    }
+  ]
+}
+```
+
+Each entry carries `preset`, `packageName`, `installedVersion` (`"unknown"` when it cannot be resolved), `latestVersion`, and `hasUpdate`. Entries whose npm lookup failed carry no version fields, only `preset`, `packageName`, and `error`.

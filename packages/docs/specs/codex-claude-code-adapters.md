@@ -160,9 +160,9 @@ CLAUDE.md
 目标 CLI 必须识别：
 
 ```bash
-jue apply --target codex
-jue apply --target claude-code
-jue apply --target codex --target claude-code
+jue apply --adapter codex
+jue apply --adapter claude-code
+jue apply --adapter codex --adapter claude-code
 ```
 
 要求：
@@ -237,7 +237,7 @@ git diff --check
 ## 8. 完成定义
 
 - [ ] 完整 Adapter 合同与实现一致。
-- [ ] Codex 与 Claude Code 可通过目标 `--target` CLI 独立选择。
+- [ ] Codex 与 Claude Code 可通过 `--adapter` CLI 独立选择。
 - [x] 本地打包的 Preset 可为两者生成可用的项目原生产物。
 - [x] 现有 Adapter 和测试不回退。
 - [x] 未增加不受支持的运行时。

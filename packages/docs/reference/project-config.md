@@ -85,5 +85,5 @@ Canonical DSL。
 ## 配置发现与错误
 
 Core 只从 `--config` 或 `<cwd>/ai.config.js` 加载项目配置。配置加载失败、
-未知字段、重复 ID、无效 Target、Extension API 不兼容均退出 `2`，且不得部分
+未知字段、重复 ID、无效 Target、Extension API 不兼容均退出 `1`，且不得部分
 执行 `apply`。

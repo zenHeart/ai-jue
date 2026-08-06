@@ -1,6 +1,6 @@
 # RFC-0002: Plugin / Bundle Artifact apply contract
 
-> Status: Accepted · Implemented
+> Status: Implemented
 > Related: Epic [#5](https://github.com/zenHeart/ai-jue/issues/5); [#2](https://github.com/zenHeart/ai-jue/issues/2), [#3](https://github.com/zenHeart/ai-jue/issues/3), [#6](https://github.com/zenHeart/ai-jue/issues/6); R5  
 > Consumer evidence: private composition entry `jue-preset-ai-assets` (ai-assets `presets/personal`)  
 > Official sources (verified 2026-08):  
@@ -78,6 +78,23 @@ Jue content packs.
 Project-local `./.hermes/plugins/` requires `HERMES_ENABLE_PROJECT_PLUGINS=true`.
 Default delivery for Canonical skill packs remains **workspace**.
 
+## Alternatives
+
+### A. Each agent invents its own aggregate directory
+
+High cost; OpenClaw already ships Claude/Codex entry points — reinventing
+them duplicates work. **Rejected.**
+
+### B. Wire Claude/Codex via CLI only; OpenClaw/Hermes never aggregate
+
+Cheapest in the short term, but it wastes OpenClaw's existing `plugins install`
+bundle capability and leaves R5's four-agent aggregation unclosed.
+**Phase 0, not the endpoint.**
+
+### C. Config-first + CLI override; OpenClaw delegates to existing plugin writers; Hermes layered (recommended)
+
+See decision.
+
 ## Decision (Accepted)
 
 **Config-first + CLI override**, with these kinds:
@@ -108,19 +125,54 @@ only loop `register_skill` — never embed Canonical text as executable logic.
 CLI `--artifact-kind` → `targets.*.artifact` → Adapter-owned detection for `auto` → default `project`/`workspace`.
 Unsupported kind fails **before write**.
 
-## Capability honesty (aggregate kinds)
+## Contract
 
-| Canonical | Via Claude bundle (OpenClaw) | Via Codex bundle (OpenClaw) | Hermes skill-plugin |
-| --- | --- | --- | --- |
-| skills | mapped | mapped | `register_skill` |
-| commands | skill roots | degraded | not packed |
-| agents | detect-only | Codex-dependent | not packed |
-| hooks | detect-only | runnable OpenClaw layout | not packed |
-| mcp | embedded merge | embedded merge | workspace only |
-| context.global | usually omitted | usually omitted | workspace only |
+### CLI / ProjectConfig
 
-Detect-only / not-packed must surface as degraded/unsupported or preflight
-warnings — never silent drop.
+```bash
+jue apply --adapter claude-code --artifact-kind plugin
+jue apply --adapter openclaw --artifact-kind compatible-bundle
+jue apply --adapter hermes --artifact-kind skill-plugin
+jue apply --all
+```
+
+```js
+export default {
+  presets: ["ai-assets"],
+  targets: {
+    "claude-code": { artifact: "plugin" },
+    codex: { artifact: "plugin" },
+    openclaw: { artifact: "compatible-bundle" },
+    hermes: { artifact: "workspace" } // or "skill-plugin"
+  },
+  tools: {
+    openclaw: { bundleFormat: "auto" } // "claude" | "codex" | "auto"
+  }
+};
+```
+
+The old Guide example `hermes: { artifact: "auto" }` — Hermes only offers
+`workspace` (plus optional `skill-plugin`), so `auto` resolves to a managed
+artifact, otherwise the single default `workspace`.
+
+### Core
+
+`runCoreAdapter` receives the resolved kind; hardcoding `"project"` is
+forbidden.
+
+### Capability honesty matrix (plugin / skill-plugin)
+
+| Canonical | Claude plugin | Codex plugin | OpenClaw via Claude bundle | OpenClaw via Codex bundle | Hermes skill-plugin |
+| --- | --- | --- | --- | --- | --- |
+| skills | supported | supported | mapped as skills | mapped as skills | `register_skill` |
+| commands | supported | degraded | **skill roots** | degraded/not mapped | not packed |
+| agents | supported | supported (TOML) | **detect-only** | per Codex mapping | not packed |
+| hooks | hooks.json | `.codex/hooks.json` | detect-only | **runnable** (OpenClaw layout) | not packed (Hermes hooks elsewhere) |
+| mcp | .mcp.json | .mcp.json | merged into embedded | merged into embedded | not packed (workspace) |
+| context.global | project-only | project-only | usually omitted | usually omitted | not packed |
+
+Detect-only / not-packed items must surface as `degraded`/`unsupported` or
+apply preflight warnings before export — never a silent drop.
 
 ## Security
 
@@ -137,14 +189,14 @@ Keep the string `compatible-bundle` (already in Guides) with the frozen meaning
 
 ## Acceptance
 
-1. #2: Claude/Codex plugin apply + existing confirm.
+1. #2: Claude/Codex plugin apply; native confirmation is probed via `--check` (the Core path does not invoke confirm).
 2. OpenClaw: `compatible-bundle` installs as `Format: bundle`; hooks use Codex base when needed.
 3. Hermes: thin skill-plugin structure plus structural confirmation evidence; workspace green.
 4. `--all` honors per-adapter `enabled`, `artifact`, and `scope`; illegal kinds and unsupported scopes fail pre-write.
 5. `smoke:preset-local --entry ai-assets` supports artifact mode offline.
 6. Idempotent second apply.
 
-## Open questions (narrowed)
+## Known boundaries (post-implementation)
 
 1. OpenClaw CLI availability across CI; the contract uses install+inspect when present and returns structured `unconfirmed` evidence when absent.
 2. Whether Hermes skill-plugin should add real `hermes plugins install/list` headless evidence.
@@ -157,7 +209,7 @@ Keep the string `compatible-bundle` (already in Guides) with the frozen meaning
 | 1 | #2 | CLI/Core/`targets` | Small |
 | 2 | #3 OpenClaw | Delegate to Claude/Codex writers + confirm | **Small** |
 | 3 | #3 Hermes | Thin skill-plugin generator + structural confirmation | Medium |
-| 5 | #6 | Smoke matrix | Small–medium |
+| 4 | #6 | Smoke matrix | Small–medium |
 | — | Explicitly skip | OpenClaw native plugin; Hermes business Python tools | Avoid large cost |
 
 Link this RFC from implementation issues; do not mark Guide examples as shipped
