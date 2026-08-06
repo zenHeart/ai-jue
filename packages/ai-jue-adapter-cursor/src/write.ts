@@ -57,6 +57,19 @@ export async function write(
         writeContext.cursorTools ?? writeContext.toolsConfig,
       ),
     );
+  } else {
+    // 失败显式化:plugin 布局不产生 AGENTS.md / .cursorignore / settings.json,
+    // 若 canonical 携带这些内容则显式警告,禁止静默丢弃。
+    const dropped = [
+      canonical.context?.global ? "context.global" : null,
+      writeContext.cursorTools ?? writeContext.toolsConfig ? "tools.cursor" : null,
+    ].filter((s): s is string => s !== null);
+    if (dropped.length > 0) {
+      console.warn(
+        `[ai-jue] cursor plugin 布局不写入 ${dropped.join("、")};` +
+          " 这些产物属于 project 布局(.cursor/),请在 project 布局下执行 apply。",
+      );
+    }
   }
 
   if (artifactKind === "plugin" && writeContext.pluginManifest) {

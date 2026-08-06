@@ -5,7 +5,7 @@ import { commands } from "./capabilities/commands";
 import { context } from "./capabilities/context";
 import { readCursorTools } from "./capabilities/cursor-tools";
 import { hooks } from "./capabilities/hooks";
-import { isProjectLayout } from "./capabilities/layout";
+import { detectArtifactKind } from "./capabilities/layout";
 import { mcp } from "./capabilities/mcp";
 import { rules } from "./capabilities/rules";
 import { skills } from "./capabilities/skills";
@@ -15,7 +15,8 @@ export interface ReadContext {
 }
 
 export async function read({ projectRoot }: ReadContext): Promise<CanonicalDocument> {
-  const artifactKind = isProjectLayout(projectRoot) ? "project" : "plugin";
+  // manifest 标记优先于 `.cursor/` 目录检测;两者都没有时回退 project(与 write 默认一致)。
+  const artifactKind = detectArtifactKind(projectRoot) ?? "project";
 
   const canonical = readCapabilities(
     {

@@ -43,4 +43,19 @@ describe("cursor hooks shape", () => {
     expect(content).not.toContain('"version"');
     expect(JSON.parse(content).hooks.postToolUse).toHaveLength(1);
   });
+
+  it("roundtrips canonical hook event names idempotently", async () => {
+    // 回归:EVENT_ALIASES 曾混入 camelCase 键,反向查表把原生
+    // beforeSubmitPrompt/stop 反解为 UserPromptSubmit/Stop,导致 round-trip 非幂等。
+    const canonicalHooks = {
+      UserPromptSubmit: { type: "command", script: "echo a" },
+      Stop: { type: "command", script: "echo b" },
+      BeforeShellExecution: { type: "command", script: "echo c" },
+      WorkspaceOpen: { type: "command", script: "echo d" },
+    };
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-cursor-hooks-idem-"));
+    applyChangesOrThrow(root, hooks("project").write(root, canonicalHooks, "cursor"));
+    const readBack = hooks("project").read(root);
+    expect(Object.keys(readBack ?? {}).sort()).toEqual(Object.keys(canonicalHooks).sort());
+  });
 });

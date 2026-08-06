@@ -40,15 +40,17 @@ export function rules(artifactKind: CursorArtifactKind): CapabilityMapping<Recor
       for (const [name, rawEntry] of Object.entries(value ?? {})) {
         const entry = rawEntry as Record<string, unknown>;
         const body = String(entry.content ?? entry.prompt ?? "").trim();
+        // 与 read 对称:透传 canonical 中除正文外的全部 frontmatter 字段
+        // (description/alwaysApply/globs 及未知字段如 paths),不丢弃。
         const attributes: Record<string, unknown> = {};
-        if (typeof entry.description === "string" && entry.description.trim()) {
-          attributes.description = entry.description.trim();
-        } else {
+        for (const [key, value] of Object.entries(entry)) {
+          if (key === "content" || key === "prompt") continue;
+          attributes[key] = value;
+        }
+        if (typeof attributes.description !== "string" || !attributes.description.trim()) {
           attributes.description = `ai-jue generated rule: ${name}`;
         }
-        if (typeof entry.alwaysApply === "boolean") attributes.alwaysApply = entry.alwaysApply;
-        else attributes.alwaysApply = true;
-        if (Array.isArray(entry.globs) && entry.globs.length > 0) attributes.globs = entry.globs;
+        if (typeof attributes.alwaysApply !== "boolean") attributes.alwaysApply = true;
         const rendered = renderMdc(attributes, body);
         const filePath = path.join(dirPath, `${name}.mdc`);
         const exists = fs.existsSync(filePath);

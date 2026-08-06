@@ -20,6 +20,11 @@ interface CanonicalHookEntry {
   timeout?: number;
 }
 
+/**
+ * Canonical(PascalCase,与 Claude Code hooks 事件名对齐)→ Cursor 原生(camelCase)。
+ * 仅单向定义;反向表由本表派生,因此每个 canonical 名必须映射到唯一原生名
+ * (例如 `UserPromptSubmit` 是原生 `beforeSubmitPrompt` 的 canonical 名)。
+ */
 const EVENT_ALIASES: Record<string, string> = {
   PreToolUse: "preToolUse",
   PostToolUse: "postToolUse",
@@ -31,20 +36,24 @@ const EVENT_ALIASES: Record<string, string> = {
   SubagentStop: "subagentStop",
   UserPromptSubmit: "beforeSubmitPrompt",
   Stop: "stop",
-  beforeShellExecution: "beforeShellExecution",
-  afterShellExecution: "afterShellExecution",
-  beforeMCPExecution: "beforeMCPExecution",
-  afterMCPExecution: "afterMCPExecution",
-  beforeReadFile: "beforeReadFile",
-  afterFileEdit: "afterFileEdit",
-  beforeSubmitPrompt: "beforeSubmitPrompt",
-  afterAgentResponse: "afterAgentResponse",
-  afterAgentThought: "afterAgentThought",
-  workspaceOpen: "workspaceOpen",
+  BeforeShellExecution: "beforeShellExecution",
+  AfterShellExecution: "afterShellExecution",
+  BeforeMCPExecution: "beforeMCPExecution",
+  AfterMCPExecution: "afterMCPExecution",
+  BeforeReadFile: "beforeReadFile",
+  AfterFileEdit: "afterFileEdit",
+  AfterAgentResponse: "afterAgentResponse",
+  AfterAgentThought: "afterAgentThought",
+  WorkspaceOpen: "workspaceOpen",
 };
 
+/** Cursor native (camelCase) event → canonical (PascalCase) event. */
+const NATIVE_TO_CANONICAL: Record<string, string> = Object.fromEntries(
+  Object.entries(EVENT_ALIASES).map(([canonical, native]) => [native, canonical]),
+);
+
 function toCursorEvent(eventName: string): string {
-  return EVENT_ALIASES[eventName] ?? eventName.replace(/^[A-Z]/, (c) => c.toLowerCase());
+  return EVENT_ALIASES[eventName] ?? eventName;
 }
 
 function toCanonicalHooks(
@@ -65,9 +74,8 @@ function toCanonicalHooks(
         type: "command",
       }));
     if (entries.length === 0) continue;
-    const canonicalEvent =
-      Object.entries(EVENT_ALIASES).find(([, cursorName]) => cursorName === eventName)?.[0] ??
-      eventName;
+    // 原生事件名通过反向表映射回 canonical;未知事件显式透传,不做猜测转换。
+    const canonicalEvent = NATIVE_TO_CANONICAL[eventName] ?? eventName;
     canonical[canonicalEvent] = entries.length === 1 ? entries[0] : entries;
   }
   return canonical;
