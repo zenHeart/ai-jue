@@ -1,8 +1,8 @@
 # Codex
 
-> Jue 状态：Read、Write、Artifact（project 与 Plugin 两种）、Confirm 均已实现
-> （JUE-301，`packages/ai-jue-adapter-codex/`）。`capabilities` 如实声明三个
-> 降级边界：`commands: "degraded"`（旧 custom-commands 机制已废弃）、
+> Jue 状态：Read、Write、Artifact（project 与 Plugin 两种）、Confirm 均为
+> Implemented（`packages/ai-jue-adapter-codex/`）。`capabilities` 如实声明三个
+> 降级边界：`commands: "degraded"`（custom-commands 机制已废弃）、
 > `mcp: "degraded"`（MCP 配在 `[mcp_servers.*]` TOML 表里，超出 JSON 工厂
 > 范围）、`rules: "degraded"`（无独立 rules 目录，归入 AGENTS.md）
 >
@@ -39,7 +39,7 @@ commands、tools、MCP config、hooks、assets、apps 和 marketplace metadata�
 
 | 层级 | 状态 | 缺口 |
 | --- | --- | --- |
-| Read | Implemented | JUE-301，`packages/ai-jue-adapter-codex/src/read.ts` |
-| Write | Implemented | JUE-301，`packages/ai-jue-adapter-codex/src/write.ts`，经 Core 执行器驱动，`jue apply --adapter codex --dry-run/--check` 已实测通过 |
+| Read | Implemented | `packages/ai-jue-adapter-codex/src/read.ts` |
+| Write | Implemented | `packages/ai-jue-adapter-codex/src/write.ts`，经 Core 执行器驱动，`jue apply --adapter codex --dry-run/--check` 实测通过 |
 | Artifact | Implemented | project 与 Plugin（`.codex-plugin/plugin.json`）两种已实现 |
 | Confirm | Implemented | Plugin 走真实 `codex plugin marketplace add`/`plugin add`/`plugin list --json`（`scripts/verify-codex-native.js` 可重放）；project 无原生校验工具，如实返回 `unconfirmed`（诚实降级，非缺口） |

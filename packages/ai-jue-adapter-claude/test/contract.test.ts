@@ -3,6 +3,7 @@ import path from "path";
 import { execFileSync } from "child_process";
 import { defineAdapterContractSuite } from "ai-jue-core/testkit";
 import type { CanonicalDocument } from "ai-jue-core";
+import { hasCli } from "../../ai-jue-core/test/has-cli";
 import { read } from "../src/read";
 import { write } from "../src/write";
 
@@ -57,6 +58,9 @@ const SYNTHETIC_CANONICAL: CanonicalDocument = {
 };
 
 function claudePluginValidateStrict(root: string): void {
+  // GitHub Actions runners (and many CI images) do not ship the Claude Code CLI.
+  // Structural read/write contract coverage still runs; native validate is local-only.
+  if (!hasCli("claude")) return;
   const result = execFileSync("claude", ["plugin", "validate", root, "--strict"], { encoding: "utf8" });
   if (!result.includes("Validation passed")) {
     throw new Error(`claude plugin validate --strict did not pass:\n${result}`);

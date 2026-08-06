@@ -1,34 +1,33 @@
 # 跨 Agent 迁移
 
 > [!WARNING]
-> 本页定义目标合同。先以 headless Claude Code 完成 Reference Extension 闭环，
-> 再开放其他 Agent 迁移；当前状态见
+> 本页定义目标合同；实现状态见
 > [实现状态](../developer/implementation-status.md)。
 
 Jue 将不同 Agent DSL 收敛为 Canonical，再生成目标 Agent 的原生产物。迁移过程
-先预览、后写入，并在同一次执行中用目标 Agent 确认。
+先预览、后写入。
 
 ## 1. 用户工作流
 
 理想使用路径：
 
 ```bash
-jue apply --from claude-code --target codex --dry-run
-jue apply --from claude-code --target codex
-jue apply --from claude-code --target codex --check
+jue apply --adapter codex --dry-run
+jue apply --adapter codex
+jue apply --adapter codex --check
 ```
 
-迁移复用 Jue 唯一的转换流水线，不引入独立命令域；在对应实现落地前，以
-[Agent 支持画像](../agents/) 的状态为准。
+迁移复用 Jue 唯一的转换流水线，不引入独立命令域；各 Agent 支持状态见
+[Agent 支持画像](../agents/)。
 
 ### 自动发现
 
-未指定来源或目标时，Jue 检查项目中的 manifest、配置目录和目标 CLI。检测结果
+未指定目标时，Jue 检查项目中的 manifest、配置目录和目标 CLI。检测结果
 必须展示给用户；存在多个候选或不确定来源时只预览，不自动写入。
 
 ### 变化预览
 
-计划至少包含：
+预览至少包含：
 
 - 检测到的来源和目标；
 - 将读取与写入的路径；
@@ -80,7 +79,7 @@ review Preset
 └── Hermes Adapter      → Hermes skill/config/plugin
 ```
 
-上图表达理想交付能力，不代表所有目标已经实现。当前状态见各 Agent 页面。
+各 Agent 交付形态见 [Agent 支持画像](../agents/)。
 
 ## 4. 幂等和共存
 

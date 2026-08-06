@@ -1,0 +1,8 @@
+---
+description: Neutral style rule
+alwaysApply: true
+globs:
+  - src/**/*.ts
+---
+
+Use two spaces for indentation.

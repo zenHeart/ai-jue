@@ -1,10 +1,5 @@
 # Project Configuration Guide
 
-> [!WARNING]
-> This page defines the target contract. `targets`, Artifact selection, and the
-> migration commands below are not fully implemented. See
-> [Implementation Status](../developer/implementation-status.md).
-
 Most projects select Presets and targets:
 
 ```js
@@ -29,5 +24,6 @@ Auto Artifact selection prefers an inspected existing Artifact, then the Target
 default, and otherwise fails with candidates. Detection never performs an
 implicit install, network, process, or user-level write.
 
-Use `jue apply --dry-run`, `jue apply`, and `jue apply --check`; review all
-degraded, unsupported, and blocked results before writing.
+Use `jue apply --adapter codex --dry-run`, `jue apply --adapter codex`, and
+`jue apply --adapter codex --check`; review all degraded, unsupported, and
+blocked results before writing. See [Cross-Agent Migration](migration.md).

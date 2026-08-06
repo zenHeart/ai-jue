@@ -26,7 +26,7 @@ Command metadata lives in `commands/*/prompt.md` frontmatter.
 ## 3. Self-bootstrap runbook
 
 1. Configure root `ai.config.js` with `presets: ["internal"]`.
-2. Run the currently available `npx jue apply --all`.
+2. Run `npx jue apply --all`.
 3. Inspect generated files and prove zero diff on the second run.
 4. Do not call generated files the source of truth; Preset and Canonical inputs are.
 

@@ -27,6 +27,9 @@ function toNativeMcp(canonical: CanonicalMcp): { mcpServers: Record<string, any>
   const projectScoped: Record<string, any> = {};
   for (const [name, server] of Object.entries(canonical.servers)) {
     const scope = server.scope ?? "project";
+    // Matches the JSDoc above: `user`/`local` servers are intentionally
+    // skipped, never dropped by an exception — a user-scope server must not
+    // block the whole project Artifact.
     if (scope !== "project") continue;
     const { scope: _scope, ...rest } = server;
     projectScoped[name] = rest;

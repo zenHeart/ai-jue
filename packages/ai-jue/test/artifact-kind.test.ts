@@ -1,0 +1,227 @@
+import { describe, expect, it } from "vitest";
+import {
+  resolveArtifactKind,
+  resolvePluginManifest,
+  resolveBundlePluginManifest,
+  isTargetEnabled,
+  resolveTargetSelection,
+  UnsupportedArtifactKindError,
+} from "../src/artifact-kind";
+
+describe("resolveArtifactKind", () => {
+  it("defaults to project/workspace with no CLI or targets", () => {
+    expect(resolveArtifactKind({ adapterName: "ai-jue-adapter-claude" })).toBe("project");
+    expect(resolveArtifactKind({ adapterName: "codex" })).toBe("project");
+    expect(resolveArtifactKind({ adapterName: "openclaw" })).toBe("workspace");
+    expect(resolveArtifactKind({ adapterName: "hermes" })).toBe("workspace");
+  });
+
+  it("lets CLI --artifact plugin mean installable pack with low cognitive load", () => {
+    expect(
+      resolveArtifactKind({ adapterName: "claude-code", cliArtifact: "plugin" }),
+    ).toBe("plugin");
+    expect(resolveArtifactKind({ adapterName: "codex", cliArtifact: "plugin" })).toBe("plugin");
+    expect(resolveArtifactKind({ adapterName: "openclaw", cliArtifact: "plugin" })).toBe(
+      "compatible-bundle",
+    );
+  });
+
+  it("honors targets.<adapter>.artifact when CLI is omitted", () => {
+    expect(
+      resolveArtifactKind({
+        adapterName: "ai-jue-adapter-claude",
+        config: { targets: { "claude-code": { artifact: "plugin" } } },
+      }),
+    ).toBe("plugin");
+    expect(
+      resolveArtifactKind({
+        adapterName: "openclaw",
+        config: { targets: { openclaw: { artifact: "compatible-bundle" } } },
+      }),
+    ).toBe("compatible-bundle");
+  });
+
+  it("lets CLI override targets", () => {
+    expect(
+      resolveArtifactKind({
+        adapterName: "codex",
+        cliArtifact: "project",
+        config: { targets: { codex: { artifact: "plugin" } } },
+      }),
+    ).toBe("project");
+  });
+
+  it('lets "auto" reuse an Adapter-detected managed Artifact', () => {
+    expect(
+      resolveArtifactKind({
+        adapterName: "codex",
+        cliArtifact: "auto",
+        existingArtifactKind: "plugin",
+      }),
+    ).toBe("plugin");
+    expect(
+      resolveArtifactKind({
+        adapterName: "openclaw",
+        config: { targets: { openclaw: { artifact: "auto" } } },
+        existingArtifactKind: "compatible-bundle",
+      }),
+    ).toBe("compatible-bundle");
+  });
+
+  it("maps Hermes plugin to skill-plugin", () => {
+    expect(resolveArtifactKind({ adapterName: "hermes", cliArtifact: "plugin" })).toBe(
+      "skill-plugin",
+    );
+    expect(
+      resolveArtifactKind({ adapterName: "hermes", cliArtifact: "skill-plugin" }),
+    ).toBe("skill-plugin");
+    expect(() =>
+      resolveArtifactKind({ adapterName: "hermes", cliArtifact: "compatible-bundle" }),
+    ).toThrow(UnsupportedArtifactKindError);
+  });
+
+  it("maps Cursor plugin/workspace aliases onto project/plugin", () => {
+    expect(resolveArtifactKind({ adapterName: "cursor", cliArtifact: "plugin" })).toBe("plugin");
+    expect(resolveArtifactKind({ adapterName: "cursor", cliArtifact: "bundle" })).toBe("plugin");
+    expect(resolveArtifactKind({ adapterName: "cursor", cliArtifact: "workspace" })).toBe(
+      "project",
+    );
+    expect(resolveArtifactKind({ adapterName: "cursor" })).toBe("project");
+  });
+
+  it("rejects an unimplemented kind for an unknown adapter", () => {
+    // Unknown adapters default to project; any other kind is unsupported.
+    expect(resolveArtifactKind({ adapterName: "unknown-adapter" })).toBe("project");
+    expect(() =>
+      resolveArtifactKind({ adapterName: "unknown-adapter", cliArtifact: "plugin" }),
+    ).toThrow(UnsupportedArtifactKindError);
+  });
+});
+
+describe("target selection", () => {
+  it("preserves enabled=false for --all filtering without entering Canonical", () => {
+    const config = {
+      targets: {
+        "claude-code": { enabled: false, scope: "project" as const },
+        codex: { enabled: true },
+      },
+    };
+    expect(isTargetEnabled(config, "ai-jue-adapter-claude")).toBe(false);
+    expect(isTargetEnabled(config, "ai-jue-adapter-codex")).toBe(true);
+    expect(resolveTargetSelection(config, "ai-jue-adapter-claude")).toEqual({
+      enabled: false,
+      scope: "project",
+    });
+  });
+});
+
+describe("resolvePluginManifest", () => {
+  it("prefers tools.<adapter>.pluginManifest", () => {
+    expect(
+      resolvePluginManifest(
+        {
+          presets: ["ai-assets"],
+          tools: { claude: { pluginManifest: { name: "my-pack", version: "2.0.0" } } },
+        },
+        "claude",
+      ),
+    ).toEqual({
+      name: "my-pack",
+      version: "2.0.0",
+      description: undefined,
+      author: { name: "ai-jue" },
+    });
+  });
+
+  it("honors an explicit tools.<adapter>.pluginManifest.author", () => {
+    expect(
+      resolvePluginManifest(
+        {
+          presets: ["ai-assets"],
+          tools: {
+            claude: {
+              pluginManifest: { name: "my-pack", version: "2.0.0", author: { name: "Jane Doe" } },
+            },
+          },
+        },
+        "claude",
+      ),
+    ).toEqual({
+      name: "my-pack",
+      version: "2.0.0",
+      description: undefined,
+      author: { name: "Jane Doe" },
+    });
+  });
+
+  it("falls back to preset name", () => {
+    expect(resolvePluginManifest({ presets: ["jue-preset-ai-assets"] }, "codex")).toEqual({
+      name: "ai-assets",
+      version: "0.1.0",
+      description: "Generated by ai-jue from preset jue-preset-ai-assets",
+      author: { name: "ai-jue" },
+    });
+  });
+
+  it("always provides a Codex Plugin identity even without a Preset name", () => {
+    expect(resolvePluginManifest({}, "codex")).toEqual({
+      name: "jue-plugin",
+      version: "0.1.0",
+      description: "Generated by ai-jue",
+      author: { name: "ai-jue" },
+    });
+  });
+
+  it("always includes an author so claude plugin validate --strict does not warn", () => {
+    // RFC-0002's native confirmation path (`claude plugin validate --strict`)
+    // treats a missing author as a failure, not just a warning.
+    const manifest = resolvePluginManifest({ presets: ["jue-preset-ai-assets"] }, "claude");
+    expect(manifest?.author?.name).toBeTruthy();
+  });
+});
+
+describe("resolveBundlePluginManifest", () => {
+  it("resolves one global identity so delegate writers never diverge", () => {
+    // Claude, Codex and OpenClaw(compatible-bundle) all emit the same
+    // `.claude-plugin/plugin.json` / `.codex-plugin/plugin.json` pair in one
+    // project root; the identity must therefore be a single deterministic
+    // value regardless of which Adapter asks. Claude's key wins, then
+    // Codex's, then the requesting Adapter's own — so every Adapter in the
+    // run writes the same manifest and re-runs are idempotent (RFC-0002
+    // acceptance criterion 6).
+    const config = {
+      tools: {
+        claude: { pluginManifest: { name: "cc-pack", version: "1.0.0" } },
+        codex: { pluginManifest: { name: "cx-pack", version: "1.0.0" } },
+        openclaw: { pluginManifest: { name: "oc-pack", version: "1.0.0" } },
+      },
+    };
+    expect(resolveBundlePluginManifest(config, "openclaw")?.name).toBe("cc-pack");
+    expect(resolveBundlePluginManifest(config, "codex")?.name).toBe("cc-pack");
+  });
+
+  it("honors the Codex key when Claude has none", () => {
+    const config = {
+      tools: {
+        codex: { pluginManifest: { name: "cx-pack", version: "1.0.0" } },
+        openclaw: { pluginManifest: { name: "oc-pack", version: "1.0.0" } },
+      },
+    };
+    expect(resolveBundlePluginManifest(config, "openclaw")?.name).toBe("cx-pack");
+    expect(resolveBundlePluginManifest(config, "codex")?.name).toBe("cx-pack");
+  });
+
+  it("falls back to preset-derived identity when no tool key is configured", () => {
+    expect(resolveBundlePluginManifest({ presets: ["jue-preset-team"] }, "openclaw")?.name).toBe(
+      "team",
+    );
+  });
+
+  it("always resolves an identity for empty config via the Codex fallback", () => {
+    // resolvePluginManifest has no claude/codex branch default for empty
+    // config, but the Codex key always provides jue-plugin — so a bundle
+    // with no identity configuration is still deterministic.
+    expect(resolveBundlePluginManifest({}, "claude")?.name).toBe("jue-plugin");
+    expect(resolveBundlePluginManifest({}, "openclaw")?.name).toBe("jue-plugin");
+  });
+});

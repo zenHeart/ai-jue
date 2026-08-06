@@ -1,9 +1,5 @@
 # 项目配置指南
 
-> [!WARNING]
-> 本页定义目标合同。`targets`、Artifact 选择和下方迁移命令尚未全部实现；当前
-> 可用状态见[实现状态](../developer/implementation-status.md)。
-
 大多数项目只需要选择 Preset 和目标 Agent：
 
 ```js
@@ -43,9 +39,9 @@ export default {
 ## 3. 迁移
 
 ```bash
-jue apply --target codex --dry-run
-jue apply --target codex
-jue apply --target codex --check
+jue apply --adapter codex --dry-run
+jue apply --adapter codex
+jue apply --adapter codex --check
 ```
 
 所有 `degraded`、`unsupported` 和 `blocked` 必须在写入

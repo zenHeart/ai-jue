@@ -1,20 +1,24 @@
 .specstory/**
 .specstory/
-.agents/
 .DS_Store
 node_modules
 dist/
 cache
 
-# AI-JUE generated files
+# AI-JUE generated files (repo-root only — do NOT ignore adapter fixtures
+# under packages/*/fixtures/**/.claude or **/.agents)
 /CLAUDE.md
 /GEMINI.md
 /.gemini/
-/.cursor/
+# Cursor local state; keep shared agent rules tracked
+/.cursor/*
+!/.cursor/rules/
+!/.cursor/rules/**
+/.claude/
+/.agents/
 .turbo
 **/.turbo/
 **/.turbo/turbo-build.log
-.claude
 
 # local-only security blocklist (never commit real identifiers)
 .security/blocklist.local.txt

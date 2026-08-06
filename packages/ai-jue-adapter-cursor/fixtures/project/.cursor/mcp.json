@@ -1,0 +1,12 @@
+{
+  "mcpServers": {
+    "demo": {
+      "command": "node",
+      "args": ["server.js"],
+      "type": "stdio",
+      "env": {
+        "TOKEN": "${DEMO_TOKEN}"
+      }
+    }
+  }
+}

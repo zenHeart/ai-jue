@@ -124,6 +124,25 @@ describe('loadConfig', () => {
         expect(logger.error).toHaveBeenCalledWith(expect.stringContaining('Unknown top-level capability field "bugbot"'));
     });
 
+    it('should accept targets.<adapter>.artifact selection', async () => {
+        searchMock.mockResolvedValue({
+            config: {
+                presets: ['ai-assets'],
+                targets: {
+                    'claude-code': { artifact: 'plugin' },
+                    openclaw: { artifact: 'compatible-bundle' },
+                    hermes: { artifact: 'workspace' },
+                },
+            },
+        });
+        const config = await loadConfig();
+        expect(config.targets).toEqual({
+            'claude-code': { artifact: 'plugin' },
+            openclaw: { artifact: 'compatible-bundle' },
+            hermes: { artifact: 'workspace' },
+        });
+    });
+
     it.each(['commands', 'rules', 'skills', 'agents'])(
         'should reject %s capabilities without an executable body',
         (section) => {

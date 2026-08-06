@@ -1,13 +1,12 @@
 # Capability Author Command
 
-Use `jue inspect --capability <id>` for queries. The namespace retains only the
-author operation that changes the external-reference lock:
+The `jue capability` namespace retains only the author operation that changes
+the external-reference lock:
 
 ```bash
-jue capability update [<id>] [--dry-run]
+jue capability update [<id>]
 ```
 
 It resolves `file:`, exact `npm:`, or pinned `github:` references and atomically
-updates `ai-jue.lock`. `--dry-run` shows version, content hash, and lock diff;
-`--frozen` forbids updates; `--offline` requires trusted cache. It never
-implicitly runs `apply`.
+updates `ai-jue.lock`. Omitting the ID updates every reference; a failed update
+exits with code 1. It never implicitly runs `apply`.

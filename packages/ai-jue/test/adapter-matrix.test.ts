@@ -38,6 +38,8 @@ describe('adapter contract matrix', () => {
       },
       skills: {
         review: {
+          name: 'review',
+          description: 'Review skill',
           prompt: 'Review skill',
           references: {
             'protocol/roles/reviewer.md': '# Reviewer role',
@@ -77,7 +79,7 @@ describe('adapter contract matrix', () => {
         cursor: { temperature: 0.3 },
       },
       agents: {
-        reviewer: { prompt: 'Review changes', skills: ['review'] },
+        reviewer: { description: 'Reviewer', prompt: 'Review changes', skills: ['review'] },
       },
     };
 
@@ -198,6 +200,8 @@ describe('adapter contract matrix', () => {
     expect(cursorStyleRule).toContain('alwaysApply: true');
     expect(cursorCommand).toContain('Run test suite');
     expect(cursorCommand).toContain('/test');
+    expect(cursorSkill).toMatch(/^---\n/);
+    expect(cursorSkill).toContain('name: review');
     expect(cursorSkill).toContain('Review skill');
     expect(
       fs.readFileSync(
@@ -227,11 +231,13 @@ describe('adapter contract matrix', () => {
         ),
       ),
     ).toEqual(Buffer.from([0, 255, 10, 128]));
-    expect(cursorHooks.PostToolUse.matcher).toBe('Edit|Write');
-    expect(cursorHooks.PostToolUse.async).toBe(true);
-    expect(cursorHooks.PostToolUse.timeout).toBe(30);
+    expect(cursorHooks.version).toBe(1);
+    expect(cursorHooks.hooks.postToolUse[0].matcher).toBe('Edit|Write');
+    expect(cursorHooks.hooks.postToolUse[0].async).toBe(true);
+    expect(cursorHooks.hooks.postToolUse[0].timeout).toBe(30);
+    expect(cursorAgent).toMatch(/^---\n/);
     expect(cursorAgent).toContain('Review changes');
-    expect(cursorAgent).toContain('- review');
+    expect(cursorMcp.mcpServers.sqlite.type).toBe('stdio');
     expect(cursorMcp.mcpServers.sqlite.autoApprove).toEqual(['read']);
     expect(cursorSettings.temperature).toBe(0.3);
     expect(claudeSettings.permissions.allow).toEqual(['Read']);

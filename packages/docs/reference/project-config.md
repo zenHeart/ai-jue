@@ -1,8 +1,9 @@
 # 项目配置 Reference
 
-> [!WARNING]
-> 本页定义目标合同。`targets`、`extensions` 与完整 Artifact 选择尚未全部实现；
-> 当前可用状态见[实现状态](../developer/implementation-status.md)。
+> [!NOTE]
+> `targets.<adapter>` 的 `artifact`、`enabled` 与 `scope` 参与 apply 选择流程（与 CLI
+> `--artifact` 组合）。Artifact scope 以 project 执行路径为准；
+> local/user 选择会在写入前返回明确的 scope 错误。
 
 项目唯一配置文件是根目录 `ai.config.js`。它选择 Preset、Extension 和 Target，并
 提供项目最高优先级覆盖；Preset 包的 `package.json#ai` 是另一种容器，见
@@ -53,12 +54,12 @@ export default {
 
 | 字段 | 类型 | 默认值 | 规则 |
 | --- | --- | --- | --- |
-| `enabled` | `boolean` | `true` | `false` 时不参与 `--all` |
+| `enabled` | `boolean` | `true` | `false` 时跳过自动发现与 `--all`；显式 `--adapter` 仍按用户选择执行 |
 | `artifact` | `string \| "auto"` | `"auto"` | 必须由 Adapter 声明 |
-| `scope` | `"project" \| "local" \| "user"` | `"project"` | user 写入需授权 |
+| `scope` | `"project" \| "local" \| "user"` | `"project"` | `project` 使用当前 Artifact 根；local/user 选择在写入前返回 scope 错误 |
 
-`auto` 优先选择已被 Jue 管理的现有 Artifact，其次选择 Adapter 唯一默认值；仍
-不唯一时 `apply` 在写入前失败并列出候选。
+`auto` 先调用 Adapter 的布局检测复用已被 Jue 管理的现有 Artifact，再选择 Adapter
+唯一默认值；检测结果进入 Artifact 转换环境，不进入 Canonical DSL。
 
 ## Extension 加载
 
@@ -84,5 +85,5 @@ Canonical DSL。
 ## 配置发现与错误
 
 Core 只从 `--config` 或 `<cwd>/ai.config.js` 加载项目配置。配置加载失败、
-未知字段、重复 ID、无效 Target、Extension API 不兼容均退出 `2`，且不得部分
+未知字段、重复 ID、无效 Target、Extension API 不兼容均退出 `1`，且不得部分
 执行 `apply`。

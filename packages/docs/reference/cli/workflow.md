@@ -2,78 +2,73 @@
 
 ## `jue init`
 
-创建最小 `ai.config.js`：
+`jue init` 不带任何选项，交互式创建最小 `ai.config.js`（ESM 项目为 `ai.config.cjs`）。它依次询问：是否创建配置文件、使用哪个 preset（默认 `base`）、是否通过 npm/pnpm/yarn 安装该 preset 包、是否创建 `.ai/` 目录结构。
+
+已有配置时跳过创建，只输出警告，不会静默覆盖。
 
 ```bash
-jue init [--preset <ref>...] [--target <id>...] [--yes]
+jue init
 ```
-
-已有配置时不得静默覆盖。Preset 与 Extension 都由现有包管理器安装；`init` 可以
-输出安装建议，但不重复实现包管理。
 
 ## `jue apply`
 
 把 Canonical DSL 收敛为目标 Agent Artifact：
 
 ```bash
-jue apply \
-  [--from <canonical|agent>] \
-  [--target <agent>...] \
-  [--all] \
-  [--artifact <kind>] \
-  [--scope <project|user>] \
-  [--dry-run | --check] \
-  [--approve <action>...] \
-  [--watch]
+jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
+          [--dry-run | --check] [--artifact <kind> | --artifact-kind <kind>]
 ```
 
-一次执行内部完成：读取与校验输入、转换为 Canonical DSL、计算 Artifact 差异、
-展示风险、写入、再通过目标原生读取路径确认。任何阶段失败都不得报告成功。
+| 选项 | 说明 |
+| --- | --- |
+| `--watch`, `-w` | 监听配置与 `.ai/` 变更，变更后重新执行 apply |
+| `--adapter <name>...` | 指定目标 adapter，可多次传入；接受 `codex`、`claude`、`claude-code`、`cursor`、`openclaw`、`hermes` 等别名 |
+| `--all`, `-a` | 应用配置中的全部可用目标 |
+| `--frozen` | 要求 Capability Source 引用不可变 |
+| `--dry-run` | 预览变更，不写入，恒退出 0 |
+| `--check` | 检查配置、漂移与确认能力，不写入 |
+| `--artifact <kind>`, `--artifact-kind <kind>` | 指定 Artifact kind：`project`、`workspace`、`plugin`、`compatible-bundle`、`skill-plugin`，依 adapter 支持范围而定 |
+
+一次执行内部完成：读取并校验配置，转换为 Canonical DSL，解析 plugin manifest，由 adapter 的 `write()` 计算变更，再按模式处理。任何阶段失败都不得报告成功。
 
 | 模式 | 是否写入 | 用途 |
 | --- | --- | --- |
-| 默认 | 是 | 应用差异并确认 |
-| `--dry-run` | 否 | 展示 Artifact 变化、降级和所需授权 |
-| `--check` | 否 | CI 中检查配置、漂移和确认能力；任一不满足即非零退出 |
+| 默认 | 是 | 原子应用变更 |
+| `--dry-run` | 否 | 预览 Artifact 变化，恒退出 0 |
+| `--check` | 否 | CI 中检查配置、漂移与确认能力，任一不满足即非零退出 |
 
-`--from <agent>` 用于导入或跨 Agent 迁移；所有转换仍经过 Canonical DSL。
-`--all` 使用配置中的全部目标。涉及联网、安装依赖、启动进程或用户级写入时，
-必须展示精确动作，并由 `--approve` 或交互确认授权。
+apply 不要求交互授权确认，预览与 CI 校验使用 `--dry-run` 与 `--check`。未检测到配置时 apply 会询问是否先运行 init，无法自动识别目标时会交互选择。拼写错误的 `--adpater` 仍被接受并显示警告。
 
-`--watch` 只重复安全的项目级收敛，不得自动批准新的副作用。
+退出码：无变更或已应用 0，待定或漂移冲突 3，未授权 4，回滚 1。目标 scope 非 project 或请求了 adapter 不支持的 Artifact kind 时退出码 2。
 
 ## `jue inspect`
 
 只读解释 Jue 解析到的事实：
 
 ```bash
-jue inspect \
-  [--capability <id>] \
-  [--preset <id>] \
-  [--extension <id>] \
-  [--target <agent>] \
-  [--artifact <kind>] \
-  [--diagnostics]
+jue inspect [--extension <id>] [--diagnostics]
 ```
 
-无筛选条件时显示配置、Preset、Capability、目标 Adapter 和 Artifact 摘要。
-`--diagnostics` 额外检查 Extension API 兼容性、npm 包解析、权限上限、目标运行
-环境、所有权冲突和目标确认路径。该命令不得写配置、lock 或 Artifact。
+`--extension <id>` 指定要检查的 Extension 包，`--diagnostics` 追加诊断。不指定 `--extension` 时只输出一条警告并结束，不输出任何摘要。
+
+`--diagnostics` 报告 Extension 的 npm 解析问题、其声明 adapter 的能力支持级别，以及当前项目 apply 的就绪状态（待定变更、漂移冲突、未授权变更计数）。该命令不写配置、lock 或 Artifact。
 
 ## JSON 输出
 
-`--json` 向 stdout 输出单一 envelope，日志写 stderr：
+没有统一的 `--json` 选项。唯一带 `--json` 的是 `jue check`（检查预设安装版本），输出预设清单 JSON 到 stdout：
 
 ```json
 {
-  "schemaVersion": "1",
-  "command": "apply",
-  "mode": "dry-run",
-  "status": "success",
-  "data": {},
-  "diagnostics": []
+  "presets": [
+    {
+      "preset": "base",
+      "packageName": "jue-preset-base",
+      "installedVersion": "1.0.0",
+      "latestVersion": "1.1.0",
+      "hasUpdate": true
+    }
+  ]
 }
 ```
 
-诊断必须有稳定 `code`、`severity`、`message` 和可执行 `remediation`，且不得包含
-凭据或未脱敏用户信息。
+每个条目包含 `preset`、`packageName`、`installedVersion`（无法解析时为 `"unknown"`）、`latestVersion`、`hasUpdate`。npm 查询失败的条目不含版本字段，只含 `preset`、`packageName` 和 `error`。

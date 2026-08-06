@@ -47,6 +47,10 @@ Developer 状态和契约测试。新增概念必须通过 RFC 证明六概念�
 统一使用 `> [!WARNING]` 标记并链接实现状态；可运行示例只能使用已实现能力。
 实现完成后必须删除对应 Warning。
 
+可导航页面还必须同步 `packages/docs/.vitepress/config.mts`（中英文侧栏/导航）
+与 `packages/ai-jue/test/docs-contract.test.ts`；RFC 另需清单行与 RFCs 侧栏项。
+仅新增 Markdown 会产生孤儿 URL。
+
 稳定文档只描述当前合同。被否决或删除的方案只保留在 RFC 决策历史，不以否定句
 回流到 README、Guide、Architecture、Specification、Reference 或 Agent profile。
 如果删除一句话不影响读者完成操作、实现或验收，该句应删除。

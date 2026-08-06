@@ -12,8 +12,8 @@
    共同使用的标准结构。
 3. [外部 Capability 引用](capability-source.md)：定义 Preset 如何通过
    `ai.capabilities` 引用规范目录。
-4. [Codex / Claude Code Adapter](codex-claude-code-adapters.md)：定义当前
-   优先运行时的原生产物和验证边界。
+4. [Codex / Claude Code Adapter](codex-claude-code-adapters.md)：定义 Codex
+   与 Claude Code 的原生产物和验证边界。
 
 Extension 实现者遵循
 [Adapter 标准](../architecture/adapter-standardization.md)、

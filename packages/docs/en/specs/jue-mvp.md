@@ -40,12 +40,14 @@ The MVP must complete one real and repeatably verifiable loop:
 2. Jue loads nested skill resources from the Preset without loss.
 3. Jue converges the Preset, project `.ai/`, and `ai.config.js` into one
    Canonical Model.
-4. The Claude Code Reference Extension generates native output and headless
+4. The Claude Code Reference Extension (a reference-implementation extension:
+   the first Adapter integration) generates native output and headless
    Claude Code confirms it through a real read or execution path.
-5. The same input passes dry-run, Core apply, confirm, check, and a zero-diff
-   second apply.
+5. The same input passes `apply --dry-run`, `apply`, `apply --check`, and a
+   zero-diff second `apply`.
 6. The Claude loop produces a reusable Extension skeleton and contract tests;
-   other Agents migrate in parallel only after that Scale Gate passes.
+   other Agents migrate in parallel only after that Scale Gate (extension gate:
+   the Claude loop verified stable) passes.
 
 ## 3. Canonical Capability set
 
@@ -69,7 +71,7 @@ least two Agents.
 
 For how a Preset references third-party Capability content from GitHub, npm,
 URL, or local sources and converts it into the Canonical Model, see the
-[external Capability reference specification](capability-source.md). It adds a reference
+[external Capability reference specification](capability-source.md). It defines a reference
 protocol without changing the Capability set above.
 
 ## 4. Preset directory contract
@@ -89,8 +91,7 @@ package.json
 ```
 
 `mcp.json` uses the Canonical `{"servers": {...}}` shape. It is isomorphic to
-the `mcp` field in `ai.config.js` and does not introduce a second MCP
-representation.
+the `mcp` field in `ai.config.js`.
 
 All nested files under a Skill's `references/`, `scripts/`, and `assets/` must
 preserve their relative paths. Jue must not silently lose capability resources

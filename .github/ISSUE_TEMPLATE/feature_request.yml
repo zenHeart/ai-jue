@@ -1,35 +1,93 @@
 name: Feature request
-about: Suggest an idea for this project
-title: '[FEAT] '
-labels: enhancement
-assignees: ''
-
+description: Propose a user-visible capability that does not change public contracts alone
+title: "[FEAT] "
+labels: ["enhancement"]
 body:
   - type: markdown
     attributes:
       value: |
-        Suggest an idea for this project!
+        Use this for implementable features. If the change alters Canonical, Adapter Artifact kinds,
+        Extension API, or apply selection semantics, open/link an
+        [RFC](https://github.com/zenHeart/ai-jue/blob/main/packages/docs/developer/rfcs/index.md) first
+        (or file an Adapter gap issue and attach an RFC draft).
   - type: textarea
     id: problem
     attributes:
-      label: Is your feature request related to a problem? Please describe.
-      description: A clear and concise description of what the problem is. Ex. I'm always frustrated when [...]
+      label: Problem / user story
+      description: Who needs this and why? Prefer "As … I want … so that …".
+      placeholder: As a maintainer of a private final Preset I want to apply it as plugins so agents can install capabilities without hand-copying project files.
+    validations:
+      required: true
+  - type: textarea
+    id: goals
+    attributes:
+      label: Goals
+      description: Concrete outcomes that must be true when this ships.
+    validations:
+      required: true
+  - type: textarea
+    id: non-goals
+    attributes:
+      label: Non-goals
+      description: Explicitly out of scope for this issue.
+    validations:
+      required: true
+  - type: dropdown
+    id: adapters
+    attributes:
+      label: Primary adapters / surfaces
+      multiple: true
+      options:
+        - CLI / Core
+        - claude-code
+        - codex
+        - openclaw
+        - hermes
+        - Preset / Capability source
+        - Docs / smoke
+    validations:
+      required: true
+  - type: dropdown
+    id: artifact-kinds
+    attributes:
+      label: Artifact kinds involved
+      multiple: true
+      options:
+        - project
+        - workspace
+        - plugin
+        - compatible-bundle
+        - skill-plugin
     validations:
       required: true
   - type: textarea
     id: solution
     attributes:
-      label: Describe the solution you'd like
-      description: A clear and concise description of what you want to happen.
+      label: Proposed solution
+      description: Include CLI flags, config fields, and key file paths an implementer should touch.
     validations:
       required: true
   - type: textarea
-    id: alternatives
+    id: acceptance
     attributes:
-      label: Describe alternatives you've considered
-      description: A clear and concise description of any alternative solutions or features you've considered.
+      label: Acceptance criteria
+      description: Commands and checks a later agent can run. Prefer smoke / contract tests.
+      placeholder: |
+        - [ ] `jue apply --adapter claude-code --artifact-kind plugin` produces valid plugin layout
+        - [ ] `npm run smoke:preset-local -- --entry ai-assets …` passes offline
+    validations:
+      required: true
   - type: textarea
-    id: additional-context
+    id: references
     attributes:
-      label: Additional Context
-      description: Add any other context or screenshots about the feature request here.
+      label: References
+      description: RFC links, related issues, docs paths, prior art.
+  - type: checkboxes
+    id: validations
+    attributes:
+      label: Checks
+      options:
+        - label: I checked implementation-status and existing issues/RFCs
+          required: true
+        - label: If this changes a public contract, an RFC is linked or drafted
+          required: true

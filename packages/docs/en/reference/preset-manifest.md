@@ -30,8 +30,14 @@ At least one directory Capability, Preset, or Capability reference is required.
 
 ## `CapabilityRef`
 
-Requires `source` (`file:`, `npm:`, or `github:`) and `type` (`skill`, `agent`,
-`command`, `rule`, `hook`, or `mcp`); optional `ref`, `path`, and `integrity`.
+| Field | Required | Type |
+| --- | --- | --- |
+| `source` | Yes | `file:` / `npm:` / `github:` |
+| `type` | Yes | `skill` / `agent` / `command` / `rule` / `hook` / `mcp` |
+| `ref` | Conditional | Git ref |
+| `path` | No | Relative path inside the source |
+| `integrity` | No | Subresource Integrity hash |
+
 Each reference is one Capability leaf. It neither expands Presets nor returns a
 Capability collection.
 

@@ -79,9 +79,20 @@ Done! `ai-jue` generates tool files automatically:
 
 ```
 ✓ CLAUDE.md / .claude/*              — Claude Code
-✓ AGENTS.md / .cursor/*              — Cursor
-✓ AGENTS.md / .codex/*               — Codex CLI
+✓ AGENTS.md / .cursor/*              — Cursor (project, default)
+✓ AGENTS.md / .codex/*               — Codex CLI (project)
 ```
+
+To generate a **distributable Plugin** (Claude / Codex / Cursor):
+
+```bash
+npx jue apply --adapter cursor --artifact plugin
+npx jue apply --adapter claude-code --artifact plugin
+npx jue apply --adapter codex --artifact plugin
+```
+
+Cursor Plugin output includes `.cursor-plugin/plugin.json` plus root-level `rules/`, `skills/`, etc. See
+[`packages/ai-jue-adapter-cursor/fixtures/README.md`](packages/ai-jue-adapter-cursor/fixtures/README.md) for local loading steps.
 
 ---
 
@@ -183,7 +194,7 @@ npx jue apply --all --watch
 ai.config.js          →  Load Presets & Merge Config  →  Adapter Plugins Generate Files
 ┌──────────────┐       ┌───────────────────┐    ┌─────────────────────────┐
 │ presets: ['base']│ → │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md + .claude/* │
-│ mcp: {...}    │      │  (Micro-kernel)    │    │ adapter-cursor → AGENTS.md + .cursor/* │
+│ mcp: {...}    │      │  (Micro-kernel)    │    │ adapter-cursor → AGENTS.md + .cursor/* (project) or Plugin tree (--artifact plugin) │
 │ commands: {}  │      │  Merge & Normalize │    │ adapter-codex  → AGENTS.md + .codex/*  │
 └──────────────┘       └───────────────────┘    └─────────────────────────────────────────┘
                                                 └─────────────────────────────────┘
@@ -199,13 +210,14 @@ The target CLI uses one conversion flow. Planned behavior is tracked in
 ```bash
 npx jue init              # Interactive configuration initialization
 npx jue inspect           # Read-only discovery (Planned)
-npx jue apply --target codex --dry-run # Preview changes (Implemented for Claude/Codex/OpenClaw/Hermes via the Core executor; Cursor not yet wired)
+npx jue apply --target codex --dry-run # Preview changes (Implemented for Claude/Codex/Cursor/OpenClaw/Hermes via the Core executor)
 npx jue apply --target codex # Target contract; currently Partial
 npx jue apply -a          # Apply all discovered adapters (same as --all)
 npx jue apply             # Auto-detect adapters from existing tool footprints
+npx jue apply --adapter cursor --artifact plugin  # Generate a distributable Cursor Plugin
 npx jue apply --lang zh   # Runtime language override (same as AI_JUE_LANG=zh)
 npx jue apply --all --watch  # Watch and re-apply with explicit adapters
-npx jue apply --target codex --check # CI and native confirmation (Implemented for Claude/Codex/OpenClaw/Hermes; Cursor not yet wired)
+npx jue apply --target codex --check # CI and native confirmation (Implemented for Claude/Codex/Cursor/OpenClaw/Hermes)
 npx jue inspect --extension <pkg> --diagnostics # Deep diagnostics (Implemented, requires --extension; bare inspect without it is still Planned)
 npx jue capability update # Update external external Capability references
 npx jue preset create <n> # Create a Preset project (Planned)

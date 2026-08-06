@@ -226,19 +226,31 @@ This is additive, not replace semantics.
 
 ### 5.2 Cursor
 
+#### 5.2.1 Project
+
 - `context.global` -> root `AGENTS.md`
 - `rules` -> `.cursor/rules/*.mdc`
 - `commands` -> `.cursor/commands/*.md`
 - `skills` -> `.cursor/skills/*/SKILL.md`
 - `agents` -> `.cursor/agents/*.md`
-- `hooks` -> `.cursor/hooks.json`
+- `hooks` -> `.cursor/hooks.json` (`{ version: 1, hooks }`)
 - `mcp.servers` -> `.cursor/mcp.json`
+- target-specific settings -> `tools.cursor` -> `.cursor/settings.json`, ignore files
+
+#### 5.2.2 Plugin
+
+- manifest -> `.cursor-plugin/plugin.json` (`name` required; `variables` is target-private passthrough)
+- `rules` -> `rules/*.mdc`
+- `commands` -> `commands/*.md`
+- `skills` -> `skills/*/SKILL.md`
+- `agents` -> `agents/*.md`
+- `hooks` -> `hooks/hooks.json` (`{ hooks }`, no `version`)
+- `mcp.servers` -> root `mcp.json`
+
+Plugins omit `context.global` and project-only `tools.cursor` settings.
 
 ## 6. Validation Policy
 
 - invalid shared structure should fail in core validation
 - adapters must not silently invent unsupported top-level capabilities
 - unsupported target-tool features must be degraded explicitly, not ignored silently
-
-Legacy `prompts` is not Canonical. Migration tooling may explicitly convert it
-to `commands`, `rules`, or `context.global`; normal config validation rejects it.

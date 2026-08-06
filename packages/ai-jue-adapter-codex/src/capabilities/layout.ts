@@ -20,8 +20,10 @@ export function isProjectLayout(root: string): boolean {
   );
 }
 
-export function detectArtifactKind(root: string): CodexArtifactKind {
-  return fs.existsSync(path.join(root, ".codex-plugin", "plugin.json"))
-    ? "plugin"
-    : "project";
+export function detectArtifactKind(root: string): CodexArtifactKind | undefined {
+  if (fs.existsSync(path.join(root, ".codex-plugin", "plugin.json"))) {
+    return "plugin";
+  }
+  if (isProjectLayout(root)) return "project";
+  return undefined;
 }

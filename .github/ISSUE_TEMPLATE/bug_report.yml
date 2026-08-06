@@ -1,58 +1,86 @@
 name: Bug report
-about: Create a report to help us improve
-title: '[BUG] '
-labels: bug
-assignees: ''
-
+description: Report incorrect behavior in CLI, Core, Preset resolution, or an Adapter
+title: "[BUG] "
+labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
-        Thanks for taking the time to fill out this bug report!
+        Thanks for the report. Prefer a minimal reproduction with a real adapter and artifact kind.
+        Contract-level design changes belong in an [RFC](https://github.com/zenHeart/ai-jue/blob/main/packages/docs/developer/rfcs/index.md), not a bug.
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options:
+        - CLI (`jue apply` / `init` / `inspect`)
+        - Core / ArtifactChange executor
+        - Preset / Capability resolution
+        - Adapter: claude-code
+        - Adapter: codex
+        - Adapter: openclaw
+        - Adapter: hermes
+        - Adapter: other
+        - Docs / smoke scripts
+        - Unknown
+    validations:
+      required: true
+  - type: dropdown
+    id: artifact-kind
+    attributes:
+      label: Artifact kind in use
+      options:
+        - project
+        - workspace
+        - plugin
+        - compatible-bundle
+        - skill-plugin
+    validations:
+      required: true
   - type: textarea
     id: description
     attributes:
-      label: Bug Description
-      description: A clear and concise description of what the bug is.
+      label: Bug description
+      description: What went wrong? Include expected vs actual in one short paragraph if possible.
     validations:
       required: true
   - type: textarea
     id: reproduction
     attributes:
-      label: Steps to Reproduce
-      description: |
-        Steps to reproduce the behavior:
-        1. Go to '...'
-        2. Click on '....'
-        3. Scroll down to '....'
-        4. See error
+      label: Steps to reproduce
+      description: Prefer commands a later agent can re-run offline.
       placeholder: |
-        1. npx jue init
-        2. ...
+        1. npm pack / install local presets …
+        2. ai.config.js presets: ['ai-assets']
+        3. npx jue apply --adapter codex --artifact-kind plugin
+        4. Observe …
     validations:
       required: true
   - type: textarea
-    id: expected-behavior
+    id: expected
     attributes:
-      label: Expected Behavior
-      description: A clear and concise description of what you expected to happen.
+      label: Expected behavior
     validations:
       required: true
-  - type: textarea
-    id: screenshots
-    attributes:
-      label: Screenshots
-      description: If applicable, add screenshots to help explain your problem.
   - type: input
     id: environment
     attributes:
       label: Environment
-      description: OS, Node.js version, ai-jue version, etc.
-      placeholder: OS: macOS, Node: v20.0.0, ai-jue: v1.2.0
+      description: OS, Node, ai-jue version/commit, target agent CLI version if relevant
+      placeholder: "macOS, Node 22, ai-jue @ main, claude 2.x"
     validations:
       required: true
   - type: textarea
-    id: additional-context
+    id: paths
     attributes:
-      label: Additional Context
-      description: Add any other context about the problem here.
+      label: Relevant paths / logs
+      description: File paths, exit codes, redacted logs. Never paste tokens or secrets.
+  - type: checkboxes
+    id: validations
+    attributes:
+      label: Checks
+      options:
+        - label: I searched existing issues for duplicates
+          required: true
+        - label: This report contains no secrets, tokens, or raw PII
+          required: true

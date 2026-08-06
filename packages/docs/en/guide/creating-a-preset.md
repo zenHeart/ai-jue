@@ -31,10 +31,13 @@ for shared or third-party content. Put target-private configuration under
 
 ## 4. Validate and package
 
+Before publishing, use `jue validate` to check the project config (`presets`
+array, preset installation, `extends` paths) and `npm pack` to preview the
+package contents:
+
 ```bash
-jue preset validate .
-jue preset inspect .
-jue preset pack .
+jue validate
+npm pack --dry-run
 ```
 
 Validation covers manifests, Canonical directories, dependency cycles, path

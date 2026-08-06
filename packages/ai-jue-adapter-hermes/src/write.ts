@@ -3,24 +3,46 @@ import type { ArtifactChange, CanonicalDocument } from "ai-jue-core";
 import { context } from "./capabilities/context";
 import { cron } from "./capabilities/cron";
 import { mcp } from "./capabilities/mcp";
+import { writeSkillPlugin } from "./capabilities/skill-plugin";
 import { skills } from "./capabilities/skills";
 
 export interface WriteContext {
   projectRoot: string;
+  /** Defaults to `"workspace"`. `skill-plugin` emits a thin installable skill pack. */
+  artifactKind?: string;
+  toolsConfig?: Record<string, unknown>;
+  pluginManifest?: { name: string; version: string; description?: string };
 }
 
 const TARGET = "hermes";
 
 /**
- * Hermes Adapter's write: thin composition; routes through
- * `core-executor.ts` `applyChangesOrThrow` (no bespoke apply/rollback
- * mechanism — Core executes `ArtifactChange` per the JUE-103 contract).
- * Same honest-stance map as read.
+ * Hermes Adapter write (RFC-0002):
+ * - workspace: MEMORY.md / skills/<cat>/<name> / config.yaml mcp / cron
+ * - skill-plugin: plugin.yaml + __init__.py + flat skills/ (skills only)
  */
 export async function write(
   canonical: CanonicalDocument,
   writeContext: WriteContext,
 ): Promise<ArtifactChange[]> {
+  const kind = writeContext.artifactKind ?? "workspace";
+
+  if (kind === "skill-plugin" || kind === "plugin") {
+    return writeSkillPlugin(canonical, writeContext.projectRoot, writeContext.pluginManifest);
+  }
+  if (kind === "compatible-bundle") {
+    throw new Error(
+      'Hermes does not use OpenClaw-style "compatible-bundle". ' +
+        "Use --artifact skill-plugin (or plugin) for a thin skill pack, " +
+        "or omit --artifact for workspace apply (skills + mcp).",
+    );
+  }
+  if (kind !== "workspace" && kind !== "project") {
+    throw new Error(
+      `Hermes adapter does not support artifact kind "${kind}". Supported: workspace, skill-plugin.`,
+    );
+  }
+
   const result = writeCapabilities(
     {
       hooks: { read: () => undefined, write: () => [] },

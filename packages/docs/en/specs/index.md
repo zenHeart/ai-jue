@@ -15,10 +15,10 @@ design rationale and runtime flow, start with
 3. [External Capability references](capability-source.md) defines how
    a Preset references canonical directories through `ai.capabilities`.
 4. [Codex / Claude Code Adapter](codex-claude-code-adapters.md)
-   defines native outputs and verification boundaries for the prioritized
-   runtimes.
+   defines native outputs and verification boundaries for Codex and
+   Claude Code.
 
-Extensions have no duplicate Specification. Implementers follow the
+Implementers follow the
 [Adapter standard](../architecture/adapter-standardization.md),
 [Extension API](../reference/extension-api.md).
 

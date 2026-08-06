@@ -2,6 +2,7 @@ import path from "path";
 import { vi } from "vitest";
 import { defineAdapterContractSuite } from "ai-jue-core/testkit";
 import type { CanonicalDocument } from "ai-jue-core";
+import { hasCli } from "../../ai-jue-core/test/has-cli";
 import { confirm } from "../src/confirm";
 import { read } from "../src/read";
 import { write } from "../src/write";
@@ -88,6 +89,8 @@ defineAdapterContractSuite({
         },
       },
       confirmNatively: async (root) => {
+        // GitHub Actions / CI images usually lack the Codex CLI.
+        if (!hasCli("codex")) return;
         const result = await confirm([], { projectRoot: root, artifactKind: "plugin" });
         if (result.status !== "confirmed") {
           throw new Error(`expected Codex confirm() to be 'confirmed', got status="${result.status}" evidence=${result.evidence ?? ""}`);

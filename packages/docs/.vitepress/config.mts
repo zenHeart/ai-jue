@@ -52,6 +52,7 @@ const zhArchitectureSidebar = [
       { text: "支持画像", link: "/agents/" },
       { text: "Claude Code", link: "/agents/claude-code" },
       { text: "Codex", link: "/agents/codex" },
+      { text: "Cursor", link: "/agents/cursor" },
       { text: "OpenClaw", link: "/agents/openclaw" },
       { text: "Hermes", link: "/agents/hermes" },
     ],
@@ -99,6 +100,10 @@ const zhDeveloperSidebar = [
       {
         text: "RFC-0001 最小转换模型",
         link: "/developer/rfcs/0001-minimal-conversion-model",
+      },
+      {
+        text: "RFC-0002 Plugin / Bundle Artifact 的 apply 合同",
+        link: "/developer/rfcs/0002-plugin-artifact-apply",
       },
     ],
   },
@@ -158,6 +163,7 @@ const enArchitectureSidebar = [
       { text: "Support Profiles", link: "/en/agents/" },
       { text: "Claude Code", link: "/en/agents/claude-code" },
       { text: "Codex", link: "/en/agents/codex" },
+      { text: "Cursor", link: "/en/agents/cursor" },
       { text: "OpenClaw", link: "/en/agents/openclaw" },
       { text: "Hermes", link: "/en/agents/hermes" },
     ],
@@ -214,6 +220,10 @@ const enDeveloperSidebar = [
       {
         text: "RFC-0001 Minimal Conversion Model",
         link: "/en/developer/rfcs/0001-minimal-conversion-model",
+      },
+      {
+        text: "RFC-0002 Plugin Artifact apply",
+        link: "/en/developer/rfcs/0002-plugin-artifact-apply",
       },
     ],
   },

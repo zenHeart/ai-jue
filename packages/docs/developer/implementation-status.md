@@ -4,14 +4,16 @@
 >
 > 当前实现主线：R1（Claude）与 R2（Scale Gate）已完成；R3 并行迁移
 > （Codex、OpenClaw、Hermes）与 R4 的 JUE-401 可移植子集矩阵均已完成，详见
-> delivery-plan.md。下一步是 R4 剩余任务（JUE-402 两两交叉转换起）。
+> delivery-plan.md。RFC-0002：`jue apply --artifact` / `targets.*.artifact` 已接线；
+> OpenClaw `compatible-bundle` 与 Hermes thin `skill-plugin` 已落地（见 Agent 画像）。
+> 下一步是 R4 剩余任务（JUE-402 两两交叉转换起）。
 
 ## CLI
 
 | 理想命令 | 状态 | 当前事实 | 下一步 |
 | --- | --- | --- | --- |
 | `jue init` | 部分实现 | 已有交互初始化 | 对齐最小配置与非覆盖合同 |
-| `jue apply` | 部分实现 | Claude、Codex、OpenClaw、Hermes 均已导出 `write()`，`isCoreCapableAdapter()` 据此自动接入 Core 执行器：`--dry-run`/`--check`/apply 均按退出码表工作，原子执行与二次 apply 零差异已验证（`jue apply --adapter codex --dry-run/--check` 实测退出码 0/3）；仓库内唯一还只导出 `generate()`、未接入 `--dry-run/--check` 的是 Cursor（`packages/ai-jue-adapter-cursor/`）。Gemini/Copilot 目前没有对应的 `packages/ai-jue-adapter-*` 包，不在此表范围内 | 为 Cursor 补齐 `write()` 后接入同一 Core 执行器 |
+| `jue apply` | 部分实现 | Claude、Codex、Cursor、OpenClaw、Hermes 均已导出 `write()` 并支持 project/workspace 与 Plugin 类 Artifact（Cursor `--artifact plugin` 已实现）；Core `--dry-run`/`--check`/apply 均按退出码表工作。Gemini/Copilot 目前没有对应的 `packages/ai-jue-adapter-*` 包 | 补齐 `jue inspect` 筛选 |
 | `jue inspect` | 部分实现 | `--extension <path> --diagnostics` 已实现：只读报告已加载 Adapter 的 `id`/`capabilities`，若 cwd 有项目配置则额外报告真实 apply 就绪状态（JUE-203） | 实现 `--capability`/`--preset`/`--target`/`--artifact` 筛选 |
 | `jue capability update` | 已实现 | 支持单项/全部来源更新 | 保持 lock 与安全合同 |
 | `jue preset create/validate/pack` | 部分实现 | 历史命令分散 | 收敛到作者命名空间 |
@@ -25,7 +27,8 @@
 | Agent | 读取为 Canonical DSL | 写出 Artifact | 目标原生确认 |
 | --- | --- | --- | --- |
 | Claude Code | 已实现 | 已实现 | 已实现（`confirm()` 已导出并组装为 `defineExtension()`，JUE-203；Plugin 走真实 `claude plugin validate --strict`，project 无原生校验工具故如实返回 `unconfirmed`） |
-| Codex | 已实现 | 已实现 | 已实现（`packages/ai-jue-adapter-codex/`，JUE-301）——能力声明如实标注三个"不支持"边界：`commands: "degraded"`（Codex 旧 custom-commands 机制已废弃，见 JUE-104/105/JUE-301 Phase 1）、`mcp: "degraded"`（Codex MCP 配在 `[mcp_servers.*]` TOML 表里，超出 JSON 工厂范围）、`rules: "degraded"`（无独立 rules 目录，rules 归入 AGENTS.md 通过 `context` 映射实现）。原生确认：Codex 0.145.0 无 `codex plugin validate`，用真实 `codex plugin marketplace add <local> --marketplace <name>` + `codex plugin add <name> --marketplace <name>` + `codex plugin list --json`（隔离 CODEX_HOME）确认 Plugin 真被 codex 装上、出现在 inventory 且 `installed: true, enabled: true`，是 Codex 0.145.0 提供的最强原生确认路径。`scripts/verify-codex-native.js`（可重放）跑完整 read→write→applyChangesOrThrow→confirm 链路，对真实 codex 0.145.0 验证通过 |
+| Codex | 已实现 | 已实现 | 已实现（`packages/ai-jue-adapter-codex/`，JUE-301）——能力声明如实标注三个"不支持"边界：`commands: "degraded"`（Codex 旧 custom-commands 机制已废弃，见 JUE-104/105/JUE-301 Phase 1）、`mcp: "degraded"`（plugin 形态写根级 `.mcp.json`；project 形态保持 TOML 降级，配在 `.codex/config.toml` 的 `[mcp_servers.*]` 表里）、`rules: "degraded"`（无独立 rules 目录，rules 归入 AGENTS.md 通过 `context` 映射实现）。原生确认：Codex 0.145.0 无 `codex plugin validate`。`confirm()` 对非 plugin 形态立即返回 `unconfirmed`；plugin 形态走真实 `codex plugin marketplace add <local>` + `codex plugin add <name> --marketplace <name>` + `codex plugin list --json`（隔离 CODEX_HOME），确认 Plugin 真被 codex 装上、出现在 inventory 且 `installed: true, enabled: true`，是 Codex 0.145.0 提供的最强原生确认路径。`scripts/verify-codex-native.js`（可重放）以 `artifactKind: "project"` 调用 `confirm()`，只验证了 read/write/confirm 函数在本机可加载运行、project 形态返回 `unconfirmed` 的代码路径，未调用真实 codex CLI |
+| Cursor | 已实现 | 已实现 | 已实现（`packages/ai-jue-adapter-cursor/`）——project 与 Plugin 两种 Artifact；Skills/Subagents/Commands 保留 frontmatter；Project hooks 使用 `{ version: 1, hooks }`、Plugin hooks 使用 `{ hooks }`；MCP 命令型 server 自动补 `type: "stdio"`；`variables` 经 `tools.cursor.pluginManifest` 透传。`confirm()` 无官方 headless 校验，project/plugin 均返回 `unconfirmed`（plugin 附带结构证据） |
 | OpenClaw | 已实现 | 已实现 | 已实现（`packages/ai-jue-adapter-openclaw/`，JUE-302）——`capabilities` 公开声明 `rules/commands/agents/mcp: "degraded"` 四个真实的"unsupported"边界（OpenClaw 无 per-workspace `commands/`/`agents/`/`rules/` 目录，`openclaw agents add/list/delete` 管理 user home 下的隔离 workspace；MCP 全局唯一在 `openclaw.json` 上），仅 `skills`/`hooks` 是 `supported`（`~/.openclaw/workspace-jue-probe/` 已实测确认的 `skills/<name>/SKILL.md` + `hooks/<name>/HOOK.md+handler.js` 形式）。原生确认走真实 `openclaw --profile jue-302-verify-<pid>-<ts> config validate --json`（隔离 `--profile` 防全局污染，实测通过），独立脚本 `scripts/verify-openclaw-native.js` 跑。**已发现并记录 openclaw 0.145.0 的一个怪癖**：`spawnSync`/`execFileSync` 在 vitest worker 里调 `openclaw config validate --json` 会产生空 stdout（手工 shell 调用正常），所以合同套件里**不**调用 `confirmNatively`（按 honest-degraded 原则），把真实原生确认放到了独立脚本里。`npm test`（285 通过，新增 5 项） |
 | Hermes | 已实现 | 已实现 | 已实现（`packages/ai-jue-adapter-hermes/`，JUE-303）——`capabilities` 如实标注 `rules: "unsupported"`、`hooks: "unsupported"`（真实安装的 `~/.hermes/hooks/` 为空目录，证据不足）、`commands: "degraded"`、`agents: "degraded"`（均为 no-op 直通，`config.yaml` 同名块是全局运行时策略）、`skills: "supported"`、`mcp: "supported"`。原生确认：真实 `tirith config validate <projectRoot>`（`tirith` 二进制，隔离临时 `HOME`），`scripts/verify-hermes-native.js` 可重放，但需要真实 `tirith` 二进制在 `PATH` 上。修正三处真实实现 bug：①`confirm.ts` 此前把可执行文件名与参数拼成一个字符串传给 `execFileSync(cmd, options)`——`execFileSync` 从不调用 shell 分词，会把整个含空格的字符串当作字面可执行文件名，无论 `tirith` 是否存在都必然 `ENOENT`；已改为 `execFileSync("tirith", ["config", "validate", projectRoot], options)`。②`capabilities/skills.ts` 的 `write()` 此前对不含 `<category>/<name>` 斜杠的 Canonical skill key 直接抛错——但 Canonical 的 `skills` schema 就是无格式约束的 `record(string, SkillSchema)`，任何来自 Claude/Codex/OpenClaw 风格 Preset 的扁平 key（这三者的原生 skills 目录都是一层）都会让 `jue apply --adapter hermes` 直接崩溃；已改为无斜杠时回退到 `general` 分类而不是拒绝，真实 `ai-assets` 仓库（27 个 agent、9 个 skill）以此验证通过。③同一文件里 `references` 附件文件名此前要求单一安全路径段，遇到嵌套路径（如 `references/nested/guide.md`，Claude/Codex 的 `bundleKeys` 机制支持这种嵌套）会拒绝写入；已复用 `ai-jue-core` 已导出的 `resolveSupportFilePath`（与其余 Adapter 的 `directoryPerItem` 工厂同一份防路径穿越逻辑）允许安全的嵌套子目录。另有一个未决架构问题：Adapter 在 `CanonicalDocumentSchema` 上新增了 `cron` 字段（`cron/jobs.json` 整文件直通），不属于六类原子 Capability 中的任何一类，是否需要正式收编（第七类原子 Capability，或改走 `tools.hermes` target-private 字段）尚未经 RFC 决定，见下方"尚未实现的关键合同" |
 
@@ -399,16 +402,27 @@
   `npm install -D ai-jue-adapter-hermes` 与一次错误的 apply；已改为
   `MEMORY.md`，与其余 Adapter 探测文件（如 `CLAUDE.md`）的特异性对齐。
 
+## Cursor 后续工作
+
+[JUE-304](delivery-plan.md) 已完成 Cursor project/plugin 正反转。下列 GitHub Issues 为**独立后续任务**——Agent 开工前必须阅读 issue 全文（含 Acceptance criteria 与 Implementation notes）：
+
+| Issue | 任务 |
+| --- | --- |
+| [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json` 生成 |
+| [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw compatible-bundle 第三基底：Cursor 布局 |
+| [#10](https://github.com/zenHeart/ai-jue/issues/10) | adapter-creator 双布局文档 |
+| [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + 安全合同 |
+
+详见 [`agents/cursor.md` §5](../agents/cursor.md#5-后续工作github-issues)。
+
 ## 尚未实现的关键合同
 
 - `resolveFinalConfig` 仍返回混合 ProjectConfig 字段的 `MergedConfig`，不是
   `CanonicalDocument`；`jue apply` 对 Core 执行器路径都在各自入口内单独调用
   `toCanonicalDocument(config)`，尚未让 `resolveFinalConfig` 本身统一产出
-  `CanonicalDocument` 供全部 Adapter 共用。Claude/Codex/OpenClaw/Hermes 现均
-  已导出 `write()` 并接入 Core 执行器；仓库内仍直接消费 `MergedConfig`
-  （`generate()`）、未经过 Core 执行器、也未接入 `--dry-run/--check` 的只剩
-  Cursor——这是 Cursor 补齐 `write()` 时才会解决的范围，不是 JUE-108 遗留。
-- Hermes Adapter（JUE-303）在 `CanonicalDocumentSchema` 上新增了一个 `cron`
+  `CanonicalDocument` 供全部 Adapter 共用。Claude/Codex/Cursor/OpenClaw/Hermes
+  现均已导出 `write()` 并接入 Core 执行器（Cursor project + plugin，[JUE-304](delivery-plan.md)）。
+- Hermes Adapter（[JUE-303](delivery-plan.md)）在 `CanonicalDocumentSchema` 上新增了一个 `cron`
   字段（`packages/ai-jue-core/src/canonical-document.ts`，`cron/jobs.json`
   整文件直通），不属于本文件其余各处反复强调"冻结"的六类原子 Capability
   （`rule`/`command`/`skill`/`agent`/`hook`/`mcp`）之一。这是先诚实暴露一个

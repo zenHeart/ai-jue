@@ -39,11 +39,11 @@ npx jue apply --all
 
 ## 4. 常用命令
 
-以下命令当前可用。
+以下命令可用。
 
 ### CI 检查
 
-目标命令为 Planned。它同时检查配置、Artifact 漂移和目标确认：
+检查配置与 Artifact 漂移：
 
 ```bash
 npx jue apply --all --check
@@ -57,12 +57,8 @@ npx jue apply --all --watch
 
 ### 创建新预设
 
-目标命令为 Planned：
-
 ```bash
-npx jue preset create my-preset
+npx jue create-preset my-preset
 ```
 
-实现前不要在自动化中调用。完整状态见
-[实现状态](../developer/implementation-status.md)，详细配置见
-[配置指南](./configuration-guide.md)。
+详细配置见 [配置指南](./configuration-guide.md)。

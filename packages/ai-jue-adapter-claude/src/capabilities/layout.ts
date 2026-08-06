@@ -15,6 +15,15 @@ export function isProjectLayout(root: string): boolean {
   return fs.existsSync(path.join(root, ".claude"));
 }
 
+/** Return a managed layout only when the root contains an unambiguous marker. */
+export function detectArtifactKind(root: string): ArtifactKind | undefined {
+  if (isProjectLayout(root)) return "project";
+  if (fs.existsSync(path.join(root, ".claude-plugin", "plugin.json"))) {
+    return "plugin";
+  }
+  return undefined;
+}
+
 /** Where per-capability component directories live for a given layout. */
 export function componentRoot(root: string, artifactKind: ArtifactKind): string {
   return artifactKind === "project" ? path.join(root, ".claude") : root;

@@ -223,19 +223,31 @@ mcp?: {
 
 ### 5.2 Cursor
 
+#### 5.2.1 Project
+
 - `context.global` -> 根目录 `AGENTS.md`
 - `rules` -> `.cursor/rules/*.mdc`
 - `commands` -> `.cursor/commands/*.md`
 - `skills` -> `.cursor/skills/*/SKILL.md`
 - `agents` -> `.cursor/agents/*.md`
-- `hooks` -> `.cursor/hooks.json`
+- `hooks` -> `.cursor/hooks.json`（`{ version: 1, hooks }`）
 - `mcp.servers` -> `.cursor/mcp.json`
+- target-specific settings -> `tools.cursor` → `.cursor/settings.json`、ignore 文件
+
+#### 5.2.2 Plugin
+
+- manifest -> `.cursor-plugin/plugin.json`（`name` 必需；`variables` 为 target-private 透传）
+- `rules` -> `rules/*.mdc`
+- `commands` -> `commands/*.md`
+- `skills` -> `skills/*/SKILL.md`
+- `agents` -> `agents/*.md`
+- `hooks` -> `hooks/hooks.json`（`{ hooks }`，无 `version`）
+- `mcp.servers` -> 根目录 `mcp.json`
+
+Plugin 不含 `context.global` 与 `tools.cursor` project 设置面。
 
 ## 6. 校验策略
 
 - 无效的共享结构必须在 core 校验中失败。
 - Adapter 不得静默发明不受支持的顶层 Capability。
 - 目标工具不支持的能力必须明确降级，不得静默忽略。
-
-历史 `prompts` 不是 Canonical 字段，只允许迁移工具把它显式转换为
-`commands`、`rules` 或 `context.global`；正常配置校验必须拒绝它。

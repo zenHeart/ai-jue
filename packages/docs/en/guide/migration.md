@@ -1,26 +1,25 @@
 # Cross-Agent Migration
 
 > [!WARNING]
-> This page defines the target contract. Complete the headless Claude Code
-> Reference Extension loop before opening other Agent migrations. See
+> This page defines the target contract. See
 > [Implementation Status](../developer/implementation-status.md).
 
 Jue converts Agent-native config into the Canonical DSL and emits target-native
-Artifacts. Every migration is previewed before writes and confirmed by apply.
+Artifacts. Every migration is previewed before writes.
 
 ## 1. User workflow
 
 The intended workflow is:
 
 ```bash
-jue apply --from claude-code --target codex --dry-run
-jue apply --from claude-code --target codex
-jue apply --from claude-code --target codex --check
+jue apply --adapter codex --dry-run
+jue apply --adapter codex
+jue apply --adapter codex --check
 ```
 
 Migration reuses Jue's single conversion pipeline rather than defining another
-command namespace. Consult
-[Agent support profiles](../agents/) until each command is implemented.
+command namespace. See [Agent support profiles](../agents/) for per-Agent
+support status.
 
 Detection identifies manifests, configuration directories, and target CLIs.
 Ambiguous detection produces a preview only.
@@ -70,7 +69,7 @@ review Preset
 └── Hermes Adapter      → Hermes skill/config/plugin
 ```
 
-This is the intended delivery model, not a claim that every target is implemented.
+See [Agent support profiles](../agents/) for each Agent's delivery shape.
 
 ## 4. Idempotency and coexistence
 

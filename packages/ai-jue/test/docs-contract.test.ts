@@ -50,6 +50,7 @@ describe("documentation contract", () => {
       "index.md",
       "claude-code.md",
       "codex.md",
+      "cursor.md",
       "openclaw.md",
       "hermes.md",
     ]) {
@@ -163,8 +164,26 @@ describe("documentation contract", () => {
       "delivery-plan.md",
       path.join("rfcs", "index.md"),
       path.join("rfcs", "0001-minimal-conversion-model.md"),
+      path.join("rfcs", "0002-plugin-artifact-apply.md"),
     ]) {
       expectLocalePair("developer", file);
+    }
+  });
+
+  it("registers RFC pages in both VitePress sidebars", () => {
+    const sidebar = readRepoFile(
+      "packages",
+      "docs",
+      ".vitepress",
+      "config.mts",
+    );
+    for (const link of [
+      "/developer/rfcs/0001-minimal-conversion-model",
+      "/developer/rfcs/0002-plugin-artifact-apply",
+      "/en/developer/rfcs/0001-minimal-conversion-model",
+      "/en/developer/rfcs/0002-plugin-artifact-apply",
+    ]) {
+      expect(sidebar).toContain(link);
     }
   });
 

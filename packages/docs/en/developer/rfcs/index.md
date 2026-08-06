@@ -20,6 +20,7 @@ require an RFC.
 | RFC | Status | Decision |
 | --- | --- | --- |
 | [RFC-0001: Minimal conversion model](0001-minimal-conversion-model.md) | Accepted | One pipeline, two adaptation responsibilities, Extensions register Adapters |
+| [RFC-0002: Plugin / Bundle Artifact apply contract](0002-plugin-artifact-apply.md) | Implemented | CLI/`targets` and four-agent plugin paths wired; OpenClaw `compatible-bundle` delegates to Claude/Codex; Hermes thin `skill-plugin` landed |
 
 New RFCs include context, goals/non-goals, alternatives, decision, contract,
 security, compatibility/migration, acceptance, and open questions. Accepted

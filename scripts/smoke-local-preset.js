@@ -14,23 +14,43 @@ function parseArgs(argv) {
   for (let index = 0; index < argv.length; index += 2) {
     const key = argv[index];
     if (!key.startsWith('--') || argv[index + 1] === undefined) {
-      throw new Error('Arguments must use --packages-dir, --entry and optional --cleanup');
+      throw new Error(
+      'Arguments must use --packages-dir, --entry and optional --cleanup / --artifact',
+      );
     }
     args[key.slice(2)] = argv[index + 1];
   }
   if (!args['packages-dir'] || !args.entry) {
-    throw new Error('Usage: smoke-local-preset --packages-dir <dir> --entry <preset> [--cleanup delete|trash]');
+    throw new Error(
+      'Usage: smoke-local-preset --packages-dir <dir> --entry <preset> [--cleanup delete|trash] [--artifact project|plugin|compatible-bundle|skill-plugin]',
+    );
   }
   return args;
 }
 
 function run(command, args, cwd) {
-  const result = spawnSync(command, args, {
+  const spawnOptions = {
     cwd,
     encoding: 'utf8',
     env: process.env,
     stdio: ['ignore', 'pipe', 'pipe'],
-  });
+  };
+  let result = spawnSync(command, args, spawnOptions);
+  // On Windows, PowerShell can resolve an App Paths/npm shim that Node's
+  // spawnSync cannot find through PATH. Use the npm CLI bundled beside the
+  // current Node binary as a deterministic fallback for this offline smoke.
+  if (result.error && command === 'npm' && process.platform === 'win32') {
+    const bundledNpm = path.join(
+      path.dirname(process.execPath),
+      'node_modules',
+      'npm',
+      'bin',
+      'npm-cli.js',
+    );
+    if (fs.existsSync(bundledNpm)) {
+      result = spawnSync(process.execPath, [bundledNpm, ...args], spawnOptions);
+    }
+  }
   if (result.status !== 0) {
     const rawError = String(result.stderr || result.stdout || '');
     let structuredSummary = '';
@@ -64,9 +84,10 @@ function run(command, args, cwd) {
     const summary = structuredSummary || (firstError >= 0
       ? sanitizedLines.slice(firstError, firstError + 12).join(' ').trim()
       : '');
+    const spawnError = result.error ? `: ${result.error.message}` : '';
     throw new Error(
-      `${path.basename(command)} failed with exit code ${result.status}`
-      + (summary ? `: ${summary.trim()}` : ''),
+      `${path.basename(command)} failed with exit code ${result.status ?? 'unavailable'}`
+      + (summary ? `: ${summary.trim()}` : spawnError),
     );
   }
   return result.stdout;
@@ -240,42 +261,203 @@ async function main() {
     }
 
     const cli = path.resolve(__dirname, '../packages/ai-jue/dist/cli.js');
-    run(process.execPath, [cli, 'apply', '--adapter', 'codex'], consumerDir);
-    run(process.execPath, [cli, 'apply', '--adapter', 'claude-code'], consumerDir);
-    run(process.execPath, [cli, 'apply', '--adapter', 'openclaw'], consumerDir);
-    run(process.execPath, [cli, 'apply', '--adapter', 'hermes'], consumerDir);
-
+    const artifact = typeof args.artifact === 'string' ? args.artifact.trim().toLowerCase() : '';
+    const pluginMode = artifact === 'plugin' || artifact === 'compatible-bundle' || artifact === 'skill-plugin';
+    const artifactArgs = pluginMode ? ['--artifact', 'plugin'] : [];
+    const skillNames = Object.keys(config.skills || {}).sort();
+    const mcpServerNames = Object.keys(config.mcp?.servers || {}).sort();
     const [skillName, skill] = skillEntry;
     const [agentName] = agentEntry;
-    for (const required of [
-      'AGENTS.md',
-      'CLAUDE.md',
-      'MEMORY.md',
-      path.join('.agents', 'skills', skillName, 'SKILL.md'),
-      path.join('.codex', 'agents', `${agentName}.toml`),
-      // Not `.codex/config.toml`: Codex's `mcp` capability is honestly
-      // `degraded` (JUE-301) — `write()` never persists MCP servers to the
-      // real TOML file (a hand-rolled TOML writer is out of scope), so no
-      // file is produced even when the Preset declares MCP servers.
-      path.join('.claude', 'skills', skillName, 'SKILL.md'),
-      path.join('.claude', 'agents', `${agentName}.md`),
-      // OpenClaw has no per-workspace `agents/` directory (honest `degraded`,
-      // no-op write) and shares the project-root `skills/` tree with Hermes,
-      // one level shallower — see ai-jue-adapter-openclaw/src/capabilities/skills.ts.
-      path.join('skills', skillName, 'SKILL.md'),
-      // Hermes requires a "<category>/<name>" skill key; a flat portable key
-      // (as produced by Claude/Codex/OpenClaw-shaped Presets) falls back to a
-      // "general" category rather than failing — see
-      // ai-jue-adapter-hermes/src/capabilities/skills.ts.
-      path.join('skills', 'general', skillName, 'SKILL.md'),
-    ]) {
-      if (!fs.existsSync(path.join(consumerDir, required))) {
-        throw new Error(`A required native Adapter output is missing: ${required}`);
+
+    function assertExists(root, relative, label) {
+      if (!fs.existsSync(path.join(root, relative))) {
+        throw new Error(`${label}: missing ${relative}`);
       }
     }
-    verifySupportFiles(skillName, skill, consumerDir);
+
+    function assertSkillTree(root, label, { nestedGeneral = false } = {}) {
+      for (const name of skillNames) {
+        const flat = name.includes('/') ? name.split('/').pop() : name;
+        const skillPath = nestedGeneral
+          ? path.join('skills', 'general', flat, 'SKILL.md')
+          : path.join('skills', flat, 'SKILL.md');
+        // Project Hermes uses category fallback; also accept encoded category keys.
+        const alt = name.includes('/')
+          ? path.join('skills', ...name.split('/'), 'SKILL.md')
+          : null;
+        if (
+          !fs.existsSync(path.join(root, skillPath))
+          && !(alt && fs.existsSync(path.join(root, alt)))
+        ) {
+          throw new Error(`${label}: missing skill ${name} (tried ${skillPath})`);
+        }
+      }
+    }
+
+    function assertMcpJson(root, label) {
+      if (mcpServerNames.length === 0) return;
+      assertExists(root, '.mcp.json', label);
+      const parsed = JSON.parse(fs.readFileSync(path.join(root, '.mcp.json'), 'utf8'));
+      const servers = parsed.mcpServers || {};
+      for (const name of mcpServerNames) {
+        if (!servers[name]) {
+          throw new Error(`${label}: .mcp.json missing server ${name}`);
+        }
+      }
+    }
+
+    function assertNoHermesMcp(root, label) {
+      // Hermes skill-plugin keeps MCP on the workspace: the pack must never
+      // carry a .mcp.json or config.yaml even when the config defines servers.
+      if (mcpServerNames.length === 0) return;
+      for (const file of ['.mcp.json', 'config.yaml']) {
+        if (fs.existsSync(path.join(root, file))) {
+          throw new Error(`${label}: ${file} must stay on workspace`);
+        }
+      }
+    }
+
+    function assertCursorSkillTree(root, label) {
+      for (const name of skillNames) {
+        const flat = name.includes('/') ? name.split('/').pop() : name;
+        const skillPath = path.join('.cursor', 'skills', flat, 'SKILL.md');
+        assertExists(root, skillPath, label);
+        const content = fs.readFileSync(path.join(root, skillPath), 'utf8');
+        if (!content.startsWith('---\n')) {
+          throw new Error(`${label}: skill ${name} missing YAML frontmatter`);
+        }
+        if (!content.includes('name:')) {
+          throw new Error(`${label}: skill ${name} missing name frontmatter`);
+        }
+      }
+    }
+
+    function assertCursorMcpJson(root, label) {
+      if (mcpServerNames.length === 0) return;
+      assertExists(root, path.join('.cursor', 'mcp.json'), label);
+      const parsed = JSON.parse(
+        fs.readFileSync(path.join(root, '.cursor', 'mcp.json'), 'utf8'),
+      );
+      const servers = parsed.mcpServers || {};
+      for (const name of mcpServerNames) {
+        if (!servers[name]) {
+          throw new Error(`${label}: .cursor/mcp.json missing server ${name}`);
+        }
+        if (servers[name].command && servers[name].type !== 'stdio') {
+          throw new Error(`${label}: MCP server ${name} missing type: stdio`);
+        }
+      }
+    }
+
+    function assertCursorPluginTree(root, label) {
+      assertExists(root, path.join('.cursor-plugin', 'plugin.json'), label);
+      for (const name of skillNames) {
+        const flat = name.includes('/') ? name.split('/').pop() : name;
+        assertExists(root, path.join('skills', flat, 'SKILL.md'), label);
+        const content = fs.readFileSync(path.join(root, 'skills', flat, 'SKILL.md'), 'utf8');
+        if (!content.startsWith('---\n')) {
+          throw new Error(`${label}: plugin skill ${name} missing YAML frontmatter`);
+        }
+      }
+      if (mcpServerNames.length > 0) {
+        assertExists(root, 'mcp.json', label);
+      }
+    }
+
+    function expectedOpenClawBundleMarker() {
+      const configured = config.tools?.openclaw?.bundleFormat;
+      const configuredFormat = typeof configured === 'string'
+        ? configured.trim().toLowerCase()
+        : 'auto';
+      const format = configuredFormat === 'claude' || configuredFormat === 'codex'
+        ? configuredFormat
+        : Object.keys(config.hooks || {}).length > 0 ? 'codex' : 'claude';
+      return format === 'codex'
+        ? path.join('.codex-plugin', 'plugin.json')
+        : path.join('.claude-plugin', 'plugin.json');
+    }
+
+    if (pluginMode) {
+      // Separate output dirs — plugin roots collide if written into one tree.
+      const outs = {};
+      for (const name of ['codex', 'claude', 'cursor', 'openclaw', 'hermes']) {
+        const dir = path.join(consumerDir, `out-${name}`);
+        fs.mkdirSync(dir);
+        fs.writeFileSync(
+          path.join(dir, 'ai.config.json'),
+          JSON.stringify({ presets: [args.entry] }),
+        );
+        fs.writeFileSync(
+          path.join(dir, 'package.json'),
+          fs.readFileSync(path.join(consumerDir, 'package.json')),
+        );
+        fs.symlinkSync(
+          path.join(consumerDir, 'node_modules'),
+          path.join(dir, 'node_modules'),
+          'junction',
+        );
+        outs[name] = dir;
+      }
+
+      run(process.execPath, [cli, 'apply', '--adapter', 'codex', ...artifactArgs], outs.codex);
+      run(process.execPath, [cli, 'apply', '--adapter', 'claude-code', ...artifactArgs], outs.claude);
+      run(process.execPath, [cli, 'apply', '--adapter', 'openclaw', ...artifactArgs], outs.openclaw);
+      run(process.execPath, [cli, 'apply', '--adapter', 'hermes', ...artifactArgs], outs.hermes);
+
+      run(process.execPath, [cli, 'apply', '--adapter', 'cursor', ...artifactArgs], outs.cursor);
+
+      assertExists(outs.codex, path.join('.codex-plugin', 'plugin.json'), 'codex plugin');
+      assertSkillTree(outs.codex, 'codex plugin');
+      assertMcpJson(outs.codex, 'codex plugin');
+
+      assertExists(outs.claude, path.join('.claude-plugin', 'plugin.json'), 'claude plugin');
+      assertSkillTree(outs.claude, 'claude plugin');
+      assertMcpJson(outs.claude, 'claude plugin');
+
+      assertCursorPluginTree(outs.cursor, 'cursor plugin');
+
+      // OpenClaw compatible-bundle follows the configured/auto-selected base.
+      assertExists(outs.openclaw, expectedOpenClawBundleMarker(), 'openclaw bundle');
+      assertSkillTree(outs.openclaw, 'openclaw bundle');
+      assertMcpJson(outs.openclaw, 'openclaw bundle');
+
+      // Hermes thin skill-plugin (skills only; mcp stays on workspace).
+      assertExists(outs.hermes, 'plugin.yaml', 'hermes skill-plugin');
+      assertExists(outs.hermes, '__init__.py', 'hermes skill-plugin');
+      assertSkillTree(outs.hermes, 'hermes skill-plugin');
+      assertNoHermesMcp(outs.hermes, 'hermes skill-plugin');
+    } else {
+      run(process.execPath, [cli, 'apply', '--adapter', 'codex'], consumerDir);
+      run(process.execPath, [cli, 'apply', '--adapter', 'claude-code'], consumerDir);
+      run(process.execPath, [cli, 'apply', '--adapter', 'openclaw'], consumerDir);
+      run(process.execPath, [cli, 'apply', '--adapter', 'hermes'], consumerDir);
+
+      run(process.execPath, [cli, 'apply', '--adapter', 'cursor'], consumerDir);
+      run(process.execPath, [cli, 'apply', '--adapter', 'cursor', '--dry-run'], consumerDir);
+      run(process.execPath, [cli, 'apply', '--adapter', 'cursor', '--check'], consumerDir);
+
+      for (const relative of [
+        'AGENTS.md',
+        'CLAUDE.md',
+        'MEMORY.md',
+        path.join('.agents', 'skills', skillName, 'SKILL.md'),
+        path.join('.codex', 'agents', `${agentName}.toml`),
+        path.join('.claude', 'skills', skillName, 'SKILL.md'),
+        path.join('.claude', 'agents', `${agentName}.md`),
+        path.join('.cursor', 'agents', `${agentName}.md`),
+        path.join('skills', skillName, 'SKILL.md'),
+        path.join('skills', 'general', skillName, 'SKILL.md'),
+      ]) {
+        assertExists(consumerDir, relative, 'workspace apply');
+      }
+      assertCursorSkillTree(consumerDir, 'cursor apply');
+      assertCursorMcpJson(consumerDir, 'cursor apply');
+      verifySupportFiles(skillName, skill, consumerDir);
+    }
     console.log(
-      `[OK] isolated local Preset install -> Codex/Claude Code/OpenClaw/Hermes (${archives.length} packages)`,
+      `[OK] isolated local Preset install -> Codex/Claude Code/Cursor/OpenClaw/Hermes`
+      + (pluginMode ? ` artifact=plugin skills=${skillNames.length} mcp=${mcpServerNames.length}` : '')
+      + ` (${archives.length} packages)`,
     );
   } finally {
     process.chdir(originalCwd);

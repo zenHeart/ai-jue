@@ -156,8 +156,17 @@ function restoreSnapshot(root: string, snapshot: Snapshot): void {
   if (snapshot.existed) {
     fs.mkdirSync(path.dirname(absolute), { recursive: true });
     fs.writeFileSync(absolute, snapshot.originalContent as Buffer);
-  } else {
+    return;
+  }
+  // The write that failed may never have created `absolute` — e.g. a parent
+  // path component is a plain file (ENOTDIR on mkdir). On Linux, rmSync of
+  // such a path throws ENOTDIR even with force:true; treat that as "already
+  // clean" so earlier snapshots in the reverse-rollback loop still run.
+  try {
     fs.rmSync(absolute, { force: true, recursive: true });
+  } catch (error) {
+    const code = (error as NodeJS.ErrnoException).code;
+    if (code !== 'ENOENT' && code !== 'ENOTDIR') throw error;
   }
 }
 

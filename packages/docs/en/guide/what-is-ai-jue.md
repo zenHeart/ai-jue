@@ -19,7 +19,7 @@ target Agents such as Claude, Cursor, and Codex.
 ```text
 Preset / .ai / ai.config.js
              ↓
-     Jue Canonical Model
+     Jue general capability model
              ↓
           Adapter
              ↓

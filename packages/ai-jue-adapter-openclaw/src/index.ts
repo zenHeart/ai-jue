@@ -10,6 +10,7 @@ export { write } from "./write";
 export type { WriteContext } from "./write";
 export { confirm } from "./confirm";
 export type { ConfirmContext } from "./confirm";
+export { detectArtifactKind } from "./capabilities/layout";
 
 /**
  * `jue apply`'s OpenClaw entry point: converts a resolved config into
@@ -21,7 +22,10 @@ export type { ConfirmContext } from "./confirm";
  */
 export async function generate(config: any, outputDir: string): Promise<void> {
   const canonical = toCanonicalDocument(config);
-  const changes = await write(canonical, { projectRoot: outputDir });
+  const changes = await write(canonical, {
+    projectRoot: outputDir,
+    artifactKind: "workspace",
+  });
   applyChangesOrThrow(outputDir, changes);
 }
 

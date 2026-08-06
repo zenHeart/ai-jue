@@ -39,12 +39,11 @@ npx jue apply --all
 
 ## 4. Common Commands
 
-The following commands are currently available.
+The following commands are available.
 
 ### CI Check
 
-The target option is Planned. It checks config, Artifact drift, and native
-confirmation:
+It checks config and Artifact drift:
 
 ```bash
 npx jue apply --all --check
@@ -60,12 +59,8 @@ npx jue apply --all --watch
 
 ### Create New Preset
 
-The target command is Planned:
-
 ```bash
-npx jue preset create my-preset
+npx jue create-preset my-preset
 ```
 
-Do not use it in automation before implementation. See
-[Implementation Status](../developer/implementation-status.md) and the
-[Configuration Guide](./configuration-guide.md).
+See the [Configuration Guide](./configuration-guide.md).

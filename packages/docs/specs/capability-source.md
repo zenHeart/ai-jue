@@ -37,7 +37,8 @@ Capability；需要引用多个 Capability 时使用 Preset。发布者应先把
 
 `ai-jue.lock` 保存引用 hash、解析版本/ref、内容 hash、type 与 schema 版本。
 `--frozen` 禁止隐式刷新，`capability update [id]` 原子更新。路径穿越、未知
-type、浮动远程版本、integrity 失败和凭据泄漏必须阻塞。
+type、浮动远程版本、integrity 失败、凭据泄漏和 lock 缓存损坏必须阻塞；离线
+解析只读本地 lock。
 
 验收覆盖统一 schema、六种 type、嵌套资源保留、确定性 lock、frozen、
 offline、update、缓存损坏和敏感信息脱敏。

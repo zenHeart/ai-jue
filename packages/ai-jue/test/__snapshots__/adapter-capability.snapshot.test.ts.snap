@@ -37,26 +37,21 @@ Global context for snapshot
       ],
     },
   },
-  "cursorCommand": "<!-- AI-JUE:START -->
-# /review
-
-Review command
-
-## Action:
-
-Run review flow
-
-## Triggers:
-
-/review
-<!-- AI-JUE:END -->",
-  "cursorProjectRuleStyle": "<!-- AI-JUE:START -->
+  "cursorCommand": "---
+description: Review command
+triggers:
+  - /review
+name: review
 ---
+
+Run review flow",
+  "cursorProjectRuleStyle": "---
 description: Style rule
 alwaysApply: true
 ---
+
 Common prompt block
-<!-- AI-JUE:END -->",
+",
   "cursorSettings": {
     "temperature": 0.3,
   },
