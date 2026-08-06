@@ -1,7 +1,6 @@
 # Preset 作者命令
 
-当前 CLI 面向 Preset 作者的命令是 `create-preset`、`validate` 与 `format`
-（历史分散形态，见[实现状态](../../developer/implementation-status.md)）：
+CLI 面向 Preset 作者的命令是 `create-preset`、`validate` 与 `format`：
 
 ```bash
 jue create-preset <name>
@@ -15,7 +14,7 @@ jue format
 | `validate` | 校验当前项目配置：`presets` 数组、预设安装与 `extends` 路径 |
 | `format` | 迁移 AI 工具配置到 `.ai` 目录 |
 
-Preset 清单查询使用 `jue list presets`。安装、升级、版本比较、发布和移除继续由
+Preset 清单查询使用 `jue list presets`。安装、升级、版本比较、发布和移除由
 npm/pnpm/yarn 负责，Jue 不复制包管理器能力。详情见
 [Preset npm 包约定](../preset-manifest.md)。
 

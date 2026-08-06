@@ -1,6 +1,6 @@
 # Codex / Claude Code Adapter Target
 
-> Status: **Partial** (legacy forward generation verified; complete Adapter contract pending)
+> Status: **Partial** (existing forward generation verified; complete Adapter contract pending)
 >
 > Priority: **P0 — Codex and Claude Code first**
 >
@@ -9,9 +9,9 @@
 > Updated: 2026-07-25
 >
 > [!WARNING]
-> This page defines the target contract. Delivery Plan fixes the implementation
-> order: complete the headless Claude Code Reference Extension and Scale Gate,
-> then migrate Codex without designing a second workflow.
+> This page defines the target contract. The implementation order is fixed:
+> complete the headless Claude Code Reference Extension and Scale Gate, then
+> migrate Codex without designing a second workflow.
 
 ## 1. Goal
 
@@ -20,7 +20,7 @@ project-scoped assets for **Codex** and **Claude Code**.
 
 This specification covers two Targets in a fixed implementation order:
 
-1. Claude Code is the first real Reference Extension.
+1. Claude Code is the first Reference Extension.
 2. Codex reuses the same skeleton and contract tests after the Scale Gate.
 
 Cursor, Gemini, Copilot and future runtimes remain compatible, but extending or
@@ -113,7 +113,7 @@ AGENTS.md
 
 | Canonical input | Codex output | Requirement |
 |---|---|---|
-| `context.global` | root `AGENTS.md` | Write through the existing AI-JUE managed block and preserve user-authored text |
+| `context.global` | root `AGENTS.md` | Write through the AI-JUE managed block (the generated region between `<!-- AI-JUE:START -->` and `<!-- AI-JUE:END -->`) and preserve user-authored text |
 | `rules` | root `AGENTS.md` | Append non-empty rules as clearly named sections; include declared path/glob scope as text because Codex has no equivalent canonical per-glob rule file |
 | `skills` | `.agents/skills/<name>/SKILL.md` | Preserve prompt/content, description and nested support files |
 | `commands` | `.agents/skills/<name>/SKILL.md` | Commands become explicitly invocable skills; preserve description, prompt and trigger hints |
@@ -143,7 +143,7 @@ Existing package:
 packages/ai-jue-adapter-claude/
 ```
 
-The package remains named `ai-jue-adapter-claude`; CLI aliases SHALL support
+The package is named `ai-jue-adapter-claude`; CLI aliases SHALL support
 both `claude` and `claude-code`.
 
 Required outputs remain:
@@ -159,16 +159,12 @@ CLAUDE.md
 .mcp.json
 ```
 
-This iteration SHALL verify and close the existing implementation rather than
-forking or renaming it:
-
 - `context.global` -> managed `AGENTS.md`; `CLAUDE.md` references it.
 - Rules, skills, commands, agents, hooks and MCP keep their existing native
   mappings.
 - Nested support files and binary assets are preserved.
 - Both CLI aliases select the same package.
-- Regeneration preserves user-authored content where the shared writer promises
-  managed-block coexistence.
+- Regeneration preserves user-authored content.
 - Existing behavior remains backward compatible.
 
 ## 5. CLI and discovery
@@ -184,7 +180,7 @@ jue apply --adapter codex --adapter claude-code
 Requirements:
 
 - Add `codex -> ai-jue-adapter-codex` to the alias map.
-- Use `claude-code` as the Target ID; accept `claude` only as diagnosed legacy input.
+- Use `claude-code` as the Target ID; accept `claude` only as a diagnosed compatibility input.
 - Add Codex to known Adapter discovery.
 - Codex project footprints include `AGENTS.md`, `.agents/skills`, and `.codex`.
 - `--all` includes Codex without removing existing Adapters.
@@ -261,8 +257,9 @@ be weakened merely to obtain green output.
 - [x] No unsupported runtime is added.
 - [x] Human review remains the final approval gate.
 
-Historical implementation evidence from 2026-07-25 (proves legacy Write and
-project Artifact only, not Read, install actions, or native/runtime Confirm):
+Historical implementation evidence from 2026-07-25 (proves Write and
+project Artifact only, not read behavior, install actions, or native/runtime
+confirmation):
 
 - targeted Codex / Claude Code / matrix tests: 22 passed
 - real CLI: `--adapter codex` and `--adapter claude-code` passed independently

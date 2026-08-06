@@ -36,11 +36,13 @@ MVP 必须跑通一条真实、可重复验证的闭环：
 1. 本地 Preset 包以标准 Preset 身份提供真实能力。
 2. Jue 无损加载 Preset 中的嵌套 skill 资源。
 3. Jue 把 Preset、项目 `.ai/` 和 `ai.config.js` 收敛为同一 canonical model。
-4. Claude Code Reference Extension 能从同一能力集生成原生产物，并由 headless
-   Claude Code 的真实读取或执行路径确认。
-5. 同一输入通过 dry-run、Core apply、confirm、check 和二次 apply 零差异。
+4. Claude Code Reference Extension（参考实现扩展：首个 Adapter 集成）能从
+   同一能力集生成原生产物，并由 headless Claude Code 的真实读取或执行路径
+   确认。
+5. 同一输入通过 `apply --dry-run`、`apply`、`apply --check` 和二次 `apply`
+   零差异。
 6. Claude 闭环沉淀出可复用的 Extension 骨架与合同测试；其他 Agent 只有在该
-   Scale Gate 通过后才并行迁移。
+   Scale Gate（扩展门禁：Claude 闭环验证稳定）通过后才并行迁移。
 
 ## 3. Canonical Capability Set
 
@@ -62,7 +64,7 @@ Canonical 之外的目标配置；工具私有能力只有在至少两个 Agent 
 
 第三方来源的 Capability 内容（GitHub / npm / URL / 本地）如何被 Preset
 引用并转换进 canonical model，见
-[external Capability reference 规格](capability-source.md)——它新增的是引用协议，不改变
+[external Capability reference 规格](capability-source.md)——它定义的是引用协议，不改变
 上面这个 Capability 集合本身。
 
 ## 4. Preset 目录契约
@@ -82,7 +84,7 @@ package.json
 ```
 
 `mcp.json` 使用 canonical `{"servers": {...}}` 结构；它与
-`ai.config.js` 的 `mcp` 字段同构，不引入第二套 MCP 表达。
+`ai.config.js` 的 `mcp` 字段同构。
 
 Skill 的 `references/`、`scripts/`、`assets/` 下的所有嵌套文件必须保留
 相对路径。Jue 不得因为目录深度而静默丢失能力资源。其他能力类型只有形成

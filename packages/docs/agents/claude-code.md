@@ -1,12 +1,11 @@
 # Claude Code
 
-> Jue 状态：Read、Write、Artifact、Confirm 均为 Implemented。Read/Write 为
-> Done（JUE-106/107）；project 与 Plugin 两种 Artifact 已实现（Marketplace
-> 聚合索引明确排除，见 adapter-standardization.md）；Core
-> `apply`/`--dry-run`/`--check` 已实现（JUE-108）；R1 全链路（fixture→
-> Canonical→Artifact→原生确认，含 headless 真实调用与批次回滚）已用一条命令
-> 端到端重放通过（JUE-109/110）；`confirm()` 已导出并组装为
-> `defineExtension()`/`Adapter`（JUE-203）：Plugin 走真实
+> Jue 状态：Read、Write、Artifact、Confirm 均为 Implemented。project 与
+> Plugin 两种 Artifact 均实现（Marketplace 聚合索引明确排除，见
+> [adapter-standardization.md](../architecture/adapter-standardization.md)）；
+> Core `apply`/`--dry-run`/`--check` 已实现；fixture→Canonical→Artifact→
+> 原生确认全链路（含 headless 真实调用与批次回滚）可由一条命令端到端重放；
+> `confirm()` 已导出并组装为 `defineExtension()`/`Adapter`：Plugin 走真实
 > `claude plugin validate --strict`，project 无原生校验工具故如实返回
 > `unconfirmed`（诚实降级，非缺口）
 >
@@ -105,26 +104,25 @@ manifest-optional 自动发现在运行时确实生效的证据（`plugin-auto-d
 不接受 `--plugin-dir`。
 
 `--tools ""` **不保证零成本**：它只是让本轮没有工具可用，若 prompt 本身不需要
-调用工具，模型仍会正常生成回复并产生真实计费（已实测：同样的命令产生了
+调用工具，模型仍会正常生成回复并产生真实计费（实测：同样的命令产生
 `total_cost_usd: 0.0394407`）。要真正避免计费，prompt 必须设计成结构上必须依赖
 一个已被禁用的工具才能完成，`--tools ""` 本身不会让 CLI 在调用模型前短路。
-JUE-109 原生验证前须先确认目标 prompt 确实免费或已获得预算批准。
+原生验证前须先确认目标 prompt 确实免费或已获得预算批准。
 
-JUE-109 的实测发现：`--bare` 认证严格要求 `ANTHROPIC_API_KEY` 或经 `--settings`
-的 `apiKeyHelper`（不读 OAuth/keychain），且不隔离操作机器上已安装的其余真实
-Plugin（`plugins` 清单会连同 fixture 一起出现）；`plugin_errors` 在无错误时是
-整个字段缺失，不是空数组。完整证据与可复现脚本见
-`packages/ai-jue-adapter-claude/fixtures/README.md`"JUE-109 native usability
-verification"一节与仓库根 `scripts/verify-claude-native.js`。JUE-110 用
-`scripts/verify-claude-mvp-gate.js` 把同一条 fixture→Canonical→Artifact→原生
-确认链路重放为一条可从干净环境重放的命令，见该 README"JUE-110 Claude MVP
-Gate"一节。
+`--bare` 认证严格要求 `ANTHROPIC_API_KEY` 或经 `--settings` 的 `apiKeyHelper`
+（不读 OAuth/keychain），且不隔离操作机器上已安装的其余 Plugin（`plugins`
+清单会连同 fixture 一起出现）；`plugin_errors` 无错误时整个字段缺失，不是空
+数组。可复现证据见 `packages/ai-jue-adapter-claude/fixtures/README.md`"native
+usability verification"一节与仓库根 `scripts/verify-claude-native.js`；同一
+fixture→Canonical→Artifact→原生确认链路可由
+`scripts/verify-claude-mvp-gate.js` 从干净环境一条命令重放，见该 README"Claude
+MVP Gate"一节。
 
 ## 4. 当前差距
 
 | 层级 | 状态 | 缺口 |
 | --- | --- | --- |
-| Read | Implemented | JUE-106，见 delivery-plan.md |
-| Write | Implemented | JUE-107，见 delivery-plan.md |
+| Read | Implemented | `packages/ai-jue-adapter-claude/src/read.ts` |
+| Write | Implemented | `packages/ai-jue-adapter-claude/src/write.ts`，经 Core 执行器驱动 |
 | Artifact | Implemented | project 与 Plugin 两种已实现；Marketplace 聚合索引明确排除（非缺口） |
-| Confirm | Implemented | `confirm()` 已导出并组装为 `defineExtension()`/`Adapter`（JUE-203）；Plugin 走真实 `plugin validate --strict`（JUE-109 headless 证据）；project 如实返回 `unconfirmed`（诚实降级，非缺口） |
+| Confirm | Implemented | `confirm()` 已导出并组装为 `defineExtension()`/`Adapter`；Plugin 走真实 `plugin validate --strict`（headless 证据）；project 如实返回 `unconfirmed`（诚实降级，非缺口） |

@@ -12,5 +12,5 @@ jue extension validate <path-or-package> [--load] [--fixtures <dir>]
 导入阶段零副作用。`--fixtures <dir>` 对目录下每个直接子目录运行
 `adapter.read()` 并校验 `CanonicalDocumentSchema`；任一夹具失败时退出码为 2。
 
-安装、升级和移除继续由 npm/pnpm/yarn 负责。详情见
+安装、升级和移除由 npm/pnpm/yarn 负责。详情见
 [Extension API](../extension-api.md)。

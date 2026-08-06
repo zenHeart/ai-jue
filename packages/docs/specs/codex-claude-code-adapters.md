@@ -1,6 +1,6 @@
 # Codex / Claude Code Adapter 目标规范
 
-> 状态：**Partial**（历史正向生成路径已验证；完整 Adapter 合同未完成）
+> 状态：**Partial**（既有正向生成路径已验证；完整 Adapter 合同未完成）
 >
 > 优先级：**P0——优先完成 Codex 与 Claude Code**
 >
@@ -9,8 +9,8 @@
 > 更新日期：2026-07-25
 >
 > [!WARNING]
-> 本页定义目标合同。执行顺序以 Delivery Plan 为准：先完成 headless Claude Code
-> Reference Extension 与 Scale Gate，再并行迁移 Codex；不得同时设计两套流程。
+> 本页定义目标合同。执行顺序固定：先完成 headless Claude Code Reference
+> Extension 与 Scale Gate，再并行迁移 Codex；不得同时设计两套流程。
 
 ## 1. 目标
 
@@ -19,10 +19,11 @@
 
 本规范覆盖以下两个 Target，但实现顺序固定：
 
-1. Claude Code 作为首个真实 Reference Extension；
+1. Claude Code 作为首个 Reference Extension；
 2. Codex 在 Scale Gate 后复用同一骨架与合同测试。
 
-Cursor、Gemini、Copilot 和未来运行时保持兼容，但不在本轮扩展或重设计范围内。
+Cursor、Gemini、Copilot 和未来运行时保持兼容，但扩展或重设计它们不在本规范
+范围内。
 
 用户模型保持不变：
 
@@ -103,7 +104,7 @@ AGENTS.md
 
 | Canonical 输入 | Codex 输出 | 要求 |
 |---|---|---|
-| `context.global` | 根目录 `AGENTS.md` | 通过既有 AI-JUE 托管块写入，并保留用户编写的正文 |
+| `context.global` | 根目录 `AGENTS.md` | 通过 AI-JUE 托管块（`<!-- AI-JUE:START/END -->` 标记内的生成区域）写入，并保留用户编写的正文 |
 | `rules` | 根目录 `AGENTS.md` | 将非空规则追加为命名清晰的章节；由于 Codex 没有等价的按 glob 规则文件，应以文本保留声明的 path/glob 范围 |
 | `skills` | `.agents/skills/<name>/SKILL.md` | 保留 prompt/content、description 与嵌套支持文件 |
 | `commands` | `.agents/skills/<name>/SKILL.md` | Command 转为可显式调用的 Skill；保留 description、prompt 与 trigger 提示 |
@@ -130,7 +131,7 @@ AGENTS.md
 packages/ai-jue-adapter-claude/
 ```
 
-包名保持 `ai-jue-adapter-claude`；CLI 别名必须同时支持 `claude` 和
+包名是 `ai-jue-adapter-claude`；CLI 别名必须同时支持 `claude` 和
 `claude-code`。
 
 要求的输出保持为：
@@ -146,13 +147,11 @@ CLAUDE.md
 .mcp.json
 ```
 
-本轮应验证并闭合既有实现，不进行分叉或重命名：
-
 - `context.global` -> 托管 `AGENTS.md`；`CLAUDE.md` 引用它。
 - Rules、skills、commands、agents、hooks 和 MCP 保持既有原生映射。
 - 保留嵌套支持文件和二进制资产。
 - 两个 CLI 别名选择同一个包。
-- 共享 writer 承诺托管块共存时，重新生成必须保留用户编写的正文。
+- 重新生成必须保留用户编写的正文。
 - 既有行为保持向后兼容。
 
 ## 5. CLI 与发现
@@ -168,7 +167,7 @@ jue apply --adapter codex --adapter claude-code
 要求：
 
 - 在别名映射中增加 `codex -> ai-jue-adapter-codex`。
-- Target ID 只使用 `claude-code`；`claude` 只作为带迁移诊断的历史输入。
+- Target ID 只使用 `claude-code`；`claude` 仅作为带迁移诊断的兼容输入。
 - 在已知 Adapter 发现中增加 Codex。
 - Codex 项目特征包括 `AGENTS.md`、`.agents/skills` 和 `.codex`。
 - `--all` 必须包含 Codex，且不得移除现有 Adapter。
@@ -243,8 +242,8 @@ git diff --check
 - [x] 未增加不受支持的运行时。
 - [x] 人工评审仍是最终批准门禁。
 
-2026-07-25 历史实现证据（只证明 legacy Write/project Artifact，不证明 Read、
-安装动作或 native/runtime Confirm）：
+2026-07-25 历史实现证据（只证明 Write/project Artifact，不证明读取、安装
+动作或原生/运行时确认）：
 
 - Codex / Claude Code / matrix 定向测试：22 项通过
 - 真实 CLI：`--adapter codex` 与 `--adapter claude-code` 分别通过

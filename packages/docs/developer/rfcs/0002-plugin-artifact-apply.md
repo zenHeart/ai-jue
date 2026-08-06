@@ -14,12 +14,12 @@ RFC-0001 已规定 Plugin、Bundle 与配置都是 **Artifact 形态**。Claude 
 layout detection 与 Core 执行路径统一接线。`targets.*.artifact`、`enabled` 与 `scope`
 属于转换环境，不进入 Canonical DSL。
 
-JUE-302 曾结论「OpenClaw 没有 Plugin/Bundle」——那是对 **workspace 项目树** 的实测
-（`AGENTS.md` / `skills/` / `hooks/`）。当前官方文档已明确第二表面：
+JUE-302 的实测对象是 **workspace 项目树**（`AGENTS.md` / `skills/` / `hooks/`）。
+OpenClaw 官方文档（2026-08 核验）还定义了独立可安装表面 Compatible bundle：
 
 | OpenClaw 表面 | 是什么 | 与 Jue 的关系 |
 | --- | --- | --- |
-| Workspace | 项目内 skills/hooks/AGENTS | 今日 Adapter 已实现 |
+| Workspace | 项目内 skills/hooks/AGENTS | Adapter 已实现 |
 | **Compatible bundle** | 安装 Claude / Codex / Cursor 布局，映射为 OpenClaw 能力 | **应用 Claude/Codex 已有 plugin 产物，零新布局** |
 | Native plugin | `openclaw.plugin.json` + 进程内 TS 运行时 | 超出 Canonical 能力包；**本 RFC 非目标** |
 
@@ -27,7 +27,7 @@ Hermes 的「plugin」是另一套产品语义：
 
 | Hermes 表面 | 是什么 | 与 Jue 的关系 |
 | --- | --- | --- |
-| Workspace | `skills/<cat>/<name>/`、`config.yaml` mcp、`MEMORY.md` | 今日 Adapter 已实现；**能力包主路径** |
+| Workspace | `skills/<cat>/<name>/`、`config.yaml` mcp、`MEMORY.md` | Adapter 已实现；**能力包主路径** |
 | General plugin | `plugin.yaml` + `__init__.py`（Python tools/hooks/commands） | 运行时扩展；**不是** Canonical skill 包的默认载体 |
 | Plugin-bundled skills | 同上目录内 `skills/<name>/SKILL.md` + `ctx.register_skill` | 可选薄封装；需生成少量 Python |
 | `~/.hermes/plugins` / `installs.json` | 安装注册表 | **不是**可分发 Artifact 本身 |
@@ -60,7 +60,7 @@ openclaw plugins inspect <id>
 
 检测标记（官方）：
 
-| Bundle format | Marker | 今日 OpenClaw 映射（supported） |
+| Bundle format | Marker | OpenClaw 映射（supported） |
 | --- | --- | --- |
 | Codex | `.codex-plugin/plugin.json` | skills；hooks（仅 `HOOK.md`+`handler.ts|js`）；MCP |
 | Claude | `.claude-plugin/plugin.json` 或无 manifest 默认布局 | skills；`commands/`→当 skill 根；MCP；settings/LSP；**agents / hooks.json 仅 detect** |
@@ -173,7 +173,7 @@ export default {
 };
 ```
 
-Guide 中旧示例 `hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`（+ 可选
+`hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`（+ 可选
 `skill-plugin`）时：`auto` → 已托管 artifact，否则唯一默认 `workspace`。
 
 ### Core
@@ -205,10 +205,10 @@ Guide 中旧示例 `hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`�
 
 ## 兼容 / 迁移
 
-- 无 flag / 无 targets：行为与今日一致（project/workspace）。
-- 修正 `packages/docs/agents/openclaw.md`：区分 workspace vs compatible bundle vs
-  native plugin；删除「OpenClaw 完全没有 Bundle」的过时断言（保留「无
-  **Jue 自创** 聚合树、workspace 仍是项目主路径」）。
+- 无 flag / 无 targets：默认行为不变（project/workspace）。
+- `packages/docs/agents/openclaw.md` 区分 workspace vs compatible bundle vs
+  native plugin 三种表面：compatible bundle 是官方可安装表面，没有 **Jue 自创**
+  聚合树，workspace 仍是项目主路径。
 - `compatible-bundle` 字符串保留（Guide 已用）；语义冻结为「Claude/Codex 兼容包」，
   不是第三种目录方言。
 
@@ -242,4 +242,4 @@ Guide 中旧示例 `hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`�
 | 4 | #6 | smoke 矩阵 | 小–中 |
 | — | 明确不做 | OpenClaw native plugin、Hermes 业务 Python tools | 避免大代价 |
 
-实现 Issue 必须链接本 RFC；Accepted 前不得把 Guide 示例标成已实现。
+实现 Issue 必须链接本 RFC。

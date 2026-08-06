@@ -14,12 +14,13 @@ RFC-0001 treats Plugin, Bundle, and config as **Artifact shapes**. Claude/Codex
 selection, Adapter-owned layout detection, and the Core execution path together.
 `targets.*.artifact`, `enabled`, and `scope` remain conversion-environment inputs.
 
-JUE-302 concluded “OpenClaw has no Plugin/Bundle” for the **workspace project
-tree**. Current OpenClaw docs add a second surface:
+JUE-302 measured the **workspace project tree** (`AGENTS.md` / `skills/` /
+`hooks/`). Current OpenClaw docs (verified 2026-08) define a separate
+installable surface, Compatible bundle:
 
 | OpenClaw surface | Meaning | Jue stance |
 | --- | --- | --- |
-| Workspace | In-project skills/hooks/AGENTS | Implemented today |
+| Workspace | In-project skills/hooks/AGENTS | Implemented |
 | **Compatible bundle** | Install Claude/Codex/Cursor layouts | **Reuse existing plugin writers — no new tree** |
 | Native plugin | `openclaw.plugin.json` + in-process TS | Out of scope for Canonical packs |
 
@@ -57,7 +58,7 @@ openclaw plugins list          # Format: bundle; Bundle format: claude|codex|cur
 openclaw plugins inspect <id>
 ```
 
-| Format | Marker | Mapped today (supported) |
+| Format | Marker | Mapped (supported) |
 | --- | --- | --- |
 | Codex | `.codex-plugin/plugin.json` | skills; hooks (`HOOK.md`+handler); MCP |
 | Claude | `.claude-plugin/plugin.json` or default layout | skills; `commands/` as skill roots; MCP; agents/hooks.json detect-only |
@@ -151,9 +152,9 @@ export default {
 };
 ```
 
-The old Guide example `hermes: { artifact: "auto" }` — Hermes only offers
-`workspace` (plus optional `skill-plugin`), so `auto` resolves to a managed
-artifact, otherwise the single default `workspace`.
+`hermes: { artifact: "auto" }` — Hermes only offers `workspace` (plus optional
+`skill-plugin`), so `auto` resolves to a managed artifact, otherwise the single
+default `workspace`.
 
 ### Core
 
@@ -182,8 +183,8 @@ boilerplate only. Install confirms use isolated HOME/profile.
 
 ## Compatibility
 
-Defaults unchanged. Fix agent docs that claimed OpenClaw has no bundle surface
-at all — clarify workspace vs compatible bundle vs native plugin.
+Defaults unchanged. Agent docs describe OpenClaw's compatible-bundle surface
+accurately — distinguishing workspace vs compatible bundle vs native plugin.
 Keep the string `compatible-bundle` (already in Guides) with the frozen meaning
 “Claude/Codex-compatible pack”.
 
@@ -212,5 +213,4 @@ Keep the string `compatible-bundle` (already in Guides) with the frozen meaning
 | 4 | #6 | Smoke matrix | Small–medium |
 | — | Explicitly skip | OpenClaw native plugin; Hermes business Python tools | Avoid large cost |
 
-Link this RFC from implementation issues; do not mark Guide examples as shipped
-before Accepted + Implemented.
+Link this RFC from implementation issues.

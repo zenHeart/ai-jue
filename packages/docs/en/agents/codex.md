@@ -1,8 +1,8 @@
 # Codex
 
 > Jue status: Read, Write, Artifact (both project and Plugin), and Confirm are
-> all Implemented (JUE-301, `packages/ai-jue-adapter-codex/`). `capabilities`
-> honestly declares three degraded boundaries: `commands: "degraded"` (the old
+> all Implemented (`packages/ai-jue-adapter-codex/`). `capabilities` honestly
+> declares three degraded boundaries: `commands: "degraded"` (the
 > custom-commands mechanism is deprecated), `mcp: "degraded"` (MCP lives in
 > `[mcp_servers.*]` TOML tables, outside the JSON factory's scope), and
 > `rules: "degraded"` (no separate rules directory; folded into AGENTS.md)
@@ -39,7 +39,7 @@ facets. Jue manages one hook representation per layer.
 
 | Level | Status | Gap |
 | --- | --- | --- |
-| Read | Implemented | JUE-301, `packages/ai-jue-adapter-codex/src/read.ts` |
-| Write | Implemented | JUE-301, `packages/ai-jue-adapter-codex/src/write.ts`, driven by the Core executor; `jue apply --adapter codex --dry-run/--check` verified working |
+| Read | Implemented | `packages/ai-jue-adapter-codex/src/read.ts` |
+| Write | Implemented | `packages/ai-jue-adapter-codex/src/write.ts`, driven by the Core executor; `jue apply --adapter codex --dry-run/--check` verified working |
 | Artifact | Implemented | Both project and Plugin (`.codex-plugin/plugin.json`) are implemented |
 | Confirm | Implemented | Plugin goes through real `codex plugin marketplace add`/`plugin add`/`plugin list --json` (replayable via `scripts/verify-codex-native.js`); project scope honestly reports `unconfirmed` (an honest degradation, not a gap) |

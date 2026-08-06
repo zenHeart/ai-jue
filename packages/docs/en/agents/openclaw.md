@@ -1,9 +1,11 @@
 # OpenClaw
 
-> Jue status: Read, Write, and Confirm are Implemented (JUE-302,
-> `packages/ai-jue-adapter-openclaw/`). **workspace** and
-> **`compatible-bundle`** (RFC-0002) both ship. The latter delegates to
-> Claude/Codex plugin writers and follows OpenClaw's official Bundle discovery path.
+> Jue status: Read, Write, and Confirm are Implemented
+> (`packages/ai-jue-adapter-openclaw/`). **workspace** and
+> **`compatible-bundle`**
+> ([RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md)) both ship.
+> The latter delegates to Claude/Codex plugin writers and follows OpenClaw's
+> official Bundle discovery path.
 > The OpenClaw native runtime surface remains an Agent-specific Artifact surface
 > in the official capability table; Jue's Canonical mapping focuses on workspace
 > and compatible-bundle.
@@ -17,7 +19,7 @@
 
 ## 1. Official surfaces (two layers)
 
-### 1.1 Workspace (project tree — JUE-302 verified)
+### 1.1 Workspace (project tree)
 
 `AGENTS.md`, `skills/<name>/SKILL.md`, `hooks/<name>/HOOK.md`+`handler.js`.  
 OpenClaw's global Agent surface manages `commands`/`agents` runtime entry points;
@@ -74,6 +76,6 @@ Bundle mapping highlights:
 
 | Level | Status | Gap |
 | --- | --- | --- |
-| Read / Write / Confirm (workspace) | Implemented | JUE-302 |
-| Artifact `compatible-bundle` | Implemented | Delegates to Claude/Codex `artifactKind: "plugin"`; install confirm needs local `openclaw` CLI (often skipped in CI) |
+| Read / Write / Confirm (workspace) | Implemented | `packages/ai-jue-adapter-openclaw/` |
+| Artifact `compatible-bundle` | Implemented | Delegates to Claude/Codex `artifactKind: "plugin"`; install confirm needs the local `openclaw` CLI (skipped when it is not installed) |
 | Native plugin Artifact | Unsupported | Explicitly out of scope (OpenClaw's official loader handles it); official runtime surface documented separately from Canonical bundles (not a gap) |

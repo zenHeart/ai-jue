@@ -236,6 +236,3 @@ mcp?: {
 - 无效的共享结构必须在 core 校验中失败。
 - Adapter 不得静默发明不受支持的顶层 Capability。
 - 目标工具不支持的能力必须明确降级，不得静默忽略。
-
-历史 `prompts` 不是 Canonical 字段，只允许迁移工具把它显式转换为
-`commands`、`rules` 或 `context.global`；正常配置校验必须拒绝它。

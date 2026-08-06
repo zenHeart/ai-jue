@@ -1,15 +1,16 @@
 # Hermes
 
-> Jue status: Read, Write, and Confirm are Implemented (JUE-303,
-> `packages/ai-jue-adapter-hermes/`). **workspace** ships as the default for
-> Canonical packs; the optional thin `skill-plugin` (RFC-0002 Phase B) also
+> Jue status: Read, Write, and Confirm are Implemented
+> (`packages/ai-jue-adapter-hermes/`). **workspace** ships as the default for
+> Canonical packs; the optional thin `skill-plugin`
+> ([RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) Phase B) also
 > ships. Official Hermes “plugins” use `plugin.yaml` + Python `register(ctx)`
 > runtime extensions that can bundle skills via `ctx.register_skill`; the thin
 > Artifact follows that official plugin.yaml surface.
 > `capabilities` honestly declare `rules/hooks: "unsupported"`,
 > `commands/agents: "degraded"`, `skills/mcp: "supported"`. Extra `cron`
 > (`cron/jobs.json`) ships as a Hermes-specific pass-through field (see
-> implementation-status).
+> [implementation-status](../developer/implementation-status.md)).
 >
 > Official sources: [Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins),
 > [Build a Hermes Plugin](https://hermes-agent.nousresearch.com/docs/guides/build-a-hermes-plugin),
@@ -17,16 +18,16 @@
 
 ## 1. Official surface
 
-Verified in JUE-303 against a real Hermes install (`~/.hermes/`): the
-project-level surface is `MEMORY.md` (shared context, semantically similar to
-Claude's `CLAUDE.md`), `skills/<category>/<name>/SKILL.md` (three levels deep,
-deeper than the one level used by Claude/Codex/OpenClaw), `config.yaml`'s
-`mcp.servers`, and `cron/jobs.json`. The installed `~/.hermes/hooks/` directory
-is part of the observed runtime surface; `hooks_auto_accept` is a session-level
-policy. `agent:`/`commands:` are global `config.yaml` runtime blocks. Hermes also
-offers plugins, ACP, TUI Gateway JSON-RPC, and an OpenAI-compatible HTTP API;
-these runtime integration surfaces are tracked as Agent-specific surfaces, with
-implementation status recorded by the Adapter documentation.
+A real Hermes install (`~/.hermes/`) exposes the project-level surface
+`MEMORY.md` (shared context, semantically similar to Claude's `CLAUDE.md`),
+`skills/<category>/<name>/SKILL.md` (three levels deep, deeper than the one
+level used by Claude/Codex/OpenClaw), `config.yaml`'s `mcp.servers`, and
+`cron/jobs.json`. The `~/.hermes/hooks/` directory is part of the runtime
+surface; `hooks_auto_accept` is a session-level policy. `agent:`/`commands:` are
+global `config.yaml` runtime blocks. Hermes also offers plugins, ACP, TUI
+Gateway JSON-RPC, and an OpenAI-compatible HTTP API; these runtime integration
+surfaces are tracked as Agent-specific surfaces, with implementation status
+recorded by the Adapter documentation.
 
 ## 2. Intended Jue mapping
 
@@ -54,14 +55,13 @@ implementation status recorded by the Adapter documentation.
 - Self-learning, memory, profile, and session state remain Agent runtime state;
   reusable Presets focus on portable Capability data.
 - `cron` is the Adapter's Agent-specific pass-through field beyond the six atomic
-  Capability types. The implementation-status page records its mapping boundary;
-  a future RFC can freeze its long-term ownership.
+  Capability types. The implementation-status page records its mapping boundary.
 
 ## 4. Current gaps
 
 | Level | Status | Gap |
 | --- | --- | --- |
-| Read | Implemented | JUE-303, `packages/ai-jue-adapter-hermes/src/read.ts` |
-| Write | Implemented | JUE-303, driven by the Core executor |
+| Read | Implemented | `packages/ai-jue-adapter-hermes/src/read.ts` |
+| Write | Implemented | `packages/ai-jue-adapter-hermes/src/write.ts`, driven by the Core executor |
 | Artifact | Implemented | `workspace` + thin `skill-plugin` (skills / `plugin.yaml` / `register_skill`; MCP stays on workspace); runtime extensions follow the official Hermes surface |
 | Confirm | Implemented | Workspace: real `tirith config validate`; skill-plugin: structural evidence from the generated plugin surface |

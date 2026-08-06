@@ -28,7 +28,7 @@ jue apply --all
 | 命令域 | 子命令 |
 | --- | --- |
 | [`jue capability`](capability.md) | `update` |
-| [`jue preset`](preset.md) | 规划中：`create`、`validate`、`pack`（当前为 `create-preset`、`validate`、`format`） |
+| [`jue preset`](preset.md) | 规划中：`create`、`validate`、`pack` |
 | [`jue extension`](extension.md) | `validate` |
 
 资源查询使用 `jue list [presets|prompts|skills|all]`（列 Preset、提示词与技能
@@ -52,5 +52,4 @@ jue apply --all
 | `4` | 所需动作未获授权 |
 
 当前实现与目标合同的差距见
-[实现状态](../../developer/implementation-status.md)；未实现的命令或选项必须标为
-规划，不得以文档示例暗示已经可用。
+[实现状态](../../developer/implementation-status.md)。

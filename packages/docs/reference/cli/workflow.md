@@ -55,7 +55,7 @@ jue inspect [--extension <id>] [--diagnostics]
 
 ## JSON 输出
 
-没有统一的 `--json` 选项。唯一带 `--json` 的是 `jue check`，输出预设清单 JSON 到 stdout：
+没有统一的 `--json` 选项。唯一带 `--json` 的是 `jue check`（检查预设安装版本），输出预设清单 JSON 到 stdout：
 
 ```json
 {

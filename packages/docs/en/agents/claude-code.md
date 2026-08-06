@@ -1,16 +1,16 @@
 # Claude Code
 
-> Jue status: Read, Write, Artifact, and Confirm are all Implemented. Read and
-> Write are Done (JUE-106/107); both project and Plugin Artifact kinds are
-> implemented (a Marketplace aggregate index is explicitly excluded — see
-> adapter-standardization.md); Core `apply`/`--dry-run`/`--check` is
-> implemented (JUE-108); the full R1 loop (fixture → Canonical → Artifact →
-> native confirmation, including a real headless invocation and a batch
-> rollback) has been replayed end-to-end as one command (JUE-109/110);
-> `confirm()` is exported and assembled into `defineExtension()`/`Adapter`
-> (JUE-203): Plugin goes through real `claude plugin validate --strict`;
-> project scope honestly reports `unconfirmed` (an honest degradation, not a
-> gap) since it has no equivalent native validator
+> Jue status: Read, Write, Artifact, and Confirm are all Implemented. Both
+> project and Plugin Artifact kinds are implemented (a Marketplace aggregate
+> index is explicitly excluded — see
+> [adapter-standardization.md](../architecture/adapter-standardization.md));
+> Core `apply`/`--dry-run`/`--check` is implemented; the full fixture →
+> Canonical → Artifact → native confirmation loop (including a real headless
+> invocation and a batch rollback) is replayable end-to-end via one command;
+> `confirm()` is exported and assembled into `defineExtension()`/`Adapter`:
+> Plugin goes through real `claude plugin validate --strict`; project scope
+> honestly reports `unconfirmed` (an honest degradation, not a gap) since it
+> has no equivalent native validator
 >
 > Official sources: [Claude Code Plugins](https://code.claude.com/docs/en/plugins),
 > [Plugins Reference](https://code.claude.com/docs/en/plugins-reference),
@@ -123,27 +123,26 @@ command above produced `total_cost_usd: 0.0394407`). Making a call actually
 free requires a prompt that structurally depends on a now-unavailable tool;
 `--tools ""` alone does not make the CLI short-circuit before invoking the
 model. Confirm the prompt is genuinely free (or budget-approved) before using
-this path for JUE-109 native verification.
+this path for native verification.
 
-JUE-109's findings from actually running this: `--bare` authentication
-strictly requires `ANTHROPIC_API_KEY` or an `apiKeyHelper` via `--settings`
-(it never reads OAuth/keychain), and does not isolate the Plugin surface from
-whatever else is installed on the machine (the `plugins` inventory lists the
-fixture alongside every other real Plugin already present). `plugin_errors`
-is absent from `system/init` entirely when nothing failed to load — not an
-empty array. Full evidence and a reproducible script live in
-`packages/ai-jue-adapter-claude/fixtures/README.md`'s "JUE-109 native
-usability verification" section and the repo-root
-`scripts/verify-claude-native.js`. JUE-110 replays the same fixture →
-Canonical → Artifact → native confirmation chain as one command runnable
-from a clean environment, via `scripts/verify-claude-mvp-gate.js` — see that
-README's "JUE-110 Claude MVP Gate" section.
+`--bare` authentication strictly requires `ANTHROPIC_API_KEY` or an
+`apiKeyHelper` via `--settings` (it never reads OAuth/keychain), and does not
+isolate the Plugin surface from whatever else is installed on the machine (the
+`plugins` inventory lists the fixture alongside every other real Plugin already
+present). `plugin_errors` is absent from `system/init` entirely when nothing
+failed to load — not an empty array. Reproducible evidence lives in
+`packages/ai-jue-adapter-claude/fixtures/README.md`'s "native usability
+verification" section and the repo-root `scripts/verify-claude-native.js`.
+The same fixture → Canonical → Artifact → native confirmation chain replays as
+one command runnable from a clean environment via
+`scripts/verify-claude-mvp-gate.js` — see that README's "Claude MVP Gate"
+section.
 
 ## 4. Current gaps
 
 | Level | Status | Gap |
 | --- | --- | --- |
-| Read | Implemented | JUE-106, see delivery-plan.md |
-| Write | Implemented | JUE-107, see delivery-plan.md |
+| Read | Implemented | `packages/ai-jue-adapter-claude/src/read.ts` |
+| Write | Implemented | `packages/ai-jue-adapter-claude/src/write.ts`, driven by the Core executor |
 | Artifact | Implemented | Both project and Plugin are implemented; a Marketplace aggregate index is explicitly excluded (not a gap) |
-| Confirm | Implemented | `confirm()` is exported and assembled into `defineExtension()`/`Adapter` (JUE-203); Plugin goes through real `plugin validate --strict` (JUE-109 headless evidence); project scope honestly reports `unconfirmed` (an honest degradation, not a gap) |
+| Confirm | Implemented | `confirm()` is exported and assembled into `defineExtension()`/`Adapter`; Plugin goes through real `plugin validate --strict` (headless evidence); project scope honestly reports `unconfirmed` (an honest degradation, not a gap) |

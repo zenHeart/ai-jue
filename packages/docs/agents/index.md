@@ -1,7 +1,8 @@
 # Agent 支持画像
 
 本目录分别记录目标 Agent 的官方能力表面、Jue 理想映射与当前实现状态。它不重新
-定义 Canonical 或 Extension 协议。
+定义 [Canonical](../specs/canonical-model.md) 或
+[Extension](../architecture/index.md) 协议。
 
 ## 统一成熟度
 
@@ -29,6 +30,6 @@
 | [OpenClaw](openclaw.md) | Implemented | Implemented | Implemented | Implemented |
 | [Hermes](hermes.md) | Implemented | Implemented | Implemented | Implemented |
 
-OpenClaw / Hermes 的 Artifact 已覆盖 workspace 与可安装聚合形态
-（`compatible-bundle` / thin `skill-plugin`）。各 Agent 的 native runtime surface
+OpenClaw / Hermes 的 Artifact 覆盖 workspace 与可安装聚合形态
+（`compatible-bundle` / thin `skill-plugin`）。各 Agent 的官方能力表面
 与 Canonical 映射边界见对应画像表。

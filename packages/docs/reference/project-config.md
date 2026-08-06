@@ -1,8 +1,8 @@
 # 项目配置 Reference
 
 > [!NOTE]
-> `targets.<adapter>` 的 `artifact`、`enabled` 与 `scope` 已进入 apply 选择流程（与 CLI
-> `--artifact` 组合，见 RFC-0002）。Artifact scope 当前以 project 执行路径为准；
+> `targets.<adapter>` 的 `artifact`、`enabled` 与 `scope` 参与 apply 选择流程（与 CLI
+> `--artifact` 组合）。Artifact scope 以 project 执行路径为准；
 > local/user 选择会在写入前返回明确的 scope 错误。
 
 项目唯一配置文件是根目录 `ai.config.js`。它选择 Preset、Extension 和 Target，并

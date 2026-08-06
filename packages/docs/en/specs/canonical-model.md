@@ -239,6 +239,3 @@ This is additive, not replace semantics.
 - invalid shared structure should fail in core validation
 - adapters must not silently invent unsupported top-level capabilities
 - unsupported target-tool features must be degraded explicitly, not ignored silently
-
-Legacy `prompts` is not Canonical. Migration tooling may explicitly convert it
-to `commands`, `rules`, or `context.global`; normal config validation rejects it.

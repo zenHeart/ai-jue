@@ -1,7 +1,9 @@
 # Agent Support Profiles
 
 This section records official target surfaces, intended Jue mappings, and
-current implementation. It does not redefine Canonical or Extension protocols.
+current implementation. It does not redefine the [Canonical
+model](../specs/canonical-model.md) or [Extension](../architecture/index.md)
+protocols.
 
 ## Shared maturity levels
 
@@ -24,5 +26,5 @@ Statuses are Implemented, Partial, Planned, Unsupported, or Unverified.
 | [Hermes](hermes.md) | Implemented | Implemented | Implemented | Implemented |
 
 OpenClaw / Hermes Artifact covers workspace plus an installable aggregate
-(`compatible-bundle` / thin `skill-plugin`). Each profile records the native
-runtime surface and its Canonical mapping boundary.
+(`compatible-bundle` / thin `skill-plugin`). Each profile records the official
+surface and its Canonical mapping boundary.

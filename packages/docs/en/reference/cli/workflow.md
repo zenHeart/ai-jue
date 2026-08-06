@@ -51,7 +51,7 @@ jue inspect [--extension <id>] [--diagnostics]
 
 ## JSON output
 
-There is no unified `--json` option. The only command with `--json` is `jue check`, which prints a preset-list JSON to stdout:
+There is no unified `--json` option. The only command with `--json` is `jue check` (checks installed preset versions), which prints a preset-list JSON to stdout:
 
 ```json
 {

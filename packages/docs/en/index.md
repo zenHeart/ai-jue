@@ -10,7 +10,7 @@ titleTemplate: false
 <div class="jue-home">
 
 <section class="signal-strip" aria-label="Jue MVP status">
-  <span><strong>8</strong> canonical capabilities</span>
+  <span><strong>6</strong> atomic capabilities</span>
   <span><strong>4</strong> production adapters</span>
   <span><strong>1</strong> source of truth</span>
 </section>
@@ -27,7 +27,7 @@ titleTemplate: false
     <div class="flow-arrow" aria-hidden="true">→</div>
     <article class="flow-core"><span class="flow-index">STANDARD</span><h3>Jue Canonical Model</h3><p>load · merge · validate · normalize</p></article>
     <div class="flow-arrow" aria-hidden="true">→</div>
-    <article><span class="flow-index">NATIVE</span><h3>Agent Adapters</h3><p>Claude · Cursor · Codex</p></article>
+    <article><span class="flow-index">NATIVE</span><h3>Agent Adapters</h3><p>Claude · Codex · OpenClaw · Hermes</p></article>
   </div>
 </section>
 

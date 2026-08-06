@@ -26,7 +26,7 @@ jue apply --all
 | Namespace | Subcommands |
 | --- | --- |
 | [`jue capability`](capability.md) | `update` |
-| [`jue preset`](preset.md) | Planned: `create`, `validate`, `pack` (today: `create-preset`, `validate`, `format`) |
+| [`jue preset`](preset.md) | Planned: `create`, `validate`, `pack` |
 | [`jue extension`](extension.md) | `validate` |
 
 Resource queries use `jue list [presets|prompts|skills|all]` (list Preset,

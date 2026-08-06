@@ -19,7 +19,7 @@ packages/jue-preset-base/
 └── package.json
 ```
 
-Command 元数据写入 prompt frontmatter，不使用第二份 index manifest。
+Command 元数据写入 prompt frontmatter。
 
 ## 3. 核心能力
 
@@ -39,7 +39,7 @@ Command 元数据写入 prompt frontmatter，不使用第二份 index manifest�
 | `test` | 边界与失败路径测试 |
 | `doc` | 面向用户的低负担文档 |
 
-存储 ID 就是 Canonical command ID，不维护 `jue:impl` 等第二套别名。
+存储 ID 就是 Canonical command ID。
 
 ### 3.3 扩展 Command
 
@@ -57,4 +57,5 @@ Commit type 只是 command 输出建议，不是 Capability 或执行副作用�
 
 ## 5. 质量目标
 
-“Review 零修改”是方向，不是保证。文档和输出不得把它描述为已达成事实。
+`review` 命令以评审零修改为质量方向；它是方向，不是保证，文档和输出不得把
+它描述为已达成事实。

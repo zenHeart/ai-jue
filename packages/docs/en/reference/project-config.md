@@ -2,8 +2,8 @@
 
 > [!NOTE]
 > `targets.<adapter>` `artifact`, `enabled`, and `scope` values participate in
-> apply selection (with CLI `--artifact`; see RFC-0002). The current Artifact
-> execution path uses project scope; local/user selections return an explicit
+> apply selection (with CLI `--artifact`). The Artifact execution path uses
+> project scope; local/user selections return an explicit
 > scope error before writing.
 
 The only project configuration file is root `ai.config.js`. It selects Presets,

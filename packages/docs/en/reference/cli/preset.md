@@ -1,8 +1,6 @@
 # Preset Author Commands
 
-The current CLI exposes `create-preset`, `validate`, and `format` for Preset
-authors (legacy scattered forms; see
-[implementation status](../../developer/implementation-status.md)):
+The CLI exposes `create-preset`, `validate`, and `format` for Preset authors:
 
 ```bash
 jue create-preset <name>

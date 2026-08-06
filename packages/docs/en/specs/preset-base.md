@@ -20,7 +20,7 @@ packages/jue-preset-base/
 └── package.json
 ```
 
-Command metadata lives in prompt frontmatter, without a second index manifest.
+Command metadata lives in prompt frontmatter.
 
 ## 3. Core capabilities
 
@@ -60,5 +60,6 @@ Language never changes behavior, permission, or acceptance.
 
 ## 5. Quality target
 
-“Zero-edit review” is a direction, not a guarantee, and must not be documented
+The `review` command targets zero-edit output as a quality direction; it is a
+direction, not a guarantee, and documentation and outputs must not present it
 as achieved fact.

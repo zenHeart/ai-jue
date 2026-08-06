@@ -1,9 +1,9 @@
 # OpenClaw
 
-> Jue 状态：Read、Write、Confirm 均已实现（JUE-302，
-> `packages/ai-jue-adapter-openclaw/`）；**workspace** 与
-> **`compatible-bundle`**（RFC-0002）均已落地。后者复用 Claude/Codex
-> plugin writer，并沿用 OpenClaw 官方 Bundle 发现路径。
+> Jue 状态：Read、Write、Confirm 均为 Implemented（`packages/ai-jue-adapter-openclaw/`）；
+> **workspace** 与 **`compatible-bundle`**
+> （[RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md)）均已实现。
+> 后者复用 Claude/Codex plugin writer，并沿用 OpenClaw 官方 Bundle 发现路径。
 > OpenClaw native runtime surface 作为 Agent-specific Artifact 表面保留在官方
 > 能力表中；Jue 的 Canonical 映射合同集中于 workspace 与 compatible-bundle。
 > `capabilities` 对 workspace 路径如实声明 `rules/commands/agents/mcp: "degraded"`。
@@ -15,7 +15,7 @@
 
 ## 1. 官方能力表面（两层）
 
-### 1.1 Workspace（项目树，JUE-302 已核验）
+### 1.1 Workspace（项目树）
 
 `AGENTS.md`、`skills/<name>/SKILL.md`、`hooks/<name>/HOOK.md`+`handler.js`。  
 `commands`/`agents` 的运行时入口由 OpenClaw 全局 Agent surface 管理；项目树
@@ -43,7 +43,7 @@ Bundle 映射要点（官方）：
 
 - skills：全格式  
 - Claude/Cursor `commands/` → 当 skill 根  
-- hooks：**仅** OpenClaw 式 `HOOK.md`+handler（今日主要是 Codex 兼容包）可执行；Claude `hooks/hooks.json` detect-only  
+- hooks：**仅** OpenClaw 式 `HOOK.md`+handler（主要是 Codex 兼容包）可执行；Claude `hooks/hooks.json` detect-only
 - agents：Claude/Cursor 多为 detect-only  
 - MCP：合并进 embedded settings（stdio/HTTP）
 
@@ -70,6 +70,6 @@ Bundle 映射要点（官方）：
 
 | 层级 | 状态 | 缺口 |
 | --- | --- | --- |
-| Read / Write / Confirm（workspace） | Implemented | JUE-302 |
-| Artifact `compatible-bundle` | Implemented | 委托 Claude/Codex `artifactKind: "plugin"`；安装确认依赖本机 `openclaw` CLI（CI 常 skip） |
+| Read / Write / Confirm（workspace） | Implemented | `packages/ai-jue-adapter-openclaw/` |
+| Artifact `compatible-bundle` | Implemented | 委托 Claude/Codex `artifactKind: "plugin"`；安装确认依赖本机 `openclaw` CLI（无 `openclaw` CLI 时跳过） |
 | Native plugin Artifact | Unsupported | 明确不纳入生成（官方 loader 独立处理）；官方 runtime surface 与 Canonical bundle surface 分开记录（非缺口） |

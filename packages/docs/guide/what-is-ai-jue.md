@@ -16,7 +16,7 @@ Cursor、Codex 等目标 Agent 的原生格式。
 ```text
 Preset / .ai / ai.config.js
              ↓
-     Jue Canonical Model
+     Jue 通用能力模型
              ↓
           Adapter
              ↓

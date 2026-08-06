@@ -28,6 +28,9 @@ executes source scripts while resolving it.
 
 Resolution merges recursive Presets, references, declarative directories, then
 project overrides. References are leaves. `ai-jue.lock` records reference hash,
-resolved version, content hash, type, and schema. Contract tests cover
-determinism, frozen/offline/update behavior, corruption, traversal, integrity,
-and sensitive-data redaction.
+resolved version, content hash, type, and schema. `--frozen` forbids implicit
+refresh; `capability update [id]` updates atomically. Path traversal, unknown
+types, floating remote versions, integrity failures, credential leaks, and
+corrupted lock caches must block. Offline resolution reads only the local lock.
+Contract tests cover determinism, frozen/offline/update behavior, corruption,
+traversal, integrity, and sensitive-data redaction.

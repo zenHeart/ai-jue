@@ -25,7 +25,7 @@ Command 元数据写入 `commands/*/prompt.md` frontmatter。
 ## 3. 自举 Runbook
 
 1. 根 `ai.config.js` 配置 `presets: ["internal"]`。
-2. 执行当前可用的 `npx jue apply --all`。
+2. 执行 `npx jue apply --all`。
 3. 检查生成文件和第二次执行零 diff。
 4. 不把生成文件称为唯一事实源；Preset 与 Canonical 输入才是事实源。
 

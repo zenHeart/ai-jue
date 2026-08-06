@@ -34,7 +34,7 @@ You can combine multiple presets using the `presets` array in `ai.config.js`.
 
 ```javascript
 // ai.config.js
-module.exports = {
+export default {
   presets: [
     'base'
   ]

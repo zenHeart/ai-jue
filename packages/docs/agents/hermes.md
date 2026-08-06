@@ -1,13 +1,15 @@
 # Hermes
 
-> Jue 状态：Read、Write、Confirm 均已实现（JUE-303，
-> `packages/ai-jue-adapter-hermes/`）；**workspace** Artifact 已落地。  
-> 官方 Hermes「plugin」是 `plugin.yaml` + Python `register(ctx)` 的运行时扩展，
-> 可附带 `ctx.register_skill` 打包 skills。Canonical 能力包默认走 workspace；可选薄封装
-> `skill-plugin`（RFC-0002 Phase B）已落地，并沿用 Hermes 的官方 plugin.yaml surface。
-> `capabilities` 如实声明 `rules/hooks: "unsupported"`、
-> `commands/agents: "degraded"`、`skills/mcp: "supported"`。  
-> 额外 `cron`（`cron/jobs.json`）作为 Hermes 专属 pass-through 字段提供，映射边界见 implementation-status。
+> Jue 状态：Read、Write、Confirm 均为 Implemented（`packages/ai-jue-adapter-hermes/`）；
+> **workspace** Artifact 已实现。官方 Hermes「plugin」是 `plugin.yaml` + Python
+> `register(ctx)` 的运行时扩展，可附带 `ctx.register_skill` 打包 skills。
+> Canonical 能力包默认走 workspace；可选薄封装 `skill-plugin`
+> （[RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) Phase B）已实现，
+> 并沿用 Hermes 的官方 plugin.yaml surface。`capabilities` 如实声明
+> `rules/hooks: "unsupported"`、`commands/agents: "degraded"`、
+> `skills/mcp: "supported"`。额外 `cron`（`cron/jobs.json`）作为 Hermes 专属
+> pass-through 字段提供，映射边界见
+> [implementation-status](../developer/implementation-status.md)。
 >
 > 官方依据：[Plugins](https://hermes-agent.nousresearch.com/docs/user-guide/features/plugins)、
 > [Build a Hermes Plugin](https://hermes-agent.nousresearch.com/docs/guides/build-a-hermes-plugin)、
@@ -15,14 +17,14 @@
 
 ## 1. 官方能力表面
 
-经 JUE-303 对真实 Hermes 安装（`~/.hermes/`）核验：项目级表面是
-`MEMORY.md`（共享上下文，语义类似 Claude 的 `CLAUDE.md`）、
-`skills/<category>/<name>/SKILL.md`（三层，比 Claude/Codex/OpenClaw 的一层
-更深）、`config.yaml` 里的 `mcp.servers` 与 `cron/jobs.json`。真实安装的
-`~/.hermes/hooks/` 目录属于已观测的 runtime surface；`hooks_auto_accept` 属于
-会话级策略。`agent:`/`commands:` 位于全局 `config.yaml` runtime surface。Hermes
-另提供 plugins、ACP、TUI Gateway JSON-RPC 与 OpenAI-compatible HTTP API，这些
-运行集成面按 Agent-specific surface 记录，Adapter 实现状态见 implementation-status。
+真实 Hermes 安装（`~/.hermes/`）的项目级表面包括：`MEMORY.md`（共享上下文，
+语义类似 Claude 的 `CLAUDE.md`）、`skills/<category>/<name>/SKILL.md`（三层，
+比 Claude/Codex/OpenClaw 的一层更深）、`config.yaml` 里的 `mcp.servers` 与
+`cron/jobs.json`。`~/.hermes/hooks/` 目录属于 runtime surface；
+`hooks_auto_accept` 属于会话级策略。`agent:`/`commands:` 位于全局 `config.yaml`
+runtime surface。Hermes 另提供 plugins、ACP、TUI Gateway JSON-RPC 与
+OpenAI-compatible HTTP API，这些运行集成面按 Agent-specific surface 记录，
+Adapter 实现状态见 [implementation-status](../developer/implementation-status.md)。
 
 ## 2. 理想 Jue 映射
 
@@ -47,14 +49,14 @@
 - ACP、Gateway 和 HTTP API 是 Transport/Runtime 面，与 Capability 集合并列。
 - Hermes 自学习、memory、profile 和 session 状态属于 Agent runtime state，通用 Preset
   继续聚焦可迁移 Capability。
-- `cron` 是本 Adapter 的 Agent-specific pass-through 字段；当前 implementation-status
-  记录其映射边界，后续 RFC 可进一步冻结其长期归属。
+- `cron` 是本 Adapter 的 Agent-specific pass-through 字段；implementation-status
+  记录其映射边界。
 
 ## 4. 当前差距
 
 | 层级 | 状态 | 缺口 |
 | --- | --- | --- |
-| Read | Implemented | JUE-303，`packages/ai-jue-adapter-hermes/src/read.ts` |
-| Write | Implemented | JUE-303，经 Core 执行器驱动 |
+| Read | Implemented | `packages/ai-jue-adapter-hermes/src/read.ts` |
+| Write | Implemented | `packages/ai-jue-adapter-hermes/src/write.ts`，经 Core 执行器驱动 |
 | Artifact | Implemented | `workspace` + thin `skill-plugin`（skills/`plugin.yaml`/`register_skill`；MCP 仍 workspace）；runtime extension surface 遵循 Hermes 官方 Plugin 规范 |
 | Confirm | Implemented | Workspace：真实 `tirith config validate`；skill-plugin：`plugin.yaml`、`register_skill` initializer 与 skill roots 的结构证据 |
