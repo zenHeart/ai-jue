@@ -402,9 +402,9 @@
   `npm install -D ai-jue-adapter-hermes` 与一次错误的 apply；已改为
   `MEMORY.md`，与其余 Adapter 探测文件（如 `CLAUDE.md`）的特异性对齐。
 
-## Cursor 后续工作（JUE-304 之后）
+## Cursor 后续工作
 
-JUE-304 已完成 Cursor project/plugin 正反转。下列 GitHub Issues 为**独立后续任务**——Agent 开工前必须阅读 issue 全文（含 Acceptance criteria 与 Implementation notes）：
+[JUE-304](delivery-plan.md) 已完成 Cursor project/plugin 正反转。下列 GitHub Issues 为**独立后续任务**——Agent 开工前必须阅读 issue 全文（含 Acceptance criteria 与 Implementation notes）：
 
 | Issue | 任务 |
 | --- | --- |
@@ -421,8 +421,8 @@ JUE-304 已完成 Cursor project/plugin 正反转。下列 GitHub Issues 为**�
   `CanonicalDocument`；`jue apply` 对 Core 执行器路径都在各自入口内单独调用
   `toCanonicalDocument(config)`，尚未让 `resolveFinalConfig` 本身统一产出
   `CanonicalDocument` 供全部 Adapter 共用。Claude/Codex/Cursor/OpenClaw/Hermes
-  现均已导出 `write()` 并接入 Core 执行器（Cursor project + plugin，JUE-304）。
-- Hermes Adapter（JUE-303）在 `CanonicalDocumentSchema` 上新增了一个 `cron`
+  现均已导出 `write()` 并接入 Core 执行器（Cursor project + plugin，[JUE-304](delivery-plan.md)）。
+- Hermes Adapter（[JUE-303](delivery-plan.md)）在 `CanonicalDocumentSchema` 上新增了一个 `cron`
   字段（`packages/ai-jue-core/src/canonical-document.ts`，`cron/jobs.json`
   整文件直通），不属于本文件其余各处反复强调"冻结"的六类原子 Capability
   （`rule`/`command`/`skill`/`agent`/`hook`/`mcp`）之一。这是先诚实暴露一个

@@ -516,9 +516,9 @@ Partial means local code or tests exist, not complete Agent support. See
   `MEMORY.md`, matching the specificity of the other Adapters' indicator
   files (e.g. `CLAUDE.md`).
 
-## Cursor follow-up (post JUE-304)
+## Cursor follow-up
 
-JUE-304 delivered Cursor project/plugin round-trip. These GitHub Issues are **separate follow-ups** — agents must read the full issue (Acceptance criteria + Implementation notes) before starting:
+[JUE-304](delivery-plan.md) delivered Cursor project/plugin round-trip. These GitHub Issues are **separate follow-ups** — agents must read the full issue (Acceptance criteria + Implementation notes) before starting:
 
 | Issue | Task |
 | --- | --- |
@@ -536,7 +536,7 @@ fields, not a `CanonicalDocument`; each Core-executor entry point calls
 `toCanonicalDocument(config)` on its own rather than `resolveFinalConfig`
 itself producing a `CanonicalDocument` every Adapter shares. Claude, Codex,
 Cursor, OpenClaw, and Hermes all export `write()` and route through the Core
-executor (Cursor project + plugin, JUE-304). The Hermes Adapter (JUE-303) adds a `cron`
+executor (Cursor project + plugin, [JUE-304](delivery-plan.md)). The Hermes Adapter ([JUE-303](delivery-plan.md)) adds a `cron`
 field to `CanonicalDocumentSchema` (`packages/ai-jue-core/src/
 canonical-document.ts`, a full-file pass-through of `cron/jobs.json`) that is
 not one of the six atomic Capability types this document elsewhere repeatedly

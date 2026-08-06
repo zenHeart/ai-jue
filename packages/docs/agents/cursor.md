@@ -62,11 +62,11 @@
 
 ## 5. 后续工作（GitHub Issues）
 
-JUE-304 已完成 project/plugin 正反转。下列项**不在 MVP 范围**，由独立 issue 跟踪，Agent 实施前先读对应 issue 全文：
+[JUE-304](../developer/delivery-plan.md) 已完成 project/plugin 正反转。下列项**不在 MVP 范围**，由独立 issue 跟踪，Agent 实施前先读对应 issue 全文：
 
 | Issue | 范围 |
 | --- | --- |
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json`（Team marketplace 索引） |
-| [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw `compatible-bundle` 以 Cursor 布局为第三基底（RFC-0002 Phase 3） |
+| [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw `compatible-bundle` 以 Cursor 布局为第三基底（[RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) 已知边界 3） |
 | [#10](https://github.com/zenHeart/ai-jue/issues/10) | `adapter-creator` 补充 Cursor 双布局实现模式 |
-| [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + 安全合同样本（Claude JUE-105 同级） |
+| [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + 安全合同样本（与 Claude [JUE-105](../developer/delivery-plan.md) 同级） |
