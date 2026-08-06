@@ -277,3 +277,23 @@ export function resolvePluginManifest(
     author: DEFAULT_MANIFEST_AUTHOR,
   };
 }
+
+/**
+ * Plugin identity for Artifacts that delegate to a shared writer
+ * (`compatible-bundle` runs the Claude/Codex plugin writers, which emit
+ * `.claude-plugin/plugin.json` under the same project root). The delegate's
+ * own tool keys must win: when Claude and OpenClaw are applied to one
+ * directory, both resolve the same manifest — otherwise each run re-writes
+ * the other's identity and the Artifact can never be idempotent
+ * (RFC-0002 acceptance criterion 6).
+ */
+export function resolveBundlePluginManifest(
+  config: Record<string, unknown> | null | undefined,
+  adapterShort: string,
+): PluginManifestIdentity | undefined {
+  return (
+    resolvePluginManifest(config, "claude") ??
+    resolvePluginManifest(config, "codex") ??
+    resolvePluginManifest(config, adapterShort)
+  );
+}

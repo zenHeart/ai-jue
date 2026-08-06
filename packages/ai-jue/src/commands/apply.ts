@@ -500,7 +500,13 @@ async function runSingleAdapter(
   }
 }
 
-async function runAdapterList(
+/**
+ * Run one Adapter per iteration with per-Adapter failure isolation: a
+ * failing Adapter is reported (runSingleAdapter) and its exit code is
+ * aggregated, but it must not skip the rest of an `--all` batch — otherwise
+ * one broken Adapter silently leaves every later target un-applied.
+ */
+export async function runAdapterList(
   adapterNames: string[],
   config: MergedConfig,
   outputDir: string,
@@ -514,10 +520,17 @@ async function runAdapterList(
   }
   let exitCode = 0;
   for (const adapterName of readyAdapters) {
-    exitCode = Math.max(
-      exitCode,
-      await runSingleAdapter(adapterName, config, outputDir, coreOptions),
-    );
+    try {
+      exitCode = Math.max(
+        exitCode,
+        await runSingleAdapter(adapterName, config, outputDir, coreOptions),
+      );
+    } catch (error: any) {
+      exitCode = Math.max(
+        exitCode,
+        typeof error?.exitCode === "number" ? error.exitCode : 1,
+      );
+    }
   }
   return exitCode;
 }

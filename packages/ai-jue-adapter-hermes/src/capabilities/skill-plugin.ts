@@ -3,6 +3,7 @@ import path from "path";
 import * as yaml from "js-yaml";
 import { directoryPerItem, hashArtifactContent } from "ai-jue-core";
 import type { ArtifactChange, CanonicalDocument } from "ai-jue-core";
+import { MANAGED_INIT_MARKER } from "./layout";
 
 const TARGET = "hermes";
 const SAFE_SKILL_NAME = /^[A-Za-z0-9][A-Za-z0-9._-]*$/;
@@ -62,6 +63,18 @@ export function writeSkillPlugin(
   pluginManifest?: { name: string; version: string; description?: string },
 ): ArtifactChange[] {
   const changes: ArtifactChange[] = [];
+  // `__init__.py` is user Python code; only ever touch it when it is ours.
+  // Refuse (fail explicit) rather than overwrite a hand-authored package.
+  const initPath = path.join(root, "__init__.py");
+  if (
+    fs.existsSync(initPath) &&
+    !fs.readFileSync(initPath, "utf8").includes(MANAGED_INIT_MARKER)
+  ) {
+    throw new Error(
+      "Hermes skill-plugin refuses to overwrite a hand-authored __init__.py; " +
+        "remove it or point the plugin at an empty directory.",
+    );
+  }
   const name = pluginManifest?.name?.trim() || "jue-skills";
   const version = pluginManifest?.version?.trim() || "0.1.0";
   const description =

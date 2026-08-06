@@ -9,7 +9,7 @@ import {
 } from "ai-jue-core";
 import {
   resolveArtifactKind,
-  resolvePluginManifest,
+  resolveBundlePluginManifest,
   resolveTargetSelection,
   shortAdapterName,
   UnsupportedArtifactScopeError,
@@ -146,10 +146,11 @@ export async function runCoreAdapter(
     artifactKind === "plugin" ||
     artifactKind === "compatible-bundle" ||
     artifactKind === "skill-plugin"
-      ? resolvePluginManifest(config as Record<string, unknown>, short) ??
-        // OpenClaw may write via Claude/Codex — use those tool keys too.
-        resolvePluginManifest(config as Record<string, unknown>, "claude") ??
-        resolvePluginManifest(config as Record<string, unknown>, "codex")
+      ? // Delegate writers first: OpenClaw bundles are Claude/Codex plugin
+        // layouts, so the identity must match what those writers emit —
+        // otherwise multiple Adapters re-write one plugin.json differently
+        // on every run and the Artifact is never idempotent.
+        resolveBundlePluginManifest(config as Record<string, unknown>, short)
       : undefined;
 
   const changes = await adapterModule.write(canonical, {

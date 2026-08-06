@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   resolveArtifactKind,
   resolvePluginManifest,
+  resolveBundlePluginManifest,
   isTargetEnabled,
   resolveTargetSelection,
   UnsupportedArtifactKindError,
@@ -159,5 +160,51 @@ describe("resolvePluginManifest", () => {
     // treats a missing author as a failure, not just a warning.
     const manifest = resolvePluginManifest({ presets: ["jue-preset-ai-assets"] }, "claude");
     expect(manifest?.author?.name).toBeTruthy();
+  });
+});
+
+describe("resolveBundlePluginManifest", () => {
+  it("resolves one global identity so delegate writers never diverge", () => {
+    // Claude, Codex and OpenClaw(compatible-bundle) all emit the same
+    // `.claude-plugin/plugin.json` / `.codex-plugin/plugin.json` pair in one
+    // project root; the identity must therefore be a single deterministic
+    // value regardless of which Adapter asks. Claude's key wins, then
+    // Codex's, then the requesting Adapter's own — so every Adapter in the
+    // run writes the same manifest and re-runs are idempotent (RFC-0002
+    // acceptance criterion 6).
+    const config = {
+      tools: {
+        claude: { pluginManifest: { name: "cc-pack", version: "1.0.0" } },
+        codex: { pluginManifest: { name: "cx-pack", version: "1.0.0" } },
+        openclaw: { pluginManifest: { name: "oc-pack", version: "1.0.0" } },
+      },
+    };
+    expect(resolveBundlePluginManifest(config, "openclaw")?.name).toBe("cc-pack");
+    expect(resolveBundlePluginManifest(config, "codex")?.name).toBe("cc-pack");
+  });
+
+  it("honors the Codex key when Claude has none", () => {
+    const config = {
+      tools: {
+        codex: { pluginManifest: { name: "cx-pack", version: "1.0.0" } },
+        openclaw: { pluginManifest: { name: "oc-pack", version: "1.0.0" } },
+      },
+    };
+    expect(resolveBundlePluginManifest(config, "openclaw")?.name).toBe("cx-pack");
+    expect(resolveBundlePluginManifest(config, "codex")?.name).toBe("cx-pack");
+  });
+
+  it("falls back to preset-derived identity when no tool key is configured", () => {
+    expect(resolveBundlePluginManifest({ presets: ["jue-preset-team"] }, "openclaw")?.name).toBe(
+      "team",
+    );
+  });
+
+  it("always resolves an identity for empty config via the Codex fallback", () => {
+    // resolvePluginManifest has no claude/codex branch default for empty
+    // config, but the Codex key always provides jue-plugin — so a bundle
+    // with no identity configuration is still deterministic.
+    expect(resolveBundlePluginManifest({}, "claude")?.name).toBe("jue-plugin");
+    expect(resolveBundlePluginManifest({}, "openclaw")?.name).toBe("jue-plugin");
   });
 });
