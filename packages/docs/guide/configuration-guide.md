@@ -1,11 +1,5 @@
 # 项目配置指南
 
-> [!NOTE]
-> `targets.<adapter>.artifact` 与 CLI `--artifact` / `--artifact-kind`
-> 控制目标交付形态。默认 project/workspace；`plugin` 对 Claude/Codex 生成
-> 原生 Plugin，对 OpenClaw 表示 Claude/Codex **compatible bundle**；Hermes
-> 可用 `skill-plugin`（仅 skills；MCP 走 workspace）。
-
 大多数项目只需要选择 Preset 和目标 Agent：
 
 ```js

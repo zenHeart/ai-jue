@@ -1,12 +1,5 @@
 # Project Configuration Guide
 
-> [!NOTE]
-> `targets.<adapter>.artifact` and the CLI `--artifact` / `--artifact-kind`
-> control the target delivery shape. The default is project/workspace.
-> `plugin` generates a native Plugin for Claude/Codex, and a Claude/Codex
-> **compatible bundle** for OpenClaw. Hermes may use `skill-plugin`
-> (skills only; MCP stays on workspace).
-
 Most projects select Presets and targets:
 
 ```js
