@@ -277,32 +277,3 @@ export function resolvePluginManifest(
     author: DEFAULT_MANIFEST_AUTHOR,
   };
 }
-
-/** Choose OpenClaw bundle base (claude vs codex) with auto heuristic. */
-export function resolveOpenClawBundleFormat(
-  toolsOpenclaw: Record<string, unknown> | undefined,
-  canonical: { hooks?: Record<string, unknown> },
-): "claude" | "codex" {
-  const configuredValue = toolsOpenclaw?.bundleFormat;
-  if (
-    configuredValue !== undefined &&
-    configuredValue !== null &&
-    typeof configuredValue !== "string"
-  ) {
-    throw new Error(
-      `OpenClaw tools.bundleFormat must be a string: auto, claude, or codex; received ${typeof configuredValue}.`,
-    );
-  }
-  const configured = typeof configuredValue === "string"
-    ? configuredValue.trim().toLowerCase()
-    : "";
-  const raw = configured || "auto";
-  if (raw === "claude" || raw === "codex") return raw;
-  if (raw !== "auto") {
-    throw new Error(
-      `OpenClaw tools.bundleFormat must be one of: auto, claude, codex; received "${raw}".`,
-    );
-  }
-  const hooks = canonical.hooks ?? {};
-  return Object.keys(hooks).length > 0 ? "codex" : "claude";
-}

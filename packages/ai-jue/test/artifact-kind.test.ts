@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vitest";
 import {
   resolveArtifactKind,
-  resolveOpenClawBundleFormat,
   resolvePluginManifest,
   isTargetEnabled,
   resolveTargetSelection,
@@ -160,20 +159,5 @@ describe("resolvePluginManifest", () => {
     // treats a missing author as a failure, not just a warning.
     const manifest = resolvePluginManifest({ presets: ["jue-preset-ai-assets"] }, "claude");
     expect(manifest?.author?.name).toBeTruthy();
-  });
-});
-
-describe("resolveOpenClawBundleFormat", () => {
-  it("defaults to claude when no hooks; codex when hooks exist", () => {
-    expect(resolveOpenClawBundleFormat(undefined, {})).toBe("claude");
-    expect(resolveOpenClawBundleFormat({ bundleFormat: "auto" }, { hooks: { a: {} } })).toBe(
-      "codex",
-    );
-    expect(resolveOpenClawBundleFormat({ bundleFormat: "claude" }, { hooks: { a: {} } })).toBe(
-      "claude",
-    );
-    expect(() => resolveOpenClawBundleFormat({ bundleFormat: "invalid" }, {})).toThrow(
-      "tools.bundleFormat must be one of: auto, claude, codex",
-    );
   });
 });
