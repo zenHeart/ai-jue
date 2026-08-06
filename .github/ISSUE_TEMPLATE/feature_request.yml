@@ -53,11 +53,11 @@ body:
       label: Artifact kinds involved
       multiple: true
       options:
-        - project / workspace
+        - project
+        - workspace
         - plugin
         - compatible-bundle
-        - auto
-        - unknown / to decide
+        - skill-plugin
     validations:
       required: true
   - type: textarea

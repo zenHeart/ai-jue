@@ -40,4 +40,31 @@ alwaysApply: true
 - `commands` 元数据统一写入 `prompt.md` YAML frontmatter。
 - 不使用历史冗余概念与中间字段。
 
+## 6. 架构语义门禁
+
+1. Jue 的稳定概念集合封闭为：`Capability`、`Preset`、`Canonical DSL`、
+   `Extension`、`Adapter`、`Artifact`。新增第七个概念必须先提交 RFC，证明现有
+   六个概念无法表达，并说明删除或合并过的替代方案。
+2. `Canonical DSL` 是正反转换的唯一中间层；不得再创建 Graph、Model、IR 等并行
+   语义层。
+3. `Extension` 是唯一可执行扩展机制；`Adapter` 是其中针对一个 Agent 的完整
+   转换单元。读取、写入、比较、确认等只作为 Adapter 方法，不得升格为插件类型。
+4. `Artifact` 统一表示配置、目录、Plugin、Bundle 等目标产物；目标平台术语不得
+   反向污染公共模型。
+5. 优先复用 npm、Node.js 和目标 Agent 的既有包、配置与发现机制。Jue 专属字段
+   只允许承载标准生态无法表达且执行前必须读取的信息；不得新建独立 manifest。
+6. 用户核心 CLI 只包含 `jue init`、`jue apply`、`jue inspect`。预览使用
+   `apply --dry-run`，CI 使用 `apply --check`，诊断使用
+   `inspect --diagnostics`；内部阶段不得各自变成命令。
+7. 架构与 Reference 定义理想合同；Developer 文档记录实现状态和 Roadmap。未
+   实现能力必须明确标记，禁止以示例暗示可用。可导航文档/RFC 必须同步
+   `.vitepress/config.mts` 中英文侧栏与 `docs-contract` 测试；见
+   `.cursor/rules/docs-vitepress-nav.mdc`。
+8. 稳定文档只做正向定义。已删除、未采用或不存在的术语、命令和抽象不得以
+   “不支持”“不再使用”“不会拆分”等否定句出现在 README、Guide、Architecture、
+   Specification、Reference 或 Agent profile。确需保留的取舍原因只写入 RFC 的
+   背景/备选方案，且不得重新进入导航和用户任务流。
+9. 文档评审必须删除“解释一个不存在对象”的段落。判断标准：移除该句后，读者
+   是否仍能仅凭正向合同完成配置或实现；若能，则该句属于认知负担，应删除。
+
 <!-- AI-JUE:END -->

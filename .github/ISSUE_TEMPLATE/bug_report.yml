@@ -30,11 +30,11 @@ body:
     attributes:
       label: Artifact kind in use
       options:
-        - project / workspace (default)
+        - project
+        - workspace
         - plugin
         - compatible-bundle
-        - auto
-        - n/a
+        - skill-plugin
     validations:
       required: true
   - type: textarea
