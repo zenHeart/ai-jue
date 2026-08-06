@@ -99,6 +99,13 @@ const ALIASES: Record<string, Record<string, string>> = {
     plugin: "skill-plugin",
     "skill-plugin": "skill-plugin",
   },
+  cursor: {
+    project: "project",
+    workspace: "project",
+    plugin: "plugin",
+    bundle: "plugin",
+    auto: "project",
+  },
 };
 
 /** Kinds that may be passed to write() today. */
@@ -107,7 +114,7 @@ const IMPLEMENTED: Record<string, string[]> = {
   codex: ["project", "plugin"],
   openclaw: ["workspace", "compatible-bundle"],
   hermes: ["workspace", "skill-plugin"],
-  cursor: ["project"],
+  cursor: ["project", "plugin"],
 };
 
 export interface ResolveArtifactKindInput {
@@ -203,6 +210,7 @@ type PluginManifestIdentity = {
   version: string;
   description?: string;
   author?: { name: string; email?: string; url?: string };
+  variables?: Record<string, unknown>;
 };
 
 const DEFAULT_MANIFEST_AUTHOR = { name: "ai-jue" };
@@ -240,11 +248,16 @@ export function resolvePluginManifest(
     | undefined;
   const explicit = tools?.pluginManifest as Record<string, unknown> | undefined;
   if (explicit && typeof explicit.name === "string" && explicit.name.trim()) {
+    const variables =
+      explicit.variables && typeof explicit.variables === "object" && !Array.isArray(explicit.variables)
+        ? (explicit.variables as Record<string, unknown>)
+        : undefined;
     return {
       name: explicit.name.trim(),
       version: typeof explicit.version === "string" && explicit.version.trim() ? explicit.version.trim() : "0.1.0",
       description: typeof explicit.description === "string" ? explicit.description : undefined,
       author: resolveExplicitAuthor(explicit) ?? DEFAULT_MANIFEST_AUTHOR,
+      ...(variables ? { variables } : {}),
     };
   }
 

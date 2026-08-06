@@ -15,7 +15,7 @@
 | Target command | Status | Current fact | Next step |
 | --- | --- | --- | --- |
 | `jue init` | Partial | Interactive initialization exists | Align minimal config and no-overwrite behavior |
-| `jue apply` | Partial | Claude, Codex, OpenClaw, and Hermes all export `write()`, so `isCoreCapableAdapter()` routes them through the Core executor automatically: `--dry-run`/`--check`/apply all follow the exit-code table, with atomic execution and a zero-diff second apply verified (`jue apply --adapter codex --dry-run/--check` empirically exits 0/3). The only Adapter in the repo still exporting just `generate()`, without `--dry-run/--check`, is Cursor (`packages/ai-jue-adapter-cursor/`). Gemini/Copilot have no corresponding `packages/ai-jue-adapter-*` package yet and are out of this table's scope | Give Cursor `write()` and route it through the same Core executor |
+| `jue apply` | Partial | Claude, Codex, Cursor, OpenClaw, and Hermes all export `write()` with project/workspace and Plugin-class Artifacts (Cursor `--artifact plugin` implemented); Core `--dry-run`/`--check`/apply follow the exit-code table. Gemini/Copilot have no corresponding `packages/ai-jue-adapter-*` package yet | Finish `jue inspect` filters |
 | `jue inspect` | Partial | `--extension <path> --diagnostics` is implemented: read-only report of the loaded Adapter's `id`/`capabilities`, plus a real apply-readiness check when a project config exists in cwd (JUE-203) | Implement `--capability`/`--preset`/`--target`/`--artifact` filters |
 | `jue capability update` | Implemented | Updates one/all sources | Preserve lock and safety contracts |
 | `jue preset create/validate/pack` | Partial | Historical commands are scattered | Converge under author namespace |
@@ -29,6 +29,7 @@ historical implementation to converge, not target architecture.
 | Agent | Read to Canonical DSL | Write Artifact | Native confirmation |
 | --- | --- | --- | --- |
 | Codex | Done | Done | Done (`packages/ai-jue-adapter-codex/`, JUE-301) — capability declaration honest about the three unsupported boundaries: `commands: "degraded"` (Codex's custom-commands mechanism deprecated per JUE-104/105/JUE-301 Phase 1), `mcp: "degraded"` (plugin writes a root `.mcp.json`; project keeps the `[mcp_servers.*]` TOML tables in `.codex/config.toml`), `rules: "degraded"` (no separate rules directory; rules fold into AGENTS.md via the `context` mapping). Native confirmation: Codex 0.145.0 has no `codex plugin validate`. `confirm()` immediately returns `unconfirmed` for non-plugin Artifacts; for plugin Artifacts it runs the real `codex plugin marketplace add <local>` + `codex plugin add <name> --marketplace <name>` + `codex plugin list --json` round-trip (isolated CODEX_HOME), asserting the Plugin is installed with `installed: true, enabled: true` — the strongest native confirmation Codex currently offers. `scripts/verify-codex-native.js` (replayable) calls `confirm()` with `artifactKind: "project"`, so it only exercises loading read/write/confirm and the project-scope `unconfirmed` path; it never invokes the real codex CLI. |
+| Cursor | Done | Done | Done (`packages/ai-jue-adapter-cursor/`) — project and Plugin Artifacts; Skills/Subagents/Commands keep frontmatter; project hooks use `{ version: 1, hooks }`, plugin hooks use `{ hooks }`; command MCP servers get `type: "stdio"`; `variables` passthrough via `tools.cursor.pluginManifest`. `confirm()` returns `unconfirmed` for both kinds (plugin includes structural evidence) |
 | OpenClaw | Done | Done | Done (`packages/ai-jue-adapter-openclaw/`, JUE-302) — `capabilities` honestly declares `rules/commands/agents/mcp: "degraded"` — the four real unsupported boundaries (OpenClaw has no per-workspace `commands/`/`agents/`/`rules/` directory; `openclaw agents add/list/delete` manages isolated workspaces under the user home, not as project files; MCP is global-only on `openclaw.json`). Only `skills`/`hooks` are `supported` (verified shape `~/.openclaw/workspace-jue-probe/skills/<name>/SKILL.md` + `hooks/<name>/HOOK.md+handler.js`). Native confirmation uses real `openclaw --profile jue-302-verify-<pid>-<ts> config validate --json` (isolated `--profile` to prevent global pollution, empirically passing). **One openclaw 0.145.0 quirk found and documented**: `spawnSync`/`execFileSync` from inside the vitest worker process produce empty stdout for `openclaw config validate --json` (works fine from a normal shell), so the contract suite **does not** call `confirmNatively` per the honest-degraded-stance principle; real native confirmation lives in the standalone `scripts/verify-openclaw-native.js`. `npm test` (285 passing, 5 new) |
 | Hermes | Done | Done | Done (`packages/ai-jue-adapter-hermes/`, JUE-303) — `capabilities` honestly declares `rules: "unsupported"`, `hooks: "unsupported"` (the real install's `~/.hermes/hooks/` is empty — insufficient evidence), `commands: "degraded"`, `agents: "degraded"` (all no-op pass-throughs; the like-named block in `config.yaml` is global runtime policy), `skills: "supported"`, `mcp: "supported"`. Native confirmation uses the real `tirith config validate <projectRoot>` (the `tirith` binary, run against an isolated temp HOME); `scripts/verify-hermes-native.js` replays it but requires the real `tirith` binary on PATH. Fixed three real implementation bugs in the process: (1) `confirm.ts` previously concatenated the executable name and its arguments into one string passed to `execFileSync(cmd, options)` — `execFileSync` never tokenizes via a shell, so it would treat the whole spaced string as a literal executable name and always throw ENOENT regardless of whether `tirith` exists; now calls `execFileSync("tirith", ["config", "validate", projectRoot], options)`. (2) `capabilities/skills.ts`'s `write()` previously threw on any Canonical skill key without a `<category>/<name>` slash — but Canonical's `skills` schema is an unconstrained `record(string, SkillSchema)`, so any flat key coming from a Claude/Codex/OpenClaw-shaped Preset (all three use a one-level native skills directory) would make `jue apply --adapter hermes` crash outright; now falls back to a `general` category instead of rejecting, verified against the real `ai-assets` repository (27 agents, 9 skills). (3) In the same file, `references` attachment filenames previously required a single safe path segment and rejected nested paths (e.g. `references/nested/guide.md`, a shape Claude/Codex's `bundleKeys` mechanism supports); now reuses `ai-jue-core`'s already-exported `resolveSupportFilePath` (the same path-traversal-safe logic the other Adapters' `directoryPerItem` factory uses) to allow safe nested subdirectories. One open architecture question remains: the Adapter adds a `cron` field to `CanonicalDocumentSchema` (a full-file pass-through of `cron/jobs.json`) that is not one of the six atomic Capability types; whether to formally adopt it (as a seventh atomic Capability, or as a `tools.hermes` target-private field instead) has not been decided via an RFC — see "Not yet implemented" below |
 
@@ -515,17 +516,27 @@ Partial means local code or tests exist, not complete Agent support. See
   `MEMORY.md`, matching the specificity of the other Adapters' indicator
   files (e.g. `CLAUDE.md`).
 
+## Cursor follow-up (post JUE-304)
+
+JUE-304 delivered Cursor project/plugin round-trip. These GitHub Issues are **separate follow-ups** — agents must read the full issue (Acceptance criteria + Implementation notes) before starting:
+
+| Issue | Task |
+| --- | --- |
+| [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json` generation |
+| [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw compatible-bundle third base: Cursor layout |
+| [#10](https://github.com/zenHeart/ai-jue/issues/10) | adapter-creator dual-layout documentation |
+| [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + security contract samples |
+
+See [`agents/cursor.md` §5](../agents/cursor.md#5-follow-up-work-github-issues).
+
 ## Critical gaps
 
 `resolveFinalConfig` still returns a `MergedConfig` mixing ProjectConfig
 fields, not a `CanonicalDocument`; each Core-executor entry point calls
 `toCanonicalDocument(config)` on its own rather than `resolveFinalConfig`
 itself producing a `CanonicalDocument` every Adapter shares. Claude, Codex,
-OpenClaw, and Hermes all now export `write()` and route through the Core
-executor; the only Adapter in the repo still consuming `MergedConfig`
-directly via `generate()`, bypassing the Core executor and not supporting
-`--dry-run/--check`, is Cursor — that's scope for when Cursor gains
-`write()`, not a JUE-108 leftover. The Hermes Adapter (JUE-303) adds a `cron`
+Cursor, OpenClaw, and Hermes all export `write()` and route through the Core
+executor (Cursor project + plugin, JUE-304). The Hermes Adapter (JUE-303) adds a `cron`
 field to `CanonicalDocumentSchema` (`packages/ai-jue-core/src/
 canonical-document.ts`, a full-file pass-through of `cron/jobs.json`) that is
 not one of the six atomic Capability types this document elsewhere repeatedly

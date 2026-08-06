@@ -223,13 +223,28 @@ mcp?: {
 
 ### 5.2 Cursor
 
+#### 5.2.1 Project
+
 - `context.global` -> 根目录 `AGENTS.md`
 - `rules` -> `.cursor/rules/*.mdc`
 - `commands` -> `.cursor/commands/*.md`
 - `skills` -> `.cursor/skills/*/SKILL.md`
 - `agents` -> `.cursor/agents/*.md`
-- `hooks` -> `.cursor/hooks.json`
+- `hooks` -> `.cursor/hooks.json`（`{ version: 1, hooks }`）
 - `mcp.servers` -> `.cursor/mcp.json`
+- target-specific settings -> `tools.cursor` → `.cursor/settings.json`、ignore 文件
+
+#### 5.2.2 Plugin
+
+- manifest -> `.cursor-plugin/plugin.json`（`name` 必需；`variables` 为 target-private 透传）
+- `rules` -> `rules/*.mdc`
+- `commands` -> `commands/*.md`
+- `skills` -> `skills/*/SKILL.md`
+- `agents` -> `agents/*.md`
+- `hooks` -> `hooks/hooks.json`（`{ hooks }`，无 `version`）
+- `mcp.servers` -> 根目录 `mcp.json`
+
+Plugin 不含 `context.global` 与 `tools.cursor` project 设置面。
 
 ## 6. 校验策略
 

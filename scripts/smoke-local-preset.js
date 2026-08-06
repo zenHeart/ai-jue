@@ -306,6 +306,53 @@ async function main() {
       }
     }
 
+    function assertCursorSkillTree(root, label) {
+      for (const name of skillNames) {
+        const flat = name.includes('/') ? name.split('/').pop() : name;
+        const skillPath = path.join('.cursor', 'skills', flat, 'SKILL.md');
+        assertExists(root, skillPath, label);
+        const content = fs.readFileSync(path.join(root, skillPath), 'utf8');
+        if (!content.startsWith('---\n')) {
+          throw new Error(`${label}: skill ${name} missing YAML frontmatter`);
+        }
+        if (!content.includes('name:')) {
+          throw new Error(`${label}: skill ${name} missing name frontmatter`);
+        }
+      }
+    }
+
+    function assertCursorMcpJson(root, label) {
+      if (mcpServerNames.length === 0) return;
+      assertExists(root, path.join('.cursor', 'mcp.json'), label);
+      const parsed = JSON.parse(
+        fs.readFileSync(path.join(root, '.cursor', 'mcp.json'), 'utf8'),
+      );
+      const servers = parsed.mcpServers || {};
+      for (const name of mcpServerNames) {
+        if (!servers[name]) {
+          throw new Error(`${label}: .cursor/mcp.json missing server ${name}`);
+        }
+        if (servers[name].command && servers[name].type !== 'stdio') {
+          throw new Error(`${label}: MCP server ${name} missing type: stdio`);
+        }
+      }
+    }
+
+    function assertCursorPluginTree(root, label) {
+      assertExists(root, path.join('.cursor-plugin', 'plugin.json'), label);
+      for (const name of skillNames) {
+        const flat = name.includes('/') ? name.split('/').pop() : name;
+        assertExists(root, path.join('skills', flat, 'SKILL.md'), label);
+        const content = fs.readFileSync(path.join(root, 'skills', flat, 'SKILL.md'), 'utf8');
+        if (!content.startsWith('---\n')) {
+          throw new Error(`${label}: plugin skill ${name} missing YAML frontmatter`);
+        }
+      }
+      if (mcpServerNames.length > 0) {
+        assertExists(root, 'mcp.json', label);
+      }
+    }
+
     function expectedOpenClawBundleMarker() {
       const configured = config.tools?.openclaw?.bundleFormat;
       const configuredFormat = typeof configured === 'string'
@@ -322,7 +369,7 @@ async function main() {
     if (pluginMode) {
       // Separate output dirs — plugin roots collide if written into one tree.
       const outs = {};
-      for (const name of ['codex', 'claude', 'openclaw', 'hermes']) {
+      for (const name of ['codex', 'claude', 'cursor', 'openclaw', 'hermes']) {
         const dir = path.join(consumerDir, `out-${name}`);
         fs.mkdirSync(dir);
         fs.writeFileSync(
@@ -346,6 +393,8 @@ async function main() {
       run(process.execPath, [cli, 'apply', '--adapter', 'openclaw', ...artifactArgs], outs.openclaw);
       run(process.execPath, [cli, 'apply', '--adapter', 'hermes', ...artifactArgs], outs.hermes);
 
+      run(process.execPath, [cli, 'apply', '--adapter', 'cursor', ...artifactArgs], outs.cursor);
+
       assertExists(outs.codex, path.join('.codex-plugin', 'plugin.json'), 'codex plugin');
       assertSkillTree(outs.codex, 'codex plugin');
       assertMcpJson(outs.codex, 'codex plugin');
@@ -353,6 +402,8 @@ async function main() {
       assertExists(outs.claude, path.join('.claude-plugin', 'plugin.json'), 'claude plugin');
       assertSkillTree(outs.claude, 'claude plugin');
       assertMcpJson(outs.claude, 'claude plugin');
+
+      assertCursorPluginTree(outs.cursor, 'cursor plugin');
 
       // OpenClaw compatible-bundle follows the configured/auto-selected base.
       assertExists(outs.openclaw, expectedOpenClawBundleMarker(), 'openclaw bundle');
@@ -369,6 +420,10 @@ async function main() {
       run(process.execPath, [cli, 'apply', '--adapter', 'openclaw'], consumerDir);
       run(process.execPath, [cli, 'apply', '--adapter', 'hermes'], consumerDir);
 
+      run(process.execPath, [cli, 'apply', '--adapter', 'cursor'], consumerDir);
+      run(process.execPath, [cli, 'apply', '--adapter', 'cursor', '--dry-run'], consumerDir);
+      run(process.execPath, [cli, 'apply', '--adapter', 'cursor', '--check'], consumerDir);
+
       for (const relative of [
         'AGENTS.md',
         'CLAUDE.md',
@@ -377,15 +432,18 @@ async function main() {
         path.join('.codex', 'agents', `${agentName}.toml`),
         path.join('.claude', 'skills', skillName, 'SKILL.md'),
         path.join('.claude', 'agents', `${agentName}.md`),
+        path.join('.cursor', 'agents', `${agentName}.md`),
         path.join('skills', skillName, 'SKILL.md'),
         path.join('skills', 'general', skillName, 'SKILL.md'),
       ]) {
         assertExists(consumerDir, relative, 'workspace apply');
       }
+      assertCursorSkillTree(consumerDir, 'cursor apply');
+      assertCursorMcpJson(consumerDir, 'cursor apply');
       verifySupportFiles(skillName, skill, consumerDir);
     }
     console.log(
-      `[OK] isolated local Preset install -> Codex/Claude Code/OpenClaw/Hermes`
+      `[OK] isolated local Preset install -> Codex/Claude Code/Cursor/OpenClaw/Hermes`
       + (pluginMode ? ` artifact=plugin skills=${skillNames.length} mcp=${mcpServerNames.length}` : '')
       + ` (${archives.length} packages)`,
     );

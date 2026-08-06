@@ -11,7 +11,7 @@ titleTemplate: false
 
 <section class="signal-strip" aria-label="Jue MVP status">
   <span><strong>6</strong> atomic capabilities</span>
-  <span><strong>4</strong> production adapters</span>
+  <span><strong>5</strong> production adapters</span>
   <span><strong>1</strong> source of truth</span>
 </section>
 
@@ -39,7 +39,7 @@ titleTemplate: false
     <article>
       <span class="flow-index">NATIVE</span>
       <h3>Agent Adapters</h3>
-      <p>Claude · Codex · OpenClaw · Hermes</p>
+      <p>Claude · Codex · Cursor · OpenClaw · Hermes</p>
     </article>
   </div>
 </section>
@@ -73,6 +73,7 @@ titleTemplate: false
   <div class="adapter-grid">
     <article><span class="adapter-mark">C</span><h3>Claude</h3><p>Skills、Agents、Rules、Hooks 与 MCP</p></article>
     <article><span class="adapter-mark">X</span><h3>Codex</h3><p>AGENTS.md、Skills、Agents、Hooks 与 MCP</p></article>
+    <article><span class="adapter-mark">Cu</span><h3>Cursor</h3><p>AGENTS.md、Rules、Skills、Subagents、Commands、Hooks 与 MCP</p></article>
     <article><span class="adapter-mark">O</span><h3>OpenClaw</h3><p>AGENTS.md、Skills、Hooks 与 MCP（workspace / compatible-bundle）</p></article>
     <article><span class="adapter-mark">H</span><h3>Hermes</h3><p>MEMORY.md、Skills 与 MCP（workspace / skill-plugin）</p></article>
   </div>

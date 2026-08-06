@@ -15,7 +15,11 @@
   "license": "MIT",
   "dependencies": {
     "ai-jue-core": "*",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "js-yaml": "^4.1.0"
+  },
+  "peerDependencies": {
+    "ai-jue-core": "*"
   },
   "devDependencies": {
     "typescript": "^5.0.0"
@@ -33,7 +37,8 @@
     "access": "public"
   },
   "files": [
-    "dist"
+    "dist",
+    "fixtures"
   ],
   "types": "dist/index.d.ts"
 }

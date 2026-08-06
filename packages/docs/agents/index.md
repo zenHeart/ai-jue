@@ -27,6 +27,7 @@
 | --- | --- | --- | --- | --- |
 | [Claude Code](claude-code.md) | Implemented | Implemented | Implemented | Implemented |
 | [Codex](codex.md) | Implemented | Implemented | Implemented | Implemented |
+| [Cursor](cursor.md) | Implemented | Implemented | Implemented | Implemented |
 | [OpenClaw](openclaw.md) | Implemented | Implemented | Implemented | Implemented |
 | [Hermes](hermes.md) | Implemented | Implemented | Implemented | Implemented |
 

@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "hooks": {
+    "postToolUse": [
+      {
+        "command": "echo neutral-fixture-project-hook",
+        "matcher": "Edit"
+      }
+    ]
+  }
+}

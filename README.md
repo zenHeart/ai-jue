@@ -111,10 +111,21 @@ npx jue apply --all
 完成！ai-jue 会根据项目的 AI 配置策略，自动为各编辑器生成对应的配置文件：
 
 ```
-✓ CLAUDE.md / .claude/*              — Claude Code
-✓ AGENTS.md / .cursor/*              — Cursor
-✓ AGENTS.md / .codex/*               — Codex CLI
+✓ CLAUDE.md / .claude/*              — Claude Code（project）
+✓ AGENTS.md / .cursor/*              — Cursor（project，默认）
+✓ AGENTS.md / .codex/*               — Codex CLI（project）
 ```
+
+生成 **可分发 Plugin**（Claude / Codex / Cursor）：
+
+```bash
+npx jue apply --adapter cursor --artifact plugin
+npx jue apply --adapter claude-code --artifact plugin
+npx jue apply --adapter codex --artifact plugin
+```
+
+Cursor Plugin 输出 `.cursor-plugin/plugin.json` 与根级 `rules/`、`skills/` 等；本地加载见
+[`packages/ai-jue-adapter-cursor/fixtures/README.md`](packages/ai-jue-adapter-cursor/fixtures/README.md)。
 
 ---
 
@@ -250,7 +261,7 @@ npx jue apply --all --watch
 ai.config.js          →  加载预设 & 合并配置  →  适配器插件生成文件
 ┌──────────────┐       ┌───────────────────┐    ┌──────────────────────┐
 │ presets: ['base']│ → │  ai-jue-core       │ → │ adapter-claude → CLAUDE.md + .claude/* │
-│ mcp: {...}    │      │  (微内核)          │    │ adapter-cursor → AGENTS.md + .cursor/* │
+│ mcp: {...}    │      │  (微内核)          │    │ adapter-cursor → AGENTS.md + .cursor/*（project）或 Plugin 树（--artifact plugin） │
 │ commands: {}  │      │  配置合并 & 规范化  │    │ adapter-codex  → AGENTS.md + .codex/*  │
 └──────────────┘       └───────────────────┘    └─────────────────────────────────────────┘
 ```
@@ -268,13 +279,14 @@ ai.config.js          →  加载预设 & 合并配置  →  适配器插件生�
 ```bash
 npx jue init              # 交互式初始化配置
 npx jue inspect           # 只读发现来源、目标与产物（规划）
-npx jue apply --target codex --dry-run # 预览变化（Claude/Codex/OpenClaw/Hermes 已实现，经 Core 执行器；Cursor 尚未接入）
+npx jue apply --target codex --dry-run # 预览变化（Claude/Codex/Cursor/OpenClaw/Hermes 已实现，经 Core 执行器）
 npx jue apply --target codex  # 生成指定目标（目标合同，当前部分实现）
 npx jue apply -a          # 生成全部已发现适配器（等同 --all）
 npx jue apply             # 未显式传参时，按 .cursor/.codex/.claude 等痕迹自动识别
+npx jue apply --adapter cursor --artifact plugin  # 生成 Cursor 可分发 Plugin
 npx jue apply --lang zh   # 运行时覆盖语言（等同 AI_JUE_LANG=zh）
 npx jue apply --all --watch  # 监听变化自动重新生成（显式适配器）
-npx jue apply --target codex --check # CI 校验、漂移和确认（Claude/Codex/OpenClaw/Hermes 已实现；Cursor 尚未接入）
+npx jue apply --target codex --check # CI 校验、漂移和确认（Claude/Codex/Cursor/OpenClaw/Hermes 已实现）
 npx jue inspect --extension <pkg> --diagnostics # 深度诊断（已实现，需指定 --extension；不带 --extension 的裸 inspect 仍是规划）
 npx jue capability update # 更新外部 external Capability reference
 npx jue preset create <n> # 创建新的预设项目结构（规划）

@@ -40,10 +40,7 @@ export interface CoreCapableAdapterModule {
 /**
  * An Adapter qualifies for the Core-driven `apply`/`--dry-run`/`--check`
  * path once it exports `write()` (the Canonical → Artifact conversion).
- * Claude, Codex, OpenClaw, and Hermes all export it (JUE-107/301/302/303).
- * Cursor still only exports `generate()` and keeps running through the
- * pre-existing direct-generate path in `apply.ts` — extending it to
- * `write()` is future scope.
+ * Claude, Codex, OpenClaw, Hermes, and Cursor all export it.
  */
 export function isCoreCapableAdapter(adapterModule: unknown): adapterModule is CoreCapableAdapterModule {
   return typeof (adapterModule as CoreCapableAdapterModule | undefined)?.write === "function";

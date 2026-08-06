@@ -1,30 +1,19 @@
 # ai-jue-adapter-cursor
 
-<div align="center">
-
-**Adapter for Cursor: capability mapping to native Cursor artifacts**
-
-[![NPM version](https://img.shields.io/npm/v/ai-jue-adapter-cursor.svg?style=flat)](https://www.npmjs.com/package/ai-jue-adapter-cursor)
-[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-
-[English](README.en.md) | [简体中文](README.md)
+> AI-Jue adapter for Cursor (project + Plugin Artifact)
 
 Part of the [ai-jue](https://github.com/zenHeart/ai-jue) monorepo.
 
-</div>
+## Artifacts
 
----
+| Kind | CLI | Output |
+| --- | --- | --- |
+| **project** (default) | `jue apply --adapter cursor` | `.cursor/*` + root `AGENTS.md` |
+| **plugin** | `jue apply --adapter cursor --artifact plugin` | `.cursor-plugin/plugin.json` + root `rules/`, `skills/`, `commands/`, `agents/`, `hooks/hooks.json`, `mcp.json` |
 
-## Features
-
-This adapter maps canonical `ai-jue` capabilities into Cursor-native outputs:
-
-- **Global Context**: Cursor consumes root `AGENTS.md` natively
-- **Project Rules**: `rules/*` -> `.cursor/rules/*.mdc`
-- **Commands**: `commands/*` -> `.cursor/commands/*.md`
-- **Skills**: `skills/*` -> `.cursor/skills/*/SKILL.md`
-- **Hooks**: `hooks/*` -> `.cursor/hooks.json`
-- **MCP Servers**: `mcp.servers` -> `.cursor/mcp.json`
+Docs: [`packages/docs/en/agents/cursor.md`](../docs/en/agents/cursor.md) ·
+[`canonical-model §5.2`](../docs/en/specs/canonical-model.md) ·
+[`fixtures/README.md`](fixtures/README.md) (manual Plugin load steps)
 
 ## Installation
 
@@ -32,10 +21,6 @@ This adapter maps canonical `ai-jue` capabilities into Cursor-native outputs:
 npm install ai-jue-adapter-cursor
 ```
 
-## Documentation
-
-For usage, please refer to the main [ai-jue](https://github.com/zenHeart/ai-jue) documentation.
-
 ## License
 
-[MIT](LICENSE)
+MIT

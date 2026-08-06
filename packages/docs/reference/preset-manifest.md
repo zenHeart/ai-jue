@@ -37,6 +37,7 @@ Preset 是声明式 Capability 包。包名建议 `jue-preset-<id>`，manifest �
 | `type` | 是 | `skill` / `agent` / `command` / `rule` / `hook` / `mcp` |
 | `ref` | 条件 | Git ref |
 | `path` | 否 | 来源内相对路径 |
+| `integrity` | 否 | Subresource Integrity 哈希 |
 
 引用是单个 Capability 叶子，不递归展开 Preset，也不返回 Capability 集合。
 

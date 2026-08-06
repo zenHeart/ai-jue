@@ -54,27 +54,41 @@ describe('ai-jue-adapter-cursor', () => {
     const content = fs.readFileSync(rulesPath, 'utf8');
     expect(content).toContain('description: Style rule');
     expect(content).toContain('alwaysApply: true');
-    expect(content).toContain('globs: ["src/**/*.ts"]');
+    expect(content).toContain('globs:');
+    expect(content).toContain('src/**/*.ts');
     expect(content).toContain('Use strict types');
   });
 
   it('should map commands/skills/hooks to cursor-native locations', async () => {
     const config = {
       commands: {
-        test: { triggers: ['/test'], prompt: 'Run tests' }
+        test: { description: 'Run tests', prompt: 'Run tests' },
       },
       skills: {
-        debug: { content: 'Debug Skill' }
+        debug: { name: 'debug', description: 'Debug skill', content: 'Debug Skill' },
       },
       hooks: {
-        'pre-commit': 'npm test'
-      }
+        PostToolUse: {
+          script: 'npm test',
+          matcher: 'Edit|Write',
+          async: true,
+          timeout: 30,
+        },
+      },
     };
 
     await generate(config, TEST_DIR);
     expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'commands', 'test.md'))).toBe(true);
-    expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'skills', 'debug', 'SKILL.md'))).toBe(true);
-    expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'hooks.json'))).toBe(true);
+    const skill = fs.readFileSync(path.join(TEST_DIR, '.cursor', 'skills', 'debug', 'SKILL.md'), 'utf8');
+    expect(skill).toMatch(/^---\n/);
+    expect(skill).toContain('name: debug');
+    expect(skill).toContain('description: Debug skill');
+    const hooksPath = path.join(TEST_DIR, '.cursor', 'hooks.json');
+    expect(fs.existsSync(hooksPath)).toBe(true);
+    const hooks = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
+    expect(hooks.version).toBe(1);
+    expect(hooks.hooks.postToolUse[0].command).toBe('npm test');
+    expect(hooks.hooks.postToolUse[0].matcher).toBe('Edit|Write');
   });
 
   it('should preserve structured hook fields from canonical input', async () => {
@@ -95,9 +109,10 @@ describe('ai-jue-adapter-cursor', () => {
     const hooksPath = path.join(TEST_DIR, '.cursor', 'hooks.json');
     const content = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
 
-    expect(content.PostToolUse.matcher).toBe('Edit|Write');
-    expect(content.PostToolUse.async).toBe(true);
-    expect(content.PostToolUse.timeout).toBe(30);
+    expect(content.version).toBe(1);
+    expect(content.hooks.postToolUse[0].matcher).toBe('Edit|Write');
+    expect(content.hooks.postToolUse[0].async).toBe(true);
+    expect(content.hooks.postToolUse[0].timeout).toBe(30);
   });
 
   it('should not generate hooks.json when hooks are empty', async () => {
@@ -260,19 +275,14 @@ describe('ai-jue-adapter-cursor', () => {
       expect(fs.existsSync(hooksPath)).toBe(true);
       const content = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
 
-      // Simple string format
-      expect(content.sessionStart).toBe('./scripts/init.sh');
-
-      // Complex object format
-      expect(content.preToolUse.matcher).toBe('Bash');
-      expect(content.preToolUse.script).toBe('./scripts/validate.sh');
-      expect(content.preToolUse.async).toBe(true);
-      expect(content.preToolUse.timeout).toBe(120);
-
-      // Partial object format (no async/timeout)
-      expect(content.postTool.matcher).toBe('Write');
-      expect(content.postTool.script).toBe('./scripts/format.sh');
-      expect(content.postTool.async).toBeUndefined();
+      expect(content.version).toBe(1);
+      expect(content.hooks.sessionStart[0].command).toBe('./scripts/init.sh');
+      expect(content.hooks.preToolUse[0].matcher).toBe('Bash');
+      expect(content.hooks.preToolUse[0].command).toBe('./scripts/validate.sh');
+      expect(content.hooks.preToolUse[0].async).toBe(true);
+      expect(content.hooks.preToolUse[0].timeout).toBe(120);
+      expect(content.hooks.postTool[0].matcher).toBe('Write');
+      expect(content.hooks.postTool[0].command).toBe('./scripts/format.sh');
     });
 
     it('should skip hooks with empty script in complex format', async () => {
@@ -292,8 +302,8 @@ describe('ai-jue-adapter-cursor', () => {
       const hooksPath = path.join(TEST_DIR, '.cursor', 'hooks.json');
       const content = JSON.parse(fs.readFileSync(hooksPath, 'utf8'));
 
-      expect(content.validHook).toBe('./valid.sh');
-      expect(content.invalidHook).toBeUndefined();
+      expect(content.hooks.validHook[0].command).toBe('./valid.sh');
+      expect(content.hooks.invalidHook).toBeUndefined();
     });
   });
 
@@ -316,12 +326,9 @@ describe('ai-jue-adapter-cursor', () => {
       expect(fs.existsSync(agentPath)).toBe(true);
       const content = fs.readFileSync(agentPath, 'utf8');
 
-      expect(content).toContain('# reviewer');
-      expect(content).toContain('Code Reviewer Agent');
+      expect(content).toMatch(/^---\n/);
+      expect(content).toContain('description: Code Reviewer Agent');
       expect(content).toContain('Review code for quality and best practices');
-      expect(content).toContain('## Skills');
-      expect(content).toContain('- security-check');
-      expect(content).toContain('- performance-review');
     });
 
     it('should generate agents without skills', async () => {
@@ -340,9 +347,9 @@ describe('ai-jue-adapter-cursor', () => {
       expect(fs.existsSync(agentPath)).toBe(true);
       const content = fs.readFileSync(agentPath, 'utf8');
 
-      expect(content).toContain('# helper');
+      expect(content).toMatch(/^---\n/);
       expect(content).toContain('Help with general tasks');
-      expect(content).not.toContain('## Skills');
+      expect(content).not.toContain('<!-- AI-JUE:START -->');
     });
   });
 

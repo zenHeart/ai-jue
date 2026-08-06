@@ -50,6 +50,7 @@ describe("documentation contract", () => {
       "index.md",
       "claude-code.md",
       "codex.md",
+      "cursor.md",
       "openclaw.md",
       "hermes.md",
     ]) {

@@ -1,0 +1,17 @@
+{
+  "name": "jue-fixture-demo",
+  "version": "1.0.0",
+  "description": "Neutral Cursor plugin fixture.",
+  "author": { "name": "ai-jue fixtures" },
+  "variables": {
+    "type": "object",
+    "properties": {
+      "DEMO_TOKEN": {
+        "type": "string",
+        "title": "Demo token",
+        "description": "Bearer token for the demo MCP server."
+      }
+    },
+    "required": ["DEMO_TOKEN"]
+  }
+}
