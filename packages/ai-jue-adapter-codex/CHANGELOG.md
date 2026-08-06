@@ -1,3 +1,9 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-codex@v0.2.0...ai-jue-adapter-codex@1.0.0) (2026-08-06)
+
+
+### Features
+
+* **apply:** Artifact kind selection + OpenClaw compatible-bundle (RFC-0002) ([996fbb3](https://github.com/zenHeart/ai-jue/commit/996fbb3456c337be90d6d57e6648fc6eca0fe323))
 # 1.0.0 (2026-07-27)
 
 

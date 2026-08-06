@@ -1,3 +1,9 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.4.0...ai-jue-core@1.0.0) (2026-08-06)
+
+
+### Features
+
+* **apply:** Artifact kind selection + OpenClaw compatible-bundle (RFC-0002) ([996fbb3](https://github.com/zenHeart/ai-jue/commit/996fbb3456c337be90d6d57e6648fc6eca0fe323))
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.2.1...ai-jue-core@1.0.0) (2026-07-27)
 
 
