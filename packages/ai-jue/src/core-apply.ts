@@ -25,7 +25,12 @@ export interface CoreCapableAdapterModule {
       projectRoot: string;
       artifactKind?: string;
       toolsConfig?: Record<string, unknown>;
-      pluginManifest?: { name: string; version: string; description?: string };
+      pluginManifest?: {
+        name: string;
+        version: string;
+        description?: string;
+        author?: { name: string; email?: string; url?: string };
+      };
     },
   ): Promise<ArtifactChange[]>;
   /** Adapter-owned layout detection used by `artifact: "auto"`. */
