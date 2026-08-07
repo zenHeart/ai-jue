@@ -16,6 +16,7 @@ const zhGuideSidebar = [
     text: "创建与集成",
     items: [
       { text: "创建预设", link: "/guide/creating-a-preset" },
+      { text: "本地开发 Preset", link: "/guide/local-preset-development" },
       { text: "扩展 Jue", link: "/guide/extensions" },
       { text: "与脚手架集成", link: "/guide/integration" },
     ],
@@ -127,6 +128,10 @@ const enGuideSidebar = [
     text: "Create and Integrate",
     items: [
       { text: "Creating a Preset", link: "/en/guide/creating-a-preset" },
+      {
+        text: "Developing a Preset Locally",
+        link: "/en/guide/local-preset-development",
+      },
       { text: "Extending Jue", link: "/en/guide/extensions" },
       { text: "Integration Guide", link: "/en/guide/integration" },
     ],
