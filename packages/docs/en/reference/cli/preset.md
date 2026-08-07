@@ -30,6 +30,9 @@ jue preset pack <path> [--out <dir>]
 
 - `create`: scaffolds an ordinary npm package and minimal Canonical directories.
 - `validate`: checks `package.json#ai`, paths, references, sensitive data, and
-  packability.
+  packability. Unlike today's `jue validate` (which only reads the consuming
+  project's `ai.config.js`), the target is to self-check `<path-or-package>`
+  directly, without first wiring it into a consuming project — motivating
+  scenarios in [Developing a Preset Locally](../../guide/local-preset-development.md) §5.
 - `pack`: follows npm pack semantics without running package scripts and emits
   content hashes.

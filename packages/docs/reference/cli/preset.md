@@ -30,5 +30,8 @@ jue preset pack <path> [--out <dir>]
 ```
 
 - `create`：生成普通 npm 包和最小 Canonical 目录。
-- `validate`：校验 `package.json#ai`、目录、引用、敏感信息和可打包性。
+- `validate`：校验 `package.json#ai`、目录、引用、敏感信息和可打包性；相比
+  今天的 `jue validate`（只读消费项目的 `ai.config.js`），目标是直接对
+  `<path-or-package>` 自检，不需要先搭一个引用它的消费项目——动机场景见
+  [本地开发 Preset](../../guide/local-preset-development.md) §5。
 - `pack`：在不执行 package scripts 的前提下调用 npm pack 语义并输出内容 hash。
