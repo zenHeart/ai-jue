@@ -14,9 +14,9 @@
   "author": "AI-Jue Team <contact@ai-jue.dev>",
   "license": "MIT",
   "dependencies": {
-    "ai-jue-core": "*",
     "@types/node": "^20.0.0",
-    "js-yaml": "^4.1.0"
+    "ai-jue-core": "*",
+    "js-yaml": "^4.3.1"
   },
   "peerDependencies": {
     "ai-jue-core": "*"
