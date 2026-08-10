@@ -26,6 +26,9 @@ export default {
 
 不要用项目配置复制 Preset 正文，也不要在 `tools` 中重新表达已有 Canonical。
 
+`presets` 里的每一项都是 npm 包名，来源由消费项目的 `package.json` 依赖
+声明决定；本地开发未发布的 Preset 见 [本地开发 Preset](local-preset-development.md)。
+
 ## 2. 自动选择
 
 `artifact: "auto"` 按以下顺序：

@@ -56,11 +56,18 @@ jue-preset-team/
 
 ## 4. 验证和打包
 
-发布前用 `jue validate` 校验项目配置（`presets` 数组、预设安装与
-`extends` 路径），并用 `npm pack` 预览包内容：
+`jue validate` 校验的是**消费项目**的 `ai.config.js`（`presets` 数组、预设
+安装与 `extends` 路径），不是 Preset 自身；本地开发时先按
+[本地开发 Preset](./local-preset-development.md) 把 Preset 用本地路径依赖
+接入一个消费项目，再运行：
 
 ```bash
-jue validate
+npx jue validate
+```
+
+发布前用 `npm pack` 预览包内容：
+
+```bash
 npm pack --dry-run
 ```
 

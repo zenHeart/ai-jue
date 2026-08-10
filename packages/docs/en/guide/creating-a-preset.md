@@ -31,12 +31,19 @@ for shared or third-party content. Put target-private configuration under
 
 ## 4. Validate and package
 
-Before publishing, use `jue validate` to check the project config (`presets`
-array, preset installation, `extends` paths) and `npm pack` to preview the
-package contents:
+`jue validate` checks the **consuming project's** `ai.config.js` (`presets`
+array, preset installation, `extends` paths) — not the Preset itself. During
+local development, wire the Preset into a consuming project with a local
+path dependency first (see
+[Developing a Preset Locally](./local-preset-development.md)), then run:
 
 ```bash
-jue validate
+npx jue validate
+```
+
+Before publishing, use `npm pack` to preview the package contents:
+
+```bash
 npm pack --dry-run
 ```
 
