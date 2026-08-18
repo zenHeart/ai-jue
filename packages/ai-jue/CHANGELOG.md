@@ -1,3 +1,9 @@
+# [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.5.2...ai-jue@1.0.0) (2026-08-18)
+
+
+### Bug Fixes
+
+* support npm Capability Sources on Windows ([#15](https://github.com/zenHeart/ai-jue/issues/15)) ([bcebc1d](https://github.com/zenHeart/ai-jue/commit/bcebc1dafbbfacef4ba1786947498370752ae2f1)), closes [#13](https://github.com/zenHeart/ai-jue/issues/13)
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.5.1...ai-jue@1.0.0) (2026-08-10)
 
 
