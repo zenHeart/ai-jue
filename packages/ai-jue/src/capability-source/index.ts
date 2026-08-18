@@ -2,7 +2,7 @@ import crypto from 'crypto';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { spawnSync } from 'child_process';
+import { spawnSync, SpawnSyncReturns } from 'child_process';
 import {
   assertCapabilityRef,
   assertNoLiteralCredentials,
@@ -172,6 +172,70 @@ function assertExactNpmSpecifier(specifier: string): void {
   }
 }
 
+interface SpawnCommand {
+  command: string;
+  argsPrefix: string[];
+}
+
+function stringOutput(value: string | Buffer | null | undefined): string {
+  if (typeof value === 'string') return value;
+  if (Buffer.isBuffer(value)) return value.toString('utf8');
+  return '';
+}
+
+function npmCommands(): SpawnCommand[] {
+  if (process.platform !== 'win32') return [{ command: 'npm', argsPrefix: [] }];
+  const commands: SpawnCommand[] = [
+    { command: 'npm.cmd', argsPrefix: [] },
+    { command: 'npm', argsPrefix: [] },
+  ];
+  const bundledNpm = path.join(
+    path.dirname(process.execPath),
+    'node_modules',
+    'npm',
+    'bin',
+    'npm-cli.js',
+  );
+  if (fs.existsSync(bundledNpm)) {
+    commands.push({ command: process.execPath, argsPrefix: [bundledNpm] });
+  }
+  return commands;
+}
+
+function npmPackFailure(specifier: string, result: SpawnSyncReturns<string>): Error {
+  const details = [
+    result.error ? result.error.message : '',
+    stringOutput(result.stderr),
+    stringOutput(result.stdout),
+  ]
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .join('\n');
+  const status =
+    result.status === null || result.status === undefined
+      ? 'without an exit code'
+      : `with exit code ${result.status}`;
+  return new Error(
+    `Unable to pack npm Capability "${specifier}" ${status}`
+    + (details ? `: ${details}` : ''),
+  );
+}
+
+function runNpmPack(specifier: string, packDir: string): SpawnSyncReturns<string> {
+  const args = ['pack', specifier, '--ignore-scripts', '--json', '--pack-destination', packDir];
+  let lastResult: SpawnSyncReturns<string> | null = null;
+  for (const candidate of npmCommands()) {
+    const result = spawnSync(candidate.command, [...candidate.argsPrefix, ...args], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
+    });
+    lastResult = result;
+    if (!result.error || process.platform !== 'win32') return result;
+  }
+  if (lastResult) return lastResult;
+  throw new Error(`Unable to pack npm Capability "${specifier}": npm executable was not attempted`);
+}
+
 function resolveNpm(
   ref: CapabilityRef,
   baseDir: string,
@@ -188,18 +252,20 @@ function resolveNpm(
   }
   const packDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-npm-pack-'));
   try {
-    const result = spawnSync(
-      'npm',
-      ['pack', specifier, '--ignore-scripts', '--json', '--pack-destination', packDir],
-      { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] },
-    );
+    const result = runNpmPack(specifier, packDir);
     if (result.status !== 0) {
-      throw new Error(`Unable to pack npm Capability: ${result.stderr.trim()}`);
+      throw npmPackFailure(specifier, result);
     }
-    const output = JSON.parse(result.stdout);
-    const filename = output?.[0]?.filename;
+    const stdout = stringOutput(result.stdout);
+    let output: unknown;
+    try {
+      output = JSON.parse(stdout);
+    } catch {
+      throw new Error(`npm pack for Capability "${specifier}" did not return valid JSON`);
+    }
+    const filename = Array.isArray(output) ? output[0]?.filename : undefined;
     if (typeof filename !== 'string') {
-      throw new Error('npm pack did not return an archive filename');
+      throw new Error(`npm pack for Capability "${specifier}" did not return an archive filename`);
     }
     return extractArchive(path.join(packDir, filename), cacheDir);
   } finally {
