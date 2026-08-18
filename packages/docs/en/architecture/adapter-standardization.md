@@ -15,6 +15,18 @@ An Adapter declares its unique ID, Capability support, native read locations,
 Artifact kinds and ownership, required permissions, and a target-native
 confirmation path.
 
+## Extension entry and capability defaults
+
+The Extension default export is the sole runtime source of truth for Adapter
+inventory, methods, and capability metadata. Core validates that export and
+passes the Adapter object to apply; the package entry keeps one default export.
+
+Core owns baselines shared by every Adapter. An Adapter declares target-native
+capabilities and deviations from those baselines. `supportedScopes` defaults to
+project-only; only an Adapter with verified user-native paths declares `user`.
+Adding a scope therefore changes the Core contract and the Adapters that opt in,
+without duplicating metadata across every package.
+
 ## Three required behaviors
 
 | Method | Purpose | Side effects |

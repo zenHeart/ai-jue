@@ -60,9 +60,9 @@ Unknown fields fail.
 | `artifact` | `string \| "auto"` | `"auto"` | Declared by the Adapter |
 | `scope` | `"project" \| "user"` | `"project"` | Select the project or user Artifact root; fail before writing when unsupported by the Adapter |
 
-`auto` first asks the Adapter to detect an existing Jue-managed Artifact, then
-uses the Adapter's unique default. The detection result stays in the Artifact
-conversion environment and never enters Canonical DSL.
+`auto` selects the Adapter's stable default Artifact. Select a non-default
+Artifact explicitly through `artifact` or `--artifact`; the selection stays in
+the Artifact conversion environment and never enters Canonical DSL.
 
 Config discovery and Artifact roots are independent. `scope: "user"` still
 loads Presets, Capabilities, and the lock from the current project, while Core

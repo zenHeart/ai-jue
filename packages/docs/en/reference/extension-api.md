@@ -8,6 +8,11 @@ export default defineExtension({
 });
 ```
 
+The default export is the Extension's only runtime entry. Package entries keep
+one default export; `read`, `write`, `confirm`, and capability metadata are
+members of the returned Adapter. `jue apply` requires an `ai-jue-adapter-*`
+package to contribute exactly one Adapter.
+
 Module import performs no file write, network access, process execution, or
 global mutation. npm `peerDependencies` declares compatible Jue versions and
 `exports` declares the entrypoint; Jue adds no package fields.
@@ -33,6 +38,7 @@ repeated. `adapter.id` is process-wide unique; conflicts fail.
 interface Adapter {
   id: string;
   capabilities: CapabilitySupport;
+  supportedScopes?: readonly ("project" | "user")[];
 
   read(context: ReadContext): Promise<CanonicalDocument>;
   write(
@@ -44,6 +50,21 @@ interface Adapter {
     context: ConfirmContext
   ): Promise<Confirmation>;
 }
+
+interface WriteContext {
+  projectRoot: string;
+  artifactRoot?: string;
+  scope?: "project" | "user";
+  artifactKind?: string;
+  toolsConfig?: Record<string, unknown>;
+  pluginManifest?: {
+    name: string;
+    version: string;
+    description?: string;
+    author?: { name: string; email?: string; url?: string };
+    variables?: Record<string, unknown>;
+  };
+}
 ```
 
 `read` converts Agent-native config to the Canonical DSL. `write` computes exact
@@ -51,6 +72,15 @@ Artifact changes without mutating state. Core validates and executes approved
 changes. An Extension receives no general write, install, network, or process
 callback; side-effecting Artifacts use Core-supported kinds and approval
 policies. `confirm` uses the target Agent's parser, CLI, or real read path.
+
+`WriteContext` is the shared conversion environment Core passes to every
+Adapter. `toolsConfig` and `pluginManifest` remain target-private and apply only
+to the current Artifact conversion.
+
+`supportedScopes` defaults to `["project"]`; an Adapter declares it only when
+it safely maps an additional apply root. Core exclusively owns scope defaulting
+and authorization. Adding a scope changes the Core type and validation once,
+then only the Adapters that support that scope.
 
 Same-target writes preserve valid unmanaged fields. Supported semantics satisfy
 `read(write(Canonical))` round trips. Target-private fields never cross Agents.

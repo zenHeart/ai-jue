@@ -1,18 +1,16 @@
 import { writeCapabilities } from "ai-jue-core";
-import type { ArtifactChange, CanonicalDocument } from "ai-jue-core";
+import type {
+  ArtifactChange,
+  CanonicalDocument,
+  WriteContext as CoreWriteContext,
+} from "ai-jue-core";
 import { context } from "./capabilities/context";
 import { cron } from "./capabilities/cron";
 import { mcp } from "./capabilities/mcp";
 import { writeSkillPlugin } from "./capabilities/skill-plugin";
 import { skills } from "./capabilities/skills";
 
-export interface WriteContext {
-  projectRoot: string;
-  /** Defaults to `"workspace"`. `skill-plugin` emits a thin installable skill pack. */
-  artifactKind?: string;
-  toolsConfig?: Record<string, unknown>;
-  pluginManifest?: { name: string; version: string; description?: string };
-}
+export type WriteContext = CoreWriteContext;
 
 const TARGET = "hermes";
 

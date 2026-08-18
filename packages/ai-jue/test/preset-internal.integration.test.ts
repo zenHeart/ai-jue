@@ -3,8 +3,9 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { resolveFinalConfig } from '../src/resolver';
-import { generate as generateClaude } from '../../ai-jue-adapter-claude/src/index';
-import { generate as generateCursor } from '../../ai-jue-adapter-cursor/src/index';
+import claudeExtension from '../../ai-jue-adapter-claude/src/index';
+import cursorExtension from '../../ai-jue-adapter-cursor/src/index';
+import { applyExtension } from './helpers/apply-extension';
 
 describe('jue-preset-internal bootstrap integration', () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-internal-integration-'));
@@ -35,8 +36,8 @@ describe('jue-preset-internal bootstrap integration', () => {
     const config = await resolveFinalConfig({ preset: 'internal', language: 'zh-CN' } as any);
 
     await Promise.all([
-      generateClaude(config, outDir),
-      generateCursor(config, outDir),
+      applyExtension(claudeExtension, config, outDir),
+      applyExtension(cursorExtension, config, outDir),
     ]);
 
     expect(fs.existsSync(path.join(outDir, 'CLAUDE.md'))).toBe(true);

@@ -52,7 +52,7 @@
 
 **Interfaces:**
 - Produces `ApplyScope`, `resolveApplyScope()`, `resolveArtifactRoot()`, and
-  project-only compatibility for absent `supportedScopes`.
+  a Core-owned project-only default for absent `supportedScopes`.
 
 - [ ] Write tests for CLI/config/default precedence, isolated user root, invalid
   local scope, missing metadata, and invalid Adapter scope declarations.
@@ -105,6 +105,7 @@
 **Files:**
 - Modify: `packages/ai-jue/src/commands/apply.ts`
 - Modify: `packages/ai-jue/src/core-apply.ts`
+- Modify: `packages/ai-jue/src/extension-loader.ts`
 - Modify: `packages/ai-jue/src/i18n.ts`
 - Modify: each built-in Adapter `src/index.ts`
 - Test: `packages/ai-jue/test/commands/apply.test.ts`
@@ -113,13 +114,16 @@
 **Interfaces:**
 - `RunCoreAdapterOptions` consumes `scope?: ApplyScope` and internal
   `userHome?: string` for isolated tests.
-- Built-ins export/decorate `supportedScopes`; only Claude includes `user`.
+- `jue apply` loads the single Adapter from the validated Extension default
+  export and invokes `Adapter.write()`.
+- Project-only Adapters omit `supportedScopes`; only Claude opts into `user`.
+- Package entries expose only the Extension default export.
 
 - [ ] Write failing tests for CLI option parsing, per-target scope, user root,
   plugin/user incompatibility, old Adapter rejection, preflight logging, and
   continuation after one Adapter fails.
-- [ ] Wire `--scope`, root resolution, Adapter metadata, and expected-scope
-  executor options.
+- [ ] Wire `--scope`, root resolution, Adapter-object loading, and expected-scope
+  executor options; delete module-level write/generate fallback paths.
 - [ ] Ensure explicit configured targets can select user mode without project
   footprint inference.
 - [ ] Run focused CLI tests until green.

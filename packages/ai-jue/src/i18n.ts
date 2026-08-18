@@ -67,8 +67,6 @@ const resources = {
             "Failed to install adapter {{packageName}}. Please install it manually and rerun apply.",
           running_adapter: "Running adapter: {{name}}",
           adapter_success: "Adapter {{name}} finished successfully",
-          adapter_no_generate:
-            'Adapter {{name}} does not export a "generate" function.',
           adapter_failed: "Error running adapter {{name}}: {{message}}",
           dry_run_describe:
             "Preview the Artifact changes without writing anything",
@@ -79,8 +77,6 @@ const resources = {
           scope_describe:
             "Apply boundary: project or user. CLI overrides targets.<adapter>.scope; default is project.",
           artifact_kind_resolved: "{{name}}: artifact={{kind}}",
-          core_unsupported:
-            "Adapter {{name}} does not support --dry-run/--check yet (no write() export). Skipped.",
           core: {
             pending: "{{name}}: {{count}} change(s) would be written:",
             conflict:
@@ -292,7 +288,6 @@ const resources = {
             "适配器 {{packageName}} 安装失败，请手动安装后重新执行 apply。",
           running_adapter: "正在运行适配器: {{name}}",
           adapter_success: "适配器 {{name}} 成功完成",
-          adapter_no_generate: '适配器 {{name}} 未导出 "generate" 函数。',
           adapter_failed: "运行适配器 {{name}} 出错: {{message}}",
           dry_run_describe: "预览将写入的 Artifact 变更，不实际写入任何内容",
           check_describe:
@@ -302,8 +297,6 @@ const resources = {
           scope_describe:
             "apply 边界：project 或 user。CLI 优先于 targets.<adapter>.scope；默认 project。",
           artifact_kind_resolved: "{{name}}：artifact={{kind}}",
-          core_unsupported:
-            "适配器 {{name}} 尚未支持 --dry-run/--check（未导出 write()），已跳过。",
           core: {
             pending: "{{name}}：以下 {{count}} 项变更将被写入：",
             conflict:

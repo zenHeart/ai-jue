@@ -20,6 +20,15 @@ export interface WriteContext {
   projectRoot: string;
   artifactRoot?: string;
   scope?: ApplyScope;
+  artifactKind?: string;
+  toolsConfig?: Record<string, unknown>;
+  pluginManifest?: {
+    name: string;
+    version: string;
+    description?: string;
+    author?: { name: string; email?: string; url?: string };
+    variables?: Record<string, unknown>;
+  };
 }
 
 export interface ConfirmContext {

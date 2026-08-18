@@ -1,20 +1,18 @@
-import { writeCapabilities } from "ai-jue-core";
-import type { ArtifactChange, CanonicalDocument } from "ai-jue-core";
+import { assertExtensionDefinition, writeCapabilities } from "ai-jue-core";
+import type {
+  Adapter,
+  ArtifactChange,
+  CanonicalDocument,
+  WriteContext as CoreWriteContext,
+} from "ai-jue-core";
 import { agents } from "./capabilities/agents";
 import { commands } from "./capabilities/commands";
 import { context } from "./capabilities/context";
-import type { OpenClawArtifactKind } from "./capabilities/layout";
 import { hooks } from "./capabilities/hooks";
 import { mcp } from "./capabilities/mcp";
 import { skills } from "./capabilities/skills";
 
-export interface WriteContext {
-  projectRoot: string;
-  /** Defaults to `"workspace"`. `"compatible-bundle"` delegates to Claude/Codex plugin writers. */
-  artifactKind?: OpenClawArtifactKind | string;
-  toolsConfig?: Record<string, unknown>;
-  pluginManifest?: { name: string; version: string; description?: string };
-}
+export type WriteContext = CoreWriteContext;
 
 const TARGET = "openclaw";
 
@@ -51,30 +49,29 @@ function resolveBundleFormat(
   return canonical.hooks && Object.keys(canonical.hooks).length > 0 ? "codex" : "claude";
 }
 
-function loadBundleWriter(format: "claude" | "codex"): {
-  write: (
-    canonical: CanonicalDocument,
-    context: {
-      projectRoot: string;
-      artifactKind: "plugin";
-      pluginManifest?: { name: string; version: string; description?: string };
-    },
-  ) => Promise<ArtifactChange[]>;
-} {
+function loadBundleWriter(format: "claude" | "codex"): Adapter {
   const packageName =
     format === "claude" ? "ai-jue-adapter-claude" : "ai-jue-adapter-codex";
+  let resolved: string;
   try {
     // Prefer consumer project resolution, then this package's node_modules.
-    const resolved = require.resolve(packageName, {
+    resolved = require.resolve(packageName, {
       paths: [process.cwd(), __dirname],
     });
-    return require(resolved);
   } catch {
     throw new Error(
       `OpenClaw compatible-bundle (${format}) requires ${packageName}. ` +
         `Install it in the project (e.g. npm i -D ${packageName}) and retry.`,
     );
   }
+  const extension = require(resolved)?.default;
+  assertExtensionDefinition(extension);
+  if (extension.adapters.length !== 1) {
+    throw new Error(
+      `${packageName} must expose exactly one Adapter for bundle delegation`,
+    );
+  }
+  return extension.adapters[0];
 }
 
 async function writeCompatibleBundle(

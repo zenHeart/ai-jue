@@ -25,10 +25,20 @@ behavior descriptions.
 - npm `peerDependencies` is the API compatibility source of truth.
 - Node.js `exports` is the Extension entrypoint source of truth.
 - `defineExtension()` is the sole Adapter inventory.
+- The Extension default export is the runtime-contract source of truth; Adapter
+  methods and capability metadata live only in the `defineExtension()` result.
 - Agent-native Plugins, Bundles, configs, and discovery protocols are adapted as
   Artifacts instead of duplicated.
 
 ## Change gate
+
+### Change-amplification gate
+
+Core defines a new public capability value's baseline semantics in one place.
+Only Adapters opting into that value change. If every Adapter needs the same
+declaration, first move it to a host-owned default or prove that the declaration
+actually varies by target. The CLI invokes validated Adapter objects and never
+reconstructs the Extension contract from package-level exports.
 
 Public changes update both languages, Architecture, Reference, Agent profiles,
 Developer status, and contract tests. A new concept requires an RFC proving the

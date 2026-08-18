@@ -155,6 +155,46 @@ describe("documentation contract", () => {
     expect(sidebar).not.toContain("extension-manifest");
   });
 
+  it("freezes one Adapter runtime contract and host-owned scope defaults", () => {
+    const chineseApi = readRepoFile(
+      "packages",
+      "docs",
+      "reference",
+      "extension-api.md",
+    );
+    const englishApi = readRepoFile(
+      "packages",
+      "docs",
+      "en",
+      "reference",
+      "extension-api.md",
+    );
+    const chineseContract = readRepoFile(
+      "packages",
+      "docs",
+      "developer",
+      "documentation-contract.md",
+    );
+    const englishContract = readRepoFile(
+      "packages",
+      "docs",
+      "en",
+      "developer",
+      "documentation-contract.md",
+    );
+    const governance = readRepoFile("packages", "jue-preset-internal", "AGENTS.md");
+
+    expect(chineseApi).toContain("默认导出是 Extension 唯一运行时入口");
+    expect(chineseApi).toContain("supportedScopes");
+    expect(chineseApi).toContain("缺省为 `[\"project\"]`");
+    expect(englishApi).toContain("default export is the Extension's only runtime entry");
+    expect(englishApi).toContain("supportedScopes");
+    expect(englishApi).toContain("defaults to `[\"project\"]`");
+    expect(chineseContract).toContain("变化放大门禁");
+    expect(englishContract).toContain("Change-amplification gate");
+    expect(governance).toContain("变化放大门禁");
+  });
+
   it("keeps Developer pages paired across locales", () => {
     for (const file of [
       "index.md",

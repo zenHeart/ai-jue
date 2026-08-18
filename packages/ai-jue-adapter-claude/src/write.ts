@@ -1,6 +1,11 @@
 import path from "path";
 import { computeMergedJson, hashArtifactContent, mergedJsonFile, writeCapabilities } from "ai-jue-core";
-import type { ApplyScope, ArtifactChange, CanonicalDocument } from "ai-jue-core";
+import type {
+  ApplyScope,
+  ArtifactChange,
+  CanonicalDocument,
+  WriteContext as CoreWriteContext,
+} from "ai-jue-core";
 import { agents } from "./capabilities/agents";
 import { commands } from "./capabilities/commands";
 import { context } from "./capabilities/context";
@@ -11,30 +16,7 @@ import { writePluginManifest, type PluginManifest } from "./capabilities/manifes
 import { rules } from "./capabilities/rules";
 import { skills } from "./capabilities/skills";
 
-export interface WriteContext {
-  projectRoot: string;
-  /** Core-authorized root. Falls back to projectRoot for older callers. */
-  artifactRoot?: string;
-  /** Apply ownership boundary. Defaults to project for backward compatibility. */
-  scope?: ApplyScope;
-  /** Which native Artifact shape to target. Defaults to `"project"`. */
-  artifactKind?: ArtifactKind;
-  /**
-   * Target-private `tools.claude` passthrough settings (ProjectConfig-only —
-   * never part of `CanonicalDocument`). Merged into the same `settings.json`
-   * as `hooks`, alongside whatever the file already has.
-   */
-  toolsConfig?: Record<string, unknown>;
-  /**
-   * The Plugin's own identity (name/version/...), used only when
-   * `artifactKind` is `"plugin"`. Jue cannot invent this — it comes from the
-   * source Preset's own package metadata. Omitting it produces a
-   * manifest-less Plugin, which is a valid, verified Claude Code mode
-   * (`--plugin-dir` auto-discovery), not a degraded one — it just won't
-   * pass `claude plugin validate`, which requires a manifest.
-   */
-  pluginManifest?: PluginManifest;
-}
+export type WriteContext = CoreWriteContext;
 
 const TARGET = "claude-code";
 
@@ -69,7 +51,7 @@ function mergeToolsConfig(
  * to the `project` layout (a Plugin has no `context.global` concept).
  */
 export async function write(canonical: CanonicalDocument, writeContext: WriteContext): Promise<ArtifactChange[]> {
-  const artifactKind = writeContext.artifactKind ?? "project";
+  const artifactKind = (writeContext.artifactKind ?? "project") as ArtifactKind;
   const scope = writeContext.scope ?? "project";
   const root = writeContext.artifactRoot ?? writeContext.projectRoot;
   if (scope === "user" && artifactKind !== "project") {
@@ -101,7 +83,9 @@ export async function write(canonical: CanonicalDocument, writeContext: WriteCon
   }
 
   if (artifactKind === "plugin" && writeContext.pluginManifest) {
-    changes.push(...writePluginManifest(root, writeContext.pluginManifest, TARGET));
+    changes.push(
+      ...writePluginManifest(root, writeContext.pluginManifest as PluginManifest, TARGET),
+    );
   }
 
   return changes;

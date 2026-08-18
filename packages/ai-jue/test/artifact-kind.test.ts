@@ -51,21 +51,21 @@ describe("resolveArtifactKind", () => {
     ).toBe("project");
   });
 
-  it('lets "auto" reuse an Adapter-detected managed Artifact', () => {
+  it('keeps "auto" on the stable Adapter default instead of accepting module-level detection', () => {
     expect(
       resolveArtifactKind({
         adapterName: "codex",
         cliArtifact: "auto",
         existingArtifactKind: "plugin",
-      }),
-    ).toBe("plugin");
+      } as any),
+    ).toBe("project");
     expect(
       resolveArtifactKind({
         adapterName: "openclaw",
         config: { targets: { openclaw: { artifact: "auto" } } },
         existingArtifactKind: "compatible-bundle",
-      }),
-    ).toBe("compatible-bundle");
+      } as any),
+    ).toBe("workspace");
   });
 
   it("maps Hermes plugin to skill-plugin", () => {

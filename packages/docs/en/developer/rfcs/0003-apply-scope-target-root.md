@@ -26,9 +26,9 @@ scope explicitly selects the Artifact installation boundary.
 2. Let Core resolve and authorize the root while Adapters emit target-native,
    root-relative paths.
 3. Share one target context across dry-run, check, apply, rollback, and confirm.
-4. Deliver complete Claude Code user scope first and make every other Adapter
-   declare its supported scopes.
-5. Keep legacy Extensions project-only unless they explicitly opt into user scope.
+4. Deliver complete Claude Code user scope first; other Adapters declare only
+   additional scopes they support.
+5. Keep Adapters without an additional-scope declaration project-only.
 
 ## Non-goals
 
@@ -120,6 +120,19 @@ project-only. Every `ArtifactChange` declares the selected scope. Core validates
 scope equality, relative paths, and resolved containment before execution; it
 does not silently rewrite Adapter output.
 
+### Extension runtime contract
+
+The `defineExtension()` default export is the sole source of truth for Adapter
+inventory, methods, and capability metadata. `jue apply` validates that export
+and invokes the selected `Adapter.write()` directly. One
+`ai-jue-adapter-*` apply target contributes exactly one Adapter; an Extension
+with multiple Adapters requires a separate explicit-selection contract.
+
+Core exclusively owns scope defaulting: omitted `supportedScopes` means
+project-only. Only an Adapter adding a native scope declares the field, so a new
+scope does not make every Adapter package duplicate baseline metadata. Package
+entries keep one default export instead of creating a CLI-private plugin API.
+
 ### Artifact-kind compatibility
 
 Scope chooses the native installation boundary; Artifact kind chooses shape.
@@ -182,7 +195,10 @@ failure does not skip later Adapters, and the aggregate result is non-zero.
 
 - Existing commands without scope retain project behavior.
 - Public target scope becomes `project | user`; MCP's native `local` value remains.
-- Legacy Adapters without `supportedScopes` stay project-only.
+- Adapters without `supportedScopes` stay project-only.
+- Apply loads only the `defineExtension()` default export and requires exactly
+  one Adapter. Package-level method exports are outside the runtime contract,
+  with no fallback path.
 - `projectRoot` remains for one compatibility window while built-ins move to
   `artifactRoot`.
 - Running from home without scope remains project mode whose root happens to be
@@ -196,8 +212,9 @@ failure does not skip later Adapters, and the aggregate result is non-zero.
    discoverable from an unrelated project.
 4. User context, settings/hooks, and MCP use official paths rather than cwd tricks.
 5. Scope mismatch, absolute path, traversal, and symlink escape have failure tests.
-6. Every built-in Adapter declares project-only or project+user; `--all` continues
-   after failures and returns an aggregate non-zero status.
+6. Project-only Adapters omit scope metadata; only Adapters supporting an
+   additional scope declare it. `--all` continues after failures and returns an
+   aggregate non-zero status.
 7. Isolated macOS/Linux homes and an authorized Windows `%USERPROFILE%` path pass.
 8. Chinese/English Reference, Guide, Agent profile, and implementation status agree.
 

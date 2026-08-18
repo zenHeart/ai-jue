@@ -58,8 +58,8 @@ export default {
 | `artifact` | `string \| "auto"` | `"auto"` | 必须由 Adapter 声明 |
 | `scope` | `"project" \| "user"` | `"project"` | 选择项目或用户 Artifact 根；Adapter 不支持时在写入前失败 |
 
-`auto` 先调用 Adapter 的布局检测复用已被 Jue 管理的现有 Artifact，再选择 Adapter
-唯一默认值；检测结果进入 Artifact 转换环境，不进入 Canonical DSL。
+`auto` 选择 Adapter 的稳定默认 Artifact。非默认 Artifact 通过 `artifact` 或
+`--artifact` 显式选择；该选择进入 Artifact 转换环境，不进入 Canonical DSL。
 
 配置发现根与 Artifact 根彼此独立。`scope: "user"` 仍从当前项目加载 Preset、
 Capability 和 lock，但 Core 将获授权 Artifact 根解析为用户家目录。Plugin、

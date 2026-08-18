@@ -2,8 +2,12 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { afterEach, beforeAll, describe, expect, it } from "vitest";
-import { hashArtifactContent, type ArtifactChange } from "ai-jue-core";
-import { runCoreAdapter, type CoreCapableAdapterModule } from "../src/core-apply";
+import {
+  hashArtifactContent,
+  type Adapter,
+  type ArtifactChange,
+} from "ai-jue-core";
+import { runCoreAdapter } from "../src/core-apply";
 import type { MergedConfig } from "../src/config";
 import { initI18n } from "../src/i18n";
 
@@ -41,20 +45,44 @@ describe("runCoreAdapter apply scope", () => {
     };
   }
 
+  function fakeAdapter(overrides: Partial<Adapter> = {}): Adapter {
+    return {
+      id: "fake",
+      capabilities: {
+        rules: "unsupported",
+        commands: "unsupported",
+        skills: "unsupported",
+        agents: "unsupported",
+        hooks: "unsupported",
+        mcp: "unsupported",
+      },
+      async read() {
+        return {};
+      },
+      async write() {
+        return [];
+      },
+      async confirm() {
+        return { target: "fake", status: "unconfirmed" };
+      },
+      ...overrides,
+    };
+  }
+
   it("lets CLI scope override target config and writes only under the user root", async () => {
     const projectRoot = tempRoot("jue-project-root-");
     const userHome = tempRoot("jue-user-root-");
     let receivedContext: Record<string, unknown> | undefined;
-    const adapter: CoreCapableAdapterModule = {
+    const adapter = fakeAdapter({
       supportedScopes: ["project", "user"],
       async write(_canonical, context) {
         receivedContext = context;
         return [change("user")];
       },
-    };
+    });
     const config = { targets: { fake: { scope: "project" } } } as unknown as MergedConfig;
 
-    const exitCode = await runCoreAdapter("ai-jue-adapter-fake", adapter, config, projectRoot, {
+    const exitCode = await runCoreAdapter(adapter, config, projectRoot, {
       scope: "user",
       userHome,
     });
@@ -73,14 +101,15 @@ describe("runCoreAdapter apply scope", () => {
   it("treats an Adapter without supportedScopes metadata as project-only", async () => {
     const projectRoot = tempRoot("jue-project-root-");
     const userHome = tempRoot("jue-user-root-");
-    const adapter: CoreCapableAdapterModule = {
+    const adapter = fakeAdapter({
+      id: "project-only",
       async write() {
         return [change("user")];
       },
-    };
+    });
 
     await expect(
-      runCoreAdapter("ai-jue-adapter-legacy", adapter, {} as MergedConfig, projectRoot, {
+      runCoreAdapter(adapter, {} as MergedConfig, projectRoot, {
         scope: "user",
         userHome,
       }),
@@ -92,16 +121,17 @@ describe("runCoreAdapter apply scope", () => {
     const projectRoot = tempRoot("jue-project-root-");
     const userHome = tempRoot("jue-user-root-");
     let called = false;
-    const adapter: CoreCapableAdapterModule = {
+    const adapter = fakeAdapter({
+      id: "claude-code",
       supportedScopes: ["project", "user"],
       async write() {
         called = true;
         return [];
       },
-    };
+    });
 
     await expect(
-      runCoreAdapter("ai-jue-adapter-claude", adapter, {} as MergedConfig, projectRoot, {
+      runCoreAdapter(adapter, {} as MergedConfig, projectRoot, {
         scope: "user",
         userHome,
         artifactKind: "plugin",
@@ -110,18 +140,39 @@ describe("runCoreAdapter apply scope", () => {
     expect(called).toBe(false);
   });
 
+  it("resolves target-private config from the canonical Adapter id", async () => {
+    const projectRoot = tempRoot("jue-project-root-");
+    let receivedContext: Record<string, unknown> | undefined;
+    const adapter = fakeAdapter({
+      id: "claude-code",
+      async write(_canonical, context) {
+        receivedContext = context;
+        return [];
+      },
+    });
+    const config = {
+      tools: { claude: { settingSources: ["user", "project"] } },
+    } as unknown as MergedConfig;
+
+    await runCoreAdapter(adapter, config, projectRoot, { dryRun: true });
+
+    expect(receivedContext?.toolsConfig).toEqual({
+      settingSources: ["user", "project"],
+    });
+  });
+
   it("makes Core reject an Adapter change stamped with the wrong scope", async () => {
     const projectRoot = tempRoot("jue-project-root-");
     const userHome = tempRoot("jue-user-root-");
-    const adapter: CoreCapableAdapterModule = {
+    const adapter = fakeAdapter({
       supportedScopes: ["project", "user"],
       async write() {
         return [change("project")];
       },
-    };
+    });
 
     await expect(
-      runCoreAdapter("ai-jue-adapter-fake", adapter, {} as MergedConfig, projectRoot, {
+      runCoreAdapter(adapter, {} as MergedConfig, projectRoot, {
         scope: "user",
         userHome,
       }),

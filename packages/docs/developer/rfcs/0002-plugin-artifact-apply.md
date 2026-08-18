@@ -142,8 +142,7 @@ Jue 从 Canonical 导出的内容包。
 
 1. CLI `--artifact-kind` / `--artifact`  
 2. 否则 `targets.<adapter>.artifact`  
-3. `auto` 时由 Adapter 检测当前输出根的已托管 Artifact
-4. 否则默认 `project` / `workspace`
+3. `auto` 使用 Adapter 的稳定默认 `project` / `workspace`
 
 非法 / 未实现 kind：**写入前失败**，不得静默降级。
 
@@ -173,8 +172,8 @@ export default {
 };
 ```
 
-`hermes: { artifact: "auto" }` 在 Hermes 仅有 `workspace`（+ 可选
-`skill-plugin`）时：`auto` → 已托管 artifact，否则唯一默认 `workspace`。
+`hermes: { artifact: "auto" }` 使用稳定默认 `workspace`；`skill-plugin` 通过
+显式 `artifact` 或 `--artifact` 选择。
 
 ### Core
 

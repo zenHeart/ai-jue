@@ -147,12 +147,9 @@
   （顺带修正了 `tsconfig.json` 遗漏排除新测试目录、导致测试文件被打进
   `dist/` 发布产物的问题）。设计记录见
   `docs/superpowers/specs/2026-07-26-capability-mapping-engine-design.md`。
-- 旧版 `generate()`（`packages/ai-jue-adapter-claude/src/index.ts`）已改造
-  为 `toCanonicalDocument()` + `write()` + `applyChangesOrThrow()`
-  （`packages/ai-jue-core/src/core-executor.ts` 的抛错便捷封装）三步组成的
-  薄包装，代码从 441 行降到 27 行。这是对
-  `jue apply` 真实输出的**主动行为修正**，不是兼容重构，两处差异均已验证
-  并同步更新 `index.test.ts`、跨适配器的 `adapter-matrix.test.ts` 与
+- Claude Extension 包入口只导出 `defineExtension()` 默认值，测试通过其中的
+  `Adapter.write()` 与 Core executor 物化 Artifact。以下映射行为均已验证并同步
+  更新 `index.test.ts`、跨适配器的 `adapter-matrix.test.ts` 与
   `adapter-capability.snapshot.test.ts`：
   - `context.global` 不再额外写一份 `AGENTS.md` 数字摘要（"## Rule: x"）
     再用 `CLAUDE.md` 的 `@AGENTS.md` 引用它；直接写入 `CLAUDE.md`，因为
@@ -193,17 +190,17 @@
     验证已应用的其他改动被完整还原（`core-executor.test.ts`，17 项断言）。
   - **幂等**：`afterHash` 已存在于磁盘的变更视为 `no-change`，二次 apply 零
     写入，`checkExecution` 与 `--check` 复用同一分类。
-  - `applyChangesOrThrow` 是"写入或抛错"的便捷封装，供 `generate()` 与
-    测试脚手架复用；取代了此前占位的 `artifact-executor.ts`（无漂移/授权/
+  - `applyChangesOrThrow` 是测试脚手架物化 `write()` 输出的便捷封装；取代了此前
+    占位的 `artifact-executor.ts`（无漂移/授权/
     回滚的最小文件系统原语），按"不保留遗留资产"原则整体删除，不是新增
     并行实现。
-  - CLI 接入（`packages/ai-jue/src/core-apply.ts`）：`jue apply` 对导出
-    `write()` 的 Adapter（目前仅 Claude）自动改走 Core 执行器，
+  - CLI 接入（`packages/ai-jue/src/core-apply.ts`）：`jue apply` 校验 Extension
+    默认导出并直接调用其中唯一 Adapter 的 `write()`，所有内置 Adapter 统一走
+    Core 执行器，
     `--dry-run`（零写入预览，恒退出 `0`）与 `--check`（只读，`no-change`
     退出 `0`、`pending`/`blocked-conflict` 退出 `3`、
     `blocked-unauthorized` 退出 `4`、`rolled-back` 退出 `1`）已接入真实
-    退出码；仅导出 `generate()` 的 Adapter（Cursor/Gemini/Copilot/Codex）
-    请求 `--dry-run/--check` 时明确提示暂不支持并跳过，不是静默降级。
+    退出码。包顶层方法不参与 apply 运行时合同。
     `scripts/smoke-apply.js` 新增 `runCoreExecutorSmoke()`，用真实构建产物
     `dist/cli.js` 验证：空项目 `--dry-run` 零写入、`--check` 退出 `3`、
     apply 退出 `0` 并写入、apply 后 `--check` 退出 `0`、二次 apply 不改写
@@ -428,7 +425,7 @@
   `CanonicalDocument`；`jue apply` 对 Core 执行器路径都在各自入口内单独调用
   `toCanonicalDocument(config)`，尚未让 `resolveFinalConfig` 本身统一产出
   `CanonicalDocument` 供全部 Adapter 共用。Claude/Codex/Cursor/OpenClaw/Hermes
-  现均已导出 `write()` 并接入 Core 执行器（Cursor project + plugin，[JUE-304](delivery-plan.md)）。
+  的默认 Extension 均提供 Adapter `write()` 并接入 Core 执行器（Cursor project + plugin，[JUE-304](delivery-plan.md)）。
 - Hermes Adapter（[JUE-303](delivery-plan.md)）在 `CanonicalDocumentSchema` 上新增了一个 `cron`
   字段（`packages/ai-jue-core/src/canonical-document.ts`，`cron/jobs.json`
   整文件直通），不属于本文件其余各处反复强调"冻结"的六类原子 Capability
@@ -436,11 +433,8 @@
   真实存在的 Hermes 原生表面，但尚未经过 RFC 决定其架构地位：应作为第七类
   原子 Capability 正式收编、还是改走 `tools.hermes` target-private 字段、
   还是维持现状，是一个需要显式决策而非默认接受的公共合同缺口。
-- `jue apply` 仍直接调用 Claude Adapter 独立导出的 `read`/`write` 函数
-  （`core-apply.ts`），不经过 JUE-203 新组装的 `Adapter`/`defineExtension()`
-  对象——`confirm()` 与 `Adapter` 组装本身已完成，但尚未把 `jue apply` 接入
-  统一走 `Adapter` 对象、复用其 `confirm()` 做写入后原生确认（目前 apply
-  完全不调用 `confirm()`）。
+- `jue apply` 已统一通过 `defineExtension()` 默认导出的 Adapter 对象调用
+  `write()`；写入后的原生 `confirm()` 生命周期仍未接入 apply。
 - `capabilities` 的 `integrity` 字段已可提供但未对远程来源强制校验。
 - Preset、Extension、Adapter、Artifact 四个概念中，Extension/Adapter 已有
   `ExtensionDefinition`/`Adapter` 公开类型；Preset、Artifact 仍无独立公开

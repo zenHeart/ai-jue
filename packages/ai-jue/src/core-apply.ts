@@ -4,12 +4,15 @@ import {
   applyExecution,
   checkExecution,
   toCanonicalDocument,
+  type Adapter,
   type ArtifactChange,
   type DriftConflict,
   type ExecutionStatus,
   type ApplyScope,
+  type WriteContext,
 } from "ai-jue-core";
 import {
+  adapterConfigKey,
   resolveArtifactKind,
   resolveBundlePluginManifest,
   resolveTargetSelection,
@@ -25,40 +28,6 @@ import {
   resolveArtifactRoot,
 } from "./apply-scope";
 
-export interface CoreCapableAdapterModule {
-  supportedScopes?: readonly ApplyScope[];
-  default?: {
-    adapters?: Array<{ id: string; supportedScopes?: readonly ApplyScope[] }>;
-  };
-  write(
-    canonical: unknown,
-    context: {
-      projectRoot: string;
-      artifactRoot?: string;
-      scope?: ApplyScope;
-      artifactKind?: string;
-      toolsConfig?: Record<string, unknown>;
-      pluginManifest?: {
-        name: string;
-        version: string;
-        description?: string;
-        author?: { name: string; email?: string; url?: string };
-      };
-    },
-  ): Promise<ArtifactChange[]>;
-  /** Adapter-owned layout detection used by `artifact: "auto"`. */
-  detectArtifactKind?(projectRoot: string): string | undefined;
-}
-
-/**
- * An Adapter qualifies for the Core-driven `apply`/`--dry-run`/`--check`
- * path once it exports `write()` (the Canonical → Artifact conversion).
- * Claude, Codex, OpenClaw, Hermes, and Cursor all export it.
- */
-export function isCoreCapableAdapter(adapterModule: unknown): adapterModule is CoreCapableAdapterModule {
-  return typeof (adapterModule as CoreCapableAdapterModule | undefined)?.write === "function";
-}
-
 export interface RunCoreAdapterOptions {
   dryRun?: boolean;
   check?: boolean;
@@ -68,22 +37,6 @@ export interface RunCoreAdapterOptions {
   scope?: ApplyScope;
   /** Isolated user root injection for tests; production defaults to os.homedir(). */
   userHome?: string;
-}
-
-function supportedScopesFor(
-  adapterName: string,
-  adapterModule: CoreCapableAdapterModule,
-): readonly ApplyScope[] | undefined {
-  if (adapterModule.supportedScopes) return adapterModule.supportedScopes;
-  const adapters = adapterModule.default?.adapters;
-  if (!adapters || adapters.length === 0) return undefined;
-  const short = shortAdapterName(adapterName);
-  const matched = adapters.find((adapter) =>
-    adapter.id === short ||
-    (short === "claude" && adapter.id === "claude-code") ||
-    (short === "claude-code" && adapter.id === "claude-code"),
-  );
-  return (matched ?? (adapters.length === 1 ? adapters[0] : undefined))?.supportedScopes;
 }
 
 const EXIT_CODE_BY_STATUS: Record<ExecutionStatus, number> = {
@@ -142,22 +95,22 @@ function reportPlan(
  * branch; a blocked or pending outcome is reported, not thrown.
  */
 export async function runCoreAdapter(
-  adapterName: string,
-  adapterModule: CoreCapableAdapterModule,
+  adapter: Adapter,
   config: MergedConfig,
   outputDir: string,
   options: RunCoreAdapterOptions,
 ): Promise<number> {
+  const adapterName = adapter.id;
   const short = shortAdapterName(adapterName);
+  const configKey = adapterConfigKey(adapterName);
   const targetSelection = resolveTargetSelection(config, adapterName);
   const scope = resolveApplyScope(options.scope, targetSelection?.scope);
-  assertAdapterSupportsScope(short, supportedScopesFor(adapterName, adapterModule), scope);
+  assertAdapterSupportsScope(short, adapter.supportedScopes, scope);
   const artifactRoot = resolveArtifactRoot(scope, outputDir, options.userHome ?? os.homedir());
   const artifactKind = resolveArtifactKind({
     adapterName,
     cliArtifact: options.artifactKind,
     config,
-    existingArtifactKind: adapterModule.detectArtifactKind?.(artifactRoot),
   });
   if (scope === "user" && !["project", "workspace"].includes(artifactKind)) {
     throw new UnsupportedArtifactKindError(
@@ -180,7 +133,7 @@ export async function runCoreAdapter(
   logger.info(pc.dim(`${adapterName}: scope=${scope}, root=${scope === "user" ? "~" : "."}`));
 
   const canonical = toCanonicalDocument(config as unknown as Record<string, unknown>);
-  const toolsConfig = (config as Record<string, any>)?.tools?.[short];
+  const toolsConfig = (config as Record<string, any>)?.tools?.[configKey];
   const pluginManifest =
     artifactKind === "plugin" ||
     artifactKind === "compatible-bundle" ||
@@ -192,14 +145,15 @@ export async function runCoreAdapter(
         resolveBundlePluginManifest(config as Record<string, unknown>, short)
       : undefined;
 
-  const changes = await adapterModule.write(canonical, {
+  const writeContext: WriteContext = {
     projectRoot: artifactRoot,
     artifactRoot,
     scope,
     artifactKind,
     toolsConfig: toolsConfig && Object.keys(toolsConfig).length > 0 ? toolsConfig : undefined,
     pluginManifest,
-  });
+  };
+  const changes = await adapter.write(canonical, writeContext);
 
   if (options.dryRun) {
     const preview = checkExecution(artifactRoot, changes, { expectedScope: scope });

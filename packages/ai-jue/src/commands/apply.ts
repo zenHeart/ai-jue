@@ -13,19 +13,15 @@ import { logger } from "../logger";
 import { t } from "../i18n";
 import { runInitFlow } from "./init";
 import type { ApplyScope } from "ai-jue-core";
-import { resolveApplyScope } from "../apply-scope";
 import {
   isTargetEnabled,
-  resolveArtifactKind,
   resolveTargetSelection,
-  UnsupportedArtifactKindError,
-  UnsupportedArtifactScopeError,
 } from "../artifact-kind";
 import {
-  isCoreCapableAdapter,
   runCoreAdapter,
   RunCoreAdapterOptions,
 } from "../core-apply";
+import { loadExtensionAdapterGuarded } from "../extension-loader";
 
 export const command = "apply";
 export const describe = ""; // Managed in cli.ts for dynamic translation
@@ -446,60 +442,9 @@ async function runSingleAdapter(
     const adapterPath = require.resolve(adapterName, {
       paths: [process.cwd(), __dirname],
     });
-    const adapter = require(adapterPath);
-    if (isCoreCapableAdapter(adapter)) {
-      adapterSpinner.stop();
-      return await runCoreAdapter(adapterName, adapter, config, outputDir, coreOptions);
-    }
-
-    const targetSelection = resolveTargetSelection(config, adapterName);
-    const scope = resolveApplyScope(coreOptions.scope, targetSelection?.scope);
-    if (scope !== "project") {
-      throw new UnsupportedArtifactScopeError(
-        toAdapterShortName(adapterName),
-        scope,
-      );
-    }
-    const artifactKind = resolveArtifactKind({
-      adapterName,
-      cliArtifact: coreOptions.artifactKind,
-      config,
-      existingArtifactKind:
-        typeof adapter.detectArtifactKind === "function"
-          ? adapter.detectArtifactKind(outputDir)
-          : undefined,
-    });
-    if (artifactKind !== "project") {
-      throw new UnsupportedArtifactKindError(
-        toAdapterShortName(adapterName),
-        artifactKind,
-        ["project"],
-        `Adapter "${toAdapterShortName(adapterName)}" only exposes the project Artifact through its direct generate() API; ` +
-          `artifact kind "${artifactKind}" requires a Core write() implementation.`,
-      );
-    }
-    if (coreOptions.dryRun || coreOptions.check) {
-      adapterSpinner.warn(
-        pc.yellow(
-          t("commands.apply.core_unsupported", { name: adapterName }),
-        ),
-      );
-      return 0;
-    }
-    if (adapter.generate && typeof adapter.generate === "function") {
-      await adapter.generate(config, outputDir);
-      adapterSpinner.succeed(
-        pc.green(t("commands.apply.adapter_success", { name: adapterName })),
-      );
-      return 0;
-    } else {
-      adapterSpinner.warn(
-        pc.yellow(
-          t("commands.apply.adapter_no_generate", { name: adapterName }),
-        ),
-      );
-      return 0;
-    }
+    const adapter = loadExtensionAdapterGuarded(adapterPath);
+    adapterSpinner.stop();
+    return await runCoreAdapter(adapter, config, outputDir, coreOptions);
   } catch (error: any) {
     adapterSpinner.fail(
       pc.red(

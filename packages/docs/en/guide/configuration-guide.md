@@ -25,9 +25,10 @@ decided by the dependency declared in the consuming project's `package.json`.
 For developing an unpublished Preset locally, see
 [Developing a Preset Locally](local-preset-development.md).
 
-Auto Artifact selection prefers an inspected existing Artifact, then the Target
-default, and otherwise fails with candidates. Detection never performs an
-implicit install, network, process, or user-level write.
+Auto Artifact selection uses the Adapter's stable default. Select Plugin,
+compatible-bundle, skill-plugin, or another non-default shape explicitly with
+`artifact` or `--artifact`. Selection performs no implicit install, network,
+process, or user-level write.
 
 Use `jue apply --adapter codex --dry-run`, `jue apply --adapter codex`, and
 `jue apply --adapter codex --check`; review all degraded, unsupported, and

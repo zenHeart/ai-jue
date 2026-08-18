@@ -171,14 +171,10 @@ Partial means local code or tests exist, not complete Agent support. See
   directory, so test files were leaking into the published `dist/`).
   Design recorded in
   `docs/superpowers/specs/2026-07-26-capability-mapping-engine-design.md`.
-- The legacy `generate()` (`packages/ai-jue-adapter-claude/src/index.ts`) is
-  now a thin wrapper: `toCanonicalDocument()` + `write()` +
-  `applyChangesOrThrow()` (a throw-on-failure convenience over
-  `packages/ai-jue-core/src/core-executor.ts`). The file dropped from 441
-  lines to 27. This is a **deliberate behavior correction** to what `jue apply`
-  actually outputs, not a compatibility-preserving refactor, and both
-  differences were verified and reflected in `index.test.ts` and the
-  cross-adapter `adapter-matrix.test.ts`/`adapter-capability.snapshot.test.ts`:
+- The Claude Extension package entry exports only the `defineExtension()`
+  default. Tests materialize Artifact changes through its `Adapter.write()` and
+  the Core executor. The following mappings are verified in `index.test.ts` and
+  the cross-adapter `adapter-matrix.test.ts`/`adapter-capability.snapshot.test.ts`:
   - `context.global` no longer writes a separate `AGENTS.md` rules digest
     ("## Rule: x") referenced from `CLAUDE.md` via `@AGENTS.md`; it writes
     directly into `CLAUDE.md`, since Claude Code never reads `AGENTS.md` on
@@ -232,20 +228,18 @@ Partial means local code or tests exist, not complete Agent support. See
   - **Idempotency**: a change whose `afterHash` is already on disk is
     treated as `no-change`; a second apply is zero-write, and
     `checkExecution`/`--check` reuse the same classification.
-  - `applyChangesOrThrow` is a "write or throw" convenience reused by
-    `generate()` and test scaffolding; it replaces the placeholder
+  - `applyChangesOrThrow` is a test helper for materializing `write()` output;
+    it replaces the placeholder
     `artifact-executor.ts` (a minimal filesystem primitive with no drift,
     authorization, or rollback), deleted outright per the "keep no legacy
     assets" rule rather than kept alongside as a parallel implementation.
-  - CLI wiring (`packages/ai-jue/src/core-apply.ts`): `jue apply`
-    automatically routes any Adapter that exports `write()` (currently only
-    Claude) through the Core executor, with real exit codes for
+  - CLI wiring (`packages/ai-jue/src/core-apply.ts`): `jue apply` validates the
+    Extension default export and invokes its single Adapter's `write()` through
+    the Core executor, with real exit codes for
     `--dry-run` (always zero-write, always exits `0`) and `--check`
     (read-only; `no-change` exits `0`, `pending`/`blocked-conflict` exit
     `3`, `blocked-unauthorized` exits `4`, `rolled-back` exits `1`).
-    Adapters that only export `generate()` (Cursor/Gemini/Copilot/Codex)
-    report that `--dry-run/--check` isn't supported yet and skip — an
-    explicit, disclosed limitation, not a silent no-op.
+    Package-level methods are outside the apply runtime contract.
     `scripts/smoke-apply.js` gained `runCoreExecutorSmoke()`, verifying
     against the real built `dist/cli.js`: `--dry-run` on an empty project is
     zero-write, `--check` exits `3`, apply exits `0` and writes, `--check`
@@ -543,7 +537,7 @@ See [`agents/cursor.md` §5](../agents/cursor.md#5-follow-up-work-github-issues)
 fields, not a `CanonicalDocument`; each Core-executor entry point calls
 `toCanonicalDocument(config)` on its own rather than `resolveFinalConfig`
 itself producing a `CanonicalDocument` every Adapter shares. Claude, Codex,
-Cursor, OpenClaw, and Hermes all export `write()` and route through the Core
+Cursor, OpenClaw, and Hermes all provide Adapter `write()` through their default Extension and route through the Core
 executor (Cursor project + plugin, [JUE-304](delivery-plan.md)). The Hermes Adapter ([JUE-303](delivery-plan.md)) adds a `cron`
 field to `CanonicalDocumentSchema` (`packages/ai-jue-core/src/
 canonical-document.ts`, a full-file pass-through of `cron/jobs.json`) that is
@@ -553,12 +547,9 @@ exposes a real Hermes-native surface, but its architecture status has not
 been settled via an RFC: whether it should be formally adopted as a seventh
 atomic Capability, moved to a `tools.hermes` target-private field, or left
 as-is is an open public-contract question, not a default acceptance. `jue
-apply` still calls the Claude Adapter's standalone
-`read`/`write` functions directly (`core-apply.ts`), not through the
-`Adapter`/`defineExtension()` object JUE-203 assembled — `confirm()` and the
-`Adapter` assembly themselves are done, but `jue apply` isn't yet wired to go
-through the `Adapter` object and call `confirm()` for post-write native
-confirmation (today it never calls `confirm()` at all). A
+apply` now invokes `write()` through the Adapter object from the
+`defineExtension()` default export. Post-write native `confirm()` is not yet
+wired into the apply lifecycle. A
 Marketplace/aggregate-index Artifact (packaging several Plugins for
 distribution) is not implemented and not in scope for the current Gate; it
 becomes relevant only if R5's ai-assets migration actually needs to ship

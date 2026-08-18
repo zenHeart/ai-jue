@@ -264,9 +264,8 @@ export function applyExecution(
 }
 
 /**
- * Convenience wrapper for callers that only want "make this happen or
- * throw" (an Adapter's own `generate()`, or a test materializing `write()`
- * output into a temp directory) without inspecting the full result.
+ * Convenience wrapper for callers materializing `write()` output into an
+ * isolated directory without inspecting the full execution result.
  */
 export function applyChangesOrThrow(
   root: string,

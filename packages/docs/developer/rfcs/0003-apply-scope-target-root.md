@@ -25,8 +25,8 @@ Artifact 的安装边界。
 1. `jue apply` 支持 `project` 与 `user` 两个显式作用域，默认保持 `project`。
 2. Core 解析并授权写入根，Adapter 只生成根内的目标原生相对路径。
 3. `--dry-run`、`--check`、apply、回滚和确认共享同一目标上下文。
-4. Claude Code 首先完整支持用户作用域；其他 Adapter 显式声明支持范围。
-5. 旧 Extension 在未声明能力时保持 project-only，不能因升级获得家目录写权限。
+4. Claude Code 首先完整支持用户作用域；其他 Adapter 只在增加额外作用域时声明。
+5. 未声明额外作用域的 Adapter 保持 project-only，不能获得家目录写权限。
 
 ## 非目标
 
@@ -111,9 +111,20 @@ interface Adapter {
 ```
 
 `artifactRoot` 是新代码使用的准确名称。兼容窗口内 Core 同时传入
-`projectRoot === artifactRoot`；旧 Adapter 缺少 `supportedScopes` 时只能用于
+`projectRoot === artifactRoot`；Adapter 缺少 `supportedScopes` 时只能用于
 project。每个 `ArtifactChange` 必须声明本次选择的 scope，Core 在执行前验证
 scope 一致性、相对路径和解析后的根包含关系，不替 Adapter 静默改写 scope。
+
+### Extension 运行时合同
+
+`defineExtension()` 的默认导出是 Adapter 清单、方法和能力元数据的唯一事实源。
+`jue apply` 校验该默认导出，并直接调用选中的 `Adapter.write()`。一个
+`ai-jue-adapter-*` apply 目标对应一个 Adapter；包含多个 Adapter 的 Extension
+需要独立的显式选择合同。
+
+Core 统一拥有 scope 缺省：省略 `supportedScopes` 表示 project-only。只有增加
+额外原生作用域的 Adapter 声明该字段，因此新增 scope 不要求所有 Adapter 包复制
+基线元数据。包入口保持单一默认导出，避免形成 CLI 私有插件协议。
 
 ### Artifact kind 组合
 
@@ -176,7 +187,9 @@ Plugin 的安装和启用属于目标原生生命周期，不由 `scope=user` �
 
 - 无 flag、无 target scope 的现有命令保持 project 行为。
 - `targets.*.scope` 的公开值收敛为 `project | user`；MCP 自身的 `local` 语义不变。
-- 旧 Adapter 不声明 `supportedScopes` 时继续 project-only。
+- Adapter 不声明 `supportedScopes` 时保持 project-only。
+- apply 只加载 `defineExtension()` 默认导出且要求恰好一个 Adapter；包级方法导出
+  不属于运行时合同。这是对并行插件协议的直接移除，不提供回退路径。
 - `projectRoot` 在一个兼容窗口保留；内置 Adapter 与文档改用 `artifactRoot`。
 - 从家目录执行且未指定 scope 的命令仍按 project 解释；推荐工作流改为在配置项目
   执行 `--scope user`。
@@ -188,7 +201,8 @@ Plugin 的安装和启用属于目标原生生命周期，不由 `scope=user` �
 3. Claude user dry-run 从项目配置预览用户路径，真实 apply 可被无关项目的新会话发现。
 4. user context、settings/hooks 与 MCP 使用官方路径，不依赖 `cwd = home`。
 5. scope mismatch、绝对路径、目录穿越和符号链接逃逸均有失败测试。
-6. 每个内置 Adapter 声明 project-only 或 project+user；`--all` 聚合失败但继续执行。
+6. project-only Adapter 省略 scope 元数据，只有支持额外 scope 的 Adapter 声明；
+   `--all` 聚合失败但继续执行。
 7. macOS/Linux 临时 home 与授权 Windows 主机的 `%USERPROFILE%` 路径均验证。
 8. 中英文 Reference、Guide、Agent profile、实现状态与本 RFC 同步。
 

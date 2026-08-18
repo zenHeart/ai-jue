@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { assertExtensionDefinition, ExtensionDefinition } from 'ai-jue-core';
+import {
+  assertExtensionDefinition,
+  type Adapter,
+  type ExtensionDefinition,
+} from 'ai-jue-core';
 
 export interface ExtensionPackageIssue {
   code: 'missing-entry' | 'missing-peer-dependency';
@@ -150,7 +154,22 @@ export function loadExtensionGuarded(entryPath: string): ExtensionDefinition {
   } finally {
     delete require.cache[resolvedPath];
   }
-  const definition = moduleExports?.default ?? moduleExports;
+  const definition = moduleExports?.default;
   assertExtensionDefinition(definition);
   return definition;
+}
+
+/**
+ * Loads the single Adapter represented by an `ai-jue-adapter-*` package.
+ * Apply targets one Agent at a time, so a multi-Adapter package is ambiguous
+ * until an explicit Extension-level selection contract exists.
+ */
+export function loadExtensionAdapterGuarded(entryPath: string): Adapter {
+  const definition = loadExtensionGuarded(entryPath);
+  if (definition.adapters.length !== 1) {
+    throw new Error(
+      `Apply requires an Extension entry with exactly one Adapter; received ${definition.adapters.length}`,
+    );
+  }
+  return definition.adapters[0];
 }
