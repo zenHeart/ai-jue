@@ -6,17 +6,14 @@ export interface CanonicalMcp {
   servers: Record<string, any>;
 }
 
-/** Accepts both native shapes confirmed in JUE-104/105: flat `{"<name>": {...}}` and wrapped `{"mcpServers": {...}}`. */
-function toCanonicalMcp(native: any): CanonicalMcp {
-  const servers: Record<string, any> =
-    native.mcpServers && typeof native.mcpServers === "object" ? native.mcpServers : native;
+function toCanonicalMcp(servers: Record<string, any>): CanonicalMcp {
   for (const [name, server] of Object.entries(servers)) {
     assertNoLiteralCredentials(server, `Claude Code MCP server "${name}"`);
   }
   return { servers };
 }
 
-function toNativeMcp(canonical: CanonicalMcp, applyScope: ApplyScope): { mcpServers: Record<string, any> } {
+function toNativeMcp(canonical: CanonicalMcp, applyScope: ApplyScope): Record<string, any> {
   const servers: Record<string, any> = {};
   for (const [name, server] of Object.entries(canonical.servers)) {
     const scope = server.scope ?? applyScope;
@@ -31,14 +28,26 @@ function toNativeMcp(canonical: CanonicalMcp, applyScope: ApplyScope): { mcpServ
     const { scope: _scope, ...rest } = server;
     servers[name] = rest;
   }
-  return { mcpServers: servers };
+  return servers;
 }
 
 /** Project MCP lives in `.mcp.json`; user MCP lives in Claude Code's `~/.claude.json`. */
 export function mcp(scope: ApplyScope = "project"): CapabilityMapping<CanonicalMcp> {
+  if (scope === "user") {
+    return mergedJsonFile<CanonicalMcp>({
+      filePath: (root) => path.join(root, ".claude.json"),
+      key: "mcpServers",
+      toCanonical: toCanonicalMcp,
+      toNative: (canonical) => toNativeMcp(canonical, scope),
+    });
+  }
+
   return mergedJsonFile<CanonicalMcp>({
-    filePath: (root) => path.join(root, scope === "user" ? ".claude.json" : ".mcp.json"),
-    toCanonical: toCanonicalMcp,
-    toNative: (canonical) => toNativeMcp(canonical, scope),
+    filePath: (root) => path.join(root, ".mcp.json"),
+    toCanonical: (native) =>
+      toCanonicalMcp(
+        native.mcpServers && typeof native.mcpServers === "object" ? native.mcpServers : native,
+      ),
+    toNative: (canonical) => ({ mcpServers: toNativeMcp(canonical, scope) }),
   });
 }
