@@ -11,6 +11,7 @@ export type { WriteContext } from "./write";
 export { confirm } from "./confirm";
 export type { ConfirmContext } from "./confirm";
 export { detectArtifactKind } from "./capabilities/layout";
+export const supportedScopes = ["project"] as const;
 
 /**
  * `jue apply`'s Hermes entry point: thin wrapper, parallel to Claude
@@ -25,6 +26,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
 
 const hermesAdapter: Adapter = {
   id: "hermes",
+  supportedScopes,
   capabilities: {
     // `rules` → Hermes has no separate rules directory (uses config.yaml's
     // prefill_messages_file + toolsets instead); honestly `unsupported`.

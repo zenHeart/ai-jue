@@ -14,7 +14,8 @@ jue init
 
 ```bash
 jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
-          [--dry-run | --check] [--artifact <kind> | --artifact-kind <kind>]
+          [--dry-run | --check] [--scope <project|user>] \
+          [--artifact <kind> | --artifact-kind <kind>]
 ```
 
 | Option | Description |
@@ -25,6 +26,7 @@ jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
 | `--frozen` | Require immutable Capability Source references |
 | `--dry-run` | Preview changes without writing; always exits 0 |
 | `--check` | Check configuration, drift, and confirmation availability without writing |
+| `--scope <project\|user>` | Select the Artifact installation boundary; overrides `targets.<adapter>.scope`, default `project` |
 | `--artifact <kind>`, `--artifact-kind <kind>` | Artifact kind: `project`, `workspace`, `plugin`, `compatible-bundle`, `skill-plugin`, depending on what the adapter supports |
 
 One invocation reads and validates the config, converts it to the Canonical DSL, resolves the plugin manifest, computes changes through the adapter's `write()`, then handles the chosen mode. A failure in any stage must not report success.
@@ -35,9 +37,16 @@ One invocation reads and validates the config, converts it to the Canonical DSL,
 | `--dry-run` | No | Preview Artifact changes; always exits 0 |
 | `--check` | No | CI check for configuration, drift, and confirmation availability; non-zero exit if anything is outstanding |
 
-`apply` requires no interactive authorization; use `--dry-run` and `--check` for previews and CI validation. When no config is detected, `apply` asks whether to run `init` first; when no target can be detected, it asks for a manual selection. The misspelled `--adpater` is still accepted and prints a warning.
+`apply` requires no interactive authorization; use `--dry-run` and `--check` for
+previews and CI validation. User scope still resolves configuration from the
+current project, but writes Artifacts to each target Agent's native user path.
+User scope requires an explicit `--adapter`, `--all`, or `targets` selection;
+project footprints are not user-home authorization. The misspelled `--adpater`
+is still accepted and prints a warning.
 
-Exit codes: no change or applied 0, pending or blocked by drift 3, unauthorized 4, rolled back 1. A target scope other than project, or a requested Artifact kind the adapter does not support, exits 2.
+Exit codes: no change or applied 0, pending or blocked by drift 3, unauthorized
+4, rolled back 1. An unsupported scope or a user-scope Plugin-class Artifact
+combination exits 2.
 
 ## `jue inspect`
 

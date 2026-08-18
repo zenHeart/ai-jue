@@ -41,6 +41,10 @@ const resources = {
             "No adapters selected. Use --adapter to choose adapters, or --all/-a to run all.",
           auto_detected_adapters:
             "No explicit adapter selected. Auto-detected {{count}} adapter(s): {{names}}",
+          configured_adapters:
+            "No explicit adapter selected. Using {{count}} configured target(s): {{names}}",
+          user_scope_requires_selection:
+            "User scope requires --adapter, --all, or an enabled targets entry; project footprints are not used as user authorization.",
           manual_selected_adapters:
             "Manually selected {{count}} adapter(s): {{names}}",
           manual_selection_intro:
@@ -72,6 +76,8 @@ const resources = {
             "Read-only: exit non-zero if changes, drift, or unauthorized actions would be needed",
           artifact_describe:
             "Artifact shape: project|workspace|plugin|compatible-bundle|skill-plugin (alias of --artifact-kind). Defaults keep today's project/workspace apply. OpenClaw plugin means a Claude/Codex-compatible bundle; Hermes plugin means skill-plugin.",
+          scope_describe:
+            "Apply boundary: project or user. CLI overrides targets.<adapter>.scope; default is project.",
           artifact_kind_resolved: "{{name}}: artifact={{kind}}",
           core_unsupported:
             "Adapter {{name}} does not support --dry-run/--check yet (no write() export). Skipped.",
@@ -260,6 +266,10 @@ const resources = {
             "未选择适配器。请使用 --adapter 指定，或使用 --all/-a 执行全部。",
           auto_detected_adapters:
             "未显式指定适配器，已自动识别 {{count}} 个适配器: {{names}}",
+          configured_adapters:
+            "未显式指定适配器，使用配置中的 {{count}} 个 target：{{names}}",
+          user_scope_requires_selection:
+            "用户级作用域必须通过 --adapter、--all 或启用的 targets 条目明确选择；项目痕迹不视为用户目录授权。",
           manual_selected_adapters:
             "已手动选择 {{count}} 个适配器: {{names}}",
           manual_selection_intro:
@@ -289,6 +299,8 @@ const resources = {
             "只读检查：如需变更、存在漂移或存在未授权动作则以非零码退出",
           artifact_describe:
             "Artifact 形态：project|workspace|plugin|compatible-bundle|skill-plugin（--artifact-kind 别名）。默认保持现有 project/workspace 行为。OpenClaw 下 plugin 表示 Claude/Codex 兼容 bundle；Hermes 下 plugin 表示 skill-plugin。",
+          scope_describe:
+            "apply 边界：project 或 user。CLI 优先于 targets.<adapter>.scope；默认 project。",
           artifact_kind_resolved: "{{name}}：artifact={{kind}}",
           core_unsupported:
             "适配器 {{name}} 尚未支持 --dry-run/--check（未导出 write()），已跳过。",

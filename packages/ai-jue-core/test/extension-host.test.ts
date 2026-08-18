@@ -23,6 +23,21 @@ describe('assertAdapter', () => {
     expect(() => assertAdapter(neutralAdapter())).not.toThrow();
   });
 
+  it('accepts project/user scope declarations', () => {
+    expect(() =>
+      assertAdapter(neutralAdapter({ supportedScopes: ['project', 'user'] })),
+    ).not.toThrow();
+  });
+
+  it('rejects duplicate or unknown scope declarations', () => {
+    expect(() =>
+      assertAdapter(neutralAdapter({ supportedScopes: ['project', 'project'] })),
+    ).toThrow('must not contain duplicates');
+    expect(() =>
+      assertAdapter(neutralAdapter({ supportedScopes: ['global'] as any })),
+    ).toThrow('project, user');
+  });
+
   it('rejects a missing id', () => {
     expect(() => assertAdapter(neutralAdapter({ id: '' }))).toThrow('non-empty string');
   });

@@ -1,6 +1,6 @@
 import path from "path";
 import { computeMergedJson, hashArtifactContent, mergedJsonFile, writeCapabilities } from "ai-jue-core";
-import type { ArtifactChange, CanonicalDocument } from "ai-jue-core";
+import type { ApplyScope, ArtifactChange, CanonicalDocument } from "ai-jue-core";
 import { agents } from "./capabilities/agents";
 import { commands } from "./capabilities/commands";
 import { context } from "./capabilities/context";
@@ -13,6 +13,10 @@ import { skills } from "./capabilities/skills";
 
 export interface WriteContext {
   projectRoot: string;
+  /** Core-authorized root. Falls back to projectRoot for older callers. */
+  artifactRoot?: string;
+  /** Apply ownership boundary. Defaults to project for backward compatibility. */
+  scope?: ApplyScope;
   /** Which native Artifact shape to target. Defaults to `"project"`. */
   artifactKind?: ArtifactKind;
   /**
@@ -40,12 +44,13 @@ function mergeToolsConfig(
   root: string,
   settingsPath: string,
   toolsConfig: Record<string, unknown>,
+  scope: ApplyScope,
 ): ArtifactChange[] {
   const relativePath = path.relative(root, settingsPath).split(path.sep).join("/");
   const existingIndex = changes.findIndex((change) => change.path === relativePath);
   if (existingIndex === -1) {
     const mapping = mergedJsonFile<Record<string, unknown>>({ filePath: () => settingsPath });
-    return [...changes, ...mapping.write(root, toolsConfig, TARGET)];
+    return [...changes, ...mapping.write(root, toolsConfig, TARGET, scope)];
   }
   const existing = changes[existingIndex];
   const merged = computeMergedJson(JSON.parse(existing.content as string), toolsConfig);
@@ -65,7 +70,11 @@ function mergeToolsConfig(
  */
 export async function write(canonical: CanonicalDocument, writeContext: WriteContext): Promise<ArtifactChange[]> {
   const artifactKind = writeContext.artifactKind ?? "project";
-  const root = writeContext.projectRoot;
+  const scope = writeContext.scope ?? "project";
+  const root = writeContext.artifactRoot ?? writeContext.projectRoot;
+  if (scope === "user" && artifactKind !== "project") {
+    throw new Error(`Claude Code user apply scope requires artifactKind "project", received "${artifactKind}"`);
+  }
 
   let changes = writeCapabilities(
     {
@@ -74,20 +83,21 @@ export async function write(canonical: CanonicalDocument, writeContext: WriteCon
       agents: agents(artifactKind),
       skills: skills(artifactKind),
       hooks: hooks(artifactKind),
-      mcp: mcp(),
+      mcp: mcp(scope),
     },
     canonical as Record<string, unknown>,
     root,
     TARGET,
+    scope,
   );
 
   if (artifactKind === "project" && canonical.context?.global) {
-    changes.push(...context().write(root, canonical.context.global, TARGET));
+    changes.push(...context(scope).write(root, canonical.context.global, TARGET, scope));
   }
 
   if (artifactKind === "project" && writeContext.toolsConfig && Object.keys(writeContext.toolsConfig).length > 0) {
     const settingsPath = path.join(root, ".claude", "settings.json");
-    changes = mergeToolsConfig(changes, root, settingsPath, writeContext.toolsConfig);
+    changes = mergeToolsConfig(changes, root, settingsPath, writeContext.toolsConfig, scope);
   }
 
   if (artifactKind === "plugin" && writeContext.pluginManifest) {

@@ -11,6 +11,7 @@ export type { WriteContext } from "./write";
 export { confirm } from "./confirm";
 export type { ConfirmContext } from "./confirm";
 export { detectArtifactKind } from "./capabilities/layout";
+export const supportedScopes = ["project", "user"] as const;
 
 /**
  * `jue apply`'s Claude Code entry point: converts a resolved config into
@@ -34,6 +35,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
 
 const claudeCodeAdapter: Adapter = {
   id: "claude-code",
+  supportedScopes,
   capabilities: {
     rules: "supported",
     commands: "supported",

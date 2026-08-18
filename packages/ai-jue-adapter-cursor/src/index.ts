@@ -11,6 +11,7 @@ export type { WriteContext } from "./write";
 export { confirm } from "./confirm";
 export type { ConfirmContext } from "./confirm";
 export { detectArtifactKind } from "./capabilities/layout";
+export const supportedScopes = ["project"] as const;
 
 export async function generate(config: any, outputDir: string): Promise<void> {
   const canonical = toCanonicalDocument(config);
@@ -24,6 +25,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
 
 const cursorAdapter: Adapter = {
   id: "cursor",
+  supportedScopes,
   capabilities: {
     rules: "supported",
     commands: "supported",

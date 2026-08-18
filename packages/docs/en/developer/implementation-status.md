@@ -1,6 +1,6 @@
 # Implementation Status
 
-> Snapshot: 2026-07-27. Architecture and Reference are target contracts; this
+> Snapshot: 2026-08-18. Architecture and Reference are target contracts; this
 > page records current facts.
 >
 > Current implementation path: R1 (Claude) and R2 (Scale Gate) are done; the
@@ -9,13 +9,16 @@
 > --artifact` / `targets.*.artifact` are wired; OpenClaw `compatible-bundle`
 > and Hermes thin `skill-plugin` have landed (see Agent profiles). Next up is
 > the rest of R4 (starting with JUE-402 cross-conversion).
+> RFC-0003 wires `jue apply --scope project|user` and `targets.*.scope`;
+> Claude Code supports user scope and every other built-in Adapter explicitly
+> remains project-only.
 
 ## CLI
 
 | Target command | Status | Current fact | Next step |
 | --- | --- | --- | --- |
 | `jue init` | Partial | Interactive initialization exists | Align minimal config and no-overwrite behavior |
-| `jue apply` | Partial | Claude, Codex, Cursor, OpenClaw, and Hermes all export `write()` with project/workspace and Plugin-class Artifacts (Cursor `--artifact plugin` implemented); Core `--dry-run`/`--check`/apply follow the exit-code table. Gemini/Copilot have no corresponding `packages/ai-jue-adapter-*` package yet | Finish `jue inspect` filters |
+| `jue apply` | Partial | Core `--dry-run`/`--check`/apply follow the exit-code table; project/user scope, per-Adapter root authorization, and batch failure aggregation are implemented; Claude user-native paths are implemented and other built-ins are project-only | Finish `jue inspect` filters |
 | `jue inspect` | Partial | `--extension <path> --diagnostics` is implemented: read-only report of the loaded Adapter's `id`/`capabilities`, plus a real apply-readiness check when a project config exists in cwd (JUE-203) | Implement `--capability`/`--preset`/`--target`/`--artifact` filters |
 | `jue capability update` | Implemented | Updates one/all sources | Preserve lock and safety contracts |
 | `jue preset create/validate/pack` | Partial | Historical commands are scattered | Converge under author namespace |
@@ -25,6 +28,11 @@ Existing `format`, `validate`, `check`, `list`, and `create-preset` commands are
 historical implementation to converge, not target architecture.
 
 ## Agent Adapters
+
+| Adapter | project scope | user scope |
+| --- | --- | --- |
+| Claude Code | Implemented | Implemented |
+| Codex / Cursor / OpenClaw / Hermes | Implemented | Undeclared; fails before writing |
 
 | Agent | Read to Canonical DSL | Write Artifact | Native confirmation |
 | --- | --- | --- | --- |

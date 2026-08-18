@@ -11,6 +11,7 @@ export type { WriteContext } from "./write";
 export { confirm } from "./confirm";
 export type { ConfirmContext } from "./confirm";
 export { detectArtifactKind } from "./capabilities/layout";
+export const supportedScopes = ["project"] as const;
 
 /**
  * `jue apply`'s OpenClaw entry point: converts a resolved config into
@@ -31,6 +32,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
 
 const openclawAdapter: Adapter = {
   id: "openclaw",
+  supportedScopes,
   capabilities: {
     rules: "degraded", // OpenClaw has no separate rules directory
     commands: "degraded", // OpenClaw has no per-workspace commands directory

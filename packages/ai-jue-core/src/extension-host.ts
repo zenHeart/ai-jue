@@ -6,23 +6,33 @@ export type CanonicalCapabilityType = 'rules' | 'commands' | 'skills' | 'agents'
 
 export type CapabilitySupportLevel = 'supported' | 'degraded' | 'unsupported';
 
+export type ApplyScope = 'project' | 'user';
+
 export type CapabilitySupport = Record<CanonicalCapabilityType, CapabilitySupportLevel>;
 
 export interface ReadContext {
   projectRoot: string;
+  artifactRoot?: string;
+  scope?: ApplyScope;
 }
 
 export interface WriteContext {
   projectRoot: string;
+  artifactRoot?: string;
+  scope?: ApplyScope;
 }
 
 export interface ConfirmContext {
   projectRoot: string;
+  artifactRoot?: string;
+  scope?: ApplyScope;
 }
 
 export interface Adapter {
   id: string;
   capabilities: CapabilitySupport;
+  /** Apply roots this Adapter maps natively. Omitted means project-only. */
+  supportedScopes?: readonly ApplyScope[];
   read(context: ReadContext): Promise<CanonicalDocument>;
   write(canonical: CanonicalDocument, context: WriteContext): Promise<ArtifactChange[]>;
   confirm(results: ArtifactResult[], context: ConfirmContext): Promise<Confirmation>;
@@ -43,6 +53,7 @@ const CANONICAL_CAPABILITY_TYPES: ReadonlyArray<CanonicalCapabilityType> = [
 
 const CAPABILITY_SUPPORT_LEVELS = new Set<CapabilitySupportLevel>(['supported', 'degraded', 'unsupported']);
 const ADAPTER_METHODS = ['read', 'write', 'confirm'] as const;
+const APPLY_SCOPES = new Set<ApplyScope>(['project', 'user']);
 
 function assertCapabilitySupport(value: unknown): asserts value is CapabilitySupport {
   if (!value || typeof value !== 'object' || Array.isArray(value)) {
@@ -73,6 +84,21 @@ export function assertAdapter(value: unknown): asserts value is Adapter {
     throw new Error('Adapter.id must be a non-empty string');
   }
   assertCapabilitySupport(adapter.capabilities);
+  if (adapter.supportedScopes !== undefined) {
+    if (!Array.isArray(adapter.supportedScopes) || adapter.supportedScopes.length === 0) {
+      throw new Error('Adapter.supportedScopes must be a non-empty array of: project, user');
+    }
+    const seenScopes = new Set<string>();
+    for (const scope of adapter.supportedScopes) {
+      if (typeof scope !== 'string' || !APPLY_SCOPES.has(scope as ApplyScope)) {
+        throw new Error('Adapter.supportedScopes entries must be one of: project, user');
+      }
+      if (seenScopes.has(scope)) {
+        throw new Error('Adapter.supportedScopes must not contain duplicates');
+      }
+      seenScopes.add(scope);
+    }
+  }
   for (const method of ADAPTER_METHODS) {
     if (typeof adapter[method] !== 'function') {
       throw new Error(`Adapter.${method} must be a function`);

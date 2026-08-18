@@ -1,7 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { extractManagedContent, managedMarkdownFile } from "ai-jue-core";
-import type { CapabilityMapping } from "ai-jue-core";
+import type { ApplyScope, CapabilityMapping } from "ai-jue-core";
 
 const IMPORT_LINE = /^@(\S+)\s*$/gm;
 const MAX_IMPORT_DEPTH = 5;
@@ -28,11 +28,15 @@ function resolveImports(content: string, baseDir: string, depth = 0): string {
  * managed-markdown-file mapping unchanged; read is the one custom bit,
  * since `@import` resolution has no sibling among the other Capabilities.
  */
-export function context(): CapabilityMapping<string> {
-  const managed = managedMarkdownFile({ filePath: (root) => path.join(root, "CLAUDE.md") });
+export function context(scope: ApplyScope = "project"): CapabilityMapping<string> {
+  const managed = managedMarkdownFile({
+    filePath: (root) =>
+      scope === "user" ? path.join(root, ".claude", "CLAUDE.md") : path.join(root, "CLAUDE.md"),
+  });
   return {
     read(root) {
-      const claudeMdPath = path.join(root, "CLAUDE.md");
+      const claudeMdPath =
+        scope === "user" ? path.join(root, ".claude", "CLAUDE.md") : path.join(root, "CLAUDE.md");
       if (!fs.existsSync(claudeMdPath)) return undefined;
       const raw = fs.readFileSync(claudeMdPath, "utf8");
       const managedContent = extractManagedContent(raw);

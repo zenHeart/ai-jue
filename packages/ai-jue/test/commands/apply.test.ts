@@ -20,15 +20,15 @@ describe("runAdapterList per-adapter isolation", () => {
   it("continues the batch when one Adapter fails and aggregates its exit code", async () => {
     const outputDir = fs.mkdtempSync(path.join(os.tmpdir(), "jue-apply-batch-"));
     try {
-      // claude → scope "user" makes runCoreAdapter throw
-      // UnsupportedArtifactScopeError (exit 2) before any write; hermes must
+      // codex is project-only, so scope "user" makes runCoreAdapter throw
+      // before any write; hermes must
       // still run afterwards and apply its workspace Artifact.
       const config = {
-        targets: { claude: { scope: "user" } },
+        targets: { codex: { scope: "user" } },
         context: { global: "Neutral context." },
       } as unknown as MergedConfig;
       const exitCode = await runAdapterList(
-        ["ai-jue-adapter-claude", "ai-jue-adapter-hermes"],
+        ["ai-jue-adapter-codex", "ai-jue-adapter-hermes"],
         config,
         outputDir,
       );

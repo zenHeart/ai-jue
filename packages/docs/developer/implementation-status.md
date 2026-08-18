@@ -1,11 +1,13 @@
 # 实现状态
 
-> 快照日期：2026-07-27。Architecture 与 Reference 是目标合同；本页是当前事实。
+> 快照日期：2026-08-18。Architecture 与 Reference 是目标合同；本页是当前事实。
 >
 > 当前实现主线：R1（Claude）与 R2（Scale Gate）已完成；R3 并行迁移
 > （Codex、OpenClaw、Hermes）与 R4 的 JUE-401 可移植子集矩阵均已完成，详见
 > delivery-plan.md。RFC-0002：`jue apply --artifact` / `targets.*.artifact` 已接线；
 > OpenClaw `compatible-bundle` 与 Hermes thin `skill-plugin` 已落地（见 Agent 画像）。
+> RFC-0003：`jue apply --scope project|user` 与 `targets.*.scope` 已接线；Claude
+> Code 支持 user，其他内置 Adapter 明确为 project-only。
 > 下一步是 R4 剩余任务（JUE-402 两两交叉转换起）。
 
 ## CLI
@@ -13,7 +15,7 @@
 | 理想命令 | 状态 | 当前事实 | 下一步 |
 | --- | --- | --- | --- |
 | `jue init` | 部分实现 | 已有交互初始化 | 对齐最小配置与非覆盖合同 |
-| `jue apply` | 部分实现 | Claude、Codex、Cursor、OpenClaw、Hermes 均已导出 `write()` 并支持 project/workspace 与 Plugin 类 Artifact（Cursor `--artifact plugin` 已实现）；Core `--dry-run`/`--check`/apply 均按退出码表工作。Gemini/Copilot 目前没有对应的 `packages/ai-jue-adapter-*` 包 | 补齐 `jue inspect` 筛选 |
+| `jue apply` | 部分实现 | Core `--dry-run`/`--check`/apply 均按退出码表工作；project/user scope、逐 Adapter 根授权与批处理失败聚合已实现；Claude user 原生路径已实现，其他内置 Adapter project-only | 补齐 `jue inspect` 筛选 |
 | `jue inspect` | 部分实现 | `--extension <path> --diagnostics` 已实现：只读报告已加载 Adapter 的 `id`/`capabilities`，若 cwd 有项目配置则额外报告真实 apply 就绪状态（JUE-203） | 实现 `--capability`/`--preset`/`--target`/`--artifact` 筛选 |
 | `jue capability update` | 已实现 | 支持单项/全部来源更新 | 保持 lock 与安全合同 |
 | `jue preset create/validate/pack` | 部分实现 | 历史命令分散 | 收敛到作者命名空间 |
@@ -23,6 +25,11 @@
 实现，不是目标架构。不得继续扩展其语义。
 
 ## Agent Adapter
+
+| Adapter | project scope | user scope |
+| --- | --- | --- |
+| Claude Code | 已实现 | 已实现 |
+| Codex / Cursor / OpenClaw / Hermes | 已实现 | 未声明，执行前失败 |
 
 | Agent | 读取为 Canonical DSL | 写出 Artifact | 目标原生确认 |
 | --- | --- | --- | --- |

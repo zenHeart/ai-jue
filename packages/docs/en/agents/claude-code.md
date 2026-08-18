@@ -4,7 +4,8 @@
 > project and Plugin Artifact kinds are implemented (a Marketplace aggregate
 > index is explicitly excluded — see
 > [adapter-standardization.md](../architecture/adapter-standardization.md));
-> Core `apply`/`--dry-run`/`--check` is implemented; the full fixture →
+> Core `apply`/`--dry-run`/`--check` is implemented for native project and
+> user apply scopes; the full fixture →
 > Canonical → Artifact → native confirmation loop (including a real headless
 > invocation and a batch rollback) is replayable end-to-end via one command;
 > `confirm()` is exported and assembled into `defineExtension()`/`Adapter`:
@@ -63,12 +64,12 @@ making the boundary finer-grained than Jue's six atomic Capability types.
 
 | Canonical / Facet | Claude Code |
 | --- | --- |
-| `context.global` | `CLAUDE.md` (project root `CLAUDE.md`/`.claude/CLAUDE.md`/`CLAUDE.local.md`); Claude Code reads only `CLAUDE.md` — wiring in the root `AGENTS.md` requires a `@AGENTS.md` import inside `CLAUDE.md` |
-| `rules` | `.claude/rules/*.md` (the `paths` frontmatter supports path-conditional loading; anything beyond Canonical's current unconditional semantics is preserved as a target-private field) |
-| `skills` / `commands` | `.claude/skills/*/SKILL.md` and `.claude/commands/*.md` share one namespace: a later-loaded entry silently overrides an earlier same-named one, and `validate` does not flag it |
+| `context.global` | project `CLAUDE.md`; user `~/.claude/CLAUDE.md` |
+| `rules` | project/user `.claude/rules/*.md` (under the user root: `~/.claude/rules/*.md`) |
+| `skills` / `commands` | project/user `.claude/skills/*/SKILL.md` and `.claude/commands/*.md` |
 | `agents` | `.claude/agents/*.md` (project), `~/.claude/agents/*.md` (user); `agents/` inside a Plugin |
-| `hooks` | the `hooks` key in `.claude/settings.json`, or a Plugin's `hooks/hooks.json` / inline manifest `hooks` |
-| `mcp.servers` | project `.mcp.json`; both a flat `{"<name>": {...}}` shape and a wrapped `{"mcpServers": {...}}` shape pass official validation |
+| `hooks` | the `hooks` key in project/user `.claude/settings.json`, or a Plugin's `hooks/hooks.json` / inline manifest `hooks` |
+| `mcp.servers` | project `.mcp.json`; user `~/.claude.json` |
 | target-specific settings | `tools.claude` (`lspServers`, `monitors`, `themes`, `output-styles`, `bin`, `workflows`, `channels`, `userConfig`, `dependencies`) |
 | Artifact | project-native config, or a Claude Plugin (`.claude-plugin/plugin.json` plus component directories, manifest optional) |
 | Confirm | `claude plugin validate <path> [--strict]`; headless `system/init` (see §3) |
@@ -96,8 +97,9 @@ making the boundary finer-grained than Jue's six atomic Capability types.
   Rule is `project > user` (`CLAUDE.local.md` is a local override); Settings
   is `managed > CLI > local > project > user` (the `permissions` key merges
   rather than overrides). MCP's `local` scope is written to `~/.claude.json`,
-  not `.claude/settings.local.json`; the only repository-local file Jue can
-  write to is the `project`-scope `.mcp.json`.
+  not `.claude/settings.local.json`. Jue project apply writes `.mcp.json` and
+  user apply writes `~/.claude.json`. A server with no scope inherits the
+  apply scope; an explicit mismatch or `local` fails before writing.
 
 ### Headless native confirmation path
 

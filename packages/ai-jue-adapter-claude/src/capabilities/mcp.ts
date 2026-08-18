@@ -1,6 +1,6 @@
 import path from "path";
 import { assertNoLiteralCredentials, mergedJsonFile } from "ai-jue-core";
-import type { CapabilityMapping } from "ai-jue-core";
+import type { ApplyScope, CapabilityMapping } from "ai-jue-core";
 
 export interface CanonicalMcp {
   servers: Record<string, any>;
@@ -16,32 +16,29 @@ function toCanonicalMcp(native: any): CanonicalMcp {
   return { servers };
 }
 
-/**
- * Only `project`-scope servers map to a safe, project-relative path
- * (`.mcp.json`). `user`/`local` scope map to `~/.claude.json`, outside the
- * project root and not expressible as a project-relative `ArtifactChange.path`
- * under the frozen JUE-102 contract — those servers are intentionally
- * skipped here rather than inventing an unreviewed path scheme.
- */
-function toNativeMcp(canonical: CanonicalMcp): { mcpServers: Record<string, any> } | undefined {
-  const projectScoped: Record<string, any> = {};
+function toNativeMcp(canonical: CanonicalMcp, applyScope: ApplyScope): { mcpServers: Record<string, any> } {
+  const servers: Record<string, any> = {};
   for (const [name, server] of Object.entries(canonical.servers)) {
-    const scope = server.scope ?? "project";
-    // Matches the JSDoc above: `user`/`local` servers are intentionally
-    // skipped, never dropped by an exception — a user-scope server must not
-    // block the whole project Artifact.
-    if (scope !== "project") continue;
+    const scope = server.scope ?? applyScope;
+    if (scope !== "project" && scope !== "user") {
+      throw new Error(`Claude Code MCP server "${name}" has unsupported scope "${scope}"`);
+    }
+    if (scope !== applyScope) {
+      throw new Error(
+        `Claude Code MCP server "${name}" scope "${scope}" does not match apply scope "${applyScope}"`,
+      );
+    }
     const { scope: _scope, ...rest } = server;
-    projectScoped[name] = rest;
+    servers[name] = rest;
   }
-  return Object.keys(projectScoped).length > 0 ? { mcpServers: projectScoped } : undefined;
+  return { mcpServers: servers };
 }
 
-/** `.mcp.json` at the root, regardless of project vs. Plugin layout. */
-export function mcp(): CapabilityMapping<CanonicalMcp> {
+/** Project MCP lives in `.mcp.json`; user MCP lives in Claude Code's `~/.claude.json`. */
+export function mcp(scope: ApplyScope = "project"): CapabilityMapping<CanonicalMcp> {
   return mergedJsonFile<CanonicalMcp>({
-    filePath: (root) => path.join(root, ".mcp.json"),
+    filePath: (root) => path.join(root, scope === "user" ? ".claude.json" : ".mcp.json"),
     toCanonical: toCanonicalMcp,
-    toNative: toNativeMcp,
+    toNative: (canonical) => toNativeMcp(canonical, scope),
   });
 }

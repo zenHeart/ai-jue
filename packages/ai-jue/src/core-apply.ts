@@ -1,4 +1,5 @@
 import pc from "picocolors";
+import os from "os";
 import {
   applyExecution,
   checkExecution,
@@ -6,23 +7,35 @@ import {
   type ArtifactChange,
   type DriftConflict,
   type ExecutionStatus,
+  type ApplyScope,
 } from "ai-jue-core";
 import {
   resolveArtifactKind,
   resolveBundlePluginManifest,
   resolveTargetSelection,
   shortAdapterName,
-  UnsupportedArtifactScopeError,
+  UnsupportedArtifactKindError,
 } from "./artifact-kind";
 import { MergedConfig } from "./config";
 import { logger } from "./logger";
 import { t } from "./i18n";
+import {
+  assertAdapterSupportsScope,
+  resolveApplyScope,
+  resolveArtifactRoot,
+} from "./apply-scope";
 
 export interface CoreCapableAdapterModule {
+  supportedScopes?: readonly ApplyScope[];
+  default?: {
+    adapters?: Array<{ id: string; supportedScopes?: readonly ApplyScope[] }>;
+  };
   write(
     canonical: unknown,
     context: {
       projectRoot: string;
+      artifactRoot?: string;
+      scope?: ApplyScope;
       artifactKind?: string;
       toolsConfig?: Record<string, unknown>;
       pluginManifest?: {
@@ -51,6 +64,26 @@ export interface RunCoreAdapterOptions {
   check?: boolean;
   /** CLI --artifact / --artifact-kind override for the current run. */
   artifactKind?: string;
+  /** CLI --scope override for the current run. */
+  scope?: ApplyScope;
+  /** Isolated user root injection for tests; production defaults to os.homedir(). */
+  userHome?: string;
+}
+
+function supportedScopesFor(
+  adapterName: string,
+  adapterModule: CoreCapableAdapterModule,
+): readonly ApplyScope[] | undefined {
+  if (adapterModule.supportedScopes) return adapterModule.supportedScopes;
+  const adapters = adapterModule.default?.adapters;
+  if (!adapters || adapters.length === 0) return undefined;
+  const short = shortAdapterName(adapterName);
+  const matched = adapters.find((adapter) =>
+    adapter.id === short ||
+    (short === "claude" && adapter.id === "claude-code") ||
+    (short === "claude-code" && adapter.id === "claude-code"),
+  );
+  return (matched ?? (adapters.length === 1 ? adapters[0] : undefined))?.supportedScopes;
 }
 
 const EXIT_CODE_BY_STATUS: Record<ExecutionStatus, number> = {
@@ -117,16 +150,24 @@ export async function runCoreAdapter(
 ): Promise<number> {
   const short = shortAdapterName(adapterName);
   const targetSelection = resolveTargetSelection(config, adapterName);
-  const targetScope = targetSelection?.scope ?? "project";
-  if (targetScope !== "project") {
-    throw new UnsupportedArtifactScopeError(short, targetScope);
-  }
+  const scope = resolveApplyScope(options.scope, targetSelection?.scope);
+  assertAdapterSupportsScope(short, supportedScopesFor(adapterName, adapterModule), scope);
+  const artifactRoot = resolveArtifactRoot(scope, outputDir, options.userHome ?? os.homedir());
   const artifactKind = resolveArtifactKind({
     adapterName,
     cliArtifact: options.artifactKind,
     config,
-    existingArtifactKind: adapterModule.detectArtifactKind?.(outputDir),
+    existingArtifactKind: adapterModule.detectArtifactKind?.(artifactRoot),
   });
+  if (scope === "user" && !["project", "workspace"].includes(artifactKind)) {
+    throw new UnsupportedArtifactKindError(
+      short,
+      artifactKind,
+      ["project", "workspace"],
+      `Adapter "${short}" cannot apply artifact kind "${artifactKind}" in user scope. ` +
+        "User scope supports only native project/workspace artifacts.",
+    );
+  }
 
   logger.info(
     pc.dim(
@@ -136,6 +177,7 @@ export async function runCoreAdapter(
       }),
     ),
   );
+  logger.info(pc.dim(`${adapterName}: scope=${scope}, root=${scope === "user" ? "~" : "."}`));
 
   const canonical = toCanonicalDocument(config as unknown as Record<string, unknown>);
   const toolsConfig = (config as Record<string, any>)?.tools?.[short];
@@ -151,28 +193,30 @@ export async function runCoreAdapter(
       : undefined;
 
   const changes = await adapterModule.write(canonical, {
-    projectRoot: outputDir,
+    projectRoot: artifactRoot,
+    artifactRoot,
+    scope,
     artifactKind,
     toolsConfig: toolsConfig && Object.keys(toolsConfig).length > 0 ? toolsConfig : undefined,
     pluginManifest,
   });
 
   if (options.dryRun) {
-    const preview = checkExecution(outputDir, changes);
+    const preview = checkExecution(artifactRoot, changes, { expectedScope: scope });
     reportPlan(adapterName, preview);
     process.exitCode = 0; // a preview never fails on its own findings
     return 0;
   }
 
   if (options.check) {
-    const result = checkExecution(outputDir, changes);
+    const result = checkExecution(artifactRoot, changes, { expectedScope: scope });
     reportPlan(adapterName, result);
     const exitCode = EXIT_CODE_BY_STATUS[result.status];
     process.exitCode = exitCode;
     return exitCode;
   }
 
-  const result = applyExecution(outputDir, changes);
+  const result = applyExecution(artifactRoot, changes, { expectedScope: scope });
   reportPlan(adapterName, result);
   if (result.status === "rolled-back") {
     logger.error(

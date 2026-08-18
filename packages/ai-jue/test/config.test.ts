@@ -143,6 +143,12 @@ describe('loadConfig', () => {
         });
     });
 
+    it('should expose only project and user apply scopes', () => {
+        expect(ConfigSchema.safeParse({ targets: { claude: { scope: 'project' } } }).success).toBe(true);
+        expect(ConfigSchema.safeParse({ targets: { claude: { scope: 'user' } } }).success).toBe(true);
+        expect(ConfigSchema.safeParse({ targets: { claude: { scope: 'local' } } }).success).toBe(false);
+    });
+
     it.each(['commands', 'rules', 'skills', 'agents'])(
         'should reject %s capabilities without an executable body',
         (section) => {

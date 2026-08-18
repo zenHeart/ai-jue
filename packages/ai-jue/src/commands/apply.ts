@@ -12,6 +12,8 @@ import { createInterface } from "readline/promises";
 import { logger } from "../logger";
 import { t } from "../i18n";
 import { runInitFlow } from "./init";
+import type { ApplyScope } from "ai-jue-core";
+import { resolveApplyScope } from "../apply-scope";
 import {
   isTargetEnabled,
   resolveArtifactKind,
@@ -71,6 +73,11 @@ export const builder: CommandBuilder = (yargs) => {
       alias: "artifact-kind",
       type: "string",
       description: t("commands.apply.artifact_describe"),
+    })
+    .option("scope", {
+      type: "string",
+      choices: ["project", "user"] as const,
+      description: t("commands.apply.scope_describe"),
     });
 };
 
@@ -420,6 +427,12 @@ function parseCliArtifact(argv: Arguments): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function configuredAdapters(config: MergedConfig): string[] {
+  return Object.entries(config.targets ?? {})
+    .filter(([, selection]) => selection?.enabled !== false)
+    .map(([name]) => resolveAdapterAlias(name));
+}
+
 async function runSingleAdapter(
   adapterName: string,
   config: MergedConfig,
@@ -440,10 +453,11 @@ async function runSingleAdapter(
     }
 
     const targetSelection = resolveTargetSelection(config, adapterName);
-    if (targetSelection?.scope && targetSelection.scope !== "project") {
+    const scope = resolveApplyScope(coreOptions.scope, targetSelection?.scope);
+    if (scope !== "project") {
       throw new UnsupportedArtifactScopeError(
         toAdapterShortName(adapterName),
-        targetSelection.scope,
+        scope,
       );
     }
     const artifactKind = resolveArtifactKind({
@@ -544,6 +558,7 @@ async function runAdapters(
     dryRun: options.dryRun,
     check: options.check,
     artifactKind: options.artifactKind,
+    scope: options.scope,
   };
   const spinner = ora(t("commands.apply.finding_adapters")).start();
   const discoveredAdapters = await findAdapters();
@@ -552,20 +567,26 @@ async function runAdapters(
   if (availableAdapters.length === 0) {
     spinner.warn(pc.yellow(t("commands.apply.no_adapters")));
     if (!options.all && options.requestedAdapters.length === 0) {
-      const footprintDetected = filterEnabledAdapters(
-        autoDetectAdapters(KNOWN_ADAPTERS, process.cwd()),
-        config,
-      );
-      if (footprintDetected.length > 0) {
-        logger.info(
-          pc.cyan(
-            t("commands.apply.auto_detected_adapters", {
-              count: footprintDetected.length,
-              names: footprintDetected.join(", "),
-            }),
-          ),
+      const configured = configuredAdapters(config);
+      if (configured.length > 0) {
+        return await runAdapterList(configured, config, outputDir, coreOptions);
+      }
+      if (options.scope !== "user") {
+        const footprintDetected = filterEnabledAdapters(
+          autoDetectAdapters(KNOWN_ADAPTERS, process.cwd()),
+          config,
         );
-        return await runAdapterList(footprintDetected, config, outputDir, coreOptions);
+        if (footprintDetected.length > 0) {
+          logger.info(
+            pc.cyan(
+              t("commands.apply.auto_detected_adapters", {
+                count: footprintDetected.length,
+                names: footprintDetected.join(", "),
+              }),
+            ),
+          );
+          return await runAdapterList(footprintDetected, config, outputDir, coreOptions);
+        }
       }
       const manualSelected = await promptManualAdapterSelection(KNOWN_ADAPTERS);
       if (manualSelected.length === 0) {
@@ -604,38 +625,56 @@ async function runAdapters(
     : availableAdapters;
   if (!options.all) {
     if (options.requestedAdapters.length === 0) {
-      const detected = filterEnabledAdapters(
-        autoDetectAdapters(availableAdapters, process.cwd()),
-        config,
-      );
-      if (detected.length === 0) {
-        spinner.warn(pc.yellow(t("commands.apply.no_adapter_detected")));
-        const manualSelected = await promptManualAdapterSelection(
-          availableAdapters,
+      const configured = configuredAdapters(config);
+      if (configured.length > 0) {
+        targetAdapters = configured;
+        logger.info(
+          pc.cyan(
+            t("commands.apply.configured_adapters", {
+              count: configured.length,
+              names: configured.join(", "),
+            }),
+          ),
         );
-        if (manualSelected.length === 0) {
-          logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
-          return 1;
-        }
+      } else if (options.scope === "user") {
+        spinner.warn(pc.yellow(t("commands.apply.user_scope_requires_selection")));
+        const manualSelected = await promptManualAdapterSelection(availableAdapters);
+        if (manualSelected.length === 0) return 1;
         targetAdapters = manualSelected;
-        logger.info(
-          pc.cyan(
-            t("commands.apply.manual_selected_adapters", {
-              count: manualSelected.length,
-              names: manualSelected.join(", "),
-            }),
-          ),
-        );
       } else {
-        targetAdapters = detected;
-        logger.info(
-          pc.cyan(
-            t("commands.apply.auto_detected_adapters", {
-              count: detected.length,
-              names: detected.join(", "),
-            }),
-          ),
+        const detected = filterEnabledAdapters(
+          autoDetectAdapters(availableAdapters, process.cwd()),
+          config,
         );
+        if (detected.length === 0) {
+          spinner.warn(pc.yellow(t("commands.apply.no_adapter_detected")));
+          const manualSelected = await promptManualAdapterSelection(
+            availableAdapters,
+          );
+          if (manualSelected.length === 0) {
+            logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
+            return 1;
+          }
+          targetAdapters = manualSelected;
+          logger.info(
+            pc.cyan(
+              t("commands.apply.manual_selected_adapters", {
+                count: manualSelected.length,
+                names: manualSelected.join(", "),
+              }),
+            ),
+          );
+        } else {
+          targetAdapters = detected;
+          logger.info(
+            pc.cyan(
+              t("commands.apply.auto_detected_adapters", {
+                count: detected.length,
+                names: detected.join(", "),
+              }),
+            ),
+          );
+        }
       }
     } else {
       let selected = options.requestedAdapters;
@@ -683,10 +722,17 @@ async function runAdapters(
 
   let exitCode = 0;
   for (const adapterName of runnableAdapters) {
-    exitCode = Math.max(
-      exitCode,
-      await runSingleAdapter(adapterName, config, outputDir, coreOptions),
-    );
+    try {
+      exitCode = Math.max(
+        exitCode,
+        await runSingleAdapter(adapterName, config, outputDir, coreOptions),
+      );
+    } catch (error: any) {
+      exitCode = Math.max(
+        exitCode,
+        typeof error?.exitCode === "number" ? error.exitCode : 1,
+      );
+    }
   }
   return exitCode;
 }
@@ -712,6 +758,7 @@ export const handler = async (argv: Arguments) => {
     dryRun: Boolean((argv as Arguments<{ "dry-run"?: boolean }>)["dry-run"]),
     check: Boolean((argv as Arguments<{ check?: boolean }>).check),
     artifactKind: parseCliArtifact(argv),
+    scope: (argv as Arguments<{ scope?: ApplyScope }>).scope,
   };
 
   const runApply = async () => {

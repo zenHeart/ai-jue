@@ -3,7 +3,7 @@ import path from 'path';
 import * as yaml from 'js-yaml';
 import { computeManagedMarkdown, computeMergedJson } from './merge-strategies';
 import { splitFrontmatter } from './frontmatter';
-import { hashArtifactContent, type ArtifactChange } from './artifact-change';
+import { hashArtifactContent, type ArtifactChange, type ArtifactScope } from './artifact-change';
 import { resolveSupportFilePath } from './file-io';
 
 /**
@@ -16,7 +16,7 @@ import { resolveSupportFilePath } from './file-io';
  */
 export interface CapabilityMapping<T = unknown> {
   read(root: string): T | undefined;
-  write(root: string, value: T, target: string): ArtifactChange[];
+  write(root: string, value: T, target: string, scope?: ArtifactScope): ArtifactChange[];
 }
 
 /** Runs every mapping's `read` and assembles the non-empty results into one object. */
@@ -38,11 +38,12 @@ export function writeCapabilities(
   canonical: Record<string, unknown>,
   root: string,
   target: string,
+  scope: ArtifactScope = 'project',
 ): ArtifactChange[] {
   const changes: ArtifactChange[] = [];
   for (const [key, mapping] of Object.entries(mappings)) {
     if (canonical[key] === undefined) continue;
-    changes.push(...mapping.write(root, canonical[key], target));
+    changes.push(...mapping.write(root, canonical[key], target, scope));
   }
   return changes;
 }
@@ -56,6 +57,7 @@ function buildFullOwnershipTextChange(
   root: string,
   absolutePath: string,
   newContent: string,
+  scope: ArtifactScope,
 ): ArtifactChange | null {
   const exists = fs.existsSync(absolutePath);
   const existingContent = exists ? fs.readFileSync(absolutePath, 'utf8') : undefined;
@@ -64,7 +66,7 @@ function buildFullOwnershipTextChange(
     target,
     kind: exists ? 'update' : 'create',
     ownership: 'full',
-    scope: 'project',
+    scope,
     path: relativePortablePath(root, absolutePath),
     beforeHash: exists ? hashArtifactContent(existingContent!) : null,
     afterHash: hashArtifactContent(newContent),
@@ -80,6 +82,7 @@ function buildFullOwnershipBinaryChange(
   root: string,
   absolutePath: string,
   newContent: Buffer,
+  scope: ArtifactScope,
 ): ArtifactChange | null {
   const exists = fs.existsSync(absolutePath);
   const existingContent = exists ? fs.readFileSync(absolutePath) : undefined;
@@ -88,7 +91,7 @@ function buildFullOwnershipBinaryChange(
     target,
     kind: exists ? 'update' : 'create',
     ownership: 'full',
-    scope: 'project',
+    scope,
     path: relativePortablePath(root, absolutePath),
     beforeHash: exists ? hashArtifactContent(existingContent!) : null,
     afterHash: hashArtifactContent(newContent),
@@ -104,6 +107,7 @@ function buildManagedMarkdownArtifactChange(
   root: string,
   absolutePath: string,
   content: string,
+  scope: ArtifactScope,
 ): ArtifactChange | null {
   const exists = fs.existsSync(absolutePath);
   const existingContent = exists ? fs.readFileSync(absolutePath, 'utf8') : undefined;
@@ -113,7 +117,7 @@ function buildManagedMarkdownArtifactChange(
     target,
     kind: exists ? 'update' : 'create',
     ownership: 'managed-block',
-    scope: 'project',
+    scope,
     path: relativePortablePath(root, absolutePath),
     beforeHash: exists ? hashArtifactContent(existingContent!) : null,
     afterHash: hashArtifactContent(finalContent),
@@ -129,6 +133,7 @@ function buildMergedJsonArtifactChange(
   root: string,
   absolutePath: string,
   content: unknown,
+  scope: ArtifactScope,
 ): ArtifactChange | null {
   const exists = fs.existsSync(absolutePath);
   let existingRaw: string | undefined;
@@ -148,7 +153,7 @@ function buildMergedJsonArtifactChange(
     target,
     kind: exists ? 'update' : 'create',
     ownership: 'merged-keys',
-    scope: 'project',
+    scope,
     path: relativePortablePath(root, absolutePath),
     beforeHash: existingRaw !== undefined ? hashArtifactContent(existingRaw) : null,
     afterHash: hashArtifactContent(finalRaw),
@@ -223,7 +228,7 @@ export function flatMarkdownDirectory(options: {
       }
       return Object.keys(result).length > 0 ? result : undefined;
     },
-    write(root, value, target) {
+    write(root, value, target, scope = 'project') {
       const dirPath = options.dirPath(root);
       const changes: ArtifactChange[] = [];
       for (const [name, rawEntry] of Object.entries(value)) {
@@ -233,7 +238,7 @@ export function flatMarkdownDirectory(options: {
           : rest;
         const body = String(content ?? prompt ?? '').trim();
         const rendered = renderFrontmatterFile(nativeAttributes, body);
-        const change = buildFullOwnershipTextChange(target, root, path.join(dirPath, `${name}.md`), rendered);
+        const change = buildFullOwnershipTextChange(target, root, path.join(dirPath, `${name}.md`), rendered, scope);
         if (change) changes.push(change);
       }
       return changes;
@@ -271,7 +276,7 @@ export function directoryPerItem(options: {
       }
       return Object.keys(result).length > 0 ? result : undefined;
     },
-    write(root, value, target) {
+    write(root, value, target, scope = 'project') {
       const dirPath = options.dirPath(root);
       const changes: ArtifactChange[] = [];
       for (const [name, rawEntry] of Object.entries(value)) {
@@ -289,6 +294,7 @@ export function directoryPerItem(options: {
           root,
           path.join(itemDir, options.mainFileName),
           rendered,
+          scope,
         );
         if (change) changes.push(change);
         for (const [bundleKey, files] of Object.entries(bundles)) {
@@ -300,6 +306,7 @@ export function directoryPerItem(options: {
               root,
               safePath,
               bufferForSupportFile(file),
+              scope,
             );
             if (bundleChange) changes.push(bundleChange);
           }
@@ -323,9 +330,9 @@ export function managedMarkdownFile(options: {
       if (!fs.existsSync(filePath)) return undefined;
       return fs.readFileSync(filePath, 'utf8');
     },
-    write(root, value, target) {
+    write(root, value, target, scope = 'project') {
       const filePath = options.filePath(root);
-      const change = buildManagedMarkdownArtifactChange(target, root, filePath, value);
+      const change = buildManagedMarkdownArtifactChange(target, root, filePath, value, scope);
       return change ? [change] : [];
     },
   };
@@ -354,12 +361,12 @@ export function mergedJsonFile<T>(options: {
       if (native === undefined) return undefined;
       return options.toCanonical ? options.toCanonical(native) : (native as T);
     },
-    write(root, value, target) {
+    write(root, value, target, scope = 'project') {
       const filePath = options.filePath(root);
       const native = options.toNative ? options.toNative(value) : value;
       if (native === undefined) return [];
       const content = options.key ? { [options.key]: native } : native;
-      const change = buildMergedJsonArtifactChange(target, root, filePath, content);
+      const change = buildMergedJsonArtifactChange(target, root, filePath, content, scope);
       return change ? [change] : [];
     },
   };

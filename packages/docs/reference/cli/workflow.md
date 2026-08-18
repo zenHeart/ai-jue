@@ -16,7 +16,8 @@ jue init
 
 ```bash
 jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
-          [--dry-run | --check] [--artifact <kind> | --artifact-kind <kind>]
+          [--dry-run | --check] [--scope <project|user>] \
+          [--artifact <kind> | --artifact-kind <kind>]
 ```
 
 | 选项 | 说明 |
@@ -27,6 +28,7 @@ jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
 | `--frozen` | 要求 Capability Source 引用不可变 |
 | `--dry-run` | 预览变更，不写入，恒退出 0 |
 | `--check` | 检查配置、漂移与确认能力，不写入 |
+| `--scope <project\|user>` | 选择 Artifact 安装边界；优先于 `targets.<adapter>.scope`，默认 `project` |
 | `--artifact <kind>`, `--artifact-kind <kind>` | 指定 Artifact kind：`project`、`workspace`、`plugin`、`compatible-bundle`、`skill-plugin`，依 adapter 支持范围而定 |
 
 一次执行内部完成：读取并校验配置，转换为 Canonical DSL，解析 plugin manifest，由 adapter 的 `write()` 计算变更，再按模式处理。任何阶段失败都不得报告成功。
@@ -37,9 +39,13 @@ jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
 | `--dry-run` | 否 | 预览 Artifact 变化，恒退出 0 |
 | `--check` | 否 | CI 中检查配置、漂移与确认能力，任一不满足即非零退出 |
 
-apply 不要求交互授权确认，预览与 CI 校验使用 `--dry-run` 与 `--check`。未检测到配置时 apply 会询问是否先运行 init，无法自动识别目标时会交互选择。拼写错误的 `--adpater` 仍被接受并显示警告。
+apply 不要求交互授权确认，预览与 CI 校验使用 `--dry-run` 与 `--check`。user scope
+仍从当前项目解析配置，但将 Artifact 写入目标 Agent 的用户原生路径。user scope
+必须通过 `--adapter`、`--all` 或 `targets` 明确选择 Adapter，不使用项目 footprint
+作为用户目录授权。拼写错误的 `--adpater` 仍被接受并显示警告。
 
-退出码：无变更或已应用 0，待定或漂移冲突 3，未授权 4，回滚 1。目标 scope 非 project 或请求了 adapter 不支持的 Artifact kind 时退出码 2。
+退出码：无变更或已应用 0，待定或漂移冲突 3，未授权 4，回滚 1。Adapter
+不支持所选 scope，或 user scope 与 Plugin 类 Artifact 组合时退出码 2。
 
 ## `jue inspect`
 

@@ -116,6 +116,32 @@ describe('planExecution', () => {
     expect(allowed.unauthorized).toHaveLength(0);
     expect(allowed.pending).toEqual([change]);
   });
+
+  it('rejects changes whose scope does not match the authorized apply scope', () => {
+    const root = tempDir();
+    expect(() =>
+      planExecution(root, [createChange({ scope: 'user' })], { expectedScope: 'project' }),
+    ).toThrow('scope');
+    expect(fs.existsSync(path.join(root, 'notes.md'))).toBe(false);
+  });
+
+  it('validates every ArtifactChange before reading from disk', () => {
+    const root = tempDir();
+    expect(() =>
+      planExecution(root, [createChange({ path: '../outside.md' })]),
+    ).toThrow('safe project-relative path');
+  });
+
+  it('rejects a target whose existing parent symlink escapes the authorized root', () => {
+    const root = tempDir();
+    const outside = tempDir();
+    fs.symlinkSync(outside, path.join(root, 'escape'), 'dir');
+
+    expect(() =>
+      planExecution(root, [createChange({ path: 'escape/notes.md' })]),
+    ).toThrow('authorized root');
+    expect(fs.existsSync(path.join(outside, 'notes.md'))).toBe(false);
+  });
 });
 
 describe('applyExecution', () => {

@@ -11,6 +11,7 @@ export type { WriteContext } from "./write";
 export { confirm } from "./confirm";
 export type { ConfirmContext } from "./confirm";
 export { detectArtifactKind } from "./capabilities/layout";
+export const supportedScopes = ["project"] as const;
 
 /**
  * `jue apply`'s Codex entry point: converts a resolved config into
@@ -28,6 +29,7 @@ export async function generate(config: any, outputDir: string): Promise<void> {
 
 const codexAdapter: Adapter = {
   id: "codex",
+  supportedScopes,
   capabilities: {
     rules: "degraded", // Codex has no separate Rules directory; rules fold into AGENTS.md via context
     commands: "degraded", // Codex's custom-commands was deprecated; this is documented honestly
