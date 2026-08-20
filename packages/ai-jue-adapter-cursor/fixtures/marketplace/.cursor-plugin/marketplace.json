@@ -1,0 +1,23 @@
+{
+  "name": "neutral-team-plugins",
+  "owner": {
+    "name": "Neutral Fixtures"
+  },
+  "metadata": {
+    "description": "Neutral multi-plugin marketplace fixture.",
+    "version": "0.1.0",
+    "pluginRoot": "plugins"
+  },
+  "plugins": [
+    {
+      "name": "demo-search",
+      "source": "demo-search",
+      "description": "Neutral search workflow fixture."
+    },
+    {
+      "name": "demo-review",
+      "source": "demo-review",
+      "description": "Neutral review workflow fixture."
+    }
+  ]
+}

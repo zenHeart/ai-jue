@@ -246,6 +246,16 @@ mcp?: {
 
 Plugin 不含 `context.global` 与 `tools.cursor` project 设置面。
 
+#### 5.2.3 Marketplace 索引
+
+- `tools.cursor.marketplace` -> `.cursor-plugin/marketplace.json`
+- `name`、`owner`、`metadata` 与 `plugins` 保持为 Cursor target-private 数据
+- `plugins` 包含 1–500 项；每个本地相对字符串 `plugins[].source` 指向独立管理、带
+  `.cursor-plugin/plugin.json` 的 Cursor Plugin 目录
+
+Marketplace read 校验索引与每个本地 Plugin manifest 的对应关系。每个子 Plugin
+通过自身 Artifact 独立读取与转换。
+
 ## 6. 校验策略
 
 - 无效的共享结构必须在 core 校验中失败。

@@ -11,6 +11,17 @@ export type { WriteContext } from "./write";
 export { confirm } from "./confirm";
 export type { ConfirmContext } from "./confirm";
 export { detectArtifactKind } from "./capabilities/layout";
+export {
+  readMarketplaceIndex,
+  validateMarketplaceIndex,
+  writeMarketplaceIndex,
+} from "./capabilities/marketplace";
+export type {
+  CursorMarketplaceManifest,
+  CursorMarketplaceMetadata,
+  CursorMarketplaceOwner,
+  CursorMarketplacePlugin,
+} from "./capabilities/marketplace";
 
 export async function generate(config: any, outputDir: string): Promise<void> {
   const canonical = toCanonicalDocument(config);

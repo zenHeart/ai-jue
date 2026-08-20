@@ -1,3 +1,4 @@
+import fs from "fs";
 import path from "path";
 import { defineAdapterContractSuite } from "ai-jue-core/testkit";
 import type { CanonicalDocument } from "ai-jue-core";
@@ -70,6 +71,14 @@ const PLUGIN_MANIFEST = {
   },
 };
 
+const MARKETPLACE_ROOT = path.join(FIXTURES_ROOT, "marketplace");
+const MARKETPLACE_MANIFEST = JSON.parse(
+  fs.readFileSync(
+    path.join(MARKETPLACE_ROOT, ".cursor-plugin", "marketplace.json"),
+    "utf8",
+  ),
+);
+
 defineAdapterContractSuite({
   adapter: { target: "cursor", read, write },
   syntheticCanonical: SYNTHETIC_CANONICAL,
@@ -125,6 +134,19 @@ defineAdapterContractSuite({
           version: "0.1.0",
           description: "Minimal Cursor plugin fixture.",
         },
+      },
+    },
+    {
+      name: "marketplace",
+      root: MARKETPLACE_ROOT,
+      writeContext: {
+        artifactKind: "project",
+        toolsConfig: { marketplace: MARKETPLACE_MANIFEST },
+      },
+      setupTempRoot: (tempRoot) => {
+        fs.cpSync(path.join(MARKETPLACE_ROOT, "plugins"), path.join(tempRoot, "plugins"), {
+          recursive: true,
+        });
       },
     },
   ],

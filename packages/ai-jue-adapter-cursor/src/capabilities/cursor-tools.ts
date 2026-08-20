@@ -2,10 +2,18 @@ import fs from "fs";
 import path from "path";
 import type { ArtifactChange } from "ai-jue-core";
 import { hashArtifactContent } from "ai-jue-core";
+import {
+  readMarketplaceIndex,
+  writeMarketplaceIndex,
+  type CursorMarketplaceManifest,
+} from "./marketplace";
 
 export interface CursorToolsConfig {
   ignore?: string[];
   indexingIgnore?: string[];
+  marketplace?: CursorMarketplaceManifest;
+  /** Control field resolved separately for Plugin output. */
+  pluginManifest?: unknown;
   [key: string]: unknown;
 }
 
@@ -43,6 +51,9 @@ export function writeCursorTools(
 ): ArtifactChange[] {
   if (!cursorTools || typeof cursorTools !== "object") return [];
   const changes: ArtifactChange[] = [];
+  if (cursorTools.marketplace !== undefined) {
+    changes.push(...writeMarketplaceIndex(root, target, cursorTools.marketplace));
+  }
   if (Array.isArray(cursorTools.ignore) && cursorTools.ignore.length > 0) {
     const change = textChange(target, root, ".cursorignore", cursorTools.ignore.join("\n"));
     if (change) changes.push(change);
@@ -54,6 +65,8 @@ export function writeCursorTools(
   const settings = { ...cursorTools };
   delete settings.ignore;
   delete settings.indexingIgnore;
+  delete settings.marketplace;
+  delete settings.pluginManifest;
   if (Object.keys(settings).length > 0) {
     const filePath = path.join(root, ".cursor", "settings.json");
     const exists = fs.existsSync(filePath);
@@ -89,6 +102,8 @@ export function writeCursorTools(
 
 export function readCursorTools(root: string): CursorToolsConfig | undefined {
   const result: CursorToolsConfig = {};
+  const marketplace = readMarketplaceIndex(root);
+  if (marketplace) result.marketplace = marketplace;
   const ignorePath = path.join(root, ".cursorignore");
   if (fs.existsSync(ignorePath)) {
     result.ignore = fs
