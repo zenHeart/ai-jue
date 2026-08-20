@@ -3,7 +3,7 @@ name: adapter-creator
 description: Creates or optimizes ai-jue Agent Adapters (Native ⇄ Canonical DSL). Use when user asks to "create adapter for [agent]", "add support for [agent]", or "optimize/update [agent] adapter".
 compatibility: Works in ai-jue monorepo with TypeScript/npm workspaces.
 metadata:
-  version: 6.2.0
+  version: 6.3.0
   tags: [adapter, capability-mapping, native-verification, equivalence-contracts, agentic-workflow, shared-contract-tests]
 ---
 
@@ -82,16 +82,25 @@ every aggregate Artifact kind, and known failure/edge cases — see
 `plugin/`, `plugin-auto-discovered/`, `marketplace/`, `conflicts/`,
 `failures/*`).
 
-1. One directory per Artifact kind (e.g. project-native config vs. an
+1. **Does the target expose multiple Artifact kinds?** Inventory every native
+   marker before choosing paths, define an explicit detection priority, and
+   keep path selection in one `capabilities/layout.ts` helper shared by
+   `read()` and `write()`. Parameterize each affected Capability mapping by
+   the resolved Artifact kind; do not duplicate the Adapter entry points.
+   Add one fixture and one contract-suite entry per kind, plus a precedence
+   test when markers can coexist. For the concrete Cursor project/Plugin
+   pattern, read
+   `references/IMPLEMENTATION-patterns.md` § "Cursor dual layout".
+2. One directory per Artifact kind (e.g. project-native config vs. an
    installable Plugin/Bundle).
-2. One fixture per target-private field you intend to preserve verbatim.
-3. One fixture per known edge case: empty value, name collision, illegal
+3. One fixture per target-private field you intend to preserve verbatim.
+4. One fixture per known edge case: empty value, name collision, illegal
    path, sensitive-looking reference, unsupported semantics.
-4. Validate every fixture against the agent's own tooling (its `validate`,
+5. Validate every fixture against the agent's own tooling (its `validate`,
    `list`, or equivalent) and record the exact command + outcome in a
    `fixtures/README.md`. A fixture that only exists to make your own parser
    happy proves nothing.
-5. **Aggregate-Artifact investigation**: before adding a new Artifact kind
+6. **Aggregate-Artifact investigation**: before adding a new Artifact kind
    (a coarser "package of Artifacts" form — a Bundle, marketplace-style
    index, or similar) because the target Agent's ecosystem happens to
    support one, apply the trade-off test in
