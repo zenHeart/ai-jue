@@ -133,7 +133,7 @@ describe('ai-jue-adapter-cursor', () => {
           sqlite: {
             command: 'uvx',
             args: ['mcp-server-sqlite'],
-            env: { DATABASE_URL: 'sqlite://test.db' },
+            env: { DATABASE_URL: '${DATABASE_URL}' },
             disabled: false,
             autoApprove: ['read', 'query']
           }
@@ -149,7 +149,7 @@ describe('ai-jue-adapter-cursor', () => {
 
     expect(content.mcpServers.sqlite.command).toBe('uvx');
     expect(content.mcpServers.sqlite.args).toEqual(['mcp-server-sqlite']);
-    expect(content.mcpServers.sqlite.env.DATABASE_URL).toBe('sqlite://test.db');
+    expect(content.mcpServers.sqlite.env.DATABASE_URL).toBe('${DATABASE_URL}');
     expect(content.mcpServers.sqlite.disabled).toBe(false);
     expect(content.mcpServers.sqlite.autoApprove).toEqual(['read', 'query']);
   });

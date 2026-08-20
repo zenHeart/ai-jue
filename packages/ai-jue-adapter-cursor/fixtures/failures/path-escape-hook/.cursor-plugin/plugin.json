@@ -1,0 +1,5 @@
+{
+  "name": "jue-fixture-path-escape-hook",
+  "version": "1.0.0",
+  "description": "Neutral fixture Plugin whose hook command contains parent-directory segments."
+}

@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "neutral-fixture-server": {
+      "command": "node",
+      "args": ["server.js"],
+      "env": {
+        "API_TOKEN": "literal-example-not-a-real-secret-do-not-use-real-values-here"
+      }
+    }
+  }
+}

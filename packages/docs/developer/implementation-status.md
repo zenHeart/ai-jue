@@ -411,7 +411,6 @@
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json` 生成 |
 | [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw compatible-bundle 第三基底：Cursor 布局 |
 | [#10](https://github.com/zenHeart/ai-jue/issues/10) | adapter-creator 双布局文档 |
-| [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + 安全合同 |
 
 详见 [`agents/cursor.md` §5](../agents/cursor.md#5-后续工作github-issues)。
 
