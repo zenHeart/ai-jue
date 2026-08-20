@@ -249,6 +249,17 @@ This is additive, not replace semantics.
 
 Plugins omit `context.global` and project-only `tools.cursor` settings.
 
+#### 5.2.3 Marketplace index
+
+- `tools.cursor.marketplace` -> `.cursor-plugin/marketplace.json`
+- `name`, `owner`, `metadata`, and `plugins` remain Cursor target-private data
+- `plugins` contains 1–500 entries; every local relative string
+  `plugins[].source` points to an independently managed Cursor Plugin directory
+  with `.cursor-plugin/plugin.json`
+
+Marketplace read validates the index and each local Plugin manifest mapping.
+Each child Plugin is read and converted through its own Artifact.
+
 ## 6. Validation Policy
 
 - invalid shared structure should fail in core validation
