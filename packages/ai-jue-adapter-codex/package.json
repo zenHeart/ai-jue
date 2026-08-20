@@ -8,13 +8,11 @@
     "build": "tsc"
   },
   "dependencies": {
-    "ai-jue-core": "*"
+    "ai-jue-core": "*",
+    "@iarna/toml": "^2.2.5"
   },
   "peerDependencies": {
     "ai-jue-core": "*"
-  },
-  "devDependencies": {
-    "@iarna/toml": "^2.2.5"
   },
   "author": "AI-Jue Team <contact@ai-jue.dev>",
   "license": "MIT",
