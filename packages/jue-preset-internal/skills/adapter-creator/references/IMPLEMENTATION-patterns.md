@@ -156,3 +156,96 @@ reuse (YAGNI).
 - Test unmanaged-field preservation (an existing file's unrelated keys or
   prose survive a write) and idempotency (identical input on a second
   `write()` call produces `[]`).
+
+## 8. Cursor dual layout
+
+Cursor is the worked example for one Adapter that emits two native Artifact
+kinds: a project tree and an installable Plugin. Detection, mapping, target-
+private fields, fixtures, and confirmation all use the same resolved
+`CursorArtifactKind`. One Adapter and one Canonical DSL serve both kinds.
+
+### 8.1 Detect the Artifact before composing mappings
+
+Keep native markers and path selection in
+[`packages/ai-jue-adapter-cursor/src/capabilities/layout.ts`](../../../../ai-jue-adapter-cursor/src/capabilities/layout.ts).
+The Plugin manifest is the stronger marker, so it wins when both markers are
+present:
+
+```typescript
+if (fs.existsSync(path.join(root, ".cursor-plugin", "plugin.json"))) {
+  return "plugin";
+}
+if (isProjectLayout(root)) return "project";
+return undefined;
+```
+
+Both [`read.ts`](../../../../ai-jue-adapter-cursor/src/read.ts) and
+[`write.ts`](../../../../ai-jue-adapter-cursor/src/write.ts) resolve one kind,
+then pass it into the same mapping table:
+
+```typescript
+const mappings = {
+  rules: rules(artifactKind),
+  commands: commands(artifactKind),
+  skills: skills(artifactKind),
+  agents: agents(artifactKind),
+  hooks: hooks(artifactKind),
+  mcp: mcp(artifactKind),
+};
+```
+
+### 8.2 Parameterize paths and native shapes
+
+`componentRoot(root, artifactKind)` owns the shared `.cursor/` versus root
+choice. Capability modules own only their native path or shape:
+
+| Responsibility | Project Artifact | Plugin Artifact | Implementation |
+| --- | --- | --- | --- |
+| Rules, commands, skills, agents | `.cursor/<capability>/` | `<capability>/` | [`packages/ai-jue-adapter-cursor/src/capabilities/skills.ts`](../../../../ai-jue-adapter-cursor/src/capabilities/skills.ts) and sibling mappings |
+| Hooks | `.cursor/hooks.json` with `{ version: 1, hooks }` | `hooks/hooks.json` with `{ hooks }` | [`packages/ai-jue-adapter-cursor/src/capabilities/hooks.ts`](../../../../ai-jue-adapter-cursor/src/capabilities/hooks.ts) |
+| MCP | `.cursor/mcp.json` | `mcp.json` | [`packages/ai-jue-adapter-cursor/src/capabilities/mcp.ts`](../../../../ai-jue-adapter-cursor/src/capabilities/mcp.ts) |
+| Global context | root `AGENTS.md` | — | [`packages/ai-jue-adapter-cursor/src/capabilities/context.ts`](../../../../ai-jue-adapter-cursor/src/capabilities/context.ts) |
+| `tools.cursor` project settings | `.cursorignore`, `.cursorindexingignore`, `.cursor/settings.json` | — | [`packages/ai-jue-adapter-cursor/src/capabilities/cursor-tools.ts`](../../../../ai-jue-adapter-cursor/src/capabilities/cursor-tools.ts) |
+| Plugin identity | — | `.cursor-plugin/plugin.json` | [`packages/ai-jue-adapter-cursor/src/capabilities/manifest.ts`](../../../../ai-jue-adapter-cursor/src/capabilities/manifest.ts) |
+
+The hooks mapping chooses the native wrapper at serialization time:
+
+```typescript
+return artifactKind === "project" ? { version: 1, hooks } : { hooks };
+```
+
+Branch project-only data in
+[`packages/ai-jue-adapter-cursor/src/write.ts`](../../../../ai-jue-adapter-cursor/src/write.ts)
+after the shared mappings are composed. The project branch maps
+`context.global` and project settings; the Plugin branch maps root capability
+components and its manifest. An explicit warning surfaces incompatible
+project-only input.
+
+For Plugin output, Core resolves `tools.cursor.pluginManifest` into
+`WriteContext.pluginManifest`. The manifest writer preserves its `variables`
+schema as target-private data. The resolver
+contract lives in
+[`packages/ai-jue/src/artifact-kind.ts`](../../../../ai-jue/src/artifact-kind.ts),
+and the emitted shape lives in
+[`packages/ai-jue-adapter-cursor/src/capabilities/manifest.ts`](../../../../ai-jue-adapter-cursor/src/capabilities/manifest.ts).
+
+### 8.3 Fixtures, contracts, and confirmation
+
+Use all three shipped fixture roots documented in
+[`packages/ai-jue-adapter-cursor/fixtures/README.md`](../../../../ai-jue-adapter-cursor/fixtures/README.md):
+
+- `project/` covers the project tree;
+- `plugin/` covers every Plugin component plus `variables`;
+- `plugin-minimal/` proves a manifest plus one Skill is sufficient input.
+
+Register each layout in the shared equivalence suite at
+[`packages/ai-jue-adapter-cursor/test/contract.test.ts`](../../../../ai-jue-adapter-cursor/test/contract.test.ts).
+Keep native-shape assertions focused in
+[`packages/ai-jue-adapter-cursor/test/hooks-shape.test.ts`](../../../../ai-jue-adapter-cursor/test/hooks-shape.test.ts)
+and
+[`packages/ai-jue-adapter-cursor/test/plugin-manifest.test.ts`](../../../../ai-jue-adapter-cursor/test/plugin-manifest.test.ts).
+
+Cursor confirmation uses structural evidence. Its
+[`packages/ai-jue-adapter-cursor/src/confirm.ts`](../../../../ai-jue-adapter-cursor/src/confirm.ts)
+collects structural evidence and returns `status: "unconfirmed"`; that status
+remains distinct from native confirmation.
