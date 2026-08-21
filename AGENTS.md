@@ -126,4 +126,8 @@
     默认导出是 Adapter 方法与能力元数据的唯一事实源。若新增一个能力值要求所有
     Adapter 重复添加相同声明，必须先把共同语义收敛到宿主缺省；CLI 只调用校验后
     的 Adapter 对象，不得从包顶层导出重建并行插件合同。
+12. **新鲜构建门禁**：Adapter 导入的仓库内包必须以相同有界版本同时出现在
+    `peerDependencies` 与 `devDependencies`。前者定义消费者兼容性，后者建立 Turbo
+    构建图；不得用运行时 `dependencies` 制造构建顺序。发布合同必须验证该关系，
+    且 release 脚本同步更新两处版本范围。
 <!-- AI-JUE:END -->

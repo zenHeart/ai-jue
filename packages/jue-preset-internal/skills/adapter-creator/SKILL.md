@@ -3,7 +3,7 @@ name: adapter-creator
 description: Creates or optimizes ai-jue Agent Adapters (Native ⇄ Canonical DSL). Use when user asks to "create adapter for [agent]", "add support for [agent]", or "optimize/update [agent] adapter".
 compatibility: Works in ai-jue monorepo with TypeScript/npm workspaces.
 metadata:
-  version: 6.2.0
+  version: 6.2.1
   tags: [adapter, capability-mapping, native-verification, equivalence-contracts, agentic-workflow, shared-contract-tests]
 ---
 
@@ -45,6 +45,11 @@ runtime evidence, not just passing unit tests. Worked example throughout:
 3. For a real target, check if `packages/ai-jue-adapter-{agent}` exists.
    - **Missing?** → **Create Mode**.
    - **Exists?** → **Optimize Mode**.
+4. Keep every in-repo package imported by the Adapter in both
+   `peerDependencies` and `devDependencies` at the same bounded range. The
+   peer contract lets the consumer provide one Core; the development edge
+   makes Turbo build dependency declarations before the Adapter on a fresh
+   checkout. Never use a runtime dependency to manufacture this build edge.
 
 ---
 

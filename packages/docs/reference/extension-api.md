@@ -13,7 +13,9 @@ export default defineExtension({
 `ai-jue-adapter-*` 包时要求该 Extension 恰好包含一个 Adapter。
 
 入口模块在导入阶段不得读写文件、联网、执行进程或修改全局状态。npm
-`peerDependencies` 声明兼容的 Jue 版本，`exports` 声明入口；Jue 不增加包字段。
+`peerDependencies` 声明消费者兼容的 `ai-jue-core` 版本，`devDependencies`
+以相同的有界版本提供本地构建依赖，`exports` 声明入口。Adapter 不把
+`ai-jue-core` 放入运行时 `dependencies`，避免安装第二份 Core。
 
 ## `defineExtension`
 

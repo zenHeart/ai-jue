@@ -13,6 +13,9 @@
   "scripts": {
     "build": "tsc"
   },
+  "devDependencies": {
+    "ai-jue-core": "^2.0.0"
+  },
   "peerDependencies": {
     "ai-jue-core": "^2.0.0"
   },

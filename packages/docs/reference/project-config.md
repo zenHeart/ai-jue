@@ -13,7 +13,7 @@
 export default {
   presets: ["base", "team"],
   capabilities: {},
-  extensions: ["jue-extension-openclaw"],
+  extensions: ["ai-jue-adapter-openclaw"],
   targets: {
     claude: { artifact: "project", scope: "user" },
     codex: { artifact: "auto", scope: "project" }

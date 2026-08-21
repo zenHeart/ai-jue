@@ -30,6 +30,11 @@
       "optional": true
     }
   },
+  "devDependencies": {
+    "ai-jue-adapter-claude": "^2.0.0",
+    "ai-jue-adapter-codex": "^0.3.0",
+    "ai-jue-core": "^2.0.0"
+  },
   "author": "AI-Jue Team <contact@ai-jue.dev>",
   "license": "MIT",
   "repository": {

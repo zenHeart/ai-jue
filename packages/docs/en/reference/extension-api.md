@@ -14,8 +14,10 @@ members of the returned Adapter. `jue apply` requires an `ai-jue-adapter-*`
 package to contribute exactly one Adapter.
 
 Module import performs no file write, network access, process execution, or
-global mutation. npm `peerDependencies` declares compatible Jue versions and
-`exports` declares the entrypoint; Jue adds no package fields.
+global mutation. npm `peerDependencies` declares the consumer-compatible
+`ai-jue-core` version, while `devDependencies` repeats the same bounded range
+for local builds; `exports` declares the entrypoint. An Adapter does not put
+`ai-jue-core` in runtime `dependencies`, which would install a second Core.
 
 ## `defineExtension`
 

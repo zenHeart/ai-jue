@@ -1,14 +1,12 @@
 # Extending Jue
 
-> [!WARNING]
-> This page defines the target contract. The Extension Host is not implemented.
-> See [Implementation Status](../developer/implementation-status.md).
-
 Write an Extension only to add Agent support. Users install an ordinary npm
 package and reference it in project config.
 
 1. Create an npm package and use `exports` for the entrypoint.
-2. Declare compatible Jue versions through `peerDependencies`.
+2. Declare consumer compatibility in `peerDependencies` and repeat the same
+   bounded version in `devDependencies` for local builds. Keep `ai-jue-core`
+   out of runtime `dependencies`.
 3. Implement Adapter `read`, `write`, and `confirm`.
 4. Export `defineExtension({ adapters: [...] })`.
 5. Test Capability mapping, round trips, idempotency, field preservation,

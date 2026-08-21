@@ -96,7 +96,7 @@ const writePackageJson = (pkgName, data) => {
 };
 
 const updatePlannedInternalRanges = (pkgJson, plannedVersions) => {
-  for (const section of ['dependencies', 'peerDependencies']) {
+  for (const section of ['dependencies', 'devDependencies', 'peerDependencies']) {
     if (!pkgJson[section]) continue;
     for (const dependency of Object.keys(pkgJson[section])) {
       const nextVersion = plannedVersions.get(dependency);

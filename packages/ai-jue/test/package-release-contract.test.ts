@@ -11,6 +11,7 @@ interface PackageManifest {
   bin?: Record<string, string>;
   exports?: Record<string, unknown>;
   dependencies?: Record<string, string>;
+  devDependencies?: Record<string, string>;
   peerDependencies?: Record<string, string>;
 }
 
@@ -35,7 +36,11 @@ describe("published package release contract", () => {
 
   it("uses bounded internal ranges that include the in-repo release", () => {
     for (const consumer of manifests) {
-      const ranges = { ...consumer.dependencies, ...consumer.peerDependencies };
+      const ranges = {
+        ...consumer.dependencies,
+        ...consumer.devDependencies,
+        ...consumer.peerDependencies,
+      };
       for (const [dependency, range] of Object.entries(ranges)) {
         const local = byName.get(dependency);
         if (!local) continue;
@@ -52,8 +57,13 @@ describe("published package release contract", () => {
     for (const directory of PUBLISHED_DIRS.filter((name) => name.startsWith("ai-jue-adapter-"))) {
       const item = manifest(directory);
       expect(Object.keys(item.exports ?? {}), item.name).toEqual(["."]);
-      expect(item.peerDependencies?.["ai-jue-core"], item.name).toBeDefined();
+      expect(item.peerDependencies?.["ai-jue-core"], item.name).toBe("^2.0.0");
+      expect(item.devDependencies?.["ai-jue-core"], item.name).toBe("^2.0.0");
       expect(item.dependencies?.["ai-jue-core"], item.name).toBeUndefined();
+      for (const [dependency, range] of Object.entries(item.peerDependencies ?? {})) {
+        if (!byName.has(dependency)) continue;
+        expect(item.devDependencies?.[dependency], `${item.name} -> ${dependency}`).toBe(range);
+      }
     }
   });
 
