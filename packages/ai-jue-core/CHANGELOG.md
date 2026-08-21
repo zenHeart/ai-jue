@@ -1,3 +1,19 @@
+## [2.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.4.2...ai-jue-core@v2.0.0) (2026-08-21)
+
+### Breaking changes
+
+- `ai-jue-core/testkit` receives Vitest APIs from the caller instead of loading
+  Vitest through CommonJS, so the published testkit works with Vitest 4 ESM.
+- Adapter `read`, `write`, and `confirm` contexts require one resolved
+  `{ scope, artifactRoot, artifactKind }` target context; `projectRoot` is
+  removed.
+- Extension package entries expose the validated default Extension contract.
+
+### Features
+
+- Core validates scope equality, bounded paths, symlink containment, and
+  user-scope rollback against the same authorized root.
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.4.1...ai-jue-core@1.0.0) (2026-08-10)
 
 

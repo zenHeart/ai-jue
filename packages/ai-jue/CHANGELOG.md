@@ -1,3 +1,21 @@
+## [2.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.5.3...ai-jue@v2.0.0) (2026-08-21)
+
+### Breaking changes
+
+- `ai-jue` is a CLI-only package; the non-existent root module entry is removed.
+- `jue apply` resolves an explicit `project | user` scope and passes one
+  `{ scope, artifactRoot, artifactKind }` context to each Adapter.
+- Extension packages are loaded only through their `defineExtension()` default
+  export; package-level Adapter method fallbacks are removed.
+
+### Features
+
+- Claude user apply writes target-native user paths while configuration remains
+  in the source project.
+- `--dry-run` and `--check` no longer initialize config, install Adapters,
+  rewrite `ai-jue.lock`, or write Artifacts.
+- Apply performs target-native confirmation after atomic execution.
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.5.2...ai-jue@1.0.0) (2026-08-18)
 
 
@@ -177,6 +195,4 @@
 ### Features
 
 * init with ai ([24aedc9](https://github.com/zenHeart/ai-jue/commit/24aedc9415ff234ff9d46a98382942c8a64e7c72))
-
-
 

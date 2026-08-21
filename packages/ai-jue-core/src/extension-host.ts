@@ -10,17 +10,15 @@ export type ApplyScope = 'project' | 'user';
 
 export type CapabilitySupport = Record<CanonicalCapabilityType, CapabilitySupportLevel>;
 
-export interface ReadContext {
-  projectRoot: string;
-  artifactRoot?: string;
-  scope?: ApplyScope;
+export interface ArtifactTargetContext {
+  artifactRoot: string;
+  scope: ApplyScope;
+  artifactKind?: string;
 }
 
-export interface WriteContext {
-  projectRoot: string;
-  artifactRoot?: string;
-  scope?: ApplyScope;
-  artifactKind?: string;
+export interface ReadContext extends ArtifactTargetContext {}
+
+export interface WriteContext extends ArtifactTargetContext {
   toolsConfig?: Record<string, unknown>;
   pluginManifest?: {
     name: string;
@@ -31,11 +29,7 @@ export interface WriteContext {
   };
 }
 
-export interface ConfirmContext {
-  projectRoot: string;
-  artifactRoot?: string;
-  scope?: ApplyScope;
-}
+export interface ConfirmContext extends ArtifactTargetContext {}
 
 export interface Adapter {
   id: string;

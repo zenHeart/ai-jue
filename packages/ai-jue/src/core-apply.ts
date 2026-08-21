@@ -2,10 +2,14 @@ import pc from "picocolors";
 import os from "os";
 import {
   applyExecution,
+  assertConfirmation,
   checkExecution,
   toCanonicalDocument,
   type Adapter,
   type ArtifactChange,
+  type ArtifactResult,
+  type Confirmation,
+  type ConfirmContext,
   type DriftConflict,
   type ExecutionStatus,
   type ApplyScope,
@@ -59,10 +63,16 @@ function describeConflict(conflict: DriftConflict): string {
 function reportPlan(
   adapterName: string,
   plan: { pending: ArtifactChange[]; conflicts: DriftConflict[]; unauthorized: ArtifactChange[] },
+  pendingState: "planned" | "applied" = "planned",
 ): void {
   if (plan.pending.length > 0) {
     logger.info(
-      pc.cyan(t("commands.apply.core.pending", { name: adapterName, count: plan.pending.length })),
+      pc.cyan(
+        t(`commands.apply.core.${pendingState}`, {
+          name: adapterName,
+          count: plan.pending.length,
+        }),
+      ),
     );
     for (const change of plan.pending) {
       logger.log(`  + ${describeChange(change)}`);
@@ -83,6 +93,28 @@ function reportPlan(
   if (plan.pending.length === 0 && plan.conflicts.length === 0 && plan.unauthorized.length === 0) {
     logger.success(pc.green(t("commands.apply.core.no_change", { name: adapterName })));
   }
+}
+
+async function confirmTarget(
+  adapter: Adapter,
+  results: ArtifactResult[],
+  context: ConfirmContext,
+): Promise<Confirmation> {
+  const confirmation = await adapter.confirm(results, context);
+  assertConfirmation(confirmation);
+  if (confirmation.target !== adapter.id) {
+    throw new Error(
+      `Adapter "${adapter.id}" returned confirmation for "${confirmation.target}"`,
+    );
+  }
+  if (confirmation.status === "confirmed") {
+    logger.success(pc.green(t("commands.apply.core.confirmed", { name: adapter.id })));
+  } else if (confirmation.status === "unconfirmed") {
+    logger.warn(pc.yellow(t("commands.apply.core.unconfirmed", { name: adapter.id })));
+  } else {
+    logger.error(pc.red(t("commands.apply.core.confirm_failed", { name: adapter.id })));
+  }
+  return confirmation;
 }
 
 /**
@@ -124,13 +156,9 @@ export async function runCoreAdapter(
 
   logger.info(
     pc.dim(
-      t("commands.apply.artifact_kind_resolved", {
-        name: adapterName,
-        kind: artifactKind,
-      }),
+      `adapter=${adapterName} scope=${scope} root=${artifactRoot} artifact=${artifactKind}`,
     ),
   );
-  logger.info(pc.dim(`${adapterName}: scope=${scope}, root=${scope === "user" ? "~" : "."}`));
 
   const canonical = toCanonicalDocument(config as unknown as Record<string, unknown>);
   const toolsConfig = (config as Record<string, any>)?.tools?.[configKey];
@@ -146,7 +174,6 @@ export async function runCoreAdapter(
       : undefined;
 
   const writeContext: WriteContext = {
-    projectRoot: artifactRoot,
     artifactRoot,
     scope,
     artifactKind,
@@ -165,19 +192,35 @@ export async function runCoreAdapter(
   if (options.check) {
     const result = checkExecution(artifactRoot, changes, { expectedScope: scope });
     reportPlan(adapterName, result);
-    const exitCode = EXIT_CODE_BY_STATUS[result.status];
+    let exitCode = EXIT_CODE_BY_STATUS[result.status];
+    if (result.status === "no-change") {
+      const confirmation = await confirmTarget(adapter, [], {
+        artifactRoot,
+        scope,
+        artifactKind,
+      });
+      if (confirmation.status === "failed") exitCode = 1;
+    }
     process.exitCode = exitCode;
     return exitCode;
   }
 
   const result = applyExecution(artifactRoot, changes, { expectedScope: scope });
-  reportPlan(adapterName, result);
+  reportPlan(adapterName, result, result.status === "applied" ? "applied" : "planned");
   if (result.status === "rolled-back") {
     logger.error(
       pc.red(t("commands.apply.core.rolled_back", { name: adapterName, message: result.error ?? "" })),
     );
   } else if (result.status === "applied" || result.status === "no-change") {
-    logger.success(pc.green(t("commands.apply.adapter_success", { name: adapterName })));
+    const confirmation = await confirmTarget(adapter, result.results, {
+      artifactRoot,
+      scope,
+      artifactKind,
+    });
+    if (confirmation.status === "failed") {
+      process.exitCode = 1;
+      return 1;
+    }
   }
   const exitCode = EXIT_CODE_BY_STATUS[result.status];
   process.exitCode = exitCode;

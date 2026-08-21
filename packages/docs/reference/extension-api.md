@@ -49,11 +49,15 @@ interface Adapter {
   ): Promise<Confirmation>;
 }
 
-interface WriteContext {
-  projectRoot: string;
-  artifactRoot?: string;
-  scope?: "project" | "user";
+interface ArtifactTargetContext {
+  artifactRoot: string;
+  scope: "project" | "user";
   artifactKind?: string;
+}
+
+interface ReadContext extends ArtifactTargetContext {}
+
+interface WriteContext extends ArtifactTargetContext {
   toolsConfig?: Record<string, unknown>;
   pluginManifest?: {
     name: string;
@@ -63,6 +67,8 @@ interface WriteContext {
     variables?: Record<string, unknown>;
   };
 }
+
+interface ConfirmContext extends ArtifactTargetContext {}
 ```
 
 | 成员 | 约束 |
@@ -73,8 +79,10 @@ interface WriteContext {
 | `write` | 只读；根据 Canonical DSL 和现状返回精确 Artifact 差异 |
 | `confirm` | 通过目标 Agent 的解析器、CLI 或真实读取路径确认结果 |
 
-`WriteContext` 是 Core 传给所有 Adapter 的统一转换环境。`toolsConfig` 与
-`pluginManifest` 保持 target-private，只用于当前 Artifact 转换。
+`ArtifactTargetContext` 是 Core 解析、校验后传给 Adapter 的唯一目标环境。
+`read`、`write` 与 `confirm` 接收相同的必填 `scope` 和 `artifactRoot`；Adapter
+不得重新缺省 scope 或维护第二个根字段。`toolsConfig` 与 `pluginManifest` 保持
+target-private，只用于当前 Artifact 转换。
 
 Core 校验并执行经过批准的 `ArtifactChange`。Extension 不获得通用写文件、安装、
 联网或启动进程的执行回调；需要副作用的 Artifact 必须通过 Core 支持的 kind 和
@@ -85,7 +93,7 @@ Core 校验并执行经过批准的 `ArtifactChange`。Extension 不获得通用
 
 Core 是 scope 缺省和授权的唯一所有者。新增 scope 只修改 Core 的公共类型、校验
 和明确支持该 scope 的 Adapter；project-only Adapter 保持省略
-`supportedScopes`。
+`supportedScopes`，但 Adapter 方法仍接收 Core 已解析的 `scope: "project"`。
 
 ## `ArtifactChange`
 
@@ -114,7 +122,7 @@ interface ArtifactChange {
 `null`；为 `delete` 时 `afterHash` 必须为 `null`；为 `update` 时两者都必须存在。
 `content` 是 Core 实际写入的字节：`kind` 为 `create`/`update` 时必须存在且其
 哈希必须等于 `afterHash`；为 `delete` 时必须省略。`path` 必须是安全的项目
-相对路径。
+相对于当前 `artifactRoot` 的安全路径。
 
 ## 结果和错误
 

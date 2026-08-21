@@ -100,7 +100,7 @@ describe("openclaw adapter contract", () => {
     try {
       fs.writeFileSync(path.join(cwrRoot, "AGENTS.md"), "");
       fs.copyFileSync(cwrConfig, path.join(cwrRoot, "openclaw.json"));
-      const c = await read({ projectRoot: cwrRoot });
+      const c = await read({ scope: "project", artifactRoot: cwrRoot });
       expect(c.mcp).toBeTypeOf("object");
       expect(c.mcp).not.toEqual({});
       const servers = (c.mcp as { servers?: Record<string, unknown> }).servers;
@@ -119,6 +119,7 @@ describe("openclaw adapter contract", () => {
   });
 
   defineAdapterContractSuite({
+    testApi: { describe, expect, it },
     adapter: { target: "openclaw", read, write },
     syntheticCanonical: SYNTHETIC_CANONICAL,
     unmanagedFieldCases: [

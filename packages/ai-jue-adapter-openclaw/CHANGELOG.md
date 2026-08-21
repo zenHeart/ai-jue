@@ -1,3 +1,15 @@
+## [0.3.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-openclaw@v0.2.2...ai-jue-adapter-openclaw@v0.3.0) (2026-08-21)
+
+### Breaking changes
+
+- The default Extension export is the only package entry and requires the new
+  Core target context plus bounded Claude/Codex peer ranges.
+
+### Bug fixes
+
+- Native confirmation always uses an isolated temporary home and never creates
+  or removes the operator's real OpenClaw profile.
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-openclaw@v0.2.1...ai-jue-adapter-openclaw@1.0.0) (2026-08-10)
 
 

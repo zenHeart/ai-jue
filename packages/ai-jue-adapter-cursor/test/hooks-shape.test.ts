@@ -34,7 +34,8 @@ describe("cursor hooks shape", () => {
     applyChangesOrThrow(
       root,
       await write(canonical as any, {
-        projectRoot: root,
+        scope: "project",
+        artifactRoot: root,
         artifactKind: "plugin",
         pluginManifest: { name: "hooks-test", version: "0.1.0" },
       }),

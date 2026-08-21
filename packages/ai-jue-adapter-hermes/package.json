@@ -1,18 +1,24 @@
 {
   "name": "ai-jue-adapter-hermes",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Adapter for generating Hermes configurations.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "ai-jue-core": "*",
     "js-yaml": "^4.3.1"
   },
   "peerDependencies": {
-    "ai-jue-core": "*"
+    "ai-jue-core": "^2.0.0"
   },
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",

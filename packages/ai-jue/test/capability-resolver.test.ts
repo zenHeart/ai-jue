@@ -82,4 +82,42 @@ describe('resolveFinalConfig Capability Source integration', () => {
       fs.rmSync(projectDir, { recursive: true, force: true });
     }
   });
+
+  it('keeps ai-jue.lock unchanged when resolution is read-only', async () => {
+    const projectDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'jue-capability-read-only-'),
+    );
+    const skillDir = path.join(projectDir, 'vendor', 'neutral-skill');
+    fs.mkdirSync(skillDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(skillDir, 'SKILL.md'),
+      '---\ndescription: Neutral project skill\n---\nProject capability',
+    );
+    const lockPath = path.join(projectDir, 'ai-jue.lock');
+    const existingLock = '{"version":1,"capabilities":{"existing":{}}}\n';
+    fs.writeFileSync(lockPath, existingLock);
+    const originalCwd = process.cwd();
+    process.chdir(projectDir);
+    try {
+      await resolveFinalConfig(
+        {
+          capabilities: {
+            'neutral-skill': {
+              source: 'file:./vendor/neutral-skill',
+              type: 'skill',
+            },
+          },
+        },
+        {
+          cacheDir: path.join(projectDir, 'cache'),
+          persistLock: false,
+        },
+      );
+
+      expect(fs.readFileSync(lockPath, 'utf8')).toBe(existingLock);
+    } finally {
+      process.chdir(originalCwd);
+      fs.rmSync(projectDir, { recursive: true, force: true });
+    }
+  });
 });

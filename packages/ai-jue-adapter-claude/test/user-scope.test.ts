@@ -27,7 +27,6 @@ describe("Claude Code user apply scope", () => {
     };
 
     const changes = await write(canonical, {
-      projectRoot: home,
       artifactRoot: home,
       artifactKind: "project",
       scope: "user",
@@ -53,7 +52,7 @@ describe("Claude Code user apply scope", () => {
       JSON.stringify({ numStartups: 4, installMethod: "native" }),
     );
 
-    const canonical = await read({ projectRoot: home, artifactRoot: home, scope: "user" });
+    const canonical = await read({ artifactRoot: home, scope: "user" });
 
     expect(canonical.mcp).toBeUndefined();
   });
@@ -70,7 +69,7 @@ describe("Claude Code user apply scope", () => {
       }),
     );
 
-    const canonical = await read({ projectRoot: home, artifactRoot: home, scope: "user" });
+    const canonical = await read({ artifactRoot: home, scope: "user" });
 
     expect(canonical.mcp?.servers).toEqual({
       demo: { command: "node", args: ["server.js"] },
@@ -87,7 +86,7 @@ describe("Claude Code user apply scope", () => {
 
     const changes = await write(
       { mcp: { servers: { demo: { command: "node", args: ["server.js"] } } } },
-      { projectRoot: home, artifactRoot: home, artifactKind: "project", scope: "user" },
+      { artifactRoot: home, artifactKind: "project", scope: "user" },
     );
     applyChangesOrThrow(home, changes);
 

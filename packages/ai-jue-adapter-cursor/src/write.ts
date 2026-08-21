@@ -36,19 +36,19 @@ export async function write(
       mcp: mcp(artifactKind),
     },
     canonical as unknown as Record<string, unknown>,
-    writeContext.projectRoot,
+    writeContext.artifactRoot,
     TARGET,
   );
 
   if (artifactKind === "project") {
     if (canonical.context?.global) {
       changes.push(
-        ...context().write(writeContext.projectRoot, canonical.context.global, TARGET),
+        ...context().write(writeContext.artifactRoot, canonical.context.global, TARGET),
       );
     }
     changes.push(
       ...writeCursorTools(
-        writeContext.projectRoot,
+        writeContext.artifactRoot,
         TARGET,
         toolsConfig,
       ),
@@ -71,7 +71,7 @@ export async function write(
   if (artifactKind === "plugin" && writeContext.pluginManifest) {
     changes.push(
       ...writePluginManifest(
-        writeContext.projectRoot,
+        writeContext.artifactRoot,
         writeContext.pluginManifest as CursorPluginManifest,
         TARGET,
       ),

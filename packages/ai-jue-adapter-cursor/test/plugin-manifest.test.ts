@@ -11,7 +11,8 @@ describe("cursor plugin manifest", () => {
     const changes = await write(
       { skills: { demo: { name: "demo", description: "Demo", prompt: "Demo body" } } },
       {
-        projectRoot: root,
+        scope: "project",
+        artifactRoot: root,
         artifactKind: "plugin",
         pluginManifest: {
           name: "my-plugin",

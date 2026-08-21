@@ -86,13 +86,14 @@ async function writeCompatibleBundle(
   const delegatedCanonical =
     format === "codex" ? { ...canonical, hooks: undefined } : canonical;
   const delegatedChanges = await writer.write(delegatedCanonical, {
-    projectRoot: writeContext.projectRoot,
+    artifactRoot: writeContext.artifactRoot,
+    scope: writeContext.scope,
     artifactKind: "plugin",
     pluginManifest: writeContext.pluginManifest,
   });
   const changes = delegatedChanges.map((change) => ({ ...change, target: TARGET }));
   if (format === "codex" && canonical.hooks && Object.keys(canonical.hooks).length > 0) {
-    changes.push(...hooks().write(writeContext.projectRoot, canonical.hooks, TARGET));
+    changes.push(...hooks().write(writeContext.artifactRoot, canonical.hooks, TARGET));
   }
   return changes;
 }
@@ -110,13 +111,13 @@ async function writeWorkspace(
       mcp: mcp(),
     },
     canonical as unknown as Record<string, unknown>,
-    writeContext.projectRoot,
+    writeContext.artifactRoot,
     TARGET,
   );
 
   if (canonical.context?.global) {
     changes.push(
-      ...context().write(writeContext.projectRoot, { global: canonical.context.global }, TARGET),
+      ...context().write(writeContext.artifactRoot, { global: canonical.context.global }, TARGET),
     );
   }
 

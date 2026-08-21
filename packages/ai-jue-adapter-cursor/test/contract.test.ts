@@ -1,4 +1,5 @@
 import path from "path";
+import { describe, expect, it } from "vitest";
 import { defineAdapterContractSuite } from "ai-jue-core/testkit";
 import type { CanonicalDocument } from "ai-jue-core";
 import { confirm } from "../src/confirm";
@@ -71,6 +72,7 @@ const PLUGIN_MANIFEST = {
 };
 
 defineAdapterContractSuite({
+  testApi: { describe, expect, it },
   adapter: { target: "cursor", read, write },
   syntheticCanonical: SYNTHETIC_CANONICAL,
   unmanagedFieldCases: [
@@ -109,7 +111,7 @@ defineAdapterContractSuite({
         pluginManifest: PLUGIN_MANIFEST,
       },
       confirmNatively: async (root) => {
-        const result = await confirm([], { projectRoot: root, artifactKind: "plugin" });
+        const result = await confirm([], { scope: "project", artifactRoot: root, artifactKind: "plugin" });
         if (result.status !== "unconfirmed" || !result.evidence?.includes("manifest.name=jue-fixture-demo")) {
           throw new Error(`expected structural unconfirmed evidence, got ${JSON.stringify(result)}`);
         }

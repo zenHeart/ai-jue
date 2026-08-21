@@ -98,8 +98,8 @@ import { rules } from "./capabilities/rules";
 import { hooks } from "./capabilities/hooks";
 // ...
 
-export async function read({ projectRoot }: ReadContext) {
-  const canonical = readCapabilities({ rules: rules(), hooks: hooks() /* ... */ }, projectRoot);
+export async function read({ artifactRoot }: ReadContext) {
+  const canonical = readCapabilities({ rules: rules(), hooks: hooks() /* ... */ }, artifactRoot);
   return toCanonicalDocument(canonical);
 }
 ```
@@ -111,8 +111,8 @@ import { rules } from "./capabilities/rules";
 import { hooks } from "./capabilities/hooks";
 // ...
 
-export async function write(canonical: CanonicalDocument, { projectRoot }: WriteContext) {
-  return writeCapabilities({ rules: rules(), hooks: hooks() /* ... */ }, canonical, projectRoot, "{agent}");
+export async function write(canonical: CanonicalDocument, { artifactRoot }: WriteContext) {
+  return writeCapabilities({ rules: rules(), hooks: hooks() /* ... */ }, canonical, artifactRoot, "{agent}");
 }
 ```
 
@@ -149,10 +149,11 @@ reuse (YAGNI).
   factories themselves.
 - Test `read()`/`write()` against every fixture from Phase 2, not just a
   happy-path sample.
-- Test the two equivalence contracts from Phase 5 with
-  `applyChangesOrThrow` (the real Core executor's throw-on-failure
-  convenience, `packages/ai-jue-core/src/core-executor.ts`) — see
-  `packages/ai-jue-adapter-claude/test/write.test.ts`.
+- Register the Phase 5 contracts with `defineAdapterContractSuite` from
+  `ai-jue-core/testkit`; pass `testApi: { describe, expect, it }` imported by
+  the test from `vitest`. The shared suite uses `applyChangesOrThrow`, the real
+  Core executor's throw-on-failure convenience. See
+  `packages/ai-jue-adapter-claude/test/contract.test.ts`.
 - Test unmanaged-field preservation (an existing file's unrelated keys or
   prose survive a write) and idempotency (identical input on a second
   `write()` call produces `[]`).

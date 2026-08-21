@@ -42,7 +42,8 @@ describe("openclaw compatible-bundle", () => {
       },
     };
     const changes = await write(withMcp, {
-      projectRoot: root,
+      scope: "project",
+      artifactRoot: root,
       artifactKind: "compatible-bundle",
       pluginManifest: { name: "jue-openclaw-bundle", version: "0.1.0" },
     });
@@ -72,7 +73,8 @@ describe("openclaw compatible-bundle", () => {
       },
     };
     const changes = await write(withHooks, {
-      projectRoot: root,
+      scope: "project",
+      artifactRoot: root,
       artifactKind: "compatible-bundle",
       pluginManifest: { name: "jue-openclaw-hooks", version: "0.1.0" },
     });
@@ -86,7 +88,7 @@ describe("openclaw compatible-bundle", () => {
   it("keeps workspace write as the default kind", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-openclaw-workspace-"));
     roots.push(root);
-    const changes = await write(CANONICAL, { projectRoot: root });
+    const changes = await write(CANONICAL, { scope: "project", artifactRoot: root });
     applyChangesOrThrow(root, changes);
     expect(fs.existsSync(path.join(root, "AGENTS.md"))).toBe(true);
     expect(fs.existsSync(path.join(root, "skills", "summarize", "SKILL.md"))).toBe(true);
@@ -98,7 +100,8 @@ describe("openclaw compatible-bundle", () => {
     roots.push(root);
     await expect(
       write(CANONICAL, {
-        projectRoot: root,
+        scope: "project",
+        artifactRoot: root,
         artifactKind: "compatible-bundle",
         toolsConfig: { bundleFormat: "invalid" },
       }),

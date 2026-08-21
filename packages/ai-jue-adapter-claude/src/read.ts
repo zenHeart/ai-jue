@@ -1,5 +1,5 @@
 import { readCapabilities, toCanonicalDocument } from "ai-jue-core";
-import type { ApplyScope, CanonicalDocument } from "ai-jue-core";
+import type { CanonicalDocument, ReadContext as CoreReadContext } from "ai-jue-core";
 import { agents } from "./capabilities/agents";
 import { commands } from "./capabilities/commands";
 import { context } from "./capabilities/context";
@@ -9,11 +9,7 @@ import { mcp } from "./capabilities/mcp";
 import { rules } from "./capabilities/rules";
 import { skills } from "./capabilities/skills";
 
-export interface ReadContext {
-  projectRoot: string;
-  artifactRoot?: string;
-  scope?: ApplyScope;
-}
+export type ReadContext = CoreReadContext;
 
 /**
  * Reads a Claude Code project or Plugin directory into a `CanonicalDocument`.
@@ -24,8 +20,8 @@ export interface ReadContext {
  * case (see `./capabilities/context.ts`).
  */
 export async function read(readContext: ReadContext): Promise<CanonicalDocument> {
-  const root = readContext.artifactRoot ?? readContext.projectRoot;
-  const scope = readContext.scope ?? "project";
+  const root = readContext.artifactRoot;
+  const scope = readContext.scope;
   const artifactKind = scope === "user" || isProjectLayout(root) ? "project" : "plugin";
 
   const canonical = readCapabilities(

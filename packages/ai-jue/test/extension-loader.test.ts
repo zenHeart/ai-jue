@@ -74,6 +74,33 @@ describe('resolveExtensionPackage', () => {
     expect(fs.realpathSync(resolved.entryPath)).toBe(fs.realpathSync(path.join(root, 'index.js')));
   });
 
+  it('resolves an installed package whose exports expose only the public entry', () => {
+    const root = tempDir();
+    const packageRoot = path.join(root, 'node_modules', 'jue-extension-exported');
+    fs.mkdirSync(packageRoot, { recursive: true });
+    fs.writeFileSync(
+      path.join(packageRoot, 'package.json'),
+      JSON.stringify({
+        name: 'jue-extension-exported',
+        version: '1.0.0',
+        main: 'index.js',
+        exports: { '.': { require: './index.js', default: './index.js' } },
+        peerDependencies: { 'ai-jue-core': '^2.0.0' },
+      }),
+    );
+    fs.writeFileSync(path.join(packageRoot, 'index.js'), NEUTRAL_DEFINITION);
+
+    const resolved = resolveExtensionPackage('jue-extension-exported', root);
+
+    expect(resolved.issues).toEqual([]);
+    expect(fs.realpathSync(resolved.packageJsonPath)).toBe(
+      fs.realpathSync(path.join(packageRoot, 'package.json')),
+    );
+    expect(fs.realpathSync(resolved.entryPath)).toBe(
+      fs.realpathSync(path.join(packageRoot, 'index.js')),
+    );
+  });
+
   it('reports a missing peerDependencies["ai-jue-core"]', () => {
     const root = tempDir();
     writeExtensionPackage(root, { entryContent: NEUTRAL_DEFINITION, peerDependencies: {} });

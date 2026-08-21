@@ -51,11 +51,15 @@ interface Adapter {
   ): Promise<Confirmation>;
 }
 
-interface WriteContext {
-  projectRoot: string;
-  artifactRoot?: string;
-  scope?: "project" | "user";
+interface ArtifactTargetContext {
+  artifactRoot: string;
+  scope: "project" | "user";
   artifactKind?: string;
+}
+
+interface ReadContext extends ArtifactTargetContext {}
+
+interface WriteContext extends ArtifactTargetContext {
   toolsConfig?: Record<string, unknown>;
   pluginManifest?: {
     name: string;
@@ -65,6 +69,8 @@ interface WriteContext {
     variables?: Record<string, unknown>;
   };
 }
+
+interface ConfirmContext extends ArtifactTargetContext {}
 ```
 
 `read` converts Agent-native config to the Canonical DSL. `write` computes exact
@@ -73,14 +79,17 @@ changes. An Extension receives no general write, install, network, or process
 callback; side-effecting Artifacts use Core-supported kinds and approval
 policies. `confirm` uses the target Agent's parser, CLI, or real read path.
 
-`WriteContext` is the shared conversion environment Core passes to every
-Adapter. `toolsConfig` and `pluginManifest` remain target-private and apply only
-to the current Artifact conversion.
+`ArtifactTargetContext` is the only target environment Core passes after
+resolution and validation. `read`, `write`, and `confirm` receive the same
+required `scope` and `artifactRoot`; an Adapter does not default scope or keep a
+second root field. `toolsConfig` and `pluginManifest` remain target-private and
+apply only to the current Artifact conversion.
 
 `supportedScopes` defaults to `["project"]`; an Adapter declares it only when
 it safely maps an additional apply root. Core exclusively owns scope defaulting
-and authorization. Adding a scope changes the Core type and validation once,
-then only the Adapters that support that scope.
+and authorization. A project-only Adapter omits `supportedScopes`, while its
+methods still receive Core's resolved `scope: "project"`. Adding a scope changes
+the Core type and validation once, then only the Adapters that support that scope.
 
 Same-target writes preserve valid unmanaged fields. Supported semantics satisfy
 `read(write(Canonical))` round trips. Target-private fields never cross Agents.
@@ -114,7 +123,7 @@ a batch of `ArtifactChange`s either all reach `applied` or all roll back to
 `delete`; both must be present when `kind` is `update`. `content` is the
 actual bytes Core writes: it must be present with a hash matching `afterHash`
 when `kind` is `create`/`update`, and must be omitted when `kind` is
-`delete`. `path` must be a safe project-relative path.
+`delete`. `path` must be safe and relative to the current `artifactRoot`.
 
 ## Results and errors
 

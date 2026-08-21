@@ -23,7 +23,7 @@ describe("claude MCP apply scope", () => {
       },
     };
     await expect(
-      write(canonical, { projectRoot: root, artifactKind: "project", scope: "project" }),
+      write(canonical, { artifactRoot: root, artifactKind: "project", scope: "project" }),
     ).rejects.toThrow('scope "user" does not match apply scope "project"');
   });
 
@@ -38,7 +38,7 @@ describe("claude MCP apply scope", () => {
       },
     };
     await expect(
-      write(canonical, { projectRoot: root, artifactKind: "project", scope: "project" }),
+      write(canonical, { artifactRoot: root, artifactKind: "project", scope: "project" }),
     ).rejects.toThrow('scope "local"');
   });
 });

@@ -19,7 +19,7 @@ describe("hermes skill-plugin confirmation", () => {
     fs.mkdirSync(path.join(root, "skills", "demo"), { recursive: true });
     fs.writeFileSync(path.join(root, "skills", "demo", "SKILL.md"), "---\nname: demo\n---\nDemo\n");
 
-    await expect(confirm([], { projectRoot: root, artifactKind: "skill-plugin" })).resolves.toMatchObject({
+    await expect(confirm([], { scope: "project", artifactRoot: root, artifactKind: "skill-plugin" })).resolves.toMatchObject({
       target: "hermes",
       status: "confirmed",
     });
@@ -32,9 +32,28 @@ describe("hermes skill-plugin confirmation", () => {
     fs.writeFileSync(path.join(root, "__init__.py"), "register_skill\n");
     fs.mkdirSync(path.join(root, "skills", "broken"), { recursive: true });
 
-    await expect(confirm([], { projectRoot: root, artifactKind: "skill-plugin" })).resolves.toMatchObject({
+    await expect(confirm([], { scope: "project", artifactRoot: root, artifactKind: "skill-plugin" })).resolves.toMatchObject({
       target: "hermes",
       status: "failed",
     });
+  });
+
+  it("reports workspace confirmation as unavailable when tirith is not installed", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-hermes-workspace-"));
+    const emptyPath = fs.mkdtempSync(path.join(os.tmpdir(), "jue-hermes-path-"));
+    roots.push(root, emptyPath);
+    const originalPath = process.env.PATH;
+    process.env.PATH = emptyPath;
+    try {
+      await expect(
+        confirm([], { scope: "project", artifactRoot: root, artifactKind: "workspace" }),
+      ).resolves.toMatchObject({
+        target: "hermes",
+        status: "unconfirmed",
+        evidence: expect.stringContaining("not available on PATH"),
+      });
+    } finally {
+      process.env.PATH = originalPath;
+    }
   });
 });

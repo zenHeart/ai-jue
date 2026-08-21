@@ -278,11 +278,16 @@ function hasProjectConfig(cwd: string): boolean {
   }
 }
 
-async function ensureConfigReadyForApply(): Promise<boolean> {
+async function ensureConfigReadyForApply(allowInit: boolean): Promise<boolean> {
   const cwd = process.cwd();
   if (hasProjectConfig(cwd)) return true;
 
   logger.warn(pc.yellow(t("commands.apply.no_config_detected")));
+
+  if (!allowInit) {
+    logger.warn(pc.yellow(t("commands.apply.read_only_requires_config")));
+    return false;
+  }
 
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     logger.warn(pc.yellow(t("commands.apply.no_config_non_interactive")));
@@ -375,11 +380,20 @@ function installAdapterPackage(adapterName: string): boolean {
   return result.status === 0;
 }
 
-async function ensureAdaptersInstalled(adapterNames: string[]): Promise<string[]> {
+async function ensureAdaptersInstalled(
+  adapterNames: string[],
+  allowInstall: boolean,
+): Promise<string[]> {
   const ready: string[] = [];
   for (const adapterName of adapterNames) {
     if (canResolveAdapter(adapterName)) {
       ready.push(adapterName);
+      continue;
+    }
+    if (!allowInstall) {
+      logger.warn(
+        pc.yellow(t("commands.apply.read_only_missing_adapter", { packageName: adapterName })),
+      );
       continue;
     }
     const installed = installAdapterPackage(adapterName);
@@ -471,7 +485,10 @@ export async function runAdapterList(
   outputDir: string,
   coreOptions: RunCoreAdapterOptions = {},
 ): Promise<number> {
-  const readyAdapters = await ensureAdaptersInstalled(adapterNames);
+  const readyAdapters = await ensureAdaptersInstalled(
+    adapterNames,
+    !coreOptions.dryRun && !coreOptions.check,
+  );
   if (readyAdapters.length === 0) {
     logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
     process.exitCode = 1;
@@ -504,7 +521,9 @@ async function runAdapters(
     check: options.check,
     artifactKind: options.artifactKind,
     scope: options.scope,
+    userHome: options.userHome,
   };
+  const allowInstall = !options.dryRun && !options.check;
   const spinner = ora(t("commands.apply.finding_adapters")).start();
   const discoveredAdapters = await findAdapters();
   const availableAdapters = discoverAvailableAdapters(discoveredAdapters);
@@ -627,7 +646,7 @@ async function runAdapters(
         (name) => !availableAdapters.includes(name),
       );
       if (unknown.length > 0) {
-        const installedUnknown = await ensureAdaptersInstalled(unknown);
+        const installedUnknown = await ensureAdaptersInstalled(unknown, allowInstall);
         const stillUnknown = unknown.filter(
           (name) => !installedUnknown.includes(name),
         );
@@ -649,7 +668,7 @@ async function runAdapters(
     }
   }
 
-  const runnableAdapters = await ensureAdaptersInstalled(targetAdapters);
+  const runnableAdapters = await ensureAdaptersInstalled(targetAdapters, allowInstall);
   if (runnableAdapters.length === 0) {
     spinner.fail(pc.red(t("commands.apply.no_adapter_selected")));
     process.exitCode = 1;
@@ -682,7 +701,12 @@ async function runAdapters(
   return exitCode;
 }
 
-export const handler = async (argv: Arguments) => {
+export interface ApplyRuntime {
+  /** Isolated user root injection for tests; CLI production uses os.homedir(). */
+  userHome?: string;
+}
+
+export const handler = async (argv: Arguments, runtime: ApplyRuntime = {}) => {
   const runtimeLang =
     typeof (argv as Arguments<{ lang?: string }>).lang === "string"
       ? String((argv as Arguments<{ lang?: string }>).lang).trim()
@@ -704,11 +728,13 @@ export const handler = async (argv: Arguments) => {
     check: Boolean((argv as Arguments<{ check?: boolean }>).check),
     artifactKind: parseCliArtifact(argv),
     scope: (argv as Arguments<{ scope?: ApplyScope }>).scope,
+    userHome: runtime.userHome,
   };
 
   const runApply = async () => {
     logger.info(pc.bold(pc.blue(t("commands.apply.running"))));
-    const configReady = await ensureConfigReadyForApply();
+    const readOnly = applyOptions.dryRun || applyOptions.check;
+    const configReady = await ensureConfigReadyForApply(!readOnly);
     if (!configReady) {
       process.exitCode = 1;
       return;
@@ -742,6 +768,7 @@ export const handler = async (argv: Arguments) => {
 
       const finalConfig = await resolveFinalConfig(config, {
         frozen: Boolean((argv as Arguments<{ frozen?: boolean }>).frozen),
+        persistLock: !readOnly,
       });
 
       const exitCode = await runAdapters(finalConfig, process.cwd(), applyOptions);

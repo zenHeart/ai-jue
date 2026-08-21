@@ -39,13 +39,13 @@ export function resolveApplyScope(
 /** Resolves the Core-authorized root without changing config discovery. */
 export function resolveArtifactRoot(
   scope: ApplyScope,
-  projectRoot: string,
+  projectDirectory: string,
   userHome: string,
 ): string {
-  return path.resolve(scope === "user" ? userHome : projectRoot);
+  return path.resolve(scope === "user" ? userHome : projectDirectory);
 }
 
-/** Missing metadata is intentionally project-only for Extension compatibility. */
+/** Core owns the project-only baseline; Adapters declare only broader support. */
 export function assertAdapterSupportsScope(
   adapterName: string,
   supportedScopes: readonly ApplyScope[] | undefined,

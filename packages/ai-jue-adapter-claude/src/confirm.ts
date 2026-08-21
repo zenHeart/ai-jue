@@ -1,9 +1,12 @@
 import { execFileSync } from "child_process";
-import type { ArtifactResult, Confirmation } from "ai-jue-core";
+import type {
+  ArtifactResult,
+  Confirmation,
+  ConfirmContext as CoreConfirmContext,
+} from "ai-jue-core";
 import type { ArtifactKind } from "./capabilities/layout";
 
-export interface ConfirmContext {
-  projectRoot: string;
+export interface ConfirmContext extends CoreConfirmContext {
   artifactKind?: ArtifactKind;
 }
 
@@ -22,7 +25,7 @@ export async function confirm(_results: ArtifactResult[], context: ConfirmContex
   }
 
   try {
-    const output = execFileSync("claude", ["plugin", "validate", context.projectRoot, "--strict"], {
+    const output = execFileSync("claude", ["plugin", "validate", context.artifactRoot, "--strict"], {
       encoding: "utf8",
     });
     if (!output.includes("Validation passed")) {

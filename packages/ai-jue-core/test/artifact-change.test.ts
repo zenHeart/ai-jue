@@ -102,13 +102,13 @@ describe('assertArtifactChange', () => {
   it('rejects an absolute path', () => {
     expect(() =>
       assertArtifactChange(baseChange({ path: '/etc/passwd' })),
-    ).toThrow('safe project-relative path');
+    ).toThrow('safe artifact-root-relative path');
   });
 
   it('rejects a path that escapes the project via traversal', () => {
     expect(() =>
       assertArtifactChange(baseChange({ path: '../outside/CLAUDE.md' })),
-    ).toThrow('safe project-relative path');
+    ).toThrow('safe artifact-root-relative path');
   });
 
   it('rejects a non-boolean requiresApproval', () => {

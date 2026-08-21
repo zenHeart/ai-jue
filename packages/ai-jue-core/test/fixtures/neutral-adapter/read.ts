@@ -1,13 +1,10 @@
 import { readCapabilities } from "../../../src/capability-mapping";
 import { toCanonicalDocument } from "../../../src/canonical-document";
 import type { CanonicalDocument } from "../../../src/canonical-document";
+import type { ReadContext } from "../../../src/extension-host";
 import { agents, commands, context, hooks, mcp, rules, skills } from "./capabilities";
 
-export interface ReadContext {
-  projectRoot: string;
-}
-
-export async function read({ projectRoot }: ReadContext): Promise<CanonicalDocument> {
+export async function read({ artifactRoot }: ReadContext): Promise<CanonicalDocument> {
   const canonical = readCapabilities(
     {
       context: context(),
@@ -18,7 +15,7 @@ export async function read({ projectRoot }: ReadContext): Promise<CanonicalDocum
       hooks: hooks(),
       mcp: mcp(),
     },
-    projectRoot,
+    artifactRoot,
   );
   return toCanonicalDocument(canonical);
 }

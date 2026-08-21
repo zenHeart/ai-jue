@@ -27,7 +27,7 @@ export interface DriftConflict {
 }
 
 export interface ExecutionOptions {
-  /** Project-relative paths whose `requiresApproval: true` change is authorized to run. */
+  /** Artifact-root-relative paths whose `requiresApproval: true` change is authorized to run. */
   authorizedTargets?: ReadonlySet<string>;
   /** Scope authorized by the current apply invocation. */
   expectedScope?: ApplyScope;

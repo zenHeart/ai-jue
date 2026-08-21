@@ -2,10 +2,9 @@ import { execFileSync } from "child_process";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import type { ArtifactResult, Confirmation } from "ai-jue-core";
+import type { ArtifactResult, Confirmation, ConfirmContext as CoreConfirmContext } from "ai-jue-core";
 
-export interface ConfirmContext {
-  projectRoot: string;
+export interface ConfirmContext extends CoreConfirmContext {
   artifactKind?: "project" | "plugin";
 }
 
@@ -32,7 +31,7 @@ export async function confirm(
     return { target: TARGET, status: "unconfirmed" };
   }
 
-  if (!fs.existsSync(path.join(context.projectRoot, ".codex-plugin", "plugin.json"))) {
+  if (!fs.existsSync(path.join(context.artifactRoot, ".codex-plugin", "plugin.json"))) {
     return { target: TARGET, status: "failed", evidence: "no .codex-plugin/plugin.json in fixture root" };
   }
 

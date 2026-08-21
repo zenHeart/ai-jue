@@ -1,4 +1,5 @@
 import path from "path";
+import { describe, expect, it } from "vitest";
 import { defineAdapterContractSuite } from "ai-jue-core/testkit";
 import type { CanonicalDocument } from "ai-jue-core";
 import { read } from "../src/read";
@@ -47,6 +48,7 @@ const SYNTHETIC_CANONICAL: CanonicalDocument = {
 };
 
 defineAdapterContractSuite({
+  testApi: { describe, expect, it },
   adapter: { target: "hermes", read, write },
   syntheticCanonical: SYNTHETIC_CANONICAL,
   unmanagedFieldCases: [

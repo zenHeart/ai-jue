@@ -102,7 +102,7 @@ type ApplyScope = "project" | "user";
 interface ArtifactTargetContext {
   scope: ApplyScope;
   artifactRoot: string;
-  projectRoot: string; // 兼容窗口：恒等于 artifactRoot
+  artifactKind?: string;
 }
 
 interface Adapter {
@@ -110,10 +110,10 @@ interface Adapter {
 }
 ```
 
-`artifactRoot` 是新代码使用的准确名称。兼容窗口内 Core 同时传入
-`projectRoot === artifactRoot`；Adapter 缺少 `supportedScopes` 时只能用于
-project。每个 `ArtifactChange` 必须声明本次选择的 scope，Core 在执行前验证
-scope 一致性、相对路径和解析后的根包含关系，不替 Adapter 静默改写 scope。
+Core 只传入已解析的 `scope`、`artifactRoot` 与 `artifactKind`，Adapter 不执行
+scope 缺省或维护第二个根字段。Adapter 缺少 `supportedScopes` 时只能用于 project。
+每个 `ArtifactChange` 必须声明本次选择的 scope，Core 在执行前验证 scope
+一致性、相对路径和解析后的根包含关系，不替 Adapter 静默改写 scope。
 
 ### Extension 运行时合同
 
@@ -180,7 +180,8 @@ Plugin 的安装和启用属于目标原生生命周期，不由 `scope=user` �
 3. 绝对路径、`..`、符号链接逃逸和解析后位于根外的路径全部阻塞。
 4. managed-block 与 merged-keys 的所有权语义在用户文件中保持不变。
 5. plan 与 execution 使用同一根；中途失败按 Adapter 批次回滚。
-6. dry-run/check 对目标文件零写入。
+6. dry-run/check 不写配置根或目标根：不初始化配置、不安装 Adapter、不更新 lock，
+   也不写 Artifact。
 7. user scope 是明确的根授权，高风险 change 仍经过现有逐项授权门禁。
 
 ## 兼容与迁移
@@ -190,7 +191,7 @@ Plugin 的安装和启用属于目标原生生命周期，不由 `scope=user` �
 - Adapter 不声明 `supportedScopes` 时保持 project-only。
 - apply 只加载 `defineExtension()` 默认导出且要求恰好一个 Adapter；包级方法导出
   不属于运行时合同。这是对并行插件协议的直接移除，不提供回退路径。
-- `projectRoot` 在一个兼容窗口保留；内置 Adapter 与文档改用 `artifactRoot`。
+- Adapter 的读取、写入和确认合同只接收一个 `artifactRoot`，不提供根字段回退。
 - 从家目录执行且未指定 scope 的命令仍按 project 解释；推荐工作流改为在配置项目
   执行 `--scope user`。
 

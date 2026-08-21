@@ -1,6 +1,6 @@
 # Implementation Status
 
-> Snapshot: 2026-08-18. Architecture and Reference are target contracts; this
+> Snapshot: 2026-08-21. Architecture and Reference are target contracts; this
 > page records current facts.
 >
 > Current implementation path: R1 (Claude) and R2 (Scale Gate) are done; the
@@ -11,14 +11,16 @@
 > the rest of R4 (starting with JUE-402 cross-conversion).
 > RFC-0003 wires `jue apply --scope project|user` and `targets.*.scope`;
 > Claude Code supports user scope and every other built-in Adapter explicitly
-> remains project-only.
+> remains project-only. Core resolves one `scope + artifactRoot + artifactKind`
+> target context for read/write/confirm; dry-run/check do not initialize config,
+> install Adapters, update the lock, or write Artifacts.
 
 ## CLI
 
 | Target command | Status | Current fact | Next step |
 | --- | --- | --- | --- |
 | `jue init` | Partial | Interactive initialization exists | Align minimal config and no-overwrite behavior |
-| `jue apply` | Partial | Core `--dry-run`/`--check`/apply follow the exit-code table; project/user scope, per-Adapter root authorization, and batch failure aggregation are implemented; Claude user-native paths are implemented and other built-ins are project-only | Finish `jue inspect` filters |
+| `jue apply` | Partial | Core `--dry-run`/`--check`/apply follow the exit-code table; project/user scope, an absolute preflight target, per-Adapter root authorization, batch failure aggregation, and post-apply native confirmation are implemented; dry-run/check write neither the config root nor the Artifact root; Claude user-native paths are implemented and other built-ins are project-only | Finish `jue inspect` filters |
 | `jue inspect` | Partial | `--extension <path> --diagnostics` is implemented: read-only report of the loaded Adapter's `id`/`capabilities`, plus a real apply-readiness check when a project config exists in cwd (JUE-203) | Implement `--capability`/`--preset`/`--target`/`--artifact` filters |
 | `jue capability update` | Implemented | Updates one/all sources | Preserve lock and safety contracts |
 | `jue preset create/validate/pack` | Partial | Historical commands are scattered | Converge under author namespace |
@@ -39,7 +41,7 @@ historical implementation to converge, not target architecture.
 | Codex | Done | Done | Done (`packages/ai-jue-adapter-codex/`, JUE-301) — capability declaration honest about the three unsupported boundaries: `commands: "degraded"` (Codex's custom-commands mechanism deprecated per JUE-104/105/JUE-301 Phase 1), `mcp: "degraded"` (plugin writes a root `.mcp.json`; project keeps the `[mcp_servers.*]` TOML tables in `.codex/config.toml`), `rules: "degraded"` (no separate rules directory; rules fold into AGENTS.md via the `context` mapping). Native confirmation: Codex 0.145.0 has no `codex plugin validate`. `confirm()` immediately returns `unconfirmed` for non-plugin Artifacts; for plugin Artifacts it runs the real `codex plugin marketplace add <local>` + `codex plugin add <name> --marketplace <name>` + `codex plugin list --json` round-trip (isolated CODEX_HOME), asserting the Plugin is installed with `installed: true, enabled: true` — the strongest native confirmation Codex currently offers. `scripts/verify-codex-native.js` (replayable) calls `confirm()` with `artifactKind: "project"`, so it only exercises loading read/write/confirm and the project-scope `unconfirmed` path; it never invokes the real codex CLI. |
 | Cursor | Done | Done | Done (`packages/ai-jue-adapter-cursor/`) — project and Plugin Artifacts; Skills/Subagents/Commands keep frontmatter; project hooks use `{ version: 1, hooks }`, plugin hooks use `{ hooks }`; command MCP servers get `type: "stdio"`; `variables` passthrough via `tools.cursor.pluginManifest`. `confirm()` returns `unconfirmed` for both kinds (plugin includes structural evidence) |
 | OpenClaw | Done | Done | Done (`packages/ai-jue-adapter-openclaw/`, JUE-302) — `capabilities` honestly declares `rules/commands/agents/mcp: "degraded"` — the four real unsupported boundaries (OpenClaw has no per-workspace `commands/`/`agents/`/`rules/` directory; `openclaw agents add/list/delete` manages isolated workspaces under the user home, not as project files; MCP is global-only on `openclaw.json`). Only `skills`/`hooks` are `supported` (verified shape `~/.openclaw/workspace-jue-probe/skills/<name>/SKILL.md` + `hooks/<name>/HOOK.md+handler.js`). Native confirmation uses real `openclaw --profile jue-302-verify-<pid>-<ts> config validate --json` (isolated `--profile` to prevent global pollution, empirically passing). **One openclaw 0.145.0 quirk found and documented**: `spawnSync`/`execFileSync` from inside the vitest worker process produce empty stdout for `openclaw config validate --json` (works fine from a normal shell), so the contract suite **does not** call `confirmNatively` per the honest-degraded-stance principle; real native confirmation lives in the standalone `scripts/verify-openclaw-native.js`. `npm test` (285 passing, 5 new) |
-| Hermes | Done | Done | Done (`packages/ai-jue-adapter-hermes/`, JUE-303) — `capabilities` honestly declares `rules: "unsupported"`, `hooks: "unsupported"` (the real install's `~/.hermes/hooks/` is empty — insufficient evidence), `commands: "degraded"`, `agents: "degraded"` (all no-op pass-throughs; the like-named block in `config.yaml` is global runtime policy), `skills: "supported"`, `mcp: "supported"`. Native confirmation uses the real `tirith config validate <projectRoot>` (the `tirith` binary, run against an isolated temp HOME); `scripts/verify-hermes-native.js` replays it but requires the real `tirith` binary on PATH. Fixed three real implementation bugs in the process: (1) `confirm.ts` previously concatenated the executable name and its arguments into one string passed to `execFileSync(cmd, options)` — `execFileSync` never tokenizes via a shell, so it would treat the whole spaced string as a literal executable name and always throw ENOENT regardless of whether `tirith` exists; now calls `execFileSync("tirith", ["config", "validate", projectRoot], options)`. (2) `capabilities/skills.ts`'s `write()` previously threw on any Canonical skill key without a `<category>/<name>` slash — but Canonical's `skills` schema is an unconstrained `record(string, SkillSchema)`, so any flat key coming from a Claude/Codex/OpenClaw-shaped Preset (all three use a one-level native skills directory) would make `jue apply --adapter hermes` crash outright; now falls back to a `general` category instead of rejecting, verified against the real `ai-assets` repository (27 agents, 9 skills). (3) In the same file, `references` attachment filenames previously required a single safe path segment and rejected nested paths (e.g. `references/nested/guide.md`, a shape Claude/Codex's `bundleKeys` mechanism supports); now reuses `ai-jue-core`'s already-exported `resolveSupportFilePath` (the same path-traversal-safe logic the other Adapters' `directoryPerItem` factory uses) to allow safe nested subdirectories. One open architecture question remains: the Adapter adds a `cron` field to `CanonicalDocumentSchema` (a full-file pass-through of `cron/jobs.json`) that is not one of the six atomic Capability types; whether to formally adopt it (as a seventh atomic Capability, or as a `tools.hermes` target-private field instead) has not been decided via an RFC — see "Not yet implemented" below |
+| Hermes | Done | Done | Done (`packages/ai-jue-adapter-hermes/`, JUE-303) — `capabilities` honestly declares `rules: "unsupported"`, `hooks: "unsupported"` (the real install's `~/.hermes/hooks/` is empty — insufficient evidence), `commands: "degraded"`, `agents: "degraded"` (all no-op pass-throughs; the like-named block in `config.yaml` is global runtime policy), `skills: "supported"`, `mcp: "supported"`. Native confirmation uses the real `tirith config validate <artifactRoot>` (the `tirith` binary, run against an isolated temp HOME); `scripts/verify-hermes-native.js` replays it but requires the real `tirith` binary on PATH. Fixed three real implementation bugs in the process: (1) `confirm.ts` previously concatenated the executable name and its arguments into one string passed to `execFileSync(cmd, options)` — `execFileSync` never tokenizes via a shell, so it would treat the whole spaced string as a literal executable name and always throw ENOENT regardless of whether `tirith` exists; now calls `execFileSync("tirith", ["config", "validate", artifactRoot], options)`. (2) `capabilities/skills.ts`'s `write()` previously threw on any Canonical skill key without a `<category>/<name>` slash — but Canonical's `skills` schema is an unconstrained `record(string, SkillSchema)`, so any flat key coming from a Claude/Codex/OpenClaw-shaped Preset (all three use a one-level native skills directory) would make `jue apply --adapter hermes` crash outright; now falls back to a `general` category instead of rejecting, verified against the real `ai-assets` repository (27 agents, 9 skills). (3) In the same file, `references` attachment filenames previously required a single safe path segment and rejected nested paths (e.g. `references/nested/guide.md`, a shape Claude/Codex's `bundleKeys` mechanism supports); now reuses `ai-jue-core`'s already-exported `resolveSupportFilePath` (the same path-traversal-safe logic the other Adapters' `directoryPerItem` factory uses) to allow safe nested subdirectories. One open architecture question remains: the Adapter adds a `cron` field to `CanonicalDocumentSchema` (a full-file pass-through of `cron/jobs.json`) that is not one of the six atomic Capability types; whether to formally adopt it (as a seventh atomic Capability, or as a `tools.hermes` target-private field instead) has not been decided via an RFC — see "Not yet implemented" below |
 
 Partial means local code or tests exist, not complete Agent support. See
 [Agent support profiles](../agents/).
@@ -338,7 +340,8 @@ Partial means local code or tests exist, not complete Agent support. See
   `npm test` (282 passing, no regressions).
 - Shared contract-test suite (JUE-202,
   `packages/ai-jue-core/src/adapter-contract-kit.ts`):
-  `defineAdapterContractSuite(options)` registers all six contract-test
+  `defineAdapterContractSuite(options)` receives the caller's ESM-imported
+  `describe`, `expect`, and `it` through `options.testApi` and registers all six contract-test
   categories in one call — both equivalence contracts, idempotency,
   unmanaged-field preservation, sensitive-reference rejection, and
   per-Artifact-kind native confirmation (via each fixture's optional
@@ -346,9 +349,10 @@ Partial means local code or tests exist, not complete Agent support. See
   `applyChangesOrThrow`/`core-executor.ts` apply path, not a separate
   test-only writer. Exported only from the `ai-jue-core/testkit` subpath
   (new `testkit.js`/`testkit.d.ts` at the package root; `vitest` declared
-  as an optional `peerDependency`), deliberately kept out of `ai-jue-core`'s
-  main `index.ts` entry point so the test framework never leaks into
-  runtime consumers; `vitest.config.ts` gained a matching alias so it
+  as an optional `peerDependency`). Core does not load Vitest through CommonJS,
+  and the suite stays out of `ai-jue-core`'s main `index.ts` entry point so the
+  test framework and its module format never leak into runtime consumers;
+  `vitest.config.ts` gained a matching alias so it
   resolves to source, not `dist/`, inside this repo. Verified by actually
   migrating the Claude Adapter onto it: new `packages/ai-jue-adapter-claude/
   test/contract.test.ts` (8 assertions, including real `claude plugin

@@ -13,9 +13,13 @@ const SKIP_TEST = ARGS.includes('--skip-test');
 const SKIP_LINT = ARGS.includes('--skip-lint');
 const IS_VERBOSE = ARGS.includes('--verbose');
 const BUMP_ARG = ARGS.find((a) => a.startsWith('--bump='));
-const BUMP_TYPE = BUMP_ARG ? BUMP_ARG.slice('--bump='.length) : 'patch';
-if (!['patch', 'minor', 'major'].includes(BUMP_TYPE)) {
+const BUMP_TYPE = BUMP_ARG ? BUMP_ARG.slice('--bump='.length) : null;
+if (BUMP_TYPE !== null && !['patch', 'minor', 'major'].includes(BUMP_TYPE)) {
   console.error(`--bump must be one of patch|minor|major, got "${BUMP_TYPE}"`);
+  process.exit(1);
+}
+if (IS_YES && BUMP_TYPE === null) {
+  console.error('--yes requires an explicit --bump=patch|minor|major; no release bump is inferred.');
   process.exit(1);
 }
 const BATCH_TAG_PREFIX = 'release-batch@v';
@@ -89,6 +93,30 @@ const writePackageJson = (pkgName, data) => {
   const dir = getPackageDir(pkgName);
   const p = path.join(PACKAGES_DIR, dir, 'package.json');
   fs.writeFileSync(p, JSON.stringify(data, null, 2) + '\n');
+};
+
+const updatePlannedInternalRanges = (pkgJson, plannedVersions) => {
+  for (const section of ['dependencies', 'peerDependencies']) {
+    if (!pkgJson[section]) continue;
+    for (const dependency of Object.keys(pkgJson[section])) {
+      const nextVersion = plannedVersions.get(dependency);
+      if (nextVersion) pkgJson[section][dependency] = `^${nextVersion}`;
+    }
+  }
+};
+
+const assertChangelogEntry = (pkgName, nextVersion) => {
+  const dir = getPackageDir(pkgName);
+  const changelogPath = path.join(PACKAGES_DIR, dir, 'CHANGELOG.md');
+  if (!fs.existsSync(changelogPath)) {
+    throw new Error(`${pkgName} must add CHANGELOG.md before release.`);
+  }
+  const changelog = fs.readFileSync(changelogPath, 'utf8');
+  if (!new RegExp(`^#{1,2} \\[${nextVersion.replace(/\./g, '\\.')}\\]`, 'm').test(changelog)) {
+    throw new Error(
+      `${pkgName} CHANGELOG.md must contain an explicit [${nextVersion}] entry before release.`,
+    );
+  }
 };
 
 // --- Core Logic ---
@@ -322,15 +350,17 @@ async function main() {
   // Execute
   const published = [];
   const tagNames = [];
+  const plannedVersions = new Map(sortedPlan.map(item => [item.name, item.nextVersion]));
 
   try {
     for (const item of sortedPlan) {
       log.step(`Processing ${item.name}...`);
-      const dir = getPackageDir(item.name);
 
       // 1. Update Version
       const pkgJson = getPackageJson(item.name);
       pkgJson.version = item.nextVersion;
+      updatePlannedInternalRanges(pkgJson, plannedVersions);
+      assertChangelogEntry(item.name, item.nextVersion);
       writePackageJson(item.name, pkgJson);
 
       // 2. Build
@@ -372,24 +402,6 @@ async function main() {
         } else {
           log.warn(`No test script for ${item.name}, skipping.`);
         }
-      }
-
-      // 4. Changelog
-      // We use conventional-changelog directly
-      if (!IS_DRY_RUN) {
-        const changelogArgs = [
-          '-p', 'angular',
-          '-i', path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'),
-          '-s',
-          '--commit-path', path.join(PACKAGES_DIR, dir),
-          '--lerna-package', item.name,
-          '--tag-prefix', `${item.name}@` // Ensure prefix matches
-        ];
-        // Ensure CHANGELOG exists
-        if (!fs.existsSync(path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'))) {
-          fs.writeFileSync(path.join(PACKAGES_DIR, dir, 'CHANGELOG.md'), '');
-        }
-        run(`npx conventional-changelog ${changelogArgs.join(' ')}`);
       }
 
       // 5. Publish

@@ -1,7 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { afterEach, beforeAll, describe, expect, it } from "vitest";
+import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   hashArtifactContent,
   type Adapter,
@@ -10,6 +10,7 @@ import {
 import { runCoreAdapter } from "../src/core-apply";
 import type { MergedConfig } from "../src/config";
 import { initI18n } from "../src/i18n";
+import { logger } from "../src/logger";
 
 beforeAll(async () => {
   await initI18n("en");
@@ -21,6 +22,7 @@ describe("runCoreAdapter apply scope", () => {
     for (const root of roots) fs.rmSync(root, { recursive: true, force: true });
     roots.length = 0;
     process.exitCode = 0;
+    vi.restoreAllMocks();
   });
 
   function tempRoot(label: string): string {
@@ -89,11 +91,11 @@ describe("runCoreAdapter apply scope", () => {
 
     expect(exitCode).toBe(0);
     expect(receivedContext).toMatchObject({
-      projectRoot: userHome,
       artifactRoot: userHome,
       scope: "user",
       artifactKind: "project",
     });
+    expect(receivedContext).not.toHaveProperty("projectRoot");
     expect(fs.readFileSync(path.join(userHome, "notes.md"), "utf8")).toBe("hello");
     expect(fs.existsSync(path.join(projectRoot, "notes.md"))).toBe(false);
   });
@@ -178,5 +180,100 @@ describe("runCoreAdapter apply scope", () => {
       }),
     ).rejects.toThrow('does not match authorized apply scope "user"');
     expect(fs.readdirSync(userHome)).toEqual([]);
+  });
+
+  it("logs one resolved target line before invoking the Adapter writer", async () => {
+    const projectRoot = tempRoot("jue-project-root-");
+    const userHome = tempRoot("jue-user-root-");
+    const events: string[] = [];
+    vi.spyOn(logger, "info").mockImplementation((message) => {
+      events.push(String(message));
+    });
+    const adapter = fakeAdapter({
+      supportedScopes: ["project", "user"],
+      async write() {
+        events.push("writer-called");
+        return [];
+      },
+    });
+
+    await runCoreAdapter(adapter, {} as MergedConfig, projectRoot, {
+      dryRun: true,
+      scope: "user",
+      userHome,
+    });
+
+    expect(events[0]).toBe(
+      `adapter=fake scope=user root=${path.resolve(userHome)} artifact=project`,
+    );
+    expect(events[1]).toBe("writer-called");
+  });
+
+  it("passes the resolved user target context and applied results to confirm", async () => {
+    const projectRoot = tempRoot("jue-project-root-");
+    const userHome = tempRoot("jue-user-root-");
+    let receivedContext: Record<string, unknown> | undefined;
+    let receivedResults = 0;
+    const messages: string[] = [];
+    vi.spyOn(logger, "info").mockImplementation((message) => messages.push(String(message)));
+    const adapter = fakeAdapter({
+      supportedScopes: ["project", "user"],
+      async write() {
+        return [change("user")];
+      },
+      async confirm(results, context) {
+        receivedResults = results.length;
+        receivedContext = context;
+        return { target: "fake", status: "confirmed", evidence: "native fixture loaded" };
+      },
+    });
+
+    const exitCode = await runCoreAdapter(adapter, {} as MergedConfig, projectRoot, {
+      scope: "user",
+      userHome,
+    });
+
+    expect(exitCode).toBe(0);
+    expect(receivedResults).toBe(1);
+    expect(receivedContext).toEqual({
+      artifactRoot: path.resolve(userHome),
+      scope: "user",
+      artifactKind: "project",
+    });
+    expect(messages).toContain("fake: applied 1 change(s):");
+    expect(messages).not.toContain("fake: 1 change(s) would be written:");
+  });
+
+  it("keeps a converged check successful when native confirmation is unavailable", async () => {
+    const projectRoot = tempRoot("jue-project-root-");
+    let confirmCalls = 0;
+    const adapter = fakeAdapter({
+      async confirm() {
+        confirmCalls += 1;
+        return { target: "fake", status: "unconfirmed" };
+      },
+    });
+
+    const exitCode = await runCoreAdapter(adapter, {} as MergedConfig, projectRoot, {
+      check: true,
+    });
+
+    expect(exitCode).toBe(0);
+    expect(confirmCalls).toBe(1);
+  });
+
+  it("fails a converged check when native confirmation returns failed", async () => {
+    const artifactRoot = tempRoot("jue-project-root-");
+    const adapter = fakeAdapter({
+      async confirm() {
+        return { target: "fake", status: "failed", evidence: "invalid native state" };
+      },
+    });
+
+    const exitCode = await runCoreAdapter(adapter, {} as MergedConfig, artifactRoot, {
+      check: true,
+    });
+
+    expect(exitCode).toBe(1);
   });
 });

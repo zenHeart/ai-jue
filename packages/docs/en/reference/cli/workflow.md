@@ -25,7 +25,7 @@ jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
 | `--all`, `-a` | Apply to every available target in the config |
 | `--frozen` | Require immutable Capability Source references |
 | `--dry-run` | Preview changes without writing; always exits 0 |
-| `--check` | Check configuration, drift, and confirmation availability without writing |
+| `--check` | Check configuration, drift, authorization, and target confirmation without writing |
 | `--scope <project\|user>` | Select the Artifact installation boundary; overrides `targets.<adapter>.scope`, default `project` |
 | `--artifact <kind>`, `--artifact-kind <kind>` | Artifact kind: `project`, `workspace`, `plugin`, `compatible-bundle`, `skill-plugin`, depending on what the adapter supports |
 
@@ -35,8 +35,22 @@ One invocation reads and validates the config, converts it to the Canonical DSL,
 | --- | --- | --- |
 | default | Yes | Apply changes atomically |
 | `--dry-run` | No | Preview Artifact changes; always exits 0 |
-| `--check` | No | CI check for configuration, drift, and confirmation availability; non-zero exit if anything is outstanding |
+| `--check` | No | CI check for config, drift, and authorization; when converged, run read-only confirmation, warn when unavailable, and exit non-zero when confirmation fails |
 
+`--dry-run` and `--check` require the config and Adapter to exist. They do not
+initialize config, install packages, or update `ai-jue.lock`, and they write
+neither the config root nor the Artifact root. Before invoking each writer Jue
+prints one resolved-target line:
+
+```text
+adapter=<id> scope=<project|user> root=<absolute path> artifact=<kind>
+```
+
+After an atomic write, apply invokes the Adapter's target-native confirmation.
+`confirmed` reports success; `unconfirmed` explicitly reports that no native
+confirmation path exists without rolling back the write; `failed` exits 1.
+The same status semantics apply to a converged `--check`: `unconfirmed` does
+not change the filesystem-convergence exit code, while `failed` exits 1.
 `apply` requires no interactive authorization; use `--dry-run` and `--check` for
 previews and CI validation. User scope still resolves configuration from the
 current project, but writes Artifacts to each target Agent's native user path.
@@ -45,7 +59,7 @@ project footprints are not user-home authorization. The misspelled `--adpater`
 is still accepted and prints a warning.
 
 Exit codes: no change or applied 0, pending or blocked by drift 3, unauthorized
-4, rolled back 1. An unsupported scope or a user-scope Plugin-class Artifact
+4, rolled back or native confirmation failed 1. An unsupported scope or a user-scope Plugin-class Artifact
 combination exits 2.
 
 ## `jue inspect`

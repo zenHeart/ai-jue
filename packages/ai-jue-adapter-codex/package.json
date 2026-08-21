@@ -1,20 +1,24 @@
 {
   "name": "ai-jue-adapter-codex",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Adapter for generating project-scoped Codex configurations.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "ai-jue-core": "*"
+    "@iarna/toml": "^2.2.5"
   },
   "peerDependencies": {
-    "ai-jue-core": "*"
-  },
-  "devDependencies": {
-    "@iarna/toml": "^2.2.5"
+    "ai-jue-core": "^2.0.0"
   },
   "author": "AI-Jue Team <contact@ai-jue.dev>",
   "license": "MIT",

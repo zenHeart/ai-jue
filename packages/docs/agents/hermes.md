@@ -38,7 +38,7 @@ Adapter 实现状态见 [implementation-status](../developer/implementation-stat
 | `commands` / `agents` | 诚实 `degraded`：`config.yaml` 里的同名块是全局运行时策略，读写均为 no-op |
 | target-specific settings | `tools.hermes` |
 | Artifact | `workspace`（skills+mcp）；`skill-plugin`（`plugin.yaml` + 仅 `register_skill` 的 `__init__.py` + flat `skills/`；mcp 仍走 workspace） |
-| Confirm | Workspace：`tirith config validate`；skill-plugin：结构校验（`plugin.yaml` / `register_skill` initializer / skill 目录） |
+| Confirm | Workspace：存在 `tirith` 时运行 `tirith config validate`，命令不可用时返回 `unconfirmed`；skill-plugin：结构校验（`plugin.yaml` / `register_skill` initializer / skill 目录） |
 
 ## 3. 转换边界
 
@@ -59,4 +59,4 @@ Adapter 实现状态见 [implementation-status](../developer/implementation-stat
 | Read | Implemented | `packages/ai-jue-adapter-hermes/src/read.ts` |
 | Write | Implemented | `packages/ai-jue-adapter-hermes/src/write.ts`，经 Core 执行器驱动 |
 | Artifact | Implemented | `workspace` + thin `skill-plugin`（skills/`plugin.yaml`/`register_skill`；MCP 仍 workspace）；runtime extension surface 遵循 Hermes 官方 Plugin 规范 |
-| Confirm | Implemented | Workspace：真实 `tirith config validate`；skill-plugin：`plugin.yaml`、`register_skill` initializer 与 skill roots 的结构证据 |
+| Confirm | Implemented | Workspace：可用时运行真实 `tirith config validate`，命令缺失时显式 `unconfirmed`；skill-plugin：`plugin.yaml`、`register_skill` initializer 与 skill roots 的结构证据 |

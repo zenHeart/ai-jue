@@ -52,8 +52,8 @@ function mergeToolsConfig(
  */
 export async function write(canonical: CanonicalDocument, writeContext: WriteContext): Promise<ArtifactChange[]> {
   const artifactKind = (writeContext.artifactKind ?? "project") as ArtifactKind;
-  const scope = writeContext.scope ?? "project";
-  const root = writeContext.artifactRoot ?? writeContext.projectRoot;
+  const scope = writeContext.scope;
+  const root = writeContext.artifactRoot;
   if (scope === "user" && artifactKind !== "project") {
     throw new Error(`Claude Code user apply scope requires artifactKind "project", received "${artifactKind}"`);
   }

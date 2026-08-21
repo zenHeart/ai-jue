@@ -1,4 +1,5 @@
 import path from "path";
+import { describe, expect, it } from "vitest";
 import { defineAdapterContractSuite } from "../src/adapter-contract-kit";
 import type { CanonicalDocument } from "../src/canonical-document";
 import { confirm } from "./fixtures/neutral-adapter/confirm";
@@ -64,6 +65,7 @@ const SYNTHETIC_CANONICAL: CanonicalDocument = {
 };
 
 defineAdapterContractSuite({
+  testApi: { describe, expect, it },
   adapter: { target: "neutral-agent", read, write },
   syntheticCanonical: SYNTHETIC_CANONICAL,
   unmanagedFieldCases: [
@@ -91,7 +93,7 @@ defineAdapterContractSuite({
       name: "project",
       root: path.join(NATIVE_ROOT, "project"),
       confirmNatively: async (root) => {
-        const result = await confirm([], { projectRoot: root });
+        const result = await confirm([], { scope: "project", artifactRoot: root });
         if (result.status !== "unconfirmed") {
           throw new Error(`expected 'unconfirmed' (no native tool exists), got "${result.status}"`);
         }

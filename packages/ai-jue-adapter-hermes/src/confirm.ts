@@ -2,11 +2,10 @@ import { execFileSync } from "child_process";
 import { existsSync, mkdtempSync, readFileSync, readdirSync, rmSync } from "fs";
 import os from "os";
 import path from "path";
-import type { ArtifactResult, Confirmation } from "ai-jue-core";
+import type { ArtifactResult, Confirmation, ConfirmContext as CoreConfirmContext } from "ai-jue-core";
 import { detectArtifactKind, type HermesArtifactKind } from "./capabilities/layout";
 
-export interface ConfirmContext {
-  projectRoot: string;
+export interface ConfirmContext extends CoreConfirmContext {
   artifactKind?: HermesArtifactKind;
 }
 
@@ -20,7 +19,7 @@ const TARGET = "hermes";
  * (D:\devuser\.hermes\bin\tirith, 9.8MB), which exposes
  * `config validate` for the on-disk config tree.
  *
- * We invoke `tirith config validate <projectRoot>` against the
+ * We invoke `tirith config validate <artifactRoot>` against the
  * freshly-written workspace (Atomically swap the real cwr fixture
  * into a temp HOME, run validate, swap back — preserves the operator's
  * real Hermes state in the rare case the user has one on the same
@@ -35,9 +34,9 @@ export async function confirm(
   _results: ArtifactResult[],
   context: ConfirmContext,
 ): Promise<Confirmation> {
-  if ((context.artifactKind ?? detectArtifactKind(context.projectRoot)) === "skill-plugin") {
-    const manifest = path.join(context.projectRoot, "plugin.yaml");
-    const initializer = path.join(context.projectRoot, "__init__.py");
+  if ((context.artifactKind ?? detectArtifactKind(context.artifactRoot)) === "skill-plugin") {
+    const manifest = path.join(context.artifactRoot, "plugin.yaml");
+    const initializer = path.join(context.artifactRoot, "__init__.py");
     if (!existsSync(manifest) || !existsSync(initializer)) {
       return {
         target: TARGET,
@@ -53,7 +52,7 @@ export async function confirm(
         evidence: "skill-plugin __init__.py does not register skills",
       };
     }
-    const skillsRoot = path.join(context.projectRoot, "skills");
+    const skillsRoot = path.join(context.artifactRoot, "skills");
     if (existsSync(skillsRoot)) {
       for (const entry of readdirSync(skillsRoot, { withFileTypes: true })) {
         if (!entry.isDirectory()) continue;
@@ -73,8 +72,8 @@ export async function confirm(
     };
   }
 
-  if (!existsSync(context.projectRoot)) {
-    return { target: TARGET, status: "failed", evidence: "projectRoot does not exist" };
+  if (!existsSync(context.artifactRoot)) {
+    return { target: TARGET, status: "failed", evidence: "artifactRoot does not exist" };
   }
   // Stage the workspace under a fresh HOME so `tirith config validate`
   // doesn't pick up the operator's real Hermes state.
@@ -85,7 +84,7 @@ export async function confirm(
     // did) makes Node treat the whole string as a literal executable
     // name and always throw ENOENT, since execFileSync never invokes a
     // shell to tokenize it.
-    const result = execFileSync("tirith", ["config", "validate", context.projectRoot], {
+    const result = execFileSync("tirith", ["config", "validate", context.artifactRoot], {
       encoding: "utf8",
       env: { ...process.env, HOME: tempHome, HERMES_HOME: tempHome },
       stdio: ["ignore", "pipe", "pipe"],
@@ -101,9 +100,16 @@ export async function confirm(
     return {
       target: TARGET,
       status: "confirmed",
-      evidence: `tirith config validate ran cleanly against ${context.projectRoot}: ${result.slice(0, 200)}`,
+      evidence: `tirith config validate ran cleanly against ${context.artifactRoot}: ${result.slice(0, 200)}`,
     };
   } catch (error) {
+    if (error && typeof error === "object" && (error as NodeJS.ErrnoException).code === "ENOENT") {
+      return {
+        target: TARGET,
+        status: "unconfirmed",
+        evidence: "tirith is not available on PATH; workspace validation was not run",
+      };
+    }
     const stderr = error && typeof error === "object" && "stderr" in error
       ? String((error as { stderr: unknown }).stderr)
       : "";

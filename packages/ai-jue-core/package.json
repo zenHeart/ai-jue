@@ -1,9 +1,21 @@
 {
   "name": "ai-jue-core",
-  "version": "1.4.2",
+  "version": "2.0.0",
   "description": "Core logic for ai-jue",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    },
+    "./testkit": {
+      "types": "./testkit.d.ts",
+      "require": "./testkit.js",
+      "default": "./testkit.js"
+    }
+  },
   "scripts": {
     "build": "tsc"
   },

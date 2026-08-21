@@ -4,7 +4,7 @@
 
 **Goal:** Implement RFC-0003 so `jue apply` can safely target project or Claude Code user artifacts without using the home directory as a fake project.
 
-**Architecture:** CLI/config resolves one apply scope per Adapter. Core resolves and authorizes the Artifact root, validates every root-relative change and scope, and runs the existing executor against that root. Adapters declare supported scopes; Claude maps the user scope to its documented native paths while legacy and other built-in Adapters remain project-only.
+**Architecture:** CLI/config resolves one apply scope per Adapter. Core resolves and authorizes the Artifact root, validates every root-relative change and scope, and runs the executor against that root. Adapters declare supported scopes; Claude maps the user scope to its documented native paths while other built-in Adapters remain project-only.
 
 **Tech Stack:** TypeScript, Node.js filesystem/path APIs, yargs, Zod, Vitest, VitePress.
 
@@ -90,13 +90,13 @@
 - Test: `packages/ai-jue-adapter-claude/test/mcp-scope.test.ts`
 
 **Interfaces:**
-- `CapabilityMapping.write(..., scope?)` and `writeCapabilities(..., scope?)`
-  default to project for compatibility.
-- Claude `WriteContext` consumes `{ artifactRoot?, projectRoot, scope? }`.
+- `CapabilityMapping.write(..., context)` and `writeCapabilities(..., context)`
+  consume Core's resolved target context.
+- Claude `WriteContext` consumes required `{ artifactRoot, scope }` fields.
 
 - [ ] Write failing user-scope tests for skills, context, settings/hooks, and MCP.
 - [ ] Write failing mismatch/local MCP tests and unchanged project-path tests.
-- [ ] Propagate scope through shared factories without changing other Adapter output.
+- [ ] Propagate the required scope through shared factories without changing other Adapter output.
 - [ ] Implement Claude's documented project/user path switch.
 - [ ] Run Claude round-trip, MCP, and user-scope tests until green.
 
@@ -120,7 +120,7 @@
 - Package entries expose only the Extension default export.
 
 - [ ] Write failing tests for CLI option parsing, per-target scope, user root,
-  plugin/user incompatibility, old Adapter rejection, preflight logging, and
+  plugin/user incompatibility, invalid Adapter rejection, preflight logging, and
   continuation after one Adapter fails.
 - [ ] Wire `--scope`, root resolution, Adapter-object loading, and expected-scope
   executor options; delete module-level write/generate fallback paths.

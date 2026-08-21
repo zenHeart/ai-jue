@@ -1,10 +1,9 @@
 import fs from "fs";
 import path from "path";
-import type { ArtifactResult, Confirmation } from "ai-jue-core";
+import type { ArtifactResult, Confirmation, ConfirmContext as CoreConfirmContext } from "ai-jue-core";
 import { splitFrontmatter } from "ai-jue-core";
 
-export interface ConfirmContext {
-  projectRoot: string;
+export interface ConfirmContext extends CoreConfirmContext {
   artifactKind?: "project" | "plugin";
 }
 
@@ -71,7 +70,7 @@ export async function confirm(
   context: ConfirmContext,
 ): Promise<Confirmation> {
   if ((context.artifactKind ?? "project") === "plugin") {
-    const evidence = collectStructuralEvidence(context.projectRoot).join("; ");
+    const evidence = collectStructuralEvidence(context.artifactRoot).join("; ");
     return { target: TARGET, status: "unconfirmed", evidence };
   }
   return { target: TARGET, status: "unconfirmed" };

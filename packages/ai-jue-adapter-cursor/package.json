@@ -1,8 +1,15 @@
 {
   "name": "ai-jue-adapter-cursor",
-  "version": "1.4.2",
+  "version": "2.0.0",
   "description": "AI-Jue adapter for Cursor",
   "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc"
   },
@@ -14,14 +21,13 @@
   "author": "AI-Jue Team <contact@ai-jue.dev>",
   "license": "MIT",
   "dependencies": {
-    "@types/node": "^20.0.0",
-    "ai-jue-core": "*",
     "js-yaml": "^4.3.1"
   },
   "peerDependencies": {
-    "ai-jue-core": "*"
+    "ai-jue-core": "^2.0.0"
   },
   "devDependencies": {
+    "@types/node": "^20.0.0",
     "typescript": "^5.0.0"
   },
   "repository": {

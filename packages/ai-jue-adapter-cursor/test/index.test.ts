@@ -10,7 +10,6 @@ const TEST_DIR = path.join(__dirname, 'temp_output');
 async function applyProject(config: any, outputDir: string): Promise<void> {
   const adapter = extension.adapters[0];
   const changes = await adapter.write(toCanonicalDocument(config), {
-    projectRoot: outputDir,
     artifactRoot: outputDir,
     scope: 'project',
     artifactKind: 'project',

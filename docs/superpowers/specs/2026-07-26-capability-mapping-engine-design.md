@@ -1,11 +1,10 @@
 # Capability-Mapping Engine + Domain-Decomposed Claude Adapter
 
-> Status: Draft — pending user review of this written spec.
+> Status: Implemented.
 > Scope: internal refactor of the Claude Code Adapter's Native ⇄ Canonical
 > code (JUE-106/JUE-107), plus a reusable engine other Adapters (Codex,
 > OpenClaw, Hermes — R3) can build on without re-deriving the same shapes.
-> Does not touch the legacy `generate()` write path used by the live
-> `jue apply` CLI (see "Explicitly out of scope").
+> The runtime boundary is the Extension default export and Adapter methods.
 
 ## 1. Problem
 
@@ -26,9 +25,8 @@ Nothing enforces that they stay inverses beyond test coverage and developer
 discipline. Every future Agent Adapter (R3) would re-derive these same four
 shapes from scratch, duplicating both the mechanics and the risk of drift.
 
-`index.ts` (436 lines, the legacy `generate()` used by the live `jue apply`
-path) is the cautionary example of what happens when this isn't factored: one
-large function handling every Capability type inline.
+The prior monolithic `index.ts` is the cautionary example of what happens when
+this isn't factored: one large function handling every Capability type inline.
 
 ## 2. Decision (confirmed with user)
 
@@ -147,7 +145,7 @@ internally.
 // read.ts (illustrative, ~35 lines total)
 const mappings = { rules, commands, agents, skills, hooks, mcp }; // from capabilities/*
 export async function read(context: ReadContext): Promise<CanonicalDocument> {
-  const root = context.projectRoot;
+  const root = context.artifactRoot;
   const global = isProjectLayout(root) ? readContext(root) : undefined;
   return toCanonicalDocument({
     context: global !== undefined ? { global } : undefined,
@@ -159,15 +157,11 @@ export async function read(context: ReadContext): Promise<CanonicalDocument> {
 `write.ts` mirrors this with `writeCapabilities(mappings, canonical, root,
 'claude-code')` plus the one `context` special case.
 
-### 3.4 Explicitly out of scope this round
+### 3.4 Runtime boundary
 
-`index.ts`'s legacy `generate()` (the function `jue apply` actually calls
-today) is **not** touched. Consolidating it onto `write()` means rewiring
-`jue apply`'s real output path onto the new Adapter interface, which is
-JUE-108's job (Core executing `ArtifactChange[]`), not this refactor's. Doing
-both at once would conflate "build the new pattern" with "change live CLI
-behavior." This is called out explicitly (not silently left inconsistent) so
-it isn't mistaken for an oversight.
+`jue apply` loads the Extension default export and invokes the Adapter's
+`write()` method. Core validates and executes the resulting `ArtifactChange[]`;
+package-level generation functions are not part of the runtime contract.
 
 ## 4. Testing / migration plan
 
@@ -214,9 +208,8 @@ it isn't mistaken for an oversight.
   `computeMergedJson`, `hashArtifactContent`, `splitFrontmatter`); no new
   primitive is invented that doesn't already exist or isn't explicitly
   introduced here.
-- Scope: bounded to the Claude Code Adapter's Native⇄Canonical code and the
-  new shared engine; explicitly excludes the legacy `generate()`/`jue apply`
-  path (§3.4) to avoid scope creep into live CLI behavior.
+- Scope: bounded to the Claude Code Adapter's Native⇄Canonical code, the shared
+  engine, and the Adapter method boundary consumed by `jue apply` (§3.4).
 - Ambiguity: the two points that had genuine forks (abstraction level,
   package location) were resolved with the user before writing this spec;
   the two smaller judgment calls (`context.ts` staying hand-written,

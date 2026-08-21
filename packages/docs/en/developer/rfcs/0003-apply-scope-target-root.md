@@ -106,7 +106,7 @@ type ApplyScope = "project" | "user";
 interface ArtifactTargetContext {
   scope: ApplyScope;
   artifactRoot: string;
-  projectRoot: string; // compatibility window: always artifactRoot
+  artifactKind?: string;
 }
 
 interface Adapter {
@@ -114,11 +114,11 @@ interface Adapter {
 }
 ```
 
-New code uses `artifactRoot`. During a compatibility window Core also passes
-`projectRoot === artifactRoot`. An Adapter without `supportedScopes` is
-project-only. Every `ArtifactChange` declares the selected scope. Core validates
-scope equality, relative paths, and resolved containment before execution; it
-does not silently rewrite Adapter output.
+Core passes only the resolved `scope`, `artifactRoot`, and `artifactKind`.
+Adapters do not default scope or maintain a second root field. An Adapter
+without `supportedScopes` is project-only. Every `ArtifactChange` declares the
+selected scope. Core validates scope equality, relative paths, and resolved
+containment before execution; it does not silently rewrite Adapter output.
 
 ### Extension runtime contract
 
@@ -188,7 +188,8 @@ failure does not skip later Adapters, and the aggregate result is non-zero.
 3. Absolute paths, traversal, symlink escapes, and resolved paths outside root fail.
 4. Managed-block and merged-key ownership remain intact in user files.
 5. Planning and execution use the same root; partial batches roll back.
-6. Dry-run and check write no target files.
+6. Dry-run and check write neither the config root nor the target root: they do
+   not initialize config, install Adapters, update the lock, or write Artifacts.
 7. User scope authorizes the root; existing per-change high-risk gates still apply.
 
 ## Compatibility and migration
@@ -199,8 +200,8 @@ failure does not skip later Adapters, and the aggregate result is non-zero.
 - Apply loads only the `defineExtension()` default export and requires exactly
   one Adapter. Package-level method exports are outside the runtime contract,
   with no fallback path.
-- `projectRoot` remains for one compatibility window while built-ins move to
-  `artifactRoot`.
+- Adapter read, write, and confirm contracts receive one `artifactRoot` with no
+  root-field fallback.
 - Running from home without scope remains project mode whose root happens to be
   home; the recommended workflow is `--scope user` from the config project.
 

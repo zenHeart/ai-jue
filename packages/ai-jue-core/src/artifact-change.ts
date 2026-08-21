@@ -65,12 +65,12 @@ function assertOneOf<T extends string>(
   }
 }
 
-function assertProjectRelativePath(value: unknown): asserts value is string {
+function assertArtifactRootRelativePath(value: unknown): asserts value is string {
   if (typeof value !== 'string' || value.length === 0) {
     throw new Error('ArtifactChange.path must be a non-empty string');
   }
   if (path.isAbsolute(value) || UNSAFE_PATH_SEGMENT.test(value)) {
-    throw new Error(`ArtifactChange.path must be a safe project-relative path: ${value}`);
+    throw new Error(`ArtifactChange.path must be a safe artifact-root-relative path: ${value}`);
   }
 }
 
@@ -133,7 +133,7 @@ export function assertArtifactChange(value: unknown): asserts value is ArtifactC
   if (typeof change.requiresApproval !== 'boolean') {
     throw new Error('ArtifactChange.requiresApproval must be a boolean');
   }
-  assertProjectRelativePath(change.path);
+  assertArtifactRootRelativePath(change.path);
   assertNullableHash('beforeHash', change.beforeHash);
   assertNullableHash('afterHash', change.afterHash);
 
