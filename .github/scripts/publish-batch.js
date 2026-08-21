@@ -9,9 +9,15 @@ function step(msg) {
   process.stdout.write(`\n${msg}\n`);
 }
 
+function normalizeExecOutput(output) {
+  return typeof output === 'string' ? output.trim() : '';
+}
+
 function run(cmd, opts = {}) {
   try {
-    return execSync(cmd, { stdio: 'pipe', encoding: 'utf8', ...opts }).trim();
+    return normalizeExecOutput(
+      execSync(cmd, { stdio: 'pipe', encoding: 'utf8', ...opts }),
+    );
   } catch (e) {
     const stdout = e.stdout ? String(e.stdout) : '';
     const stderr = e.stderr ? String(e.stderr) : '';
@@ -150,4 +156,6 @@ function main() {
   }
 }
 
-main();
+if (require.main === module) main();
+
+module.exports = { normalizeExecOutput };
