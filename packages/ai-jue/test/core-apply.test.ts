@@ -1,6 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { stripVTControlCharacters } from "node:util";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import {
   hashArtifactContent,
@@ -187,7 +188,7 @@ describe("runCoreAdapter apply scope", () => {
     const userHome = tempRoot("jue-user-root-");
     const events: string[] = [];
     vi.spyOn(logger, "info").mockImplementation((message) => {
-      events.push(String(message));
+      events.push(stripVTControlCharacters(String(message)));
     });
     const adapter = fakeAdapter({
       supportedScopes: ["project", "user"],
@@ -215,7 +216,9 @@ describe("runCoreAdapter apply scope", () => {
     let receivedContext: Record<string, unknown> | undefined;
     let receivedResults = 0;
     const messages: string[] = [];
-    vi.spyOn(logger, "info").mockImplementation((message) => messages.push(String(message)));
+    vi.spyOn(logger, "info").mockImplementation((message) => {
+      messages.push(stripVTControlCharacters(String(message)));
+    });
     const adapter = fakeAdapter({
       supportedScopes: ["project", "user"],
       async write() {

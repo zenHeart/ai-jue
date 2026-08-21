@@ -1,6 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
+import { stripVTControlCharacters } from "node:util";
 import { afterEach, beforeAll, describe, expect, it, vi } from "vitest";
 import { handler, runAdapterList } from "../../src/commands/apply";
 import type { MergedConfig } from "../../src/config";
@@ -105,7 +106,9 @@ describe("runAdapterList per-adapter isolation", () => {
       const beforeProject = snapshot(projectRoot);
       const beforeHome = snapshot(userHome);
       const logLines: string[] = [];
-      vi.spyOn(logger, "info").mockImplementation((message) => logLines.push(String(message)));
+      vi.spyOn(logger, "info").mockImplementation((message) => {
+        logLines.push(stripVTControlCharacters(String(message)));
+      });
       const originalCwd = process.cwd();
       process.chdir(projectRoot);
       try {
