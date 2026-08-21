@@ -1,3 +1,10 @@
+## [0.3.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-hermes@v0.2.2...ai-jue-adapter-hermes@v0.3.0) (2026-08-21)
+
+### Breaking changes
+
+- The default Extension export is the only package entry and requires
+  `ai-jue-core@^2.0.0` with an explicit project target context.
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-hermes@v0.2.1...ai-jue-adapter-hermes@1.0.0) (2026-08-10)
 
 

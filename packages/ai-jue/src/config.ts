@@ -58,7 +58,7 @@ const ConfigSchema = z
           .object({
             enabled: z.boolean().optional(),
             artifact: z.string().optional(),
-            scope: z.enum(['project', 'local', 'user']).optional(),
+            scope: z.enum(['project', 'user']).optional(),
           })
           .strict(),
       )

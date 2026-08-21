@@ -1,8 +1,7 @@
 {
   "name": "ai-jue",
-  "version": "1.5.3",
+  "version": "2.0.0",
   "description": "The AI coding capability management framework.",
-  "main": "dist/index.js",
   "bin": {
     "jue": "dist/cli.js",
     "ai-jue": "dist/cli.js",
@@ -17,8 +16,8 @@
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {
-    "ai-jue-adapter-codex": "*",
-    "ai-jue-core": "*",
+    "ai-jue-adapter-codex": "^0.3.0",
+    "ai-jue-core": "^2.0.0",
     "chokidar": "^4.0.3",
     "cosmiconfig": "^9.0.0",
     "enquirer": "^2.4.1",

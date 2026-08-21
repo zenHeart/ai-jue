@@ -36,7 +36,8 @@ describe("codex plugin skills + mcp", () => {
       },
     };
     const changes = await write(canonical, {
-      projectRoot: root,
+      scope: "project",
+      artifactRoot: root,
       artifactKind: "plugin",
       pluginManifest: {
         name: "jue-core",
@@ -66,7 +67,7 @@ describe("codex plugin skills + mcp", () => {
             },
           },
         },
-        { projectRoot: root, artifactKind: "plugin" },
+        { scope: "project", artifactRoot: root, artifactKind: "plugin" },
       ),
     ).rejects.toThrow('MCP server "private" uses scope "user"');
   });
@@ -74,7 +75,7 @@ describe("codex plugin skills + mcp", () => {
   it("creates the Codex Plugin marker when no manifest is supplied", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-codex-plugin-manifest-"));
     roots.push(root);
-    const changes = await write({}, { projectRoot: root, artifactKind: "plugin" });
+    const changes = await write({}, { scope: "project", artifactRoot: root, artifactKind: "plugin" });
     applyChangesOrThrow(root, changes);
     expect(JSON.parse(fs.readFileSync(path.join(root, ".codex-plugin", "plugin.json"), "utf8"))).toEqual({
       name: "jue-plugin",
@@ -89,7 +90,8 @@ describe("codex plugin skills + mcp", () => {
     const changes = await write(
       {},
       {
-        projectRoot: root,
+        scope: "project",
+        artifactRoot: root,
         artifactKind: "plugin",
         pluginManifest: { name: "minimal", version: "0.1.0" },
       },

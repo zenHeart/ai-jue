@@ -8,8 +8,14 @@ export default defineExtension({
 });
 ```
 
+默认导出是 Extension 唯一运行时入口。包入口保持单一默认导出，`read`、`write`、
+`confirm` 和能力元数据均属于返回的 Adapter 对象。`jue apply` 加载
+`ai-jue-adapter-*` 包时要求该 Extension 恰好包含一个 Adapter。
+
 入口模块在导入阶段不得读写文件、联网、执行进程或修改全局状态。npm
-`peerDependencies` 声明兼容的 Jue 版本，`exports` 声明入口；Jue 不增加包字段。
+`peerDependencies` 声明消费者兼容的 `ai-jue-core` 版本，`devDependencies`
+以相同的有界版本提供本地构建依赖，`exports` 声明入口。Adapter 不把
+`ai-jue-core` 放入运行时 `dependencies`，避免安装第二份 Core。
 
 ## `defineExtension`
 
@@ -32,6 +38,7 @@ Extension 自身的名称、版本、入口和兼容版本直接取 npm `package
 interface Adapter {
   id: string;
   capabilities: CapabilitySupport;
+  supportedScopes?: readonly ("project" | "user")[];
 
   read(context: ReadContext): Promise<CanonicalDocument>;
   write(
@@ -43,14 +50,41 @@ interface Adapter {
     context: ConfirmContext
   ): Promise<Confirmation>;
 }
+
+interface ArtifactTargetContext {
+  artifactRoot: string;
+  scope: "project" | "user";
+  artifactKind?: string;
+}
+
+interface ReadContext extends ArtifactTargetContext {}
+
+interface WriteContext extends ArtifactTargetContext {
+  toolsConfig?: Record<string, unknown>;
+  pluginManifest?: {
+    name: string;
+    version: string;
+    description?: string;
+    author?: { name: string; email?: string; url?: string };
+    variables?: Record<string, unknown>;
+  };
+}
+
+interface ConfirmContext extends ArtifactTargetContext {}
 ```
 
 | 成员 | 约束 |
 | --- | --- |
 | `capabilities` | 明确支持、降级和不支持的 Canonical Capability |
+| `supportedScopes` | 可安全映射的 apply 根；缺省为 `["project"]`，支持额外根时才声明 |
 | `read` | 只读；Agent 原生配置转换为 Canonical DSL |
 | `write` | 只读；根据 Canonical DSL 和现状返回精确 Artifact 差异 |
 | `confirm` | 通过目标 Agent 的解析器、CLI 或真实读取路径确认结果 |
+
+`ArtifactTargetContext` 是 Core 解析、校验后传给 Adapter 的唯一目标环境。
+`read`、`write` 与 `confirm` 接收相同的必填 `scope` 和 `artifactRoot`；Adapter
+不得重新缺省 scope 或维护第二个根字段。`toolsConfig` 与 `pluginManifest` 保持
+target-private，只用于当前 Artifact 转换。
 
 Core 校验并执行经过批准的 `ArtifactChange`。Extension 不获得通用写文件、安装、
 联网或启动进程的执行回调；需要副作用的 Artifact 必须通过 Core 支持的 kind 和
@@ -58,6 +92,10 @@ Core 校验并执行经过批准的 `ArtifactChange`。Extension 不获得通用
 
 `write` 必须保留同一目标中未由 Jue 管理的合法字段。`read(write(Canonical))` 对
 声明支持的语义必须往返一致。跨 Agent 时不得携带目标私有字段。
+
+Core 是 scope 缺省和授权的唯一所有者。新增 scope 只修改 Core 的公共类型、校验
+和明确支持该 scope 的 Adapter；project-only Adapter 保持省略
+`supportedScopes`，但 Adapter 方法仍接收 Core 已解析的 `scope: "project"`。
 
 ## `ArtifactChange`
 
@@ -86,7 +124,7 @@ interface ArtifactChange {
 `null`；为 `delete` 时 `afterHash` 必须为 `null`；为 `update` 时两者都必须存在。
 `content` 是 Core 实际写入的字节：`kind` 为 `create`/`update` 时必须存在且其
 哈希必须等于 `afterHash`；为 `delete` 时必须省略。`path` 必须是安全的项目
-相对路径。
+相对于当前 `artifactRoot` 的安全路径。
 
 ## 结果和错误
 

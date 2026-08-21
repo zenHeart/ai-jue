@@ -1,16 +1,23 @@
 {
   "name": "ai-jue-adapter-claude",
-  "version": "1.4.1",
+  "version": "2.0.0",
   "description": "Adapter for generating Claude AI configurations.",
   "main": "dist/index.js",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc"
   },
-  "dependencies": {
-    "ai-jue-core": "*"
+  "devDependencies": {
+    "ai-jue-core": "^2.0.0"
   },
   "peerDependencies": {
-    "ai-jue-core": "*"
+    "ai-jue-core": "^2.0.0"
   },
   "author": "AI-Jue Team <contact@ai-jue.dev>",
   "license": "MIT",

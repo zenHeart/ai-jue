@@ -2,9 +2,21 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import fs from 'fs';
-import { generate } from '../src/index';
+import { applyChangesOrThrow, toCanonicalDocument } from 'ai-jue-core';
+import extension from '../src/index';
 
 const TEST_DIR = path.join(__dirname, 'temp_output');
+
+async function applyProject(config: any, outputDir: string): Promise<void> {
+  const adapter = extension.adapters[0];
+  const changes = await adapter.write(toCanonicalDocument(config), {
+    artifactRoot: outputDir,
+    scope: 'project',
+    artifactKind: 'project',
+    toolsConfig: config?.tools?.cursor,
+  } as any);
+  applyChangesOrThrow(outputDir, changes);
+}
 
 describe('ai-jue-adapter-cursor', () => {
   beforeEach(() => {
@@ -27,7 +39,7 @@ describe('ai-jue-adapter-cursor', () => {
       }
     };
 
-    await generate(config, TEST_DIR);
+    await applyProject(config, TEST_DIR);
 
     const agentsPath = path.join(TEST_DIR, 'AGENTS.md');
     expect(fs.existsSync(agentsPath)).toBe(true);
@@ -47,7 +59,7 @@ describe('ai-jue-adapter-cursor', () => {
       }
     };
 
-    await generate(config, TEST_DIR);
+    await applyProject(config, TEST_DIR);
 
     const rulesPath = path.join(TEST_DIR, '.cursor', 'rules', 'style.mdc');
     expect(fs.existsSync(rulesPath)).toBe(true);
@@ -77,7 +89,7 @@ describe('ai-jue-adapter-cursor', () => {
       },
     };
 
-    await generate(config, TEST_DIR);
+    await applyProject(config, TEST_DIR);
     expect(fs.existsSync(path.join(TEST_DIR, '.cursor', 'commands', 'test.md'))).toBe(true);
     const skill = fs.readFileSync(path.join(TEST_DIR, '.cursor', 'skills', 'debug', 'SKILL.md'), 'utf8');
     expect(skill).toMatch(/^---\n/);
@@ -92,7 +104,7 @@ describe('ai-jue-adapter-cursor', () => {
   });
 
   it('should preserve structured hook fields from canonical input', async () => {
-    await generate(
+    await applyProject(
       {
         hooks: {
           PostToolUse: {
@@ -116,7 +128,7 @@ describe('ai-jue-adapter-cursor', () => {
   });
 
   it('should not generate hooks.json when hooks are empty', async () => {
-    await generate(
+    await applyProject(
       {
         hooks: {},
       },
@@ -141,7 +153,7 @@ describe('ai-jue-adapter-cursor', () => {
       }
     };
 
-    await generate(config, TEST_DIR);
+    await applyProject(config, TEST_DIR);
 
     const mcpPath = path.join(TEST_DIR, '.cursor', 'mcp.json');
     expect(fs.existsSync(mcpPath)).toBe(true);
@@ -155,7 +167,7 @@ describe('ai-jue-adapter-cursor', () => {
   });
 
   it('should map tools.cursor to .cursor/settings.json', async () => {
-    await generate(
+    await applyProject(
       {
         tools: {
           cursor: {
@@ -177,14 +189,14 @@ describe('ai-jue-adapter-cursor', () => {
     const userContent = 'User Custom Content';
 
     // Initial run
-    await generate({ context: { global: 'initial' } }, TEST_DIR);
+    await applyProject({ context: { global: 'initial' } }, TEST_DIR);
 
     // Simulate user appending content
     const initialContent = fs.readFileSync(rulesPath, 'utf8');
     fs.writeFileSync(rulesPath, initialContent + '\n' + userContent);
 
     // Second run
-    await generate({ context: { global: 'updated' } }, TEST_DIR);
+    await applyProject({ context: { global: 'updated' } }, TEST_DIR);
 
     const finalContent = fs.readFileSync(rulesPath, 'utf8');
     expect(finalContent).toContain('updated');
@@ -194,7 +206,7 @@ describe('ai-jue-adapter-cursor', () => {
 
   describe('Ignore Files', () => {
     it('should generate .cursorignore from tools.cursor.ignore', async () => {
-      await generate(
+      await applyProject(
         {
           tools: {
             cursor: {
@@ -214,7 +226,7 @@ describe('ai-jue-adapter-cursor', () => {
     });
 
     it('should generate .cursorindexingignore from tools.cursor.indexingIgnore', async () => {
-      await generate(
+      await applyProject(
         {
           tools: {
             cursor: {
@@ -234,7 +246,7 @@ describe('ai-jue-adapter-cursor', () => {
     });
 
     it('should not generate ignore files when not configured', async () => {
-      await generate(
+      await applyProject(
         {
           tools: {
             cursor: {
@@ -252,7 +264,7 @@ describe('ai-jue-adapter-cursor', () => {
 
   describe('Advanced Hooks', () => {
     it('should support complex hook format with matcher, async, timeout', async () => {
-      await generate(
+      await applyProject(
         {
           hooks: {
             sessionStart: './scripts/init.sh',
@@ -286,7 +298,7 @@ describe('ai-jue-adapter-cursor', () => {
     });
 
     it('should skip hooks with empty script in complex format', async () => {
-      await generate(
+      await applyProject(
         {
           hooks: {
             validHook: './valid.sh',
@@ -309,7 +321,7 @@ describe('ai-jue-adapter-cursor', () => {
 
   describe('Agents', () => {
     it('should generate agents with skills references', async () => {
-      await generate(
+      await applyProject(
         {
           agents: {
             reviewer: {
@@ -332,7 +344,7 @@ describe('ai-jue-adapter-cursor', () => {
     });
 
     it('should generate agents without skills', async () => {
-      await generate(
+      await applyProject(
         {
           agents: {
             helper: {
@@ -355,7 +367,7 @@ describe('ai-jue-adapter-cursor', () => {
 
   describe('Settings Exclusion', () => {
     it('should exclude ignore fields from settings.json', async () => {
-      await generate(
+      await applyProject(
         {
           tools: {
             cursor: {

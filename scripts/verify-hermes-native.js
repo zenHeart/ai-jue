@@ -41,21 +41,21 @@ async function main() {
     fs.cpSync(src, workDir, { recursive: true });
 
     console.log("[1/3] read() -> Canonical");
-    const canonical = await read({ projectRoot: workDir });
+    const canonical = await read({ scope: "project", artifactRoot: workDir });
     console.log("      read() returned:", JSON.stringify(canonical, null, 2).slice(0, 600));
 
     const withContext = { ...canonical, context: { global: "Jue Hermes native verify context." } };
     console.log("[2/3] write() -> applyChangesOrThrow");
-    const changes = await write(withContext, { projectRoot: workDir });
+    const changes = await write(withContext, { scope: "project", artifactRoot: workDir });
     applyChangesOrThrow(workDir, changes);
 
-    const reRead = await read({ projectRoot: workDir });
+    const reRead = await read({ scope: "project", artifactRoot: workDir });
     if (JSON.stringify(reRead) !== JSON.stringify(withContext)) {
       throw new Error("read(write(read(N))) round-trip mismatch");
     }
 
     console.log("[3/3] confirm() -> real 'tirith config validate'");
-    const confirmation = await confirm([], { projectRoot: workDir });
+    const confirmation = await confirm([], { scope: "project", artifactRoot: workDir });
     console.log("      confirm() returned:", JSON.stringify(confirmation));
     if (confirmation.status === "failed") {
       throw new Error("tirith config validate reported 'failed' evidence=" + confirmation.evidence);

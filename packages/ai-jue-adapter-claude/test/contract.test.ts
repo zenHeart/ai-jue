@@ -1,6 +1,7 @@
 import fs from "fs";
 import path from "path";
 import { execFileSync } from "child_process";
+import { describe, expect, it } from "vitest";
 import { defineAdapterContractSuite } from "ai-jue-core/testkit";
 import type { CanonicalDocument } from "ai-jue-core";
 import { hasCli } from "../../ai-jue-core/test/has-cli";
@@ -68,6 +69,7 @@ function claudePluginValidateStrict(root: string): void {
 }
 
 defineAdapterContractSuite({
+  testApi: { describe, expect, it },
   adapter: { target: "claude-code", read, write },
   syntheticCanonical: SYNTHETIC_CANONICAL,
   unmanagedFieldCases: [
@@ -127,6 +129,7 @@ defineAdapterContractSuite({
         },
       },
       confirmNatively: claudePluginValidateStrict,
+      nativeConfirmationTimeoutMs: 30_000,
     },
   ],
 });

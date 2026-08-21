@@ -1,3 +1,15 @@
+## [0.3.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-codex@v0.2.1...ai-jue-adapter-codex@v0.3.0) (2026-08-21)
+
+### Breaking changes
+
+- The default Extension export is the only package entry and requires
+  `ai-jue-core@^2.0.0` with an explicit project target context.
+
+### Bug fixes
+
+- Ships `@iarna/toml` as a runtime dependency so isolated consumers can load
+  the packed Adapter.
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-codex@v0.2.0...ai-jue-adapter-codex@1.0.0) (2026-08-06)
 
 

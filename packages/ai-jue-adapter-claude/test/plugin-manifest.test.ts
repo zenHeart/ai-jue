@@ -31,7 +31,7 @@ const CANONICAL: CanonicalDocument = {
 describe("write() with a Plugin manifest", () => {
   it("omits .claude-plugin/plugin.json when no manifest is supplied (manifest-optional Plugin)", async () => {
     const root = tempDir();
-    applyChangesOrThrow(root, await write(CANONICAL, { projectRoot: root, artifactKind: "plugin" }));
+    applyChangesOrThrow(root, await write(CANONICAL, { scope: "project", artifactRoot: root, artifactKind: "plugin" }));
 
     expect(fs.existsSync(path.join(root, ".claude-plugin", "plugin.json"))).toBe(false);
     expect(fs.existsSync(path.join(root, "skills", "demo", "SKILL.md"))).toBe(true);
@@ -40,7 +40,8 @@ describe("write() with a Plugin manifest", () => {
   it("writes a Plugin manifest when supplied", async () => {
     const root = tempDir();
     const changes = await write(CANONICAL, {
-      projectRoot: root,
+      scope: "project",
+      artifactRoot: root,
       artifactKind: "plugin",
       pluginManifest: {
         name: "jue-write-test-plugin",
@@ -64,7 +65,8 @@ describe("write() with a Plugin manifest", () => {
     async () => {
       const root = tempDir();
       const changes = await write(CANONICAL, {
-        projectRoot: root,
+        scope: "project",
+        artifactRoot: root,
         artifactKind: "plugin",
         pluginManifest: {
           name: "jue-write-test-plugin",

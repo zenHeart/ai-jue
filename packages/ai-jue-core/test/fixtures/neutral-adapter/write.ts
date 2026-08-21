@@ -1,15 +1,12 @@
 import { writeCapabilities } from "../../../src/capability-mapping";
 import type { ArtifactChange } from "../../../src/artifact-change";
 import type { CanonicalDocument } from "../../../src/canonical-document";
+import type { WriteContext } from "../../../src/extension-host";
 import { agents, commands, context, hooks, mcp, rules, skills } from "./capabilities";
-
-export interface WriteContext {
-  projectRoot: string;
-}
 
 const TARGET = "neutral-agent";
 
-export async function write(canonical: CanonicalDocument, { projectRoot }: WriteContext): Promise<ArtifactChange[]> {
+export async function write(canonical: CanonicalDocument, { artifactRoot }: WriteContext): Promise<ArtifactChange[]> {
   return writeCapabilities(
     {
       context: context(),
@@ -21,7 +18,7 @@ export async function write(canonical: CanonicalDocument, { projectRoot }: Write
       mcp: mcp(),
     },
     canonical as Record<string, unknown>,
-    projectRoot,
+    artifactRoot,
     TARGET,
   );
 }

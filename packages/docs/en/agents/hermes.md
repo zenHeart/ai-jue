@@ -41,7 +41,7 @@ recorded by the Adapter documentation.
 | `commands` / `agents` | Honestly `degraded`: the like-named block in `config.yaml` is global runtime policy; read/write are no-ops |
 | target-specific settings | `tools.hermes` |
 | Artifact | `workspace` (skills+mcp); `skill-plugin` (`plugin.yaml` + register_skill-only `__init__.py` + flat `skills/`; mcp stays on workspace) |
-| Confirm | Workspace: `tirith config validate`; skill-plugin: structural evidence from `plugin.yaml`, the `register_skill` initializer, and skill roots |
+| Confirm | Workspace: run `tirith config validate` when `tirith` is available, otherwise return `unconfirmed`; skill-plugin: structural evidence from `plugin.yaml`, the `register_skill` initializer, and skill roots |
 
 ## 3. Conversion boundary
 
@@ -64,4 +64,4 @@ recorded by the Adapter documentation.
 | Read | Implemented | `packages/ai-jue-adapter-hermes/src/read.ts` |
 | Write | Implemented | `packages/ai-jue-adapter-hermes/src/write.ts`, driven by the Core executor |
 | Artifact | Implemented | `workspace` + thin `skill-plugin` (skills / `plugin.yaml` / `register_skill`; MCP stays on workspace); runtime extensions follow the official Hermes surface |
-| Confirm | Implemented | Workspace: real `tirith config validate`; skill-plugin: structural evidence from the generated plugin surface |
+| Confirm | Implemented | Workspace: real `tirith config validate` when available and explicit `unconfirmed` when the command is absent; skill-plugin: structural evidence from the generated plugin surface |

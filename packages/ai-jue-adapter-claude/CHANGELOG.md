@@ -1,3 +1,16 @@
+## [2.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v1.4.1...ai-jue-adapter-claude@v2.0.0) (2026-08-21)
+
+### Breaking changes
+
+- The default Extension export is the only package entry and requires
+  `ai-jue-core@^2.0.0`.
+- Adapter methods require the resolved target context.
+
+### Features
+
+- Adds verified Claude user mappings for context, rules, commands, skills,
+  agents, settings/hooks, and MCP without relying on `cwd = home`.
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v1.4.0...ai-jue-adapter-claude@1.0.0) (2026-08-06)
 
 
@@ -101,6 +114,5 @@
 ### Features
 
 * init with ai ([24aedc9](https://github.com/zenHeart/ai-jue/commit/24aedc9415ff234ff9d46a98382942c8a64e7c72))
-
 
 

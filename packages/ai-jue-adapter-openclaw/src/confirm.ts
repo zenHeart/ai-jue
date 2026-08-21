@@ -2,15 +2,14 @@ import { execFileSync } from "child_process";
 import fs from "fs";
 import os from "os";
 import path from "path";
-import type { ArtifactResult, Confirmation } from "ai-jue-core";
+import type { ArtifactResult, Confirmation, ConfirmContext as CoreConfirmContext } from "ai-jue-core";
 import {
   detectArtifactKind,
   isCompatibleBundleLayout,
   type OpenClawArtifactKind,
 } from "./capabilities/layout";
 
-export interface ConfirmContext {
-  projectRoot: string;
+export interface ConfirmContext extends CoreConfirmContext {
   artifactKind?: OpenClawArtifactKind;
   /**
    * Isolated OpenClaw profile name (defaults to a per-process unique
@@ -20,6 +19,8 @@ export interface ConfirmContext {
    * never the operator's real `~/.openclaw/`.
    */
   profile?: string;
+  /** Optional isolated home supplied by a caller; defaults to a temporary directory. */
+  verificationHome?: string;
 }
 
 const TARGET = "openclaw";
@@ -31,6 +32,27 @@ function profileName(context: ConfirmContext): string {
     throw new Error(`OpenClaw confirmation profile must be a safe name: ${value}`);
   }
   return value;
+}
+
+function verificationEnvironment(context: ConfirmContext): {
+  root: string;
+  owned: boolean;
+  env: NodeJS.ProcessEnv;
+} {
+  const owned = context.verificationHome === undefined;
+  const root = owned
+    ? fs.mkdtempSync(path.join(os.tmpdir(), "jue-openclaw-confirm-home-"))
+    : path.resolve(context.verificationHome!);
+  if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
+    throw new Error(`OpenClaw verification home must be an existing directory: ${root}`);
+  }
+  const env: NodeJS.ProcessEnv = { ...process.env, HOME: root, USERPROFILE: root };
+  delete env.OPENCLAW_CONFIG_PATH;
+  return { root, owned, env };
+}
+
+function cleanupVerificationHome(root: string, owned: boolean): void {
+  if (owned) fs.rmSync(root, { recursive: true, force: true });
 }
 
 function bundleMarker(root: string): { format: string; manifest: string } | undefined {
@@ -93,7 +115,7 @@ function pluginIdFromList(value: unknown, manifestName: string, root: string): s
 async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirmation> {
   let structure: string;
   try {
-    structure = validateBundleStructure(context.projectRoot);
+    structure = validateBundleStructure(context.artifactRoot);
   } catch (error) {
     return {
       target: TARGET,
@@ -102,7 +124,7 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
     };
   }
 
-  const marker = bundleMarker(context.projectRoot)!;
+  const marker = bundleMarker(context.artifactRoot)!;
   let manifestName = "";
   try {
     const manifest = JSON.parse(fs.readFileSync(marker.manifest, "utf8")) as { name?: unknown };
@@ -128,7 +150,17 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
       evidence: error instanceof Error ? error.message : String(error),
     };
   }
-  const profileDir = path.join(os.homedir(), `.openclaw-${profile}`);
+  let verification: ReturnType<typeof verificationEnvironment>;
+  try {
+    verification = verificationEnvironment(context);
+  } catch (error) {
+    return {
+      target: TARGET,
+      status: "failed",
+      evidence: error instanceof Error ? error.message : String(error),
+    };
+  }
+  const profileDir = path.join(verification.root, `.openclaw-${profile}`);
   let createdProfile = false;
   try {
     if (fs.existsSync(profileDir)) {
@@ -142,13 +174,13 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
     createdProfile = true;
     const installOutput = execFileSync(
       "openclaw",
-      ["--profile", profile, "plugins", "install", context.projectRoot],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      ["--profile", profile, "plugins", "install", context.artifactRoot],
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: verification.env },
     );
     const listOutput = execFileSync(
       "openclaw",
       ["--profile", profile, "plugins", "list", "--json"],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: verification.env },
     );
     let listJson: unknown;
     try {
@@ -160,11 +192,11 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
         evidence: `openclaw plugins list --json returned non-JSON: ${listOutput.slice(0, 500)}`,
       };
     }
-    const pluginId = pluginIdFromList(listJson, manifestName, context.projectRoot) ?? manifestName;
+    const pluginId = pluginIdFromList(listJson, manifestName, context.artifactRoot) ?? manifestName;
     const inspectOutput = execFileSync(
       "openclaw",
       ["--profile", profile, "plugins", "inspect", pluginId],
-      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] },
+      { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: verification.env },
     );
     const evidence = `${installOutput}\n${listOutput}\n${inspectOutput}`;
     if (
@@ -203,6 +235,7 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
     };
   } finally {
     if (createdProfile) fs.rmSync(profileDir, { recursive: true, force: true });
+    cleanupVerificationHome(verification.root, verification.owned);
   }
 }
 
@@ -220,11 +253,11 @@ export async function confirm(
   _results: ArtifactResult[],
   context: ConfirmContext,
 ): Promise<Confirmation> {
-  if ((context.artifactKind ?? detectArtifactKind(context.projectRoot)) === "compatible-bundle") {
+  if ((context.artifactKind ?? detectArtifactKind(context.artifactRoot)) === "compatible-bundle") {
     return confirmCompatibleBundle(context);
   }
 
-  const fixtureConfig = path.join(context.projectRoot, "openclaw.json");
+  const fixtureConfig = path.join(context.artifactRoot, "openclaw.json");
   if (!fs.existsSync(fixtureConfig)) {
     return {
       target: TARGET,
@@ -243,7 +276,17 @@ export async function confirm(
       evidence: error instanceof Error ? error.message : String(error),
     };
   }
-  const profileDir = path.join(os.homedir(), `.openclaw-${profile}`);
+  let verification: ReturnType<typeof verificationEnvironment>;
+  try {
+    verification = verificationEnvironment(context);
+  } catch (error) {
+    return {
+      target: TARGET,
+      status: "failed",
+      evidence: error instanceof Error ? error.message : String(error),
+    };
+  }
+  const profileDir = path.join(verification.root, `.openclaw-${profile}`);
   let createdProfile = false;
   const profileConfig = path.join(profileDir, "openclaw.json");
 
@@ -270,6 +313,7 @@ export async function confirm(
       {
         encoding: "utf8",
         stdio: ["ignore", "pipe", "pipe"],
+        env: verification.env,
       },
     );
   } catch (error) {
@@ -293,6 +337,7 @@ export async function confirm(
         // ignore
       }
     }
+    cleanupVerificationHome(verification.root, verification.owned);
   }
 
   let parsed: { valid?: boolean; issues?: unknown };

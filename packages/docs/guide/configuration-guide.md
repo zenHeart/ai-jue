@@ -31,11 +31,8 @@ export default {
 
 ## 2. 自动选择
 
-`artifact: "auto"` 按以下顺序：
-
-1. 已存在且 inspect 成功的 Artifact；
-2. Adapter 合同默认 Artifact；
-3. 仍不唯一则 apply 在写入前失败并列出候选。
+`artifact: "auto"` 使用 Adapter 的稳定默认 Artifact。Plugin、compatible-bundle
+或 skill-plugin 等非默认形态通过 `artifact` 或 `--artifact` 显式选择。
 
 自动发现不能隐式执行 install、enable、update、reload 或用户级写入。
 

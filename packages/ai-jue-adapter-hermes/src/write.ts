@@ -1,18 +1,16 @@
 import { writeCapabilities } from "ai-jue-core";
-import type { ArtifactChange, CanonicalDocument } from "ai-jue-core";
+import type {
+  ArtifactChange,
+  CanonicalDocument,
+  WriteContext as CoreWriteContext,
+} from "ai-jue-core";
 import { context } from "./capabilities/context";
 import { cron } from "./capabilities/cron";
 import { mcp } from "./capabilities/mcp";
 import { writeSkillPlugin } from "./capabilities/skill-plugin";
 import { skills } from "./capabilities/skills";
 
-export interface WriteContext {
-  projectRoot: string;
-  /** Defaults to `"workspace"`. `skill-plugin` emits a thin installable skill pack. */
-  artifactKind?: string;
-  toolsConfig?: Record<string, unknown>;
-  pluginManifest?: { name: string; version: string; description?: string };
-}
+export type WriteContext = CoreWriteContext;
 
 const TARGET = "hermes";
 
@@ -28,7 +26,7 @@ export async function write(
   const kind = writeContext.artifactKind ?? "workspace";
 
   if (kind === "skill-plugin" || kind === "plugin") {
-    return writeSkillPlugin(canonical, writeContext.projectRoot, writeContext.pluginManifest);
+    return writeSkillPlugin(canonical, writeContext.artifactRoot, writeContext.pluginManifest);
   }
   if (kind === "compatible-bundle") {
     throw new Error(
@@ -53,14 +51,14 @@ export async function write(
       cron: cron(),
     },
     canonical as unknown as Record<string, unknown>,
-    writeContext.projectRoot,
+    writeContext.artifactRoot,
     TARGET,
   );
 
   if (canonical.context?.global) {
     result.push(
       ...context().write(
-        writeContext.projectRoot,
+        writeContext.artifactRoot,
         { global: (canonical.context as { global?: string }).global ?? "" },
         TARGET,
       ),

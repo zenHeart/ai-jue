@@ -38,7 +38,7 @@ export interface ExtensionDiagnostics {
 
 export interface ApplyCheckInput {
   canonical: CanonicalDocument;
-  projectRoot: string;
+  artifactRoot: string;
 }
 
 /**
@@ -77,9 +77,10 @@ export async function runExtensionDiagnostics(
   if (options.applyCheck) {
     const adapter = definition.adapters[0];
     const changes = await adapter.write(options.applyCheck.canonical, {
-      projectRoot: options.applyCheck.projectRoot,
+      artifactRoot: options.applyCheck.artifactRoot,
+      scope: "project",
     });
-    const result = checkExecution(options.applyCheck.projectRoot, changes);
+    const result = checkExecution(options.applyCheck.artifactRoot, changes);
     diagnostics.applyReadiness = {
       adapterId: adapter.id,
       status: result.status,
@@ -117,7 +118,7 @@ export const handler = async (argv: Arguments) => {
     try {
       const userConfig: MergedConfig = await loadConfig();
       const finalConfig = await resolveFinalConfig(userConfig);
-      applyCheck = { canonical: toCanonicalDocument(finalConfig), projectRoot: process.cwd() };
+      applyCheck = { canonical: toCanonicalDocument(finalConfig), artifactRoot: process.cwd() };
     } catch {
       // No project config in cwd — diagnostics still report Extension/Adapter facts alone.
     }

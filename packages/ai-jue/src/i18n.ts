@@ -27,6 +27,10 @@ const resources = {
             "Run interactive initialization now? (Y/n)",
           no_config_non_interactive:
             "Non-interactive mode cannot run initialization. Please run `jue init` first or create ai.config.js.",
+          read_only_requires_config:
+            "Dry-run and check are read-only. Run `jue init` explicitly before previewing or checking.",
+          read_only_missing_adapter:
+            "Read-only apply will not install missing Adapter {{packageName}}. Install it explicitly first.",
           init_declined:
             "Initialization skipped. Apply is not executed.",
           init_not_completed:
@@ -41,6 +45,10 @@ const resources = {
             "No adapters selected. Use --adapter to choose adapters, or --all/-a to run all.",
           auto_detected_adapters:
             "No explicit adapter selected. Auto-detected {{count}} adapter(s): {{names}}",
+          configured_adapters:
+            "No explicit adapter selected. Using {{count}} configured target(s): {{names}}",
+          user_scope_requires_selection:
+            "User scope requires --adapter, --all, or an enabled targets entry; project footprints are not used as user authorization.",
           manual_selected_adapters:
             "Manually selected {{count}} adapter(s): {{names}}",
           manual_selection_intro:
@@ -62,21 +70,18 @@ const resources = {
           install_adapter_failed:
             "Failed to install adapter {{packageName}}. Please install it manually and rerun apply.",
           running_adapter: "Running adapter: {{name}}",
-          adapter_success: "Adapter {{name}} finished successfully",
-          adapter_no_generate:
-            'Adapter {{name}} does not export a "generate" function.',
           adapter_failed: "Error running adapter {{name}}: {{message}}",
           dry_run_describe:
-            "Preview the Artifact changes without writing anything",
+            "Preview Artifact changes without mutating config, lock, or Artifact roots",
           check_describe:
             "Read-only: exit non-zero if changes, drift, or unauthorized actions would be needed",
           artifact_describe:
             "Artifact shape: project|workspace|plugin|compatible-bundle|skill-plugin (alias of --artifact-kind). Defaults keep today's project/workspace apply. OpenClaw plugin means a Claude/Codex-compatible bundle; Hermes plugin means skill-plugin.",
-          artifact_kind_resolved: "{{name}}: artifact={{kind}}",
-          core_unsupported:
-            "Adapter {{name}} does not support --dry-run/--check yet (no write() export). Skipped.",
+          scope_describe:
+            "Apply boundary: project or user. CLI overrides targets.<adapter>.scope; default is project.",
           core: {
-            pending: "{{name}}: {{count}} change(s) would be written:",
+            planned: "{{name}}: {{count}} change(s) would be written:",
+            applied: "{{name}}: applied {{count}} change(s):",
             conflict:
               "{{name}}: blocked — on-disk state no longer matches what was last applied:",
             unauthorized:
@@ -84,6 +89,10 @@ const resources = {
             no_change: "{{name}}: already up to date, no changes needed",
             rolled_back:
               "{{name}}: apply failed partway and was rolled back: {{message}}",
+            confirmed: "{{name}}: target confirmed through the Adapter's native path",
+            unconfirmed:
+              "{{name}}: target-native confirmation is unavailable",
+            confirm_failed: "{{name}}: target-native confirmation failed",
           },
           loaded_config: "Loaded user config.",
           finished: "✨ Apply command finished.",
@@ -246,6 +255,10 @@ const resources = {
             "是否现在执行交互式初始化？(Y/n)",
           no_config_non_interactive:
             "当前为非交互模式，无法自动初始化。请先执行 `jue init` 或创建 ai.config.js。",
+          read_only_requires_config:
+            "dry-run 与 check 为只读模式。请先显式执行 `jue init`，再运行预览或检查。",
+          read_only_missing_adapter:
+            "只读 apply 不会安装缺失的 Adapter {{packageName}}。请先显式安装。",
           init_declined:
             "已跳过初始化，本次不会执行 apply。",
           init_not_completed:
@@ -260,6 +273,10 @@ const resources = {
             "未选择适配器。请使用 --adapter 指定，或使用 --all/-a 执行全部。",
           auto_detected_adapters:
             "未显式指定适配器，已自动识别 {{count}} 个适配器: {{names}}",
+          configured_adapters:
+            "未显式指定适配器，使用配置中的 {{count}} 个 target：{{names}}",
+          user_scope_requires_selection:
+            "用户级作用域必须通过 --adapter、--all 或启用的 targets 条目明确选择；项目痕迹不视为用户目录授权。",
           manual_selected_adapters:
             "已手动选择 {{count}} 个适配器: {{names}}",
           manual_selection_intro:
@@ -281,24 +298,25 @@ const resources = {
           install_adapter_failed:
             "适配器 {{packageName}} 安装失败，请手动安装后重新执行 apply。",
           running_adapter: "正在运行适配器: {{name}}",
-          adapter_success: "适配器 {{name}} 成功完成",
-          adapter_no_generate: '适配器 {{name}} 未导出 "generate" 函数。',
           adapter_failed: "运行适配器 {{name}} 出错: {{message}}",
-          dry_run_describe: "预览将写入的 Artifact 变更，不实际写入任何内容",
+          dry_run_describe: "预览 Artifact 变更，不修改配置、lock 或 Artifact 根",
           check_describe:
             "只读检查：如需变更、存在漂移或存在未授权动作则以非零码退出",
           artifact_describe:
             "Artifact 形态：project|workspace|plugin|compatible-bundle|skill-plugin（--artifact-kind 别名）。默认保持现有 project/workspace 行为。OpenClaw 下 plugin 表示 Claude/Codex 兼容 bundle；Hermes 下 plugin 表示 skill-plugin。",
-          artifact_kind_resolved: "{{name}}：artifact={{kind}}",
-          core_unsupported:
-            "适配器 {{name}} 尚未支持 --dry-run/--check（未导出 write()），已跳过。",
+          scope_describe:
+            "apply 边界：project 或 user。CLI 优先于 targets.<adapter>.scope；默认 project。",
           core: {
-            pending: "{{name}}：以下 {{count}} 项变更将被写入：",
+            planned: "{{name}}：以下 {{count}} 项变更将被写入：",
+            applied: "{{name}}：已应用以下 {{count}} 项变更：",
             conflict:
               "{{name}}：已阻塞——磁盘上的内容与上次应用后的状态不一致：",
             unauthorized: "{{name}}：已阻塞——以下变更需要授权：",
             no_change: "{{name}}：已是最新状态，无需变更",
             rolled_back: "{{name}}：apply 执行到一半失败，已回滚：{{message}}",
+            confirmed: "{{name}}：已通过 Adapter 的目标原生路径确认",
+            unconfirmed: "{{name}}：目标原生确认不可用",
+            confirm_failed: "{{name}}：目标原生确认失败",
           },
           loaded_config: "已加载用户配置。",
           finished: "✨ Apply 命令执行完毕。",

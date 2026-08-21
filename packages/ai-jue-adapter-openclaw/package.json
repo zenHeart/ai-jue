@@ -1,20 +1,26 @@
 {
   "name": "ai-jue-adapter-openclaw",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Adapter for generating OpenClaw configurations.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.js",
+      "default": "./dist/index.js"
+    }
+  },
   "scripts": {
     "build": "tsc"
   },
   "dependencies": {
-    "ai-jue-core": "*",
     "js-yaml": "^4.3.1"
   },
   "peerDependencies": {
-    "ai-jue-adapter-claude": "*",
-    "ai-jue-adapter-codex": "*",
-    "ai-jue-core": "*"
+    "ai-jue-adapter-claude": "^2.0.0",
+    "ai-jue-adapter-codex": "^0.3.0",
+    "ai-jue-core": "^2.0.0"
   },
   "peerDependenciesMeta": {
     "ai-jue-adapter-claude": {
@@ -23,6 +29,11 @@
     "ai-jue-adapter-codex": {
       "optional": true
     }
+  },
+  "devDependencies": {
+    "ai-jue-adapter-claude": "^2.0.0",
+    "ai-jue-adapter-codex": "^0.3.0",
+    "ai-jue-core": "^2.0.0"
   },
   "author": "AI-Jue Team <contact@ai-jue.dev>",
   "license": "MIT",

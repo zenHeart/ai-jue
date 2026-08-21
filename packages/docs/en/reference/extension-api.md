@@ -8,9 +8,16 @@ export default defineExtension({
 });
 ```
 
+The default export is the Extension's only runtime entry. Package entries keep
+one default export; `read`, `write`, `confirm`, and capability metadata are
+members of the returned Adapter. `jue apply` requires an `ai-jue-adapter-*`
+package to contribute exactly one Adapter.
+
 Module import performs no file write, network access, process execution, or
-global mutation. npm `peerDependencies` declares compatible Jue versions and
-`exports` declares the entrypoint; Jue adds no package fields.
+global mutation. npm `peerDependencies` declares the consumer-compatible
+`ai-jue-core` version, while `devDependencies` repeats the same bounded range
+for local builds; `exports` declares the entrypoint. An Adapter does not put
+`ai-jue-core` in runtime `dependencies`, which would install a second Core.
 
 ## `defineExtension`
 
@@ -33,6 +40,7 @@ repeated. `adapter.id` is process-wide unique; conflicts fail.
 interface Adapter {
   id: string;
   capabilities: CapabilitySupport;
+  supportedScopes?: readonly ("project" | "user")[];
 
   read(context: ReadContext): Promise<CanonicalDocument>;
   write(
@@ -44,6 +52,27 @@ interface Adapter {
     context: ConfirmContext
   ): Promise<Confirmation>;
 }
+
+interface ArtifactTargetContext {
+  artifactRoot: string;
+  scope: "project" | "user";
+  artifactKind?: string;
+}
+
+interface ReadContext extends ArtifactTargetContext {}
+
+interface WriteContext extends ArtifactTargetContext {
+  toolsConfig?: Record<string, unknown>;
+  pluginManifest?: {
+    name: string;
+    version: string;
+    description?: string;
+    author?: { name: string; email?: string; url?: string };
+    variables?: Record<string, unknown>;
+  };
+}
+
+interface ConfirmContext extends ArtifactTargetContext {}
 ```
 
 `read` converts Agent-native config to the Canonical DSL. `write` computes exact
@@ -51,6 +80,18 @@ Artifact changes without mutating state. Core validates and executes approved
 changes. An Extension receives no general write, install, network, or process
 callback; side-effecting Artifacts use Core-supported kinds and approval
 policies. `confirm` uses the target Agent's parser, CLI, or real read path.
+
+`ArtifactTargetContext` is the only target environment Core passes after
+resolution and validation. `read`, `write`, and `confirm` receive the same
+required `scope` and `artifactRoot`; an Adapter does not default scope or keep a
+second root field. `toolsConfig` and `pluginManifest` remain target-private and
+apply only to the current Artifact conversion.
+
+`supportedScopes` defaults to `["project"]`; an Adapter declares it only when
+it safely maps an additional apply root. Core exclusively owns scope defaulting
+and authorization. A project-only Adapter omits `supportedScopes`, while its
+methods still receive Core's resolved `scope: "project"`. Adding a scope changes
+the Core type and validation once, then only the Adapters that support that scope.
 
 Same-target writes preserve valid unmanaged fields. Supported semantics satisfy
 `read(write(Canonical))` round trips. Target-private fields never cross Agents.
@@ -84,7 +125,7 @@ a batch of `ArtifactChange`s either all reach `applied` or all roll back to
 `delete`; both must be present when `kind` is `update`. `content` is the
 actual bytes Core writes: it must be present with a hash matching `afterHash`
 when `kind` is `create`/`update`, and must be omitted when `kind` is
-`delete`. `path` must be a safe project-relative path.
+`delete`. `path` must be safe and relative to the current `artifactRoot`.
 
 ## Results and errors
 

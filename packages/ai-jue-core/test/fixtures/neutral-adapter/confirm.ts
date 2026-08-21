@@ -1,8 +1,5 @@
 import type { ArtifactResult, Confirmation } from "../../../src/artifact-change";
-
-export interface ConfirmContext {
-  projectRoot: string;
-}
+import type { ConfirmContext } from "../../../src/extension-host";
 
 /**
  * There is no official CLI, validator, or runtime for this fictional Agent

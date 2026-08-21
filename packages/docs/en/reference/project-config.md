@@ -2,9 +2,9 @@
 
 > [!NOTE]
 > `targets.<adapter>` `artifact`, `enabled`, and `scope` values participate in
-> apply selection (with CLI `--artifact`). The Artifact execution path uses
-> project scope; local/user selections return an explicit
-> scope error before writing.
+> apply selection. `scope` is exactly `project | user`; CLI `--scope` wins over
+> target configuration, and the default is `project`. An Adapter must
+> explicitly declare `user` support before it can write under the user home.
 
 The only project configuration file is root `ai.config.js`. It selects Presets,
 Extensions, and Targets and supplies highest-priority project overrides.
@@ -15,10 +15,10 @@ Preset `package.json#ai` is a different container; see
 export default {
   presets: ["base", "team"],
   capabilities: {},
-  extensions: ["jue-extension-openclaw"],
+  extensions: ["ai-jue-adapter-openclaw"],
   targets: {
-    codex: { artifact: "auto" },
-    openclaw: { artifact: "compatible-bundle" }
+    claude: { artifact: "project", scope: "user" },
+    codex: { artifact: "auto", scope: "project" }
   },
   context: { global: "Project-specific constraints." },
   skills: {},
@@ -58,11 +58,16 @@ Unknown fields fail.
 | --- | --- | --- | --- |
 | `enabled` | `boolean` | `true` | `false` skips auto-discovery and `--all`; an explicit `--adapter` remains an explicit user selection |
 | `artifact` | `string \| "auto"` | `"auto"` | Declared by the Adapter |
-| `scope` | `"project" \| "local" \| "user"` | `"project"` | `project` uses the current Artifact root; local/user selections return a scope error before writing |
+| `scope` | `"project" \| "user"` | `"project"` | Select the project or user Artifact root; fail before writing when unsupported by the Adapter |
 
-`auto` first asks the Adapter to detect an existing Jue-managed Artifact, then
-uses the Adapter's unique default. The detection result stays in the Artifact
-conversion environment and never enters Canonical DSL.
+`auto` selects the Adapter's stable default Artifact. Select a non-default
+Artifact explicitly through `artifact` or `--artifact`; the selection stays in
+the Artifact conversion environment and never enters Canonical DSL.
+
+Config discovery and Artifact roots are independent. `scope: "user"` still
+loads Presets, Capabilities, and the lock from the current project, while Core
+authorizes the user home as the Artifact root. Plugin, compatible-bundle, and
+skill-plugin kinds cannot be combined with user scope.
 
 ## Extension loading
 

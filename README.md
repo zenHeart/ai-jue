@@ -116,6 +116,17 @@ npx jue apply --all
 ✓ AGENTS.md / .codex/*               — Codex CLI（project）
 ```
 
+从当前项目配置安装 Claude Code 用户级能力：
+
+```bash
+npx jue apply --adapter claude --scope user
+```
+
+配置仍从当前项目解析，产物写入 Claude Code 的用户原生路径（如
+`~/.claude/skills/`）；`--scope` 优先于 `targets.<adapter>.scope`，默认仍为
+`project`。目前只有 Claude Adapter 声明 user scope，其他内置 Adapter 在写入前
+返回明确错误。
+
 生成 **可分发 Plugin**（Claude / Codex / Cursor）：
 
 ```bash
@@ -284,6 +295,7 @@ npx jue apply --target codex  # 生成指定目标（目标合同，当前部分
 npx jue apply -a          # 生成全部已发现适配器（等同 --all）
 npx jue apply             # 未显式传参时，按 .cursor/.codex/.claude 等痕迹自动识别
 npx jue apply --adapter cursor --artifact plugin  # 生成 Cursor 可分发 Plugin
+npx jue apply --adapter claude --scope user # 安装 Claude 用户级能力
 npx jue apply --lang zh   # 运行时覆盖语言（等同 AI_JUE_LANG=zh）
 npx jue apply --all --watch  # 监听变化自动重新生成（显式适配器）
 npx jue apply --target codex --check # CI 校验、漂移和确认（Claude/Codex/Cursor/OpenClaw/Hermes 已实现）

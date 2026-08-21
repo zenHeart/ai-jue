@@ -2,8 +2,9 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { generate as generateClaude } from '../../ai-jue-adapter-claude/src/index';
-import { generate as generateCursor } from '../../ai-jue-adapter-cursor/src/index';
+import claudeExtension from '../../ai-jue-adapter-claude/src/index';
+import cursorExtension from '../../ai-jue-adapter-cursor/src/index';
+import { applyExtension } from './helpers/apply-extension';
 
 describe('adapter capability snapshot', () => {
   const outDir = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-capability-snapshot-'));
@@ -54,8 +55,8 @@ describe('adapter capability snapshot', () => {
     };
 
     await Promise.all([
-      generateClaude(config, outDir),
-      generateCursor(config, outDir),
+      applyExtension(claudeExtension, config, outDir),
+      applyExtension(cursorExtension, config, outDir),
     ]);
 
     const snapshotPayload = {

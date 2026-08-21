@@ -106,6 +106,10 @@ const zhDeveloperSidebar = [
         text: "RFC-0002 Plugin / Bundle Artifact 的 apply 合同",
         link: "/developer/rfcs/0002-plugin-artifact-apply",
       },
+      {
+        text: "RFC-0003 apply 作用域与目标根",
+        link: "/developer/rfcs/0003-apply-scope-target-root",
+      },
     ],
   },
 ];
@@ -229,6 +233,10 @@ const enDeveloperSidebar = [
       {
         text: "RFC-0002 Plugin Artifact apply",
         link: "/en/developer/rfcs/0002-plugin-artifact-apply",
+      },
+      {
+        text: "RFC-0003 Apply Scope and Target Root",
+        link: "/en/developer/rfcs/0003-apply-scope-target-root",
       },
     ],
   },

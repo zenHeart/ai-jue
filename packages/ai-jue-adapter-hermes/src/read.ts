@@ -1,13 +1,11 @@
 import { readCapabilities, toCanonicalDocument } from "ai-jue-core";
-import type { CanonicalDocument } from "ai-jue-core";
+import type { CanonicalDocument, ReadContext as CoreReadContext } from "ai-jue-core";
 import { context } from "./capabilities/context";
 import { cron } from "./capabilities/cron";
 import { mcp } from "./capabilities/mcp";
 import { skills } from "./capabilities/skills";
 
-export interface ReadContext {
-  projectRoot: string;
-}
+export type ReadContext = CoreReadContext;
 
 /**
  * Hermes Adapter's read: thin composition over a small subset of the
@@ -21,7 +19,7 @@ export interface ReadContext {
  *   - `skills`           ← `skills/<cat>/<name>/SKILL.md` (3-level shape)
  *   - `cron`             ← `cron/jobs.json` (full-file pass-through)
  */
-export async function read({ projectRoot }: ReadContext): Promise<CanonicalDocument> {
+export async function read({ artifactRoot }: ReadContext): Promise<CanonicalDocument> {
   const canonical = readCapabilities(
     {
       context: context(),
@@ -32,7 +30,7 @@ export async function read({ projectRoot }: ReadContext): Promise<CanonicalDocum
       skills: skills(),
       cron: cron(),
     },
-    projectRoot,
+    artifactRoot,
   );
   return toCanonicalDocument(canonical as unknown as Record<string, unknown>);
 }

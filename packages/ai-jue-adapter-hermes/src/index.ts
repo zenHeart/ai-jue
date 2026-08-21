@@ -1,27 +1,8 @@
-import { applyChangesOrThrow, defineExtension, toCanonicalDocument } from "ai-jue-core";
+import { defineExtension } from "ai-jue-core";
 import type { Adapter } from "ai-jue-core";
 import { confirm } from "./confirm";
 import { read } from "./read";
 import { write } from "./write";
-
-export { read } from "./read";
-export type { ReadContext } from "./read";
-export { write } from "./write";
-export type { WriteContext } from "./write";
-export { confirm } from "./confirm";
-export type { ConfirmContext } from "./confirm";
-export { detectArtifactKind } from "./capabilities/layout";
-
-/**
- * `jue apply`'s Hermes entry point: thin wrapper, parallel to Claude
- * and Codex. Kept for the legacy `jue apply --all` path while the
- * canonical JUE-103 contract is the `Adapter` default export below.
- */
-export async function generate(config: any, outputDir: string): Promise<void> {
-  const canonical = toCanonicalDocument(config);
-  const changes = await write(canonical, { projectRoot: outputDir });
-  applyChangesOrThrow(outputDir, changes);
-}
 
 const hermesAdapter: Adapter = {
   id: "hermes",

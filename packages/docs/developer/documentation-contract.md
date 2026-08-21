@@ -38,9 +38,18 @@
 - npm `peerDependencies` 是 API 兼容版本事实源。
 - Node.js `exports` 是入口事实源。
 - Adapter inventory 只由 `defineExtension()` 返回，不在包元数据重复。
+- Extension 默认导出是运行时合同事实源；Adapter 方法和能力元数据只存在于
+  `defineExtension()` 返回值。
 - Agent 已有 Plugin、Bundle、配置和发现协议作为 Artifact 适配，不重造同义格式。
 
 ## 变更门禁
+
+### 变化放大门禁
+
+新增公共能力值时，基线语义由 Core 在一个位置定义；只有选择支持该值的 Adapter
+允许修改。若每个 Adapter 都必须同步添加相同声明，变更必须先重构为宿主缺省或
+证明该声明确实因目标而异。CLI 只调用校验后的 Adapter 对象，不从包顶层导出重建
+Extension 合同。
 
 公共合同变更必须同步更新中英文 Architecture、Reference、Agent profile、
 Developer 状态和契约测试。新增概念必须通过 RFC 证明六概念无法表达；未实现能力

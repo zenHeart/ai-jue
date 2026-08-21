@@ -1,6 +1,10 @@
 import fs from 'fs';
 import path from 'path';
-import { assertExtensionDefinition, ExtensionDefinition } from 'ai-jue-core';
+import {
+  assertExtensionDefinition,
+  type Adapter,
+  type ExtensionDefinition,
+} from 'ai-jue-core';
 
 export interface ExtensionPackageIssue {
   code: 'missing-entry' | 'missing-peer-dependency';
@@ -28,6 +32,39 @@ function resolveEntryRelativePath(packageJson: Record<string, unknown>): string 
   return typeof packageJson.main === 'string' ? packageJson.main : undefined;
 }
 
+function findOwningPackageJson(entryPath: string): string {
+  let current = path.dirname(entryPath);
+  while (true) {
+    const candidate = path.join(current, 'package.json');
+    if (fs.existsSync(candidate)) return candidate;
+    const parent = path.dirname(current);
+    if (parent === current) {
+      throw new Error(`Cannot find package.json owning Extension entry: ${entryPath}`);
+    }
+    current = parent;
+  }
+}
+
+function resolveExtensionLocation(
+  pathOrPackage: string,
+  baseDir: string,
+): { packageJsonPath: string; resolvedEntryPath?: string } {
+  const localPath = path.resolve(baseDir, pathOrPackage);
+  const localPackageJson = path.join(localPath, 'package.json');
+  if (fs.existsSync(localPackageJson)) {
+    return { packageJsonPath: localPackageJson };
+  }
+
+  // Resolve only the package's public entry. Package `exports` intentionally
+  // may hide package.json, so metadata discovery must not require a private
+  // `./package.json` subpath export.
+  const resolvedEntryPath = require.resolve(pathOrPackage, { paths: [baseDir] });
+  return {
+    packageJsonPath: findOwningPackageJson(resolvedEntryPath),
+    resolvedEntryPath,
+  };
+}
+
 /**
  * Validates an Extension package's npm metadata without executing its entry:
  * `exports`/`main` must resolve to an existing file, and `peerDependencies`
@@ -39,16 +76,16 @@ export function resolveExtensionPackage(
   pathOrPackage: string,
   baseDir: string = process.cwd(),
 ): ResolvedExtensionPackage {
-  const packageJsonPath = require.resolve(`${pathOrPackage}/package.json`, { paths: [baseDir] });
+  const { packageJsonPath, resolvedEntryPath } = resolveExtensionLocation(pathOrPackage, baseDir);
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   const packageDir = path.dirname(packageJsonPath);
   const issues: ExtensionPackageIssue[] = [];
 
   const entryRelative = resolveEntryRelativePath(packageJson);
-  let entryPath = '';
-  if (!entryRelative) {
+  let entryPath = resolvedEntryPath ?? '';
+  if (!resolvedEntryPath && !entryRelative) {
     issues.push({ code: 'missing-entry', message: 'Extension package.json is missing `exports` or `main`' });
-  } else {
+  } else if (!resolvedEntryPath && entryRelative) {
     entryPath = path.resolve(packageDir, entryRelative);
     if (!fs.existsSync(entryPath)) {
       issues.push({ code: 'missing-entry', message: `Resolved entry does not exist: ${entryPath}` });
@@ -150,7 +187,22 @@ export function loadExtensionGuarded(entryPath: string): ExtensionDefinition {
   } finally {
     delete require.cache[resolvedPath];
   }
-  const definition = moduleExports?.default ?? moduleExports;
+  const definition = moduleExports?.default;
   assertExtensionDefinition(definition);
   return definition;
+}
+
+/**
+ * Loads the single Adapter represented by an `ai-jue-adapter-*` package.
+ * Apply targets one Agent at a time, so a multi-Adapter package is ambiguous
+ * until an explicit Extension-level selection contract exists.
+ */
+export function loadExtensionAdapterGuarded(entryPath: string): Adapter {
+  const definition = loadExtensionGuarded(entryPath);
+  if (definition.adapters.length !== 1) {
+    throw new Error(
+      `Apply requires an Extension entry with exactly one Adapter; received ${definition.adapters.length}`,
+    );
+  }
+  return definition.adapters[0];
 }

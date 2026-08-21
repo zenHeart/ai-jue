@@ -1,3 +1,11 @@
+## [2.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.4.2...ai-jue-adapter-cursor@v2.0.0) (2026-08-21)
+
+### Breaking changes
+
+- Publish the TypeScript declarations referenced by the package entry.
+- The default Extension export is the only package entry and requires
+  `ai-jue-core@^2.0.0` with an explicit project target context.
+
 # [1.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.4.1...ai-jue-adapter-cursor@1.0.0) (2026-08-10)
 
 
@@ -110,6 +118,4 @@
 ### Features
 
 * init with ai ([24aedc9](https://github.com/zenHeart/ai-jue/commit/24aedc9415ff234ff9d46a98382942c8a64e7c72))
-
-
 

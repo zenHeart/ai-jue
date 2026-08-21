@@ -1,6 +1,13 @@
 import fs from 'fs';
 import path from 'path';
-import { ArtifactChange, ArtifactResult, artifactContentBytes, hashArtifactContent } from './artifact-change';
+import {
+  ArtifactChange,
+  ArtifactResult,
+  artifactContentBytes,
+  assertArtifactChange,
+  hashArtifactContent,
+} from './artifact-change';
+import type { ApplyScope } from './extension-host';
 
 export type ExecutionStatus =
   | 'no-change'
@@ -20,8 +27,10 @@ export interface DriftConflict {
 }
 
 export interface ExecutionOptions {
-  /** Project-relative paths whose `requiresApproval: true` change is authorized to run. */
+  /** Artifact-root-relative paths whose `requiresApproval: true` change is authorized to run. */
   authorizedTargets?: ReadonlySet<string>;
+  /** Scope authorized by the current apply invocation. */
+  expectedScope?: ApplyScope;
 }
 
 export interface ExecutionPlan {
@@ -39,8 +48,33 @@ export interface ExecutionResult extends ExecutionPlan {
   error?: string;
 }
 
+function isWithinRoot(root: string, candidate: string): boolean {
+  const relative = path.relative(root, candidate);
+  return relative === '' || (!relative.startsWith(`..${path.sep}`) && relative !== '..' && !path.isAbsolute(relative));
+}
+
+/**
+ * Resolves a target through its deepest existing parent so an Adapter cannot
+ * escape the Core-authorized root through an existing symbolic link.
+ */
 function absolutePathFor(root: string, relativePath: string): string {
-  return path.join(root, ...relativePath.split('/'));
+  const realRoot = fs.realpathSync(root);
+  const absolute = path.resolve(realRoot, ...relativePath.split('/'));
+  if (!isWithinRoot(realRoot, absolute)) {
+    throw new Error(`ArtifactChange.path escapes the authorized root: ${relativePath}`);
+  }
+
+  let existingAncestor = absolute;
+  while (!fs.existsSync(existingAncestor)) {
+    const parent = path.dirname(existingAncestor);
+    if (parent === existingAncestor) break;
+    existingAncestor = parent;
+  }
+  const realAncestor = fs.realpathSync(existingAncestor);
+  if (!isWithinRoot(realRoot, realAncestor)) {
+    throw new Error(`ArtifactChange.path escapes the authorized root through a symlink: ${relativePath}`);
+  }
+  return absolute;
 }
 
 function currentHash(root: string, relativePath: string): string | null {
@@ -82,6 +116,12 @@ export function planExecution(
   const unauthorized: ArtifactChange[] = [];
 
   for (const change of changes) {
+    assertArtifactChange(change);
+    if (options.expectedScope !== undefined && change.scope !== options.expectedScope) {
+      throw new Error(
+        `ArtifactChange.scope "${change.scope}" does not match authorized apply scope "${options.expectedScope}"`,
+      );
+    }
     const actualHash = currentHash(root, change.path);
 
     if (change.afterHash !== null && actualHash === change.afterHash) {
@@ -224,9 +264,8 @@ export function applyExecution(
 }
 
 /**
- * Convenience wrapper for callers that only want "make this happen or
- * throw" (an Adapter's own `generate()`, or a test materializing `write()`
- * output into a temp directory) without inspecting the full result.
+ * Convenience wrapper for callers materializing `write()` output into an
+ * isolated directory without inspecting the full execution result.
  */
 export function applyChangesOrThrow(
   root: string,

@@ -1,9 +1,9 @@
 # 项目配置 Reference
 
 > [!NOTE]
-> `targets.<adapter>` 的 `artifact`、`enabled` 与 `scope` 参与 apply 选择流程（与 CLI
-> `--artifact` 组合）。Artifact scope 以 project 执行路径为准；
-> local/user 选择会在写入前返回明确的 scope 错误。
+> `targets.<adapter>` 的 `artifact`、`enabled` 与 `scope` 参与 apply 选择流程。
+> `scope` 只包含 `project | user`；CLI `--scope` 优先于 target 配置，默认
+> `project`。Adapter 必须显式声明支持 `user` 才能获得用户目录写入权限。
 
 项目唯一配置文件是根目录 `ai.config.js`。它选择 Preset、Extension 和 Target，并
 提供项目最高优先级覆盖；Preset 包的 `package.json#ai` 是另一种容器，见
@@ -13,10 +13,10 @@
 export default {
   presets: ["base", "team"],
   capabilities: {},
-  extensions: ["jue-extension-openclaw"],
+  extensions: ["ai-jue-adapter-openclaw"],
   targets: {
-    codex: { artifact: "auto" },
-    openclaw: { artifact: "compatible-bundle" }
+    claude: { artifact: "project", scope: "user" },
+    codex: { artifact: "auto", scope: "project" }
   },
   context: { global: "Project-specific constraints." },
   skills: {},
@@ -56,10 +56,14 @@ export default {
 | --- | --- | --- | --- |
 | `enabled` | `boolean` | `true` | `false` 时跳过自动发现与 `--all`；显式 `--adapter` 仍按用户选择执行 |
 | `artifact` | `string \| "auto"` | `"auto"` | 必须由 Adapter 声明 |
-| `scope` | `"project" \| "local" \| "user"` | `"project"` | `project` 使用当前 Artifact 根；local/user 选择在写入前返回 scope 错误 |
+| `scope` | `"project" \| "user"` | `"project"` | 选择项目或用户 Artifact 根；Adapter 不支持时在写入前失败 |
 
-`auto` 先调用 Adapter 的布局检测复用已被 Jue 管理的现有 Artifact，再选择 Adapter
-唯一默认值；检测结果进入 Artifact 转换环境，不进入 Canonical DSL。
+`auto` 选择 Adapter 的稳定默认 Artifact。非默认 Artifact 通过 `artifact` 或
+`--artifact` 显式选择；该选择进入 Artifact 转换环境，不进入 Canonical DSL。
+
+配置发现根与 Artifact 根彼此独立。`scope: "user"` 仍从当前项目加载 Preset、
+Capability 和 lock，但 Core 将获授权 Artifact 根解析为用户家目录。Plugin、
+compatible-bundle 与 skill-plugin 不能和 user scope 组合。
 
 ## Extension 加载
 

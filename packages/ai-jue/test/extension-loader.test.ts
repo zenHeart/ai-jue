@@ -2,7 +2,11 @@ import fs from 'fs';
 import os from 'os';
 import path from 'path';
 import { afterEach, describe, expect, it } from 'vitest';
-import { loadExtensionGuarded, resolveExtensionPackage } from '../src/extension-loader';
+import {
+  loadExtensionAdapterGuarded,
+  loadExtensionGuarded,
+  resolveExtensionPackage,
+} from '../src/extension-loader';
 
 const tempDirs: string[] = [];
 
@@ -68,6 +72,33 @@ describe('resolveExtensionPackage', () => {
 
     expect(resolved.issues).toEqual([]);
     expect(fs.realpathSync(resolved.entryPath)).toBe(fs.realpathSync(path.join(root, 'index.js')));
+  });
+
+  it('resolves an installed package whose exports expose only the public entry', () => {
+    const root = tempDir();
+    const packageRoot = path.join(root, 'node_modules', 'jue-extension-exported');
+    fs.mkdirSync(packageRoot, { recursive: true });
+    fs.writeFileSync(
+      path.join(packageRoot, 'package.json'),
+      JSON.stringify({
+        name: 'jue-extension-exported',
+        version: '1.0.0',
+        main: 'index.js',
+        exports: { '.': { require: './index.js', default: './index.js' } },
+        peerDependencies: { 'ai-jue-core': '^2.0.0' },
+      }),
+    );
+    fs.writeFileSync(path.join(packageRoot, 'index.js'), NEUTRAL_DEFINITION);
+
+    const resolved = resolveExtensionPackage('jue-extension-exported', root);
+
+    expect(resolved.issues).toEqual([]);
+    expect(fs.realpathSync(resolved.packageJsonPath)).toBe(
+      fs.realpathSync(path.join(packageRoot, 'package.json')),
+    );
+    expect(fs.realpathSync(resolved.entryPath)).toBe(
+      fs.realpathSync(path.join(packageRoot, 'index.js')),
+    );
   });
 
   it('reports a missing peerDependencies["ai-jue-core"]', () => {
@@ -179,5 +210,65 @@ ${NEUTRAL_DEFINITION}
     const proofPath = path.join(root, 'proof.txt');
     expect(() => fs.writeFileSync(proofPath, 'ok')).not.toThrow();
     expect(fs.readFileSync(proofPath, 'utf8')).toBe('ok');
+  });
+});
+
+describe('loadExtensionAdapterGuarded', () => {
+  it('returns the Adapter from the Extension default export', () => {
+    const root = tempDir();
+    writeExtensionPackage(root, { entryContent: NEUTRAL_DEFINITION });
+
+    const adapter = loadExtensionAdapterGuarded(path.join(root, 'index.js'));
+
+    expect(adapter.id).toBe('neutral-agent');
+  });
+
+  it('rejects a historical module-level write API without an Extension default export', () => {
+    const root = tempDir();
+    writeExtensionPackage(root, {
+      entryContent: 'module.exports.write = async () => [];',
+    });
+
+    expect(() => loadExtensionAdapterGuarded(path.join(root, 'index.js'))).toThrow(
+      'Extension default export',
+    );
+  });
+
+  it('rejects an ambiguous multi-Adapter Extension for one apply target', () => {
+    const root = tempDir();
+    writeExtensionPackage(root, {
+      entryContent: NEUTRAL_DEFINITION.replace(
+        "id: 'neutral-agent',",
+        "id: 'neutral-agent',",
+      ).replace(
+        '  ],\n};',
+        `    {
+      id: 'second-agent',
+      capabilities: {
+        rules: 'unsupported', commands: 'unsupported', skills: 'unsupported',
+        agents: 'unsupported', hooks: 'unsupported', mcp: 'unsupported',
+      },
+      read: async () => ({}), write: async () => [],
+      confirm: async () => ({ target: 'second-agent', status: 'unconfirmed' }),
+    },
+  ],
+};`,
+      ),
+    });
+
+    expect(() => loadExtensionAdapterGuarded(path.join(root, 'index.js'))).toThrow(
+      'exactly one Adapter',
+    );
+  });
+
+  it('reads scope capability only from the Adapter definition', () => {
+    const root = tempDir();
+    writeExtensionPackage(root, {
+      entryContent: `${NEUTRAL_DEFINITION}\nmodule.exports.supportedScopes = ['project', 'user'];`,
+    });
+
+    const adapter = loadExtensionAdapterGuarded(path.join(root, 'index.js'));
+
+    expect(adapter.supportedScopes).toBeUndefined();
   });
 });

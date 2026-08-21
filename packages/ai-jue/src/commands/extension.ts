@@ -41,7 +41,7 @@ export async function runExtensionFixtureCheck(
   for (const entry of entries) {
     const fixturePath = path.join(fixturesDir, entry.name);
     try {
-      const canonical = await adapter.read({ projectRoot: fixturePath });
+      const canonical = await adapter.read({ artifactRoot: fixturePath, scope: "project" });
       CanonicalDocumentSchema.parse(canonical);
       results.push({ name: entry.name, path: fixturePath, ok: true });
     } catch (error: any) {

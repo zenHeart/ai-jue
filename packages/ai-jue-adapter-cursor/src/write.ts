@@ -1,5 +1,9 @@
 import { writeCapabilities } from "ai-jue-core";
-import type { ArtifactChange, CanonicalDocument } from "ai-jue-core";
+import type {
+  ArtifactChange,
+  CanonicalDocument,
+  WriteContext as CoreWriteContext,
+} from "ai-jue-core";
 import { agents } from "./capabilities/agents";
 import { commands } from "./capabilities/commands";
 import { context } from "./capabilities/context";
@@ -11,16 +15,7 @@ import { mcp } from "./capabilities/mcp";
 import { rules } from "./capabilities/rules";
 import { skills } from "./capabilities/skills";
 
-export interface WriteContext {
-  projectRoot: string;
-  artifactKind?: CursorArtifactKind;
-  /** From `generate()` — same shape as `tools.cursor`. */
-  cursorTools?: CursorToolsConfig;
-  /** From Core `apply` — `tools.cursor` keyed by adapter short name. */
-  toolsConfig?: CursorToolsConfig;
-  /** Plugin identity; required for meaningful plugin Artifact output. */
-  pluginManifest?: CursorPluginManifest;
-}
+export type WriteContext = CoreWriteContext;
 
 const TARGET = "cursor";
 
@@ -28,7 +23,8 @@ export async function write(
   canonical: CanonicalDocument,
   writeContext: WriteContext,
 ): Promise<ArtifactChange[]> {
-  const artifactKind: CursorArtifactKind = writeContext.artifactKind ?? "project";
+  const artifactKind = (writeContext.artifactKind ?? "project") as CursorArtifactKind;
+  const toolsConfig = writeContext.toolsConfig as CursorToolsConfig | undefined;
 
   const changes = writeCapabilities(
     {
@@ -40,21 +36,21 @@ export async function write(
       mcp: mcp(artifactKind),
     },
     canonical as unknown as Record<string, unknown>,
-    writeContext.projectRoot,
+    writeContext.artifactRoot,
     TARGET,
   );
 
   if (artifactKind === "project") {
     if (canonical.context?.global) {
       changes.push(
-        ...context().write(writeContext.projectRoot, canonical.context.global, TARGET),
+        ...context().write(writeContext.artifactRoot, canonical.context.global, TARGET),
       );
     }
     changes.push(
       ...writeCursorTools(
-        writeContext.projectRoot,
+        writeContext.artifactRoot,
         TARGET,
-        writeContext.cursorTools ?? writeContext.toolsConfig,
+        toolsConfig,
       ),
     );
   } else {
@@ -62,7 +58,7 @@ export async function write(
     // 若 canonical 携带这些内容则显式警告,禁止静默丢弃。
     const dropped = [
       canonical.context?.global ? "context.global" : null,
-      writeContext.cursorTools ?? writeContext.toolsConfig ? "tools.cursor" : null,
+      toolsConfig ? "tools.cursor" : null,
     ].filter((s): s is string => s !== null);
     if (dropped.length > 0) {
       console.warn(
@@ -74,7 +70,11 @@ export async function write(
 
   if (artifactKind === "plugin" && writeContext.pluginManifest) {
     changes.push(
-      ...writePluginManifest(writeContext.projectRoot, writeContext.pluginManifest, TARGET),
+      ...writePluginManifest(
+        writeContext.artifactRoot,
+        writeContext.pluginManifest as CursorPluginManifest,
+        TARGET,
+      ),
     );
   }
 

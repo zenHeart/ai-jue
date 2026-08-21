@@ -5,6 +5,7 @@ The CLI exposes user tasks, not internal conversion stages. Most users need:
 ```bash
 jue init
 jue apply --all
+jue apply --adapter claude --scope user
 ```
 
 ## Core commands
@@ -19,6 +20,7 @@ jue apply --all
 
 - preview: `jue apply --dry-run`
 - CI: `jue apply --check`
+- user installation: `jue apply --adapter claude --scope user`
 - diagnostics: `jue inspect --diagnostics`
 
 ## Author commands

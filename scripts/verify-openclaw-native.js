@@ -52,15 +52,15 @@ async function main() {
     );
 
     console.log("[1/3] read() -> Canonical");
-    const canonical = await read({ projectRoot: workDir });
+    const canonical = await read({ scope: "project", artifactRoot: workDir });
     console.log("      read() returned:", JSON.stringify(canonical));
 
     const withContext = { ...canonical, context: { global: "Jue OpenClaw native verify context." } };
     console.log("[2/3] write() -> applyChangesOrThrow");
-    const changes = await write(withContext, { projectRoot: workDir });
+    const changes = await write(withContext, { scope: "project", artifactRoot: workDir });
     applyChangesOrThrow(workDir, changes);
 
-    const reRead = await read({ projectRoot: workDir });
+    const reRead = await read({ scope: "project", artifactRoot: workDir });
     if (JSON.stringify(reRead) !== JSON.stringify(withContext)) {
       throw new Error(
         "read(write(read(N))) round-trip mismatch: " +
@@ -71,7 +71,7 @@ async function main() {
     }
 
     console.log("[3/3] confirm() -> real 'openclaw --profile ... config validate --json'");
-    const confirmation = await confirm([], { projectRoot: workDir });
+    const confirmation = await confirm([], { scope: "project", artifactRoot: workDir });
     console.log("      confirm() returned:", JSON.stringify(confirmation));
     if (confirmation.status === "failed") {
       throw new Error(

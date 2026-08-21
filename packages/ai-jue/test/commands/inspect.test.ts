@@ -52,7 +52,7 @@ describe("runExtensionDiagnostics", () => {
     const diagnostics = await runExtensionDiagnostics(CLAUDE_ADAPTER, {
       applyCheck: {
         canonical: { commands: { demo: { description: "d", content: "c" } } } as any,
-        projectRoot: root,
+        artifactRoot: root,
       },
     });
     expect(diagnostics.applyReadiness).toMatchObject({ adapterId: "claude-code", status: "pending", pendingCount: 1 });
@@ -61,7 +61,7 @@ describe("runExtensionDiagnostics", () => {
     const second = await runExtensionDiagnostics(CLAUDE_ADAPTER, {
       applyCheck: {
         canonical: { commands: { demo: { description: "d", content: "c" } } } as any,
-        projectRoot: root,
+        artifactRoot: root,
       },
     });
     expect(second.applyReadiness?.status).toBe("pending");

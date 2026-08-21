@@ -34,7 +34,8 @@ describe("hermes skill-plugin", () => {
       },
     };
     const changes = await write(canonical, {
-      projectRoot: root,
+      scope: "project",
+      artifactRoot: root,
       artifactKind: "skill-plugin",
       pluginManifest: { name: "ai-assets", version: "0.1.0" },
     });
@@ -61,7 +62,7 @@ describe("hermes skill-plugin", () => {
             "ops/check": { content: "Ops", prompt: "Ops" },
           },
         },
-        { projectRoot: root, artifactKind: "skill-plugin" },
+        { scope: "project", artifactRoot: root, artifactKind: "skill-plugin" },
       ),
     ).rejects.toThrow('flatten multiple Canonical skills to "check"');
   });
@@ -76,7 +77,7 @@ describe("hermes skill-plugin", () => {
             "../bad name": { content: "Escape", prompt: "Escape" },
           },
         },
-        { projectRoot: root, artifactKind: "skill-plugin" },
+        { scope: "project", artifactRoot: root, artifactKind: "skill-plugin" },
       ),
     ).rejects.toThrow("safe single path segment");
   });
@@ -86,7 +87,7 @@ describe("hermes skill-plugin", () => {
     roots.push(root);
     fs.writeFileSync(path.join(root, "__init__.py"), "MY_HAND_WRITTEN_CODE = 1\n");
     await expect(
-      write({ skills: {} }, { projectRoot: root, artifactKind: "skill-plugin" }),
+      write({ skills: {} }, { scope: "project", artifactRoot: root, artifactKind: "skill-plugin" }),
     ).rejects.toThrow("hand-authored __init__.py");
   });
 });

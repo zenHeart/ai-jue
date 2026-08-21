@@ -90,14 +90,21 @@ function npmVersionExists(pkg, version) {
 
 function main() {
   const batchTag = parseBatchTagFromEnv();
-  if (!batchTag) {
-    process.stdout.write('Not triggered by a tag. Skipping.\n');
+  const releaseItems = process.env.RELEASE_ITEMS;
+  let items;
+  if (releaseItems) {
+    const parsed = JSON.parse(releaseItems);
+    if (!Array.isArray(parsed)) throw new Error('RELEASE_ITEMS must be a JSON array.');
+    items = parsed.map(({ name, version }) => ({ name, version, tag: `${name}@v${version}` }));
+    step('Detected release items from the verified workflow plan.');
+  } else if (batchTag) {
+    step(`Detected Batch Tag: ${batchTag}`);
+    const note = readReleaseNoteAtTag(batchTag);
+    items = parseReleaseNote(note);
+  } else {
+    process.stdout.write('No release plan found. Skipping.\n');
     return;
   }
-
-  step(`Detected Batch Tag: ${batchTag}`);
-  const note = readReleaseNoteAtTag(batchTag);
-  const items = parseReleaseNote(note);
   if (items.length === 0) {
     throw new Error('release-note.md contains no publish items.');
   }
@@ -144,4 +151,3 @@ function main() {
 }
 
 main();
-

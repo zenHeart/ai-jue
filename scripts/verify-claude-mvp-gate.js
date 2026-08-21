@@ -103,7 +103,7 @@ async function main() {
   const root = process.argv[2] || fs.mkdtempSync(path.join(os.tmpdir(), "jue-110-mvp-gate-"));
   fs.mkdirSync(root, { recursive: true });
 
-  const canonical = await read({ projectRoot: nativeFixture });
+  const canonical = await read({ scope: "project", artifactRoot: nativeFixture });
   core.CanonicalDocumentSchema.parse(canonical);
   console.log("[1/6] read(native fixture) -> Canonical, schema-checked: passed");
 
@@ -144,7 +144,8 @@ async function main() {
     author: { name: "ai-jue fixtures" },
   };
   const changes = await write(canonicalWithProbe, {
-    projectRoot: root,
+    scope: "project",
+    artifactRoot: root,
     artifactKind: "plugin",
     pluginManifest,
   });
@@ -154,11 +155,11 @@ async function main() {
   validatePlugin(root);
   console.log("[3/6] claude plugin validate --strict: passed");
 
-  const roundTripped = await read({ projectRoot: root });
+  const roundTripped = await read({ scope: "project", artifactRoot: root });
   assert.deepStrictEqual(roundTripped, canonicalWithProbe);
   console.log("[4/6] read(write(Canonical)) equals Canonical (equivalence contract): passed");
 
-  const second = await write(canonicalWithProbe, { projectRoot: root, artifactKind: "plugin", pluginManifest });
+  const second = await write(canonicalWithProbe, { scope: "project", artifactRoot: root, artifactKind: "plugin", pluginManifest });
   assert.deepStrictEqual(second, []);
   console.log("[5/6] second apply of the same Canonical produces zero changes (idempotent): passed");
 

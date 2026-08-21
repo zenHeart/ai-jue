@@ -1,56 +1,46 @@
 import pc from "picocolors";
+import os from "os";
 import {
   applyExecution,
+  assertConfirmation,
   checkExecution,
   toCanonicalDocument,
+  type Adapter,
   type ArtifactChange,
+  type ArtifactResult,
+  type Confirmation,
+  type ConfirmContext,
   type DriftConflict,
   type ExecutionStatus,
+  type ApplyScope,
+  type WriteContext,
 } from "ai-jue-core";
 import {
+  adapterConfigKey,
   resolveArtifactKind,
   resolveBundlePluginManifest,
   resolveTargetSelection,
   shortAdapterName,
-  UnsupportedArtifactScopeError,
+  UnsupportedArtifactKindError,
 } from "./artifact-kind";
 import { MergedConfig } from "./config";
 import { logger } from "./logger";
 import { t } from "./i18n";
-
-export interface CoreCapableAdapterModule {
-  write(
-    canonical: unknown,
-    context: {
-      projectRoot: string;
-      artifactKind?: string;
-      toolsConfig?: Record<string, unknown>;
-      pluginManifest?: {
-        name: string;
-        version: string;
-        description?: string;
-        author?: { name: string; email?: string; url?: string };
-      };
-    },
-  ): Promise<ArtifactChange[]>;
-  /** Adapter-owned layout detection used by `artifact: "auto"`. */
-  detectArtifactKind?(projectRoot: string): string | undefined;
-}
-
-/**
- * An Adapter qualifies for the Core-driven `apply`/`--dry-run`/`--check`
- * path once it exports `write()` (the Canonical → Artifact conversion).
- * Claude, Codex, OpenClaw, Hermes, and Cursor all export it.
- */
-export function isCoreCapableAdapter(adapterModule: unknown): adapterModule is CoreCapableAdapterModule {
-  return typeof (adapterModule as CoreCapableAdapterModule | undefined)?.write === "function";
-}
+import {
+  assertAdapterSupportsScope,
+  resolveApplyScope,
+  resolveArtifactRoot,
+} from "./apply-scope";
 
 export interface RunCoreAdapterOptions {
   dryRun?: boolean;
   check?: boolean;
   /** CLI --artifact / --artifact-kind override for the current run. */
   artifactKind?: string;
+  /** CLI --scope override for the current run. */
+  scope?: ApplyScope;
+  /** Isolated user root injection for tests; production defaults to os.homedir(). */
+  userHome?: string;
 }
 
 const EXIT_CODE_BY_STATUS: Record<ExecutionStatus, number> = {
@@ -73,10 +63,16 @@ function describeConflict(conflict: DriftConflict): string {
 function reportPlan(
   adapterName: string,
   plan: { pending: ArtifactChange[]; conflicts: DriftConflict[]; unauthorized: ArtifactChange[] },
+  pendingState: "planned" | "applied" = "planned",
 ): void {
   if (plan.pending.length > 0) {
     logger.info(
-      pc.cyan(t("commands.apply.core.pending", { name: adapterName, count: plan.pending.length })),
+      pc.cyan(
+        t(`commands.apply.core.${pendingState}`, {
+          name: adapterName,
+          count: plan.pending.length,
+        }),
+      ),
     );
     for (const change of plan.pending) {
       logger.log(`  + ${describeChange(change)}`);
@@ -99,6 +95,28 @@ function reportPlan(
   }
 }
 
+async function confirmTarget(
+  adapter: Adapter,
+  results: ArtifactResult[],
+  context: ConfirmContext,
+): Promise<Confirmation> {
+  const confirmation = await adapter.confirm(results, context);
+  assertConfirmation(confirmation);
+  if (confirmation.target !== adapter.id) {
+    throw new Error(
+      `Adapter "${adapter.id}" returned confirmation for "${confirmation.target}"`,
+    );
+  }
+  if (confirmation.status === "confirmed") {
+    logger.success(pc.green(t("commands.apply.core.confirmed", { name: adapter.id })));
+  } else if (confirmation.status === "unconfirmed") {
+    logger.warn(pc.yellow(t("commands.apply.core.unconfirmed", { name: adapter.id })));
+  } else {
+    logger.error(pc.red(t("commands.apply.core.confirm_failed", { name: adapter.id })));
+  }
+  return confirmation;
+}
+
 /**
  * Runs `jue apply`'s Core-driven path for a `write()`-capable Adapter:
  * computes the Artifact from the resolved config, then either previews it
@@ -109,36 +127,41 @@ function reportPlan(
  * branch; a blocked or pending outcome is reported, not thrown.
  */
 export async function runCoreAdapter(
-  adapterName: string,
-  adapterModule: CoreCapableAdapterModule,
+  adapter: Adapter,
   config: MergedConfig,
   outputDir: string,
   options: RunCoreAdapterOptions,
 ): Promise<number> {
+  const adapterName = adapter.id;
   const short = shortAdapterName(adapterName);
+  const configKey = adapterConfigKey(adapterName);
   const targetSelection = resolveTargetSelection(config, adapterName);
-  const targetScope = targetSelection?.scope ?? "project";
-  if (targetScope !== "project") {
-    throw new UnsupportedArtifactScopeError(short, targetScope);
-  }
+  const scope = resolveApplyScope(options.scope, targetSelection?.scope);
+  assertAdapterSupportsScope(short, adapter.supportedScopes, scope);
+  const artifactRoot = resolveArtifactRoot(scope, outputDir, options.userHome ?? os.homedir());
   const artifactKind = resolveArtifactKind({
     adapterName,
     cliArtifact: options.artifactKind,
     config,
-    existingArtifactKind: adapterModule.detectArtifactKind?.(outputDir),
   });
+  if (scope === "user" && !["project", "workspace"].includes(artifactKind)) {
+    throw new UnsupportedArtifactKindError(
+      short,
+      artifactKind,
+      ["project", "workspace"],
+      `Adapter "${short}" cannot apply artifact kind "${artifactKind}" in user scope. ` +
+        "User scope supports only native project/workspace artifacts.",
+    );
+  }
 
   logger.info(
     pc.dim(
-      t("commands.apply.artifact_kind_resolved", {
-        name: adapterName,
-        kind: artifactKind,
-      }),
+      `adapter=${adapterName} scope=${scope} root=${artifactRoot} artifact=${artifactKind}`,
     ),
   );
 
   const canonical = toCanonicalDocument(config as unknown as Record<string, unknown>);
-  const toolsConfig = (config as Record<string, any>)?.tools?.[short];
+  const toolsConfig = (config as Record<string, any>)?.tools?.[configKey];
   const pluginManifest =
     artifactKind === "plugin" ||
     artifactKind === "compatible-bundle" ||
@@ -150,36 +173,54 @@ export async function runCoreAdapter(
         resolveBundlePluginManifest(config as Record<string, unknown>, short)
       : undefined;
 
-  const changes = await adapterModule.write(canonical, {
-    projectRoot: outputDir,
+  const writeContext: WriteContext = {
+    artifactRoot,
+    scope,
     artifactKind,
     toolsConfig: toolsConfig && Object.keys(toolsConfig).length > 0 ? toolsConfig : undefined,
     pluginManifest,
-  });
+  };
+  const changes = await adapter.write(canonical, writeContext);
 
   if (options.dryRun) {
-    const preview = checkExecution(outputDir, changes);
+    const preview = checkExecution(artifactRoot, changes, { expectedScope: scope });
     reportPlan(adapterName, preview);
     process.exitCode = 0; // a preview never fails on its own findings
     return 0;
   }
 
   if (options.check) {
-    const result = checkExecution(outputDir, changes);
+    const result = checkExecution(artifactRoot, changes, { expectedScope: scope });
     reportPlan(adapterName, result);
-    const exitCode = EXIT_CODE_BY_STATUS[result.status];
+    let exitCode = EXIT_CODE_BY_STATUS[result.status];
+    if (result.status === "no-change") {
+      const confirmation = await confirmTarget(adapter, [], {
+        artifactRoot,
+        scope,
+        artifactKind,
+      });
+      if (confirmation.status === "failed") exitCode = 1;
+    }
     process.exitCode = exitCode;
     return exitCode;
   }
 
-  const result = applyExecution(outputDir, changes);
-  reportPlan(adapterName, result);
+  const result = applyExecution(artifactRoot, changes, { expectedScope: scope });
+  reportPlan(adapterName, result, result.status === "applied" ? "applied" : "planned");
   if (result.status === "rolled-back") {
     logger.error(
       pc.red(t("commands.apply.core.rolled_back", { name: adapterName, message: result.error ?? "" })),
     );
   } else if (result.status === "applied" || result.status === "no-change") {
-    logger.success(pc.green(t("commands.apply.adapter_success", { name: adapterName })));
+    const confirmation = await confirmTarget(adapter, result.results, {
+      artifactRoot,
+      scope,
+      artifactKind,
+    });
+    if (confirmation.status === "failed") {
+      process.exitCode = 1;
+      return 1;
+    }
   }
   const exitCode = EXIT_CODE_BY_STATUS[result.status];
   process.exitCode = exitCode;

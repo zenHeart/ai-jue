@@ -3,7 +3,7 @@ name: adapter-creator
 description: Creates or optimizes ai-jue Agent Adapters (Native ⇄ Canonical DSL). Use when user asks to "create adapter for [agent]", "add support for [agent]", or "optimize/update [agent] adapter".
 compatibility: Works in ai-jue monorepo with TypeScript/npm workspaces.
 metadata:
-  version: 6.2.0
+  version: 6.2.1
   tags: [adapter, capability-mapping, native-verification, equivalence-contracts, agentic-workflow, shared-contract-tests]
 ---
 
@@ -45,6 +45,11 @@ runtime evidence, not just passing unit tests. Worked example throughout:
 3. For a real target, check if `packages/ai-jue-adapter-{agent}` exists.
    - **Missing?** → **Create Mode**.
    - **Exists?** → **Optimize Mode**.
+4. Keep every in-repo package imported by the Adapter in both
+   `peerDependencies` and `devDependencies` at the same bounded range. The
+   peer contract lets the consumer provide one Core; the development edge
+   makes Turbo build dependency declarations before the Adapter on a fresh
+   checkout. Never use a runtime dependency to manufacture this build edge.
 
 ---
 
@@ -174,17 +179,19 @@ normalize(read(write(C))) = normalize(C)
 normalize(read(write(read(N)))) = normalize(read(N))
 ```
 
-1. **Don't hand-write these tests.** `import { defineAdapterContractSuite }
-   from "ai-jue-core/testkit"` (JUE-202) and call it once with your
-   Adapter's `read`/`write`, a synthetic Canonical fixture, and your Phase 2
-   native fixtures — see `packages/ai-jue-adapter-claude/test/
-   contract.test.ts` for the worked example. It registers both equivalence
+1. **Don't hand-write these tests.** Import `defineAdapterContractSuite` from
+   `ai-jue-core/testkit` and `{ describe, expect, it }` from `vitest`, then
+   call the suite with `testApi: { describe, expect, it }`, your Adapter's
+   `read`/`write`, a synthetic Canonical fixture, and your Phase 2 native
+   fixtures. See `packages/ai-jue-adapter-claude/test/contract.test.ts` for
+   the worked example. The caller-supplied API keeps the CommonJS Core
+   package independent of Vitest's ESM runtime. It registers both equivalence
    contracts, idempotency, unmanaged-field preservation, sensitive-reference
    rejection, and (via each fixture's optional `confirmNatively` callback)
    native confirmation, materializing `ArtifactChange[]` through the real
    `applyChangesOrThrow`/`core-executor.ts` apply path, not a bespoke
-   test-only writer. This subpath is test-only (it depends on `vitest` as an
-   optional peer dependency) and deliberately not exported from
+   test-only writer. This subpath is test-only (`vitest` is an optional peer
+   used for types; the caller owns the runtime import) and deliberately not exported from
    `ai-jue-core`'s main entry point.
 2. Test the first contract against a synthetic, already-normalized
    Canonical fixture (mirrored `content`/`prompt`, explicit hook `type`,

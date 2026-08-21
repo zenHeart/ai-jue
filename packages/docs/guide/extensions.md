@@ -1,26 +1,24 @@
 # 扩展 Jue
 
-> [!WARNING]
-> 本页定义目标合同。Extension Host 尚未实现；当前状态见
-> [实现状态](../developer/implementation-status.md)。
-
 只有新增 Agent 支持时才需要编写 Extension。普通用户安装 npm 包并在配置中引用：
 
 ```bash
-npm install -D jue-extension-openclaw
+npm install -D ai-jue-adapter-openclaw
 ```
 
 ```js
 export default {
-  extensions: ["jue-extension-openclaw"],
-  targets: ["openclaw"]
+  extensions: ["ai-jue-adapter-openclaw"],
+  targets: { openclaw: { enabled: true } }
 };
 ```
 
 ## 实现一个 Adapter
 
 1. 建立普通 npm 包，使用 `exports` 指向入口。
-2. 使用 `peerDependencies` 声明 Jue 兼容版本。
+2. 用相同的有界版本在 `peerDependencies` 声明消费者兼容性，并在
+   `devDependencies` 建立本地构建依赖；`ai-jue-core` 不进入运行时
+   `dependencies`。
 3. 实现一个 Adapter 的 `read`、`write`、`confirm`。
 4. 默认导出 `defineExtension({ adapters: [...] })`。
 5. 添加 Capability 映射、往返、幂等、字段保留、权限和确认测试。

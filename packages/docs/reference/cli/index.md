@@ -5,6 +5,7 @@ CLI 只暴露用户任务，不暴露内部转换阶段。普通用户只需要�
 ```bash
 jue init
 jue apply --all
+jue apply --adapter claude --scope user
 ```
 
 ## 核心命令
@@ -19,6 +20,7 @@ jue apply --all
 
 - 预览：`jue apply --dry-run`
 - CI 检查：`jue apply --check`
+- 用户级安装：`jue apply --adapter claude --scope user`
 - 深度诊断：`jue inspect --diagnostics`
 
 ## 作者命令

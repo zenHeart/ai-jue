@@ -1,15 +1,7 @@
 import fs from "fs";
 import os from "os";
 import path from "path";
-import { afterEach, describe, expect, it, vi } from "vitest";
-
-vi.mock("child_process", () => ({
-  execFileSync: vi.fn(() => {
-    const error = new Error("openclaw unavailable") as Error & { code?: string };
-    error.code = "ENOENT";
-    throw error;
-  }),
-}));
+import { afterEach, describe, expect, it } from "vitest";
 
 import { confirm } from "../src/confirm";
 
@@ -32,10 +24,16 @@ describe("openclaw compatible-bundle confirmation", () => {
     fs.writeFileSync(path.join(root, "hooks", "check", "HOOK.md"), "---\nname: check\n---\n");
     fs.writeFileSync(path.join(root, "hooks", "check", "handler.js"), "module.exports = {};\n");
 
-    await expect(confirm([], { projectRoot: root })).resolves.toMatchObject({
-      target: "openclaw",
-      status: "unconfirmed",
-    });
+    const originalPath = process.env.PATH;
+    process.env.PATH = "";
+    try {
+      await expect(confirm([], { scope: "project", artifactRoot: root })).resolves.toMatchObject({
+        target: "openclaw",
+        status: "unconfirmed",
+      });
+    } finally {
+      process.env.PATH = originalPath;
+    }
   });
 
   it("fails when a bundle hook is missing its handler", async () => {
@@ -49,7 +47,7 @@ describe("openclaw compatible-bundle confirmation", () => {
     fs.mkdirSync(path.join(root, "hooks", "broken"), { recursive: true });
     fs.writeFileSync(path.join(root, "hooks", "broken", "HOOK.md"), "---\nname: broken\n---\n");
 
-    await expect(confirm([], { projectRoot: root, artifactKind: "compatible-bundle" })).resolves.toMatchObject({
+    await expect(confirm([], { scope: "project", artifactRoot: root, artifactKind: "compatible-bundle" })).resolves.toMatchObject({
       target: "openclaw",
       status: "failed",
     });

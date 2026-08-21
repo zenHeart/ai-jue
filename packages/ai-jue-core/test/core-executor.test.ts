@@ -116,6 +116,32 @@ describe('planExecution', () => {
     expect(allowed.unauthorized).toHaveLength(0);
     expect(allowed.pending).toEqual([change]);
   });
+
+  it('rejects changes whose scope does not match the authorized apply scope', () => {
+    const root = tempDir();
+    expect(() =>
+      planExecution(root, [createChange({ scope: 'user' })], { expectedScope: 'project' }),
+    ).toThrow('scope');
+    expect(fs.existsSync(path.join(root, 'notes.md'))).toBe(false);
+  });
+
+  it('validates every ArtifactChange before reading from disk', () => {
+    const root = tempDir();
+    expect(() =>
+      planExecution(root, [createChange({ path: '../outside.md' })]),
+    ).toThrow('safe artifact-root-relative path');
+  });
+
+  it('rejects a target whose existing parent symlink escapes the authorized root', () => {
+    const root = tempDir();
+    const outside = tempDir();
+    fs.symlinkSync(outside, path.join(root, 'escape'), 'dir');
+
+    expect(() =>
+      planExecution(root, [createChange({ path: 'escape/notes.md' })]),
+    ).toThrow('authorized root');
+    expect(fs.existsSync(path.join(outside, 'notes.md'))).toBe(false);
+  });
 });
 
 describe('applyExecution', () => {
@@ -181,6 +207,30 @@ describe('applyExecution', () => {
     expect(result.status).toBe('rolled-back');
     expect(fs.readFileSync(path.join(root, 'existing.md'), 'utf8')).toBe('original');
     expect(fs.existsSync(path.join(root, 'new.md'))).toBe(false);
+  });
+
+  it('rolls back a partial user-scope batch inside the authorized user root', () => {
+    const userRoot = tempDir();
+    fs.writeFileSync(path.join(userRoot, 'existing.md'), 'original');
+    fs.writeFileSync(path.join(userRoot, 'broken'), 'not a directory');
+    const changes = [
+      createChange({
+        scope: 'user',
+        path: 'existing.md',
+        kind: 'update',
+        beforeHash: hashArtifactContent('original'),
+        afterHash: hashArtifactContent('updated'),
+        content: 'updated',
+      }),
+      createChange({ scope: 'user', path: 'new.md' }),
+      createChange({ scope: 'user', path: 'broken/nested.md' }),
+    ];
+
+    const result = applyExecution(userRoot, changes, { expectedScope: 'user' });
+
+    expect(result.status).toBe('rolled-back');
+    expect(fs.readFileSync(path.join(userRoot, 'existing.md'), 'utf8')).toBe('original');
+    expect(fs.existsSync(path.join(userRoot, 'new.md'))).toBe(false);
   });
 
   it('second apply of the same changes is idempotent (zero further writes)', () => {

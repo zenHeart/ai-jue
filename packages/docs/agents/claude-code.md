@@ -3,7 +3,8 @@
 > Jue 状态：Read、Write、Artifact、Confirm 均为 Implemented。project 与
 > Plugin 两种 Artifact 均实现（Marketplace 聚合索引明确排除，见
 > [adapter-standardization.md](../architecture/adapter-standardization.md)）；
-> Core `apply`/`--dry-run`/`--check` 已实现；fixture→Canonical→Artifact→
+> Core `apply`/`--dry-run`/`--check` 已实现，原生 project 与 user apply scope
+> 均可用；fixture→Canonical→Artifact→
 > 原生确认全链路（含 headless 真实调用与批次回滚）可由一条命令端到端重放；
 > `confirm()` 已导出并组装为 `defineExtension()`/`Adapter`：Plugin 走真实
 > `claude plugin validate --strict`，project 无原生校验工具故如实返回
@@ -56,12 +57,12 @@ Skill/Command/Agent 三类组件共享同一套 frontmatter 执行语义字段�
 
 | Canonical / Adapter 职责 | Claude Code |
 | --- | --- |
-| `context.global` | `CLAUDE.md`（项目根 `CLAUDE.md`/`.claude/CLAUDE.md`/`CLAUDE.local.md`）；Claude Code 只读取 `CLAUDE.md`，接入根目录 `AGENTS.md` 需要 `CLAUDE.md` 里的 `@AGENTS.md` import |
-| `rules` | `.claude/rules/*.md`（`paths` frontmatter 支持路径条件加载，超出 Canonical 现有无条件语义的部分作为目标私有字段保留） |
-| `skills` / `commands` | `.claude/skills/*/SKILL.md` 与 `.claude/commands/*.md` 共享同一命名空间：同名时后加载的静默覆盖先加载的，`validate` 不报错 |
+| `context.global` | project `CLAUDE.md`；user `~/.claude/CLAUDE.md` |
+| `rules` | project/user `.claude/rules/*.md`（用户根下即 `~/.claude/rules/*.md`） |
+| `skills` / `commands` | project/user `.claude/skills/*/SKILL.md` 与 `.claude/commands/*.md` |
 | `agents` | `.claude/agents/*.md`（项目）、`~/.claude/agents/*.md`（用户）；Plugin 内为 `agents/` |
-| `hooks` | `.claude/settings.json` 的 `hooks` 键，或 Plugin `hooks/hooks.json`／manifest 内联 `hooks` |
-| `mcp.servers` | 项目 `.mcp.json`；接受扁平 `{"<name>": {...}}` 与包裹 `{"mcpServers": {...}}` 两种形状，均通过官方校验 |
+| `hooks` | project/user `.claude/settings.json` 的 `hooks` 键，或 Plugin `hooks/hooks.json`／manifest 内联 `hooks` |
+| `mcp.servers` | project `.mcp.json`；user `~/.claude.json` |
 | target-specific settings | `tools.claude`（`lspServers`、`monitors`、`themes`、`output-styles`、`bin`、`workflows`、`channels`、`userConfig`、`dependencies`） |
 | Artifact | project-native 配置，或 Claude Plugin（`.claude-plugin/plugin.json` + 组件目录，manifest 可选） |
 | Confirm | `claude plugin validate <path> [--strict]`；headless `system/init`（见 §3） |
@@ -84,8 +85,9 @@ Skill/Command/Agent 三类组件共享同一套 frontmatter 执行语义字段�
   Rule 是 `project > user`（`CLAUDE.local.md` 属本地覆盖）；Settings 是
   `managed > CLI > local > project > user`（`permissions` 键按 merge 而非
   override 生效）。MCP 的 `local` scope 写入 `~/.claude.json`，不落在
-  `.claude/settings.local.json`；Jue 可写入的仓库内文件只有 `project` scope
-  的 `.mcp.json`。
+  `.claude/settings.local.json`。Jue 的 project apply 写 `.mcp.json`，user apply
+  写 `~/.claude.json`。Server 省略 scope 时继承本次 apply；显式 scope 不一致或
+  `local` 时在写入前失败。
 
 ### Headless 原生确认路径
 

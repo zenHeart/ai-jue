@@ -123,7 +123,9 @@ only loop `register_skill` — never embed Canonical text as executable logic.
 
 ### Resolution order
 
-CLI `--artifact-kind` → `targets.*.artifact` → Adapter-owned detection for `auto` → default `project`/`workspace`.
+CLI `--artifact-kind` → `targets.*.artifact` → the Adapter's stable
+`project`/`workspace` default. Non-default Artifacts use explicit selection;
+the Extension entry adds no layout-detection method.
 Unsupported kind fails **before write**.
 
 ## Contract

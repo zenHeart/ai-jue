@@ -11,6 +11,11 @@ import {
   CapabilitySourceOptions,
 } from './capability-source';
 
+export interface ResolveFinalConfigOptions extends CapabilitySourceOptions {
+  /** Persist the resolved Capability lock. Read-only apply modes set this to false. */
+  persistLock?: boolean;
+}
+
 /**
  * Loads external asset files defined in the 'extends' property of ai.config.js.
  * 
@@ -54,8 +59,9 @@ async function loadExtendedAssets(extendsConfig: { [key: string]: string | strin
  */
 export async function resolveFinalConfig(
   userConfig: MergedConfig,
-  sourceOptions: CapabilitySourceOptions = {},
+  sourceOptions: ResolveFinalConfigOptions = {},
 ): Promise<MergedConfig> {
+    const { persistLock = true, ...capabilitySourceOptions } = sourceOptions;
     let finalConfig: MergedConfig = { };
     const locks = [];
 
@@ -78,7 +84,7 @@ export async function resolveFinalConfig(
          const preset = await loadPresetWithLock(
            presetName,
            userConfig.language,
-           sourceOptions,
+           capabilitySourceOptions,
          );
          finalConfig = mergeConfigWithLayeredContext(finalConfig, preset.config);
          locks.push(preset.lock);
@@ -119,7 +125,7 @@ export async function resolveFinalConfig(
       userConfig.capabilities,
       process.cwd(),
       userConfig.language,
-      sourceOptions,
+      capabilitySourceOptions,
     );
     finalConfig = mergeConfigWithLayeredContext(
       finalConfig,
@@ -135,18 +141,20 @@ export async function resolveFinalConfig(
     const normalized = normalizeConfig(finalConfig);
     const parsed = ConfigSchema.parse(normalized);
     const lock = mergeCapabilityLocks(...locks);
-    const lockPath = path.join(process.cwd(), 'ai-jue.lock');
-    if (Object.keys(lock.capabilities).length > 0) {
-      await fs.promises.writeFile(
-        lockPath,
-        `${JSON.stringify(lock, null, 2)}\n`,
-        'utf8',
-      );
-    } else if (fs.existsSync(lockPath)) {
-      // No ai.capabilities were resolved this run. Leaving a previous run's
-      // lock in place would let readers (e.g. `jue capability update`)
-      // mistake it for evidence that something was just resolved.
-      await fs.promises.unlink(lockPath);
+    if (persistLock) {
+      const lockPath = path.join(process.cwd(), 'ai-jue.lock');
+      if (Object.keys(lock.capabilities).length > 0) {
+        await fs.promises.writeFile(
+          lockPath,
+          `${JSON.stringify(lock, null, 2)}\n`,
+          'utf8',
+        );
+      } else if (fs.existsSync(lockPath)) {
+        // No ai.capabilities were resolved this run. Leaving a previous run's
+        // lock in place would let readers (e.g. `jue capability update`)
+        // mistake it for evidence that something was just resolved.
+        await fs.promises.unlink(lockPath);
+      }
     }
     return parsed;
 }

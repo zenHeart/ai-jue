@@ -12,18 +12,16 @@ import { createInterface } from "readline/promises";
 import { logger } from "../logger";
 import { t } from "../i18n";
 import { runInitFlow } from "./init";
+import type { ApplyScope } from "ai-jue-core";
 import {
   isTargetEnabled,
-  resolveArtifactKind,
   resolveTargetSelection,
-  UnsupportedArtifactKindError,
-  UnsupportedArtifactScopeError,
 } from "../artifact-kind";
 import {
-  isCoreCapableAdapter,
   runCoreAdapter,
   RunCoreAdapterOptions,
 } from "../core-apply";
+import { loadExtensionAdapterGuarded } from "../extension-loader";
 
 export const command = "apply";
 export const describe = ""; // Managed in cli.ts for dynamic translation
@@ -71,6 +69,11 @@ export const builder: CommandBuilder = (yargs) => {
       alias: "artifact-kind",
       type: "string",
       description: t("commands.apply.artifact_describe"),
+    })
+    .option("scope", {
+      type: "string",
+      choices: ["project", "user"] as const,
+      description: t("commands.apply.scope_describe"),
     });
 };
 
@@ -275,11 +278,16 @@ function hasProjectConfig(cwd: string): boolean {
   }
 }
 
-async function ensureConfigReadyForApply(): Promise<boolean> {
+async function ensureConfigReadyForApply(allowInit: boolean): Promise<boolean> {
   const cwd = process.cwd();
   if (hasProjectConfig(cwd)) return true;
 
   logger.warn(pc.yellow(t("commands.apply.no_config_detected")));
+
+  if (!allowInit) {
+    logger.warn(pc.yellow(t("commands.apply.read_only_requires_config")));
+    return false;
+  }
 
   if (!process.stdin.isTTY || !process.stdout.isTTY) {
     logger.warn(pc.yellow(t("commands.apply.no_config_non_interactive")));
@@ -372,11 +380,20 @@ function installAdapterPackage(adapterName: string): boolean {
   return result.status === 0;
 }
 
-async function ensureAdaptersInstalled(adapterNames: string[]): Promise<string[]> {
+async function ensureAdaptersInstalled(
+  adapterNames: string[],
+  allowInstall: boolean,
+): Promise<string[]> {
   const ready: string[] = [];
   for (const adapterName of adapterNames) {
     if (canResolveAdapter(adapterName)) {
       ready.push(adapterName);
+      continue;
+    }
+    if (!allowInstall) {
+      logger.warn(
+        pc.yellow(t("commands.apply.read_only_missing_adapter", { packageName: adapterName })),
+      );
       continue;
     }
     const installed = installAdapterPackage(adapterName);
@@ -420,6 +437,12 @@ function parseCliArtifact(argv: Arguments): string | undefined {
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+function configuredAdapters(config: MergedConfig): string[] {
+  return Object.entries(config.targets ?? {})
+    .filter(([, selection]) => selection?.enabled !== false)
+    .map(([name]) => resolveAdapterAlias(name));
+}
+
 async function runSingleAdapter(
   adapterName: string,
   config: MergedConfig,
@@ -433,59 +456,9 @@ async function runSingleAdapter(
     const adapterPath = require.resolve(adapterName, {
       paths: [process.cwd(), __dirname],
     });
-    const adapter = require(adapterPath);
-    if (isCoreCapableAdapter(adapter)) {
-      adapterSpinner.stop();
-      return await runCoreAdapter(adapterName, adapter, config, outputDir, coreOptions);
-    }
-
-    const targetSelection = resolveTargetSelection(config, adapterName);
-    if (targetSelection?.scope && targetSelection.scope !== "project") {
-      throw new UnsupportedArtifactScopeError(
-        toAdapterShortName(adapterName),
-        targetSelection.scope,
-      );
-    }
-    const artifactKind = resolveArtifactKind({
-      adapterName,
-      cliArtifact: coreOptions.artifactKind,
-      config,
-      existingArtifactKind:
-        typeof adapter.detectArtifactKind === "function"
-          ? adapter.detectArtifactKind(outputDir)
-          : undefined,
-    });
-    if (artifactKind !== "project") {
-      throw new UnsupportedArtifactKindError(
-        toAdapterShortName(adapterName),
-        artifactKind,
-        ["project"],
-        `Adapter "${toAdapterShortName(adapterName)}" only exposes the project Artifact through its direct generate() API; ` +
-          `artifact kind "${artifactKind}" requires a Core write() implementation.`,
-      );
-    }
-    if (coreOptions.dryRun || coreOptions.check) {
-      adapterSpinner.warn(
-        pc.yellow(
-          t("commands.apply.core_unsupported", { name: adapterName }),
-        ),
-      );
-      return 0;
-    }
-    if (adapter.generate && typeof adapter.generate === "function") {
-      await adapter.generate(config, outputDir);
-      adapterSpinner.succeed(
-        pc.green(t("commands.apply.adapter_success", { name: adapterName })),
-      );
-      return 0;
-    } else {
-      adapterSpinner.warn(
-        pc.yellow(
-          t("commands.apply.adapter_no_generate", { name: adapterName }),
-        ),
-      );
-      return 0;
-    }
+    const adapter = loadExtensionAdapterGuarded(adapterPath);
+    adapterSpinner.stop();
+    return await runCoreAdapter(adapter, config, outputDir, coreOptions);
   } catch (error: any) {
     adapterSpinner.fail(
       pc.red(
@@ -512,7 +485,10 @@ export async function runAdapterList(
   outputDir: string,
   coreOptions: RunCoreAdapterOptions = {},
 ): Promise<number> {
-  const readyAdapters = await ensureAdaptersInstalled(adapterNames);
+  const readyAdapters = await ensureAdaptersInstalled(
+    adapterNames,
+    !coreOptions.dryRun && !coreOptions.check,
+  );
   if (readyAdapters.length === 0) {
     logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
     process.exitCode = 1;
@@ -544,7 +520,10 @@ async function runAdapters(
     dryRun: options.dryRun,
     check: options.check,
     artifactKind: options.artifactKind,
+    scope: options.scope,
+    userHome: options.userHome,
   };
+  const allowInstall = !options.dryRun && !options.check;
   const spinner = ora(t("commands.apply.finding_adapters")).start();
   const discoveredAdapters = await findAdapters();
   const availableAdapters = discoverAvailableAdapters(discoveredAdapters);
@@ -552,20 +531,26 @@ async function runAdapters(
   if (availableAdapters.length === 0) {
     spinner.warn(pc.yellow(t("commands.apply.no_adapters")));
     if (!options.all && options.requestedAdapters.length === 0) {
-      const footprintDetected = filterEnabledAdapters(
-        autoDetectAdapters(KNOWN_ADAPTERS, process.cwd()),
-        config,
-      );
-      if (footprintDetected.length > 0) {
-        logger.info(
-          pc.cyan(
-            t("commands.apply.auto_detected_adapters", {
-              count: footprintDetected.length,
-              names: footprintDetected.join(", "),
-            }),
-          ),
+      const configured = configuredAdapters(config);
+      if (configured.length > 0) {
+        return await runAdapterList(configured, config, outputDir, coreOptions);
+      }
+      if (options.scope !== "user") {
+        const footprintDetected = filterEnabledAdapters(
+          autoDetectAdapters(KNOWN_ADAPTERS, process.cwd()),
+          config,
         );
-        return await runAdapterList(footprintDetected, config, outputDir, coreOptions);
+        if (footprintDetected.length > 0) {
+          logger.info(
+            pc.cyan(
+              t("commands.apply.auto_detected_adapters", {
+                count: footprintDetected.length,
+                names: footprintDetected.join(", "),
+              }),
+            ),
+          );
+          return await runAdapterList(footprintDetected, config, outputDir, coreOptions);
+        }
       }
       const manualSelected = await promptManualAdapterSelection(KNOWN_ADAPTERS);
       if (manualSelected.length === 0) {
@@ -604,38 +589,56 @@ async function runAdapters(
     : availableAdapters;
   if (!options.all) {
     if (options.requestedAdapters.length === 0) {
-      const detected = filterEnabledAdapters(
-        autoDetectAdapters(availableAdapters, process.cwd()),
-        config,
-      );
-      if (detected.length === 0) {
-        spinner.warn(pc.yellow(t("commands.apply.no_adapter_detected")));
-        const manualSelected = await promptManualAdapterSelection(
-          availableAdapters,
+      const configured = configuredAdapters(config);
+      if (configured.length > 0) {
+        targetAdapters = configured;
+        logger.info(
+          pc.cyan(
+            t("commands.apply.configured_adapters", {
+              count: configured.length,
+              names: configured.join(", "),
+            }),
+          ),
         );
-        if (manualSelected.length === 0) {
-          logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
-          return 1;
-        }
+      } else if (options.scope === "user") {
+        spinner.warn(pc.yellow(t("commands.apply.user_scope_requires_selection")));
+        const manualSelected = await promptManualAdapterSelection(availableAdapters);
+        if (manualSelected.length === 0) return 1;
         targetAdapters = manualSelected;
-        logger.info(
-          pc.cyan(
-            t("commands.apply.manual_selected_adapters", {
-              count: manualSelected.length,
-              names: manualSelected.join(", "),
-            }),
-          ),
-        );
       } else {
-        targetAdapters = detected;
-        logger.info(
-          pc.cyan(
-            t("commands.apply.auto_detected_adapters", {
-              count: detected.length,
-              names: detected.join(", "),
-            }),
-          ),
+        const detected = filterEnabledAdapters(
+          autoDetectAdapters(availableAdapters, process.cwd()),
+          config,
         );
+        if (detected.length === 0) {
+          spinner.warn(pc.yellow(t("commands.apply.no_adapter_detected")));
+          const manualSelected = await promptManualAdapterSelection(
+            availableAdapters,
+          );
+          if (manualSelected.length === 0) {
+            logger.warn(pc.yellow(t("commands.apply.no_adapter_selected")));
+            return 1;
+          }
+          targetAdapters = manualSelected;
+          logger.info(
+            pc.cyan(
+              t("commands.apply.manual_selected_adapters", {
+                count: manualSelected.length,
+                names: manualSelected.join(", "),
+              }),
+            ),
+          );
+        } else {
+          targetAdapters = detected;
+          logger.info(
+            pc.cyan(
+              t("commands.apply.auto_detected_adapters", {
+                count: detected.length,
+                names: detected.join(", "),
+              }),
+            ),
+          );
+        }
       }
     } else {
       let selected = options.requestedAdapters;
@@ -643,7 +646,7 @@ async function runAdapters(
         (name) => !availableAdapters.includes(name),
       );
       if (unknown.length > 0) {
-        const installedUnknown = await ensureAdaptersInstalled(unknown);
+        const installedUnknown = await ensureAdaptersInstalled(unknown, allowInstall);
         const stillUnknown = unknown.filter(
           (name) => !installedUnknown.includes(name),
         );
@@ -665,7 +668,7 @@ async function runAdapters(
     }
   }
 
-  const runnableAdapters = await ensureAdaptersInstalled(targetAdapters);
+  const runnableAdapters = await ensureAdaptersInstalled(targetAdapters, allowInstall);
   if (runnableAdapters.length === 0) {
     spinner.fail(pc.red(t("commands.apply.no_adapter_selected")));
     process.exitCode = 1;
@@ -683,15 +686,27 @@ async function runAdapters(
 
   let exitCode = 0;
   for (const adapterName of runnableAdapters) {
-    exitCode = Math.max(
-      exitCode,
-      await runSingleAdapter(adapterName, config, outputDir, coreOptions),
-    );
+    try {
+      exitCode = Math.max(
+        exitCode,
+        await runSingleAdapter(adapterName, config, outputDir, coreOptions),
+      );
+    } catch (error: any) {
+      exitCode = Math.max(
+        exitCode,
+        typeof error?.exitCode === "number" ? error.exitCode : 1,
+      );
+    }
   }
   return exitCode;
 }
 
-export const handler = async (argv: Arguments) => {
+export interface ApplyRuntime {
+  /** Isolated user root injection for tests; CLI production uses os.homedir(). */
+  userHome?: string;
+}
+
+export const handler = async (argv: Arguments, runtime: ApplyRuntime = {}) => {
   const runtimeLang =
     typeof (argv as Arguments<{ lang?: string }>).lang === "string"
       ? String((argv as Arguments<{ lang?: string }>).lang).trim()
@@ -712,11 +727,14 @@ export const handler = async (argv: Arguments) => {
     dryRun: Boolean((argv as Arguments<{ "dry-run"?: boolean }>)["dry-run"]),
     check: Boolean((argv as Arguments<{ check?: boolean }>).check),
     artifactKind: parseCliArtifact(argv),
+    scope: (argv as Arguments<{ scope?: ApplyScope }>).scope,
+    userHome: runtime.userHome,
   };
 
   const runApply = async () => {
     logger.info(pc.bold(pc.blue(t("commands.apply.running"))));
-    const configReady = await ensureConfigReadyForApply();
+    const readOnly = applyOptions.dryRun || applyOptions.check;
+    const configReady = await ensureConfigReadyForApply(!readOnly);
     if (!configReady) {
       process.exitCode = 1;
       return;
@@ -750,6 +768,7 @@ export const handler = async (argv: Arguments) => {
 
       const finalConfig = await resolveFinalConfig(config, {
         frozen: Boolean((argv as Arguments<{ frozen?: boolean }>).frozen),
+        persistLock: !readOnly,
       });
 
       const exitCode = await runAdapters(finalConfig, process.cwd(), applyOptions);

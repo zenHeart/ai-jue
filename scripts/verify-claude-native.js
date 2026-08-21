@@ -58,7 +58,8 @@ async function buildFixture(root) {
   const { write, core } = loadClaudeAdapterDist();
   fs.mkdirSync(root, { recursive: true });
   const changes = await write(CANONICAL, {
-    projectRoot: root,
+    scope: "project",
+    artifactRoot: root,
     artifactKind: "plugin",
     pluginManifest: PLUGIN_MANIFEST,
   });

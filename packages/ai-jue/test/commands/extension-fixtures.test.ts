@@ -17,7 +17,7 @@ afterEach(() => {
   }
 });
 
-function stubAdapter(behavior: (projectRoot: string) => Promise<unknown>): Adapter {
+function stubAdapter(behavior: (artifactRoot: string) => Promise<unknown>): Adapter {
   return {
     id: "stub",
     capabilities: {
@@ -28,7 +28,7 @@ function stubAdapter(behavior: (projectRoot: string) => Promise<unknown>): Adapt
       hooks: "unsupported",
       mcp: "unsupported",
     },
-    read: async ({ projectRoot }) => behavior(projectRoot) as any,
+    read: async ({ artifactRoot }) => behavior(artifactRoot) as any,
     write: async () => [],
     confirm: async () => ({ target: "stub", status: "unconfirmed" as const }),
   };

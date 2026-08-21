@@ -1,18 +1,21 @@
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { describe, expect, it } from 'vitest';
+import type { ExpectStatic, SuiteAPI, TestAPI } from 'vitest';
 import { applyChangesOrThrow } from './core-executor';
 import type { CanonicalDocument } from './canonical-document';
 import type { ArtifactChange } from './artifact-change';
+import type { ApplyScope } from './extension-host';
 
 export interface AdapterReadContext {
-  projectRoot: string;
+  artifactRoot: string;
+  scope: ApplyScope;
   [key: string]: unknown;
 }
 
 export interface AdapterWriteContext {
-  projectRoot: string;
+  artifactRoot: string;
+  scope: ApplyScope;
   [key: string]: unknown;
 }
 
@@ -34,6 +37,8 @@ export interface NativeFixtureCase {
   setupTempRoot?: (tempRoot: string) => void;
   /** Optional real native confirmation for this Artifact kind, e.g. `execFileSync('claude', ['plugin', 'validate', root, '--strict'])`. Throws on failure. */
   confirmNatively?: (root: string) => void | Promise<void>;
+  /** Explicit allowance for native CLIs that can exceed Vitest's default timeout. */
+  nativeConfirmationTimeoutMs?: number;
 }
 
 export interface UnmanagedFieldCase {
@@ -54,6 +59,12 @@ export interface SecurityRejectionCase {
 }
 
 export interface AdapterContractSuiteOptions {
+  /** Test-runner functions supplied by the caller's Vitest ESM context. */
+  testApi: {
+    describe: SuiteAPI;
+    expect: ExpectStatic;
+    it: TestAPI;
+  };
   adapter: AdapterUnderTest;
   /** A pre-normalized synthetic Canonical fixture (mirrored content/prompt, explicit hook `type`, etc. — the shape read() always produces). */
   syntheticCanonical: CanonicalDocument;
@@ -76,6 +87,7 @@ function freshTempDir(target: string, suffix: string): string {
  */
 export function defineAdapterContractSuite(options: AdapterContractSuiteOptions): void {
   const {
+    testApi: { describe, expect, it },
     adapter,
     syntheticCanonical,
     nativeFixtures,
@@ -86,16 +98,16 @@ export function defineAdapterContractSuite(options: AdapterContractSuiteOptions)
   describe(`${adapter.target} adapter contract`, () => {
     it('normalize(read(write(C))) = normalize(C) for a synthetic Canonical fixture', async () => {
       const root = freshTempDir(adapter.target, 'synthetic');
-      const changes = await adapter.write(syntheticCanonical, { projectRoot: root });
+      const changes = await adapter.write(syntheticCanonical, { artifactRoot: root, scope: 'project' });
       applyChangesOrThrow(root, changes);
-      const roundTripped = await adapter.read({ projectRoot: root });
+      const roundTripped = await adapter.read({ artifactRoot: root, scope: 'project' });
       expect(roundTripped).toEqual(syntheticCanonical);
     });
 
     it('a second write() with the same synthetic Canonical produces zero changes (idempotent)', async () => {
       const root = freshTempDir(adapter.target, 'idempotent');
-      applyChangesOrThrow(root, await adapter.write(syntheticCanonical, { projectRoot: root }));
-      const second = await adapter.write(syntheticCanonical, { projectRoot: root });
+      applyChangesOrThrow(root, await adapter.write(syntheticCanonical, { artifactRoot: root, scope: 'project' }));
+      const second = await adapter.write(syntheticCanonical, { artifactRoot: root, scope: 'project' });
       expect(second).toEqual([]);
     });
 
@@ -105,14 +117,14 @@ export function defineAdapterContractSuite(options: AdapterContractSuiteOptions)
         const absolute = path.join(root, uc.relativePath);
         fs.mkdirSync(path.dirname(absolute), { recursive: true });
         fs.writeFileSync(absolute, uc.seedContent);
-        applyChangesOrThrow(root, await adapter.write(syntheticCanonical, { projectRoot: root }));
+        applyChangesOrThrow(root, await adapter.write(syntheticCanonical, { artifactRoot: root, scope: 'project' }));
         uc.assertPreserved(fs.readFileSync(absolute, 'utf8'));
       });
     }
 
     for (const sc of securityRejectionCases) {
       it(`rejects a literal-looking credential ("${sc.name}")`, async () => {
-        await expect(adapter.read({ projectRoot: sc.root, ...sc.readContext })).rejects.toThrow(
+        await expect(adapter.read({ artifactRoot: sc.root, scope: 'project', ...sc.readContext })).rejects.toThrow(
           sc.expectedErrorSubstring,
         );
       });
@@ -120,28 +132,32 @@ export function defineAdapterContractSuite(options: AdapterContractSuiteOptions)
 
     for (const fixture of nativeFixtures) {
       it(`normalize(read(write(read(N)))) = normalize(read(N)) for the "${fixture.name}" native fixture`, async () => {
-        const nativeCanonical = await adapter.read({ projectRoot: fixture.root, ...fixture.readContext });
+        const nativeCanonical = await adapter.read({ artifactRoot: fixture.root, scope: 'project', ...fixture.readContext });
         const freshRoot = freshTempDir(adapter.target, fixture.name);
         fixture.setupTempRoot?.(freshRoot);
         applyChangesOrThrow(
           freshRoot,
-          await adapter.write(nativeCanonical, { projectRoot: freshRoot, ...fixture.writeContext }),
+          await adapter.write(nativeCanonical, { artifactRoot: freshRoot, scope: 'project', ...fixture.writeContext }),
         );
-        const roundTripped = await adapter.read({ projectRoot: freshRoot, ...fixture.readContext });
+        const roundTripped = await adapter.read({ artifactRoot: freshRoot, scope: 'project', ...fixture.readContext });
         expect(roundTripped).toEqual(nativeCanonical);
       });
 
       if (fixture.confirmNatively) {
-        it(`passes native confirmation for the "${fixture.name}" Artifact kind`, async () => {
-          const nativeCanonical = await adapter.read({ projectRoot: fixture.root, ...fixture.readContext });
-          const freshRoot = freshTempDir(adapter.target, `confirm-${fixture.name}`);
-          fixture.setupTempRoot?.(freshRoot);
-          applyChangesOrThrow(
-            freshRoot,
-            await adapter.write(nativeCanonical, { projectRoot: freshRoot, ...fixture.writeContext }),
-          );
-          await fixture.confirmNatively!(freshRoot);
-        });
+        it(
+          `passes native confirmation for the "${fixture.name}" Artifact kind`,
+          async () => {
+            const nativeCanonical = await adapter.read({ artifactRoot: fixture.root, scope: 'project', ...fixture.readContext });
+            const freshRoot = freshTempDir(adapter.target, `confirm-${fixture.name}`);
+            fixture.setupTempRoot?.(freshRoot);
+            applyChangesOrThrow(
+              freshRoot,
+              await adapter.write(nativeCanonical, { artifactRoot: freshRoot, scope: 'project', ...fixture.writeContext }),
+            );
+            await fixture.confirmNatively!(freshRoot);
+          },
+          fixture.nativeConfirmationTimeoutMs,
+        );
       }
     }
   });

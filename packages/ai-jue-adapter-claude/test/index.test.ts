@@ -1,12 +1,25 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import path from 'path';
 import fs from 'fs';
-import { generate } from '../src/index';
+import { applyChangesOrThrow, toCanonicalDocument } from 'ai-jue-core';
+import extension from '../src/index';
 import { resolveAdapterAlias } from '../../ai-jue/src/commands/apply';
 
 const TEST_DIR = path.join(__dirname, 'temp_output');
 
-describe('ai-jue-adapter-claude generate()', () => {
+async function applyProject(config: any, outputDir: string): Promise<void> {
+  const adapter = extension.adapters[0];
+  const toolsConfig = config?.tools?.claude;
+  const changes = await adapter.write(toCanonicalDocument(config), {
+    artifactRoot: outputDir,
+    scope: 'project',
+    artifactKind: 'project',
+    toolsConfig: toolsConfig && Object.keys(toolsConfig).length > 0 ? toolsConfig : undefined,
+  } as any);
+  applyChangesOrThrow(outputDir, changes);
+}
+
+describe('ai-jue-adapter-claude Extension', () => {
   beforeEach(() => {
     if (fs.existsSync(TEST_DIR)) {
       fs.rmSync(TEST_DIR, { recursive: true, force: true });
@@ -26,7 +39,7 @@ describe('ai-jue-adapter-claude generate()', () => {
   });
 
   it('writes context.global directly into CLAUDE.md (Claude Code reads only CLAUDE.md, never AGENTS.md)', async () => {
-    await generate({ context: { global: 'Claude Context' } }, TEST_DIR);
+    await applyProject({ context: { global: 'Claude Context' } }, TEST_DIR);
 
     expect(fs.existsSync(path.join(TEST_DIR, 'AGENTS.md'))).toBe(false);
     const claudeMd = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
@@ -34,7 +47,7 @@ describe('ai-jue-adapter-claude generate()', () => {
   });
 
   it('writes rules to .claude/rules/', async () => {
-    await generate(
+    await applyProject(
       {
         rules: {
           security: { description: 'Security rules', globs: ['*.ts'], content: 'Never log secrets' },
@@ -50,7 +63,7 @@ describe('ai-jue-adapter-claude generate()', () => {
   });
 
   it('writes commands to .claude/commands/ as their own directory (not merged into skills)', async () => {
-    await generate(
+    await applyProject(
       { commands: { deploy: { description: 'Deploy app', content: 'Deploy instruction' } } },
       TEST_DIR,
     );
@@ -62,7 +75,7 @@ describe('ai-jue-adapter-claude generate()', () => {
   });
 
   it('writes skills to .claude/skills/, including attachment bundles', async () => {
-    await generate(
+    await applyProject(
       {
         skills: {
           review: {
@@ -85,7 +98,7 @@ describe('ai-jue-adapter-claude generate()', () => {
   });
 
   it('writes agents to .claude/agents/', async () => {
-    await generate(
+    await applyProject(
       { agents: { 'code-reviewer': { description: 'Reviews code for quality', content: 'You are a code reviewer.' } } },
       TEST_DIR,
     );
@@ -96,7 +109,7 @@ describe('ai-jue-adapter-claude generate()', () => {
   });
 
   it('writes hooks into .claude/settings.json and MCP servers into .mcp.json', async () => {
-    await generate(
+    await applyProject(
       {
         mcp: { servers: { sqlite: { command: 'uvx', args: ['mcp-server-sqlite'] } } },
         hooks: { PreToolUse: { script: 'npm test', matcher: 'Write' } },
@@ -113,7 +126,7 @@ describe('ai-jue-adapter-claude generate()', () => {
   });
 
   it('merges tools.claude passthrough settings into settings.json alongside hooks', async () => {
-    await generate(
+    await applyProject(
       {
         hooks: { PreToolUse: 'npm test' },
         tools: { claude: { statusLine: { type: 'command', command: './status.sh' } } },
@@ -144,9 +157,9 @@ describe('ai-jue-adapter-claude generate()', () => {
       },
     };
 
-    await generate(config, TEST_DIR);
+    await applyProject(config, TEST_DIR);
     const first = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
-    await generate(config, TEST_DIR);
+    await applyProject(config, TEST_DIR);
     expect(fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8')).toBe(first);
 
     expect(first).toContain('# Claude user notes');
@@ -165,7 +178,7 @@ describe('ai-jue-adapter-claude generate()', () => {
 
   it('rejects support-file path traversal', async () => {
     await expect(
-      generate(
+      applyProject(
         { skills: { review: { content: 'Review', references: { '../secret.md': 'nope' } } } },
         TEST_DIR,
       ),
@@ -173,7 +186,7 @@ describe('ai-jue-adapter-claude generate()', () => {
   });
 
   it('produces no output for an empty config', async () => {
-    await generate({}, TEST_DIR);
+    await applyProject({}, TEST_DIR);
     expect(fs.readdirSync(TEST_DIR)).toEqual([]);
   });
 });

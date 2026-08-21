@@ -41,25 +41,25 @@ async function main() {
     fs.writeFileSync(path.join(workDir, "AGENTS.md"), "");
 
     console.log("[1/3] read() → Canonical");
-    const canonical = await read({ projectRoot: workDir });
+    const canonical = await read({ scope: "project", artifactRoot: workDir });
     console.log("      read() returned:", JSON.stringify(canonical));
 
     // Materialise context.global so the write() actually emits a managed
     // block (otherwise the canonical round-trip is vacuously empty).
     const withContext = { ...canonical, context: { global: "Jue Codex native verify context." } };
     console.log("[2/3] write() → applyChangesOrThrow");
-    const changes = await write(withContext, { projectRoot: workDir, artifactKind: "project" });
+    const changes = await write(withContext, { scope: "project", artifactRoot: workDir, artifactKind: "project" });
     fs.mkdirSync(path.join(workDir, ".claude"), { recursive: true }); // not used, but no-op
     const { applyChangesOrThrow } = require(path.join(repoRoot, "packages/ai-jue-core/dist/index.js"));
     applyChangesOrThrow(workDir, changes);
 
-    const reRead = await read({ projectRoot: workDir });
+    const reRead = await read({ scope: "project", artifactRoot: workDir });
     if (JSON.stringify(reRead) !== JSON.stringify(withContext)) {
       throw new Error(`read(write(read(N))) round-trip mismatch: ${JSON.stringify(reRead)} !== ${JSON.stringify(withContext)}`);
     }
 
     console.log("[3/3] confirm() — native Codex plugin round-trip");
-    const confirmation = await confirm([], { projectRoot: workDir, artifactKind: "project" });
+    const confirmation = await confirm([], { scope: "project", artifactRoot: workDir, artifactKind: "project" });
     console.log("      confirm() returned:", JSON.stringify(confirmation));
     if (confirmation.status === "failed") {
       throw new Error(`codex confirm() reported 'failed' evidence=${confirmation.evidence}`);

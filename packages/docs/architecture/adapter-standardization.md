@@ -20,6 +20,16 @@ Adapter 必须声明：
 - 写入所需的权限；
 - 用于确认结果的目标原生路径。
 
+## Extension 入口与能力缺省
+
+Extension 默认导出是 Adapter 清单、方法和能力元数据的唯一运行时事实源。Core
+校验默认导出后把 Adapter 对象交给 apply；包入口保持单一默认导出。
+
+适用于所有 Adapter 的基线由 Core 定义，Adapter 只声明目标原生能力与基线差异。
+`supportedScopes` 缺省为 project-only；只有拥有真实用户级原生路径和验证证据的
+Adapter 声明 `user`。因此增加新 scope 只改变 Core 合同和实际支持它的 Adapter，
+不会要求其余包复制相同元数据。
+
 ## 三个必要行为
 
 | 方法 | 作用 | 是否允许副作用 |

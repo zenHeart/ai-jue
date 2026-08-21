@@ -27,23 +27,6 @@ export class UnsupportedArtifactKindError extends Error {
   }
 }
 
-export class UnsupportedArtifactScopeError extends Error {
-  readonly adapter: string;
-  readonly scope: string;
-  readonly exitCode = 2;
-
-  constructor(adapter: string, scope: string) {
-    super(
-      `Adapter "${adapter}" cannot apply target scope "${scope}" yet. ` +
-        'Only "project" scope has a safe project-relative execution path; ' +
-        "local and user scopes require an explicit authorization/root mapping.",
-    );
-    this.name = "UnsupportedArtifactScopeError";
-    this.adapter = adapter;
-    this.scope = scope;
-  }
-}
-
 /** Short adapter id used in CLI / targets / tools keys. */
 export function shortAdapterName(adapterName: string): string {
   return adapterName.startsWith("ai-jue-adapter-")
@@ -55,6 +38,11 @@ export function shortAdapterName(adapterName: string): string {
 function normalizeAdapterKey(shortName: string): string {
   if (shortName === "claude-code" || shortName === "claude") return "claude";
   return shortName;
+}
+
+/** Config/tools key for a package name or canonical Adapter id. */
+export function adapterConfigKey(adapterName: string): string {
+  return normalizeAdapterKey(shortAdapterName(adapterName));
 }
 
 const DEFAULT_KIND: Record<string, string> = {
@@ -129,8 +117,6 @@ export interface ResolveArtifactKindInput {
       { artifact?: string; enabled?: boolean; scope?: ArtifactScope } | undefined
     >;
   } | null;
-  /** Adapter-owned detection of an existing managed Artifact at the output root. */
-  existingArtifactKind?: string | null;
 }
 
 export type ArtifactScope = "project" | "local" | "user";
@@ -172,7 +158,7 @@ export function isTargetEnabled(
 
 /**
  * Resolve the Artifact kind for one adapter.
- * Order: CLI → targets.<adapter>.artifact → detected Artifact for `auto` → default.
+ * Order: CLI → targets.<adapter>.artifact → stable Adapter default.
  */
 export function resolveArtifactKind(input: ResolveArtifactKindInput): string {
   const short = shortAdapterName(input.adapterName);
@@ -186,11 +172,8 @@ export function resolveArtifactKind(input: ResolveArtifactKindInput): string {
   const fromTargets = normalizeRaw(targetSelection?.artifact);
 
   const raw = fromCli ?? fromTargets ?? "auto";
-  const detected = normalizeRaw(input.existingArtifactKind);
   const resolved =
-    raw === "auto" && detected && implemented.includes(detected)
-      ? detected
-      : aliases?.[raw] ?? (raw === "auto" ? defaultKind : raw);
+    aliases?.[raw] ?? (raw === "auto" ? defaultKind : raw);
 
   if (!implemented.includes(resolved)) {
     throw new UnsupportedArtifactKindError(short, raw, implemented);

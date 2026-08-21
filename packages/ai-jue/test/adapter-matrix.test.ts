@@ -2,10 +2,11 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import fs from 'fs';
 import os from 'os';
 import path from 'path';
-import { generate as generateClaude } from '../../ai-jue-adapter-claude/src/index';
-import { generate as generateCursor } from '../../ai-jue-adapter-cursor/src/index';
-import { generate as generateCodex } from '../../ai-jue-adapter-codex/src/index';
+import claudeExtension from '../../ai-jue-adapter-claude/src/index';
+import cursorExtension from '../../ai-jue-adapter-cursor/src/index';
+import codexExtension from '../../ai-jue-adapter-codex/src/index';
 import { parse as parseToml } from '@iarna/toml';
+import { applyExtension } from './helpers/apply-extension';
 
 const TEST_DIR = fs.mkdtempSync(path.join(os.tmpdir(), 'ai-jue-matrix-'));
 
@@ -83,9 +84,9 @@ describe('adapter contract matrix', () => {
       },
     };
 
-    await generateCursor(config, TEST_DIR);
-    await generateCodex(config, TEST_DIR);
-    await generateClaude(config, TEST_DIR);
+    await applyExtension(cursorExtension, config, TEST_DIR);
+    await applyExtension(codexExtension, config, TEST_DIR);
+    await applyExtension(claudeExtension, config, TEST_DIR);
 
     const claude = fs.readFileSync(path.join(TEST_DIR, 'CLAUDE.md'), 'utf8');
     const agentsMd = fs.readFileSync(path.join(TEST_DIR, 'AGENTS.md'), 'utf8');
