@@ -30,9 +30,18 @@ function manifest(directory: string): PackageManifest {
   return JSON.parse(fs.readFileSync(file, "utf8")) as PackageManifest;
 }
 
+const { normalizeExecOutput } = require(
+  path.join(process.cwd(), ".github", "scripts", "publish-batch.js"),
+) as { normalizeExecOutput(output: string | null): string };
+
 describe("published package release contract", () => {
   const manifests = PUBLISHED_DIRS.map(manifest);
   const byName = new Map(manifests.map((item) => [item.name, item]));
+
+  it("accepts inherited stdio's null result after a successful publish", () => {
+    expect(normalizeExecOutput(" 2.0.0\n")).toBe("2.0.0");
+    expect(normalizeExecOutput(null)).toBe("");
+  });
 
   it("uses bounded internal ranges that include the in-repo release", () => {
     for (const consumer of manifests) {
