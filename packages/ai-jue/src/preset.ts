@@ -231,6 +231,68 @@ function findLocalizedFile(baseDir: string, fileNames: string[], userLanguage?: 
   return null;
 }
 
+type FlatMarkdownEntry = {
+  assetName: string;
+  entry: fs.Dirent;
+};
+
+function selectFlatMarkdownEntries(
+  entries: fs.Dirent[],
+  userLanguage?: string,
+): FlatMarkdownEntry[] {
+  const markdownFiles = entries.filter((entry) => entry.isFile() && entry.name.endsWith('.md'));
+  const fileNames = new Set(markdownFiles.map((entry) => entry.name));
+  const selected = new Map<string, fs.Dirent>();
+
+  for (const entry of markdownFiles) {
+    const stem = entry.name.slice(0, -3);
+    const localeSeparator = stem.lastIndexOf('.');
+    if (localeSeparator > 0) {
+      const baseName = stem.slice(0, localeSeparator);
+      const locale = stem.slice(localeSeparator + 1);
+      if (fileNames.has(`${baseName}.md`)) {
+        if (locale === userLanguage) selected.set(baseName, entry);
+        continue;
+      }
+    }
+    if (!selected.has(stem)) selected.set(stem, entry);
+  }
+
+  return [...selected].map(([assetName, entry]) => ({ assetName, entry }));
+}
+
+function assertNoDualModeConflicts(
+  section: string,
+  flatEntries: FlatMarkdownEntry[],
+  entries: fs.Dirent[],
+): void {
+  const directoryNames = new Set(
+    entries.filter((entry) => entry.isDirectory()).map((entry) => entry.name),
+  );
+  for (const { assetName } of flatEntries) {
+    if (directoryNames.has(assetName)) {
+      throw new Error(
+        `${section}.${assetName} is defined in both flat-file and directory mode`,
+      );
+    }
+  }
+}
+
+function selectDualModeEntries(
+  section: string,
+  entries: fs.Dirent[],
+  userLanguage?: string,
+): FlatMarkdownEntry[] {
+  const flatEntries = selectFlatMarkdownEntries(entries, userLanguage);
+  assertNoDualModeConflicts(section, flatEntries, entries);
+  return [
+    ...flatEntries,
+    ...entries
+      .filter((entry) => entry.isDirectory())
+      .map((entry) => ({ entry, assetName: entry.name })),
+  ];
+}
+
 async function loadNamedAssetDir(
   config: MergedConfig,
   dirPath: string,
@@ -242,11 +304,11 @@ async function loadNamedAssetDir(
   if (!config[section]) config[section] = {};
 
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  const assetEntries = selectDualModeEntries(section, entries, userLanguage);
   await Promise.all(
-    entries.map(async (entry) => {
+    assetEntries.map(async ({ entry, assetName }) => {
       // 1. Flat file capability: <section>/<name>.md
-      if (entry.isFile() && entry.name.endsWith('.md')) {
-        const assetName = entry.name.slice(0, -3);
+      if (entry.isFile()) {
         const rawContent = await fs.promises.readFile(path.join(dirPath, entry.name), 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawContent);
         config[section][assetName] = {
@@ -258,7 +320,6 @@ async function loadNamedAssetDir(
 
       // 2. Directory capability: <section>/<name>/...
       if (entry.isDirectory()) {
-        const assetName = entry.name;
         const assetDir = path.join(dirPath, assetName);
         const contentPath = findLocalizedFile(assetDir, preferredFiles, userLanguage);
         if (!contentPath) return;
@@ -287,11 +348,11 @@ async function loadCommands(config: MergedConfig, dirPath: string, userLanguage?
   const commands = (config.commands ??= {});
 
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  const assetEntries = selectDualModeEntries('commands', entries, userLanguage);
   await Promise.all(
-    entries.map(async (entry) => {
+    assetEntries.map(async ({ entry, assetName: commandName }) => {
       // 1. Flat file command: commands/<name>.md
-      if (entry.isFile() && entry.name.endsWith('.md')) {
-        const commandName = entry.name.slice(0, -3);
+      if (entry.isFile()) {
         const rawPrompt = await fs.promises.readFile(path.join(dirPath, entry.name), 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawPrompt);
         commands[commandName] = {
@@ -304,7 +365,6 @@ async function loadCommands(config: MergedConfig, dirPath: string, userLanguage?
 
       // 2. Directory command: commands/<name>/prompt.md
       if (entry.isDirectory()) {
-        const commandName = entry.name;
         const commandDir = path.join(dirPath, commandName);
         const promptPath = findLocalizedFile(commandDir, ['prompt.md'], userLanguage);
         if (!promptPath) return;
@@ -326,11 +386,11 @@ async function loadAgents(config: MergedConfig, dirPath: string, userLanguage?: 
   const agents = (config.agents ??= {});
 
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  const assetEntries = selectDualModeEntries('agents', entries, userLanguage);
   await Promise.all(
-    entries.map(async (entry) => {
+    assetEntries.map(async ({ entry, assetName: agentName }) => {
       // 1. Flat file agent: agents/<name>.md
-      if (entry.isFile() && entry.name.endsWith('.md')) {
-        const agentName = entry.name.slice(0, -3);
+      if (entry.isFile()) {
         const rawPrompt = await fs.promises.readFile(path.join(dirPath, entry.name), 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawPrompt);
         agents[agentName] = {
@@ -341,9 +401,8 @@ async function loadAgents(config: MergedConfig, dirPath: string, userLanguage?: 
         return;
       }
 
-      // 2. Directory agent: agents/<name>/prompt.md (with optional references/ bundle)
+      // 2. Directory agent: agents/<name>/prompt.md
       if (entry.isDirectory()) {
-        const agentName = entry.name;
         const agentDir = path.join(dirPath, agentName);
         const meta = await readJsonIfExists(path.join(agentDir, 'index.json'));
         const promptPath = findLocalizedFile(agentDir, ['prompt.md', 'AGENTS.md'], userLanguage);
@@ -351,14 +410,11 @@ async function loadAgents(config: MergedConfig, dirPath: string, userLanguage?: 
 
         const rawPrompt = await fs.promises.readFile(promptPath, 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawPrompt);
-        const bundle = await loadAssetBundle(agentDir);
-
         agents[agentName] = {
           ...meta,
           ...parsed.attributes,
           prompt: parsed.content,
           content: parsed.content,
-          ...bundle,
         };
       }
     }),
@@ -370,19 +426,22 @@ async function loadHooks(config: MergedConfig, dirPath: string, userLanguage?: s
   const hooks = (config.hooks ??= {});
 
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
+  const assetEntries = selectDualModeEntries('hooks', entries, userLanguage);
   await Promise.all(
-    entries.map(async (entry) => {
+    assetEntries.map(async ({ entry, assetName: hookName }) => {
       // 1. Flat file hook: hooks/<name>.md
-      if (entry.isFile() && entry.name.endsWith('.md')) {
-        const hookName = entry.name.slice(0, -3);
-        const script = (await fs.promises.readFile(path.join(dirPath, entry.name), 'utf8')).trim();
-        hooks[hookName] = script;
+      if (entry.isFile()) {
+        const rawContent = await fs.promises.readFile(path.join(dirPath, entry.name), 'utf8');
+        const parsed = parseMarkdownWithFrontmatter(rawContent);
+        const script = parsed.content.trim();
+        hooks[hookName] = Object.keys(parsed.attributes).length > 0
+          ? { ...parsed.attributes, script }
+          : script;
         return;
       }
 
       // 2. Directory hook: hooks/<name>/prompt.md
       if (entry.isDirectory()) {
-        const hookName = entry.name;
         const hookDir = path.join(dirPath, hookName);
         const meta = await readJsonIfExists(path.join(hookDir, 'index.json'));
         const promptPath = findLocalizedFile(hookDir, ['prompt.md'], userLanguage);

@@ -9,7 +9,7 @@ function makeTempDir(): string {
 }
 
 describe('Preset Loader Dual-Mode Asset Support', () => {
-  it('loads flat single-file agents alongside directory-based agents with attachment bundles', async () => {
+  it('loads flat single-file agents alongside directory-based agents', async () => {
     const dir = makeTempDir();
 
     // 1. Flat single-file agent
@@ -26,9 +26,9 @@ model: inherit
 Perform structured analysis without side effects.`,
     );
 
-    // 2. Directory-based complex agent with references bundle
+    // 2. Directory-based agent
     const complexAgentDir = path.join(agentsDir, 'synthetic-coordinator');
-    fs.mkdirSync(path.join(complexAgentDir, 'references', 'roles'), { recursive: true });
+    fs.mkdirSync(complexAgentDir, { recursive: true });
     fs.writeFileSync(
       path.join(complexAgentDir, 'prompt.md'),
       `---
@@ -38,11 +38,6 @@ description: Synthetic multi-role coordinator agent
 # Synthetic Coordinator
 Coordinate specialized roles.`,
     );
-    fs.writeFileSync(
-      path.join(complexAgentDir, 'references', 'roles', 'specialist.md'),
-      '# Specialist Role\nGuidance for specialized tasks.',
-    );
-
     const config = await loadAssetsFromDir(dir, 'en');
 
     // Verify flat single-file agent
@@ -52,12 +47,11 @@ Coordinate specialized roles.`,
     expect(config.agents?.['synthetic-analyst']?.model).toBe('inherit');
     expect(config.agents?.['synthetic-analyst']?.prompt).toContain('Perform structured analysis');
 
-    // Verify directory-based complex agent and its bundle
+    // Verify directory-based agent
     expect(config.agents?.['synthetic-coordinator']).toBeDefined();
     expect(config.agents?.['synthetic-coordinator']?.name).toBe('synthetic-coordinator');
     expect(config.agents?.['synthetic-coordinator']?.description).toBe('Synthetic multi-role coordinator agent');
     expect(config.agents?.['synthetic-coordinator']?.prompt).toContain('Coordinate specialized roles');
-    expect(config.agents?.['synthetic-coordinator']?.references?.['roles/specialist.md']).toContain('Guidance for specialized tasks');
   });
 
   it('loads flat single-file commands alongside directory-based commands', async () => {
@@ -130,10 +124,11 @@ Enforce least privilege access.`,
     fs.mkdirSync(hooksDir, { recursive: true });
 
     // Flat hook
-    fs.writeFileSync(
-      path.join(hooksDir, 'pre-commit.md'),
-      'npm run test:quick',
-    );
+    fs.writeFileSync(path.join(hooksDir, 'pre-commit.md'), `---
+matcher: Write|Edit
+async: true
+---
+npm run test:quick`);
 
     // Directory hook
     const postBuildDir = path.join(hooksDir, 'post-build');
@@ -144,7 +139,44 @@ Enforce least privilege access.`,
     );
 
     const config = await loadAssetsFromDir(dir, 'en');
-    expect(config.hooks?.['pre-commit']).toBe('npm run test:quick');
+    expect(config.hooks?.['pre-commit']).toEqual({
+      matcher: 'Write|Edit',
+      async: true,
+      script: 'npm run test:quick',
+    });
     expect(config.hooks?.['post-build']).toBe('npm run smoke');
+  });
+
+  it('selects requested flat-file language variants without creating suffixed capabilities', async () => {
+    const dir = makeTempDir();
+    for (const section of ['commands', 'rules', 'agents', 'hooks']) {
+      const sectionDir = path.join(dir, section);
+      fs.mkdirSync(sectionDir, { recursive: true });
+      fs.writeFileSync(path.join(sectionDir, 'demo.md'), 'Default body');
+      fs.writeFileSync(path.join(sectionDir, 'demo.en.md'), 'English body');
+    }
+
+    const config = await loadAssetsFromDir(dir, 'en');
+
+    expect(config.commands?.demo?.content).toBe('English body');
+    expect(config.rules?.demo?.content).toBe('English body');
+    expect(config.agents?.demo?.content).toBe('English body');
+    expect(config.hooks?.demo).toBe('English body');
+    expect(config.commands?.['demo.en']).toBeUndefined();
+    expect(config.rules?.['demo.en']).toBeUndefined();
+    expect(config.agents?.['demo.en']).toBeUndefined();
+    expect(config.hooks?.['demo.en']).toBeUndefined();
+  });
+
+  it('rejects an id defined in both flat-file and directory mode', async () => {
+    const dir = makeTempDir();
+    const rulesDir = path.join(dir, 'rules');
+    fs.mkdirSync(path.join(rulesDir, 'duplicate'), { recursive: true });
+    fs.writeFileSync(path.join(rulesDir, 'duplicate.md'), 'Flat rule');
+    fs.writeFileSync(path.join(rulesDir, 'duplicate', 'prompt.md'), 'Directory rule');
+
+    await expect(loadAssetsFromDir(dir, 'en')).rejects.toThrow(
+      'rules.duplicate is defined in both flat-file and directory mode',
+    );
   });
 });

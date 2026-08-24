@@ -26,7 +26,7 @@ A Preset is a declarative Capability package, conventionally named
 | `presets` | No | `string[]` | Recursive dependencies |
 | `capabilities` | No | `Record<string, CapabilityRef>` | External leaf references |
 
-At least one directory Capability, Preset, or Capability reference is required.
+At least one local Capability, Preset, or Capability reference is required.
 
 ## `CapabilityRef`
 
@@ -41,18 +41,24 @@ At least one directory Capability, Preset, or Capability reference is required.
 Each reference is one Capability leaf. It neither expands Presets nor returns a
 Capability collection.
 
-## Directory inventory
+## Capability inventory
 
 | Path | Canonical |
 | --- | --- |
 | `AGENTS.md` | `context.global` |
 | `skills/<id>/SKILL.md` | `skills.<id>` |
-| `commands/<id>/prompt.md` | `commands.<id>` |
-| `rules/<id>/prompt.md` | `rules.<id>` |
-| `agents/<id>/prompt.md` | `agents.<id>` |
-| `hooks/<id>/index.json` | `hooks.<id>` |
+| `commands/<id>.md` or `commands/<id>/prompt.md` | `commands.<id>` |
+| `rules/<id>.md` or `rules/<id>/prompt.md` | `rules.<id>` |
+| `agents/<id>.md` or `agents/<id>/prompt.md` | `agents.<id>` |
+| `hooks/<id>.md`, `hooks/<id>/prompt.md`, or `hooks/<id>/index.json` | `hooks.<id>` |
 | `mcp.json` | `mcp` |
 | `tools/<target>/config.json` | non-Canonical configuration for that target |
+
+Use one Markdown file for a simple Capability and a same-name directory when
+directory structure is needed. One `<id>` within a Capability type uses exactly
+one mode. Markdown frontmatter becomes Canonical metadata and the body becomes
+Capability content; a hook body becomes `script`. Pair a language variant named
+`<id>.<language>.md` with `<id>.md`.
 
 Presets contain no Extension entrypoint, install state, credential, user state,
 or target Plugin runtime code.
