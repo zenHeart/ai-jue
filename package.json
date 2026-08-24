@@ -8,6 +8,8 @@
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
     "security-scan": "node scripts/security-scan.js",
+    "privacy-scan:release": "node scripts/package-privacy-scan.js",
+    "test:release-privacy": "node --test scripts/package-privacy-scan.test.js",
     "test": "vitest run",
     "build": "turbo run build",
     "docs:dev": "npm run docs:dev -w docs",

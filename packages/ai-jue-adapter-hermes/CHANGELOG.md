@@ -1,3 +1,11 @@
+## [0.3.1](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-hermes@v0.3.0...ai-jue-adapter-hermes@v0.3.1) (2026-08-24)
+
+### Bug fixes
+
+- Preserve portable Skill `scripts` and `assets` beside `references` in
+  Hermes workspace artifacts.
+- Publish public project metadata without a placeholder contact email.
+
 ## [0.3.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-hermes@v0.2.2...ai-jue-adapter-hermes@v0.3.0) (2026-08-21)
 
 ### Breaking changes

@@ -1,6 +1,6 @@
 {
   "name": "ai-jue-adapter-hermes",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Adapter for generating Hermes configurations.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -25,7 +25,10 @@
     "ai-jue-core": "^2.0.0",
     "typescript": "^5.0.0"
   },
-  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "author": {
+    "name": "ZenHeart",
+    "url": "https://github.com/zenHeart"
+  },
   "license": "MIT",
   "repository": {
     "type": "git",
