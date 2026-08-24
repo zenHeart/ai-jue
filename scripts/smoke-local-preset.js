@@ -220,6 +220,57 @@ function verifySupportFilesAt(skillName, skill, skillDir, label) {
   }
 }
 
+function executeClassifier(skillDirs) {
+  const fixtures = [
+    {
+      intention: 'unknown',
+      domain: 'unknown',
+      project_candidates: ['beta', 'alpha'],
+      clarification_round: 0,
+    },
+    {
+      intention: 'task',
+      domain: 'work',
+      project_candidates: [],
+      clarification_round: 1,
+    },
+  ];
+  let expected = null;
+  for (const [label, skillDir] of skillDirs) {
+    const script = path.join(skillDir, 'scripts', 'classify_intake.mjs');
+    if (!fs.existsSync(script)) {
+      throw new Error(`${label}: missing executable jot classifier`);
+    }
+    const output = fixtures.map((fixture) => {
+      const result = spawnSync(process.execPath, [script], {
+        encoding: 'utf8',
+        input: JSON.stringify(fixture),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      if (result.status !== 0) {
+        throw new Error(`${label}: jot classifier exited ${result.status ?? 'unavailable'}`);
+      }
+      return JSON.parse(result.stdout);
+    });
+    const serialized = JSON.stringify(output);
+    if (expected === null) expected = serialized;
+    else if (serialized !== expected) {
+      throw new Error(`${label}: jot classifier output differs across Adapters`);
+    }
+  }
+  const [clarification, fallback] = JSON.parse(expected);
+  if (clarification.action !== 'clarify' || clarification.questions.length !== 3) {
+    throw new Error('jot classifier did not batch all ambiguities into one round');
+  }
+  if (
+    fallback.action !== 'record'
+    || fallback.classification?.type !== 'idea'
+    || fallback.classification?.status !== 'draft'
+  ) {
+    throw new Error('jot classifier did not fall back to draft after one round');
+  }
+}
+
 function assertNoHomePath(root, label) {
   const homeBytes = Buffer.from(os.homedir());
   const visit = (dir) => {
@@ -466,15 +517,17 @@ async function main() {
       assertNoHermesMcp(outs.hermes, 'hermes skill-plugin');
 
       if (jotSkill) {
-        for (const [label, dir] of [
+        const jotDirs = [
           ['codex plugin', path.join(outs.codex, 'skills', 'jot')],
           ['claude plugin', path.join(outs.claude, 'skills', 'jot')],
           ['cursor plugin', path.join(outs.cursor, 'skills', 'jot')],
           ['openclaw bundle', path.join(outs.openclaw, 'skills', 'jot')],
           ['hermes skill-plugin', path.join(outs.hermes, 'skills', 'jot')],
-        ]) {
+        ];
+        for (const [label, dir] of jotDirs) {
           verifySupportFilesAt('jot', jotSkill, dir, label);
         }
+        executeClassifier(jotDirs);
       }
       for (const [name, root] of Object.entries(outs)) {
         assertNoHomePath(root, `${name} plugin`);
@@ -512,15 +565,17 @@ async function main() {
       assertCursorMcpJson(consumerDir, 'cursor apply');
       verifySupportFiles(skillName, skill, consumerDir);
       if (jotSkill) {
-        for (const [label, dir] of [
+        const jotDirs = [
           ['codex workspace', path.join(consumerDir, '.agents', 'skills', 'jot')],
           ['claude workspace', path.join(consumerDir, '.claude', 'skills', 'jot')],
           ['cursor workspace', path.join(consumerDir, '.cursor', 'skills', 'jot')],
           ['openclaw workspace', path.join(consumerDir, 'skills', 'jot')],
           ['hermes workspace', path.join(consumerDir, 'skills', 'general', 'jot')],
-        ]) {
+        ];
+        for (const [label, dir] of jotDirs) {
           verifySupportFilesAt('jot', jotSkill, dir, label);
         }
+        executeClassifier(jotDirs);
       }
     }
     console.log(
