@@ -201,6 +201,95 @@ function verifySupportFiles(skillName, skill, consumerDir) {
   }
 }
 
+function verifySupportFilesAt(skillName, skill, skillDir, label) {
+  for (const [section, files] of [
+    ['references', skill.references],
+    ['scripts', skill.scripts],
+    ['assets', skill.assets],
+  ]) {
+    for (const [relativePath, expected] of Object.entries(files || {})) {
+      const generated = fs.readFileSync(path.join(skillDir, section, relativePath));
+      const expectedBytes =
+        typeof expected === 'string'
+          ? Buffer.from(expected)
+          : Buffer.from(expected.content, expected.encoding);
+      if (!generated.equals(expectedBytes)) {
+        throw new Error(`${label}: ${skillName}/${section}/${relativePath} differs`);
+      }
+    }
+  }
+}
+
+function executeClassifier(skillDirs) {
+  const fixtures = [
+    {
+      intention: 'unknown',
+      domain: 'unknown',
+      project_candidates: ['beta', 'alpha'],
+      clarification_round: 0,
+    },
+    {
+      intention: 'task',
+      domain: 'work',
+      project_candidates: [],
+      clarification_round: 1,
+    },
+  ];
+  let expected = null;
+  for (const [label, skillDir] of skillDirs) {
+    const script = path.join(skillDir, 'scripts', 'classify_intake.mjs');
+    const capture = path.join(skillDir, 'scripts', 'capture_workflow_issue.mjs');
+    if (!fs.existsSync(script)) {
+      throw new Error(`${label}: missing executable jot classifier`);
+    }
+    if (!fs.existsSync(capture)) {
+      throw new Error(`${label}: missing portable jot gh capture bridge`);
+    }
+    const output = fixtures.map((fixture) => {
+      const result = spawnSync(process.execPath, [script], {
+        encoding: 'utf8',
+        input: JSON.stringify(fixture),
+        stdio: ['pipe', 'pipe', 'pipe'],
+      });
+      if (result.status !== 0) {
+        throw new Error(`${label}: jot classifier exited ${result.status ?? 'unavailable'}`);
+      }
+      return JSON.parse(result.stdout);
+    });
+    const serialized = JSON.stringify(output);
+    if (expected === null) expected = serialized;
+    else if (serialized !== expected) {
+      throw new Error(`${label}: jot classifier output differs across Adapters`);
+    }
+  }
+  const [clarification, fallback] = JSON.parse(expected);
+  if (clarification.action !== 'clarify' || clarification.questions.length !== 3) {
+    throw new Error('jot classifier did not batch all ambiguities into one round');
+  }
+  if (
+    fallback.action !== 'record'
+    || fallback.classification?.type !== 'idea'
+    || fallback.classification?.status !== 'draft'
+  ) {
+    throw new Error('jot classifier did not fall back to draft after one round');
+  }
+}
+
+function assertNoHomePath(root, label) {
+  const homeBytes = Buffer.from(os.homedir());
+  const visit = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === 'node_modules') continue;
+      const target = path.join(dir, entry.name);
+      if (entry.isDirectory()) visit(target);
+      if (entry.isFile() && fs.readFileSync(target).includes(homeBytes)) {
+        throw new Error(`${label}: generated Artifact contains an absolute home path`);
+      }
+    }
+  };
+  visit(root);
+}
+
 function cleanup(tempRoot, mode) {
   if (mode !== 'trash') {
     fs.rmSync(tempRoot, { recursive: true, force: true });
@@ -256,8 +345,8 @@ async function main() {
     const config = normalizeConfig(await loadPreset(args.entry, 'en'));
     const skillEntry = firstEntry(config.skills);
     const agentEntry = firstEntry(config.agents);
-    if (!skillEntry || !agentEntry || !config.context?.global) {
-      throw new Error('The installed Preset did not resolve required Capability types');
+    if (!skillEntry || !config.context?.global) {
+      throw new Error('The installed Preset did not resolve a Skill and global context');
     }
 
     const cli = path.resolve(__dirname, '../packages/ai-jue/dist/cli.js');
@@ -267,7 +356,8 @@ async function main() {
     const skillNames = Object.keys(config.skills || {}).sort();
     const mcpServerNames = Object.keys(config.mcp?.servers || {}).sort();
     const [skillName, skill] = skillEntry;
-    const [agentName] = agentEntry;
+    const agentName = agentEntry?.[0];
+    const jotSkill = config.skills?.jot;
 
     function assertExists(root, relative, label) {
       if (!fs.existsSync(path.join(root, relative))) {
@@ -391,13 +481,16 @@ async function main() {
           path.join(dir, 'package.json'),
           fs.readFileSync(path.join(consumerDir, 'package.json')),
         );
-        fs.symlinkSync(
-          path.join(consumerDir, 'node_modules'),
-          path.join(dir, 'node_modules'),
-          'junction',
-        );
         outs[name] = dir;
       }
+
+      // Keep package resolution outside the installable Artifact root. A
+      // node_modules link inside a bundle is correctly rejected by native
+      // target security scanners as an external-root dependency.
+      const originalNodePath = process.env.NODE_PATH;
+      process.env.NODE_PATH = originalNodePath
+        ? `${path.join(consumerDir, 'node_modules')}${path.delimiter}${originalNodePath}`
+        : path.join(consumerDir, 'node_modules');
 
       run(process.execPath, [cli, 'apply', '--adapter', 'codex', ...artifactArgs], outs.codex);
       run(process.execPath, [cli, 'apply', '--adapter', 'claude-code', ...artifactArgs], outs.claude);
@@ -426,6 +519,23 @@ async function main() {
       assertExists(outs.hermes, '__init__.py', 'hermes skill-plugin');
       assertSkillTree(outs.hermes, 'hermes skill-plugin');
       assertNoHermesMcp(outs.hermes, 'hermes skill-plugin');
+
+      if (jotSkill) {
+        const jotDirs = [
+          ['codex plugin', path.join(outs.codex, 'skills', 'jot')],
+          ['claude plugin', path.join(outs.claude, 'skills', 'jot')],
+          ['cursor plugin', path.join(outs.cursor, 'skills', 'jot')],
+          ['openclaw bundle', path.join(outs.openclaw, 'skills', 'jot')],
+          ['hermes skill-plugin', path.join(outs.hermes, 'skills', 'jot')],
+        ];
+        for (const [label, dir] of jotDirs) {
+          verifySupportFilesAt('jot', jotSkill, dir, label);
+        }
+        executeClassifier(jotDirs);
+      }
+      for (const [name, root] of Object.entries(outs)) {
+        assertNoHomePath(root, `${name} plugin`);
+      }
     } else {
       run(process.execPath, [cli, 'apply', '--adapter', 'codex'], consumerDir);
       run(process.execPath, [cli, 'apply', '--adapter', 'claude-code'], consumerDir);
@@ -436,23 +546,50 @@ async function main() {
       run(process.execPath, [cli, 'apply', '--adapter', 'cursor', '--dry-run'], consumerDir);
       run(process.execPath, [cli, 'apply', '--adapter', 'cursor', '--check'], consumerDir);
 
-      for (const relative of [
+      const requiredWorkspaceFiles = [
         'AGENTS.md',
         'CLAUDE.md',
         'MEMORY.md',
         path.join('.agents', 'skills', skillName, 'SKILL.md'),
-        path.join('.codex', 'agents', `${agentName}.toml`),
         path.join('.claude', 'skills', skillName, 'SKILL.md'),
-        path.join('.claude', 'agents', `${agentName}.md`),
-        path.join('.cursor', 'agents', `${agentName}.md`),
         path.join('skills', skillName, 'SKILL.md'),
         path.join('skills', 'general', skillName, 'SKILL.md'),
-      ]) {
+      ];
+      if (agentName) {
+        requiredWorkspaceFiles.push(
+          path.join('.codex', 'agents', `${agentName}.toml`),
+          path.join('.claude', 'agents', `${agentName}.md`),
+          path.join('.cursor', 'agents', `${agentName}.md`),
+        );
+      }
+      for (const relative of requiredWorkspaceFiles) {
         assertExists(consumerDir, relative, 'workspace apply');
+      }
+      for (const name of skillNames) {
+        const flat = name.includes('/') ? name.split('/').pop() : name;
+        for (const [label, relative] of [
+          ['codex workspace', path.join('.agents', 'skills', flat, 'SKILL.md')],
+          ['claude workspace', path.join('.claude', 'skills', flat, 'SKILL.md')],
+          ['openclaw workspace', path.join('skills', flat, 'SKILL.md')],
+          ['hermes workspace', path.join('skills', 'general', flat, 'SKILL.md')],
+        ]) assertExists(consumerDir, relative, label);
       }
       assertCursorSkillTree(consumerDir, 'cursor apply');
       assertCursorMcpJson(consumerDir, 'cursor apply');
       verifySupportFiles(skillName, skill, consumerDir);
+      if (jotSkill) {
+        const jotDirs = [
+          ['codex workspace', path.join(consumerDir, '.agents', 'skills', 'jot')],
+          ['claude workspace', path.join(consumerDir, '.claude', 'skills', 'jot')],
+          ['cursor workspace', path.join(consumerDir, '.cursor', 'skills', 'jot')],
+          ['openclaw workspace', path.join(consumerDir, 'skills', 'jot')],
+          ['hermes workspace', path.join(consumerDir, 'skills', 'general', 'jot')],
+        ];
+        for (const [label, dir] of jotDirs) {
+          verifySupportFilesAt('jot', jotSkill, dir, label);
+        }
+        executeClassifier(jotDirs);
+      }
     }
     console.log(
       `[OK] isolated local Preset install -> Codex/Claude Code/Cursor/OpenClaw/Hermes`

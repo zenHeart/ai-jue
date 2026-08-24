@@ -13,6 +13,9 @@ const CANONICAL: CanonicalDocument = {
       description: "Neutral fixture skill",
       content: "Summarize the content.",
       prompt: "Summarize the content.",
+      references: { "guide.md": "Reference" },
+      scripts: { "validate.mjs": "export default true;\n" },
+      assets: { "template.txt": "Template" },
     },
   },
 };
@@ -50,6 +53,9 @@ describe("openclaw compatible-bundle", () => {
     applyChangesOrThrow(root, changes);
     expect(fs.existsSync(path.join(root, ".claude-plugin", "plugin.json"))).toBe(true);
     expect(fs.existsSync(path.join(root, "skills", "summarize", "SKILL.md"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "skills", "summarize", "references", "guide.md"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "skills", "summarize", "scripts", "validate.mjs"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "skills", "summarize", "assets", "template.txt"))).toBe(true);
     expect(JSON.parse(fs.readFileSync(path.join(root, ".mcp.json"), "utf8")).mcpServers.filesystem).toBeTruthy();
     // Workspace AGENTS.md must not be required for bundle mode.
     expect(fs.existsSync(path.join(root, "AGENTS.md"))).toBe(false);
@@ -92,6 +98,9 @@ describe("openclaw compatible-bundle", () => {
     applyChangesOrThrow(root, changes);
     expect(fs.existsSync(path.join(root, "AGENTS.md"))).toBe(true);
     expect(fs.existsSync(path.join(root, "skills", "summarize", "SKILL.md"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "skills", "summarize", "references", "guide.md"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "skills", "summarize", "scripts", "validate.mjs"))).toBe(true);
+    expect(fs.existsSync(path.join(root, "skills", "summarize", "assets", "template.txt"))).toBe(true);
     expect(fs.existsSync(path.join(root, ".claude-plugin"))).toBe(false);
   });
 

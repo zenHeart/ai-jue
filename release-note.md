@@ -1,3 +1,4 @@
 # Release 2026-08-24
 
-- ai-jue@v2.1.0
+- ai-jue-adapter-hermes@v0.3.1
+- ai-jue-adapter-openclaw@v0.3.1

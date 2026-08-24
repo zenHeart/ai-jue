@@ -69,6 +69,12 @@ jobs:
       - name: Check Base i18n
         run: npm run check-base-i18n
 
+      - name: Test Release Privacy Gate
+        run: npm run test:release-privacy
+
+      - name: Scan Release Packages for Privacy
+        run: npm run privacy-scan:release
+
       - name: Smoke Apply
         run: npm run smoke-apply
 
@@ -104,6 +110,9 @@ jobs:
 
       - name: Build
         run: npm run build
+
+      - name: Scan Release Packages for Privacy
+        run: npm run privacy-scan:release
 
       - name: Upgrade npm for trusted publishing
         run: npm install -g npm@11.6.2

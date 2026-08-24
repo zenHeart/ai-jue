@@ -52,7 +52,7 @@ Bundle 映射要点（官方）：
 | Canonical / Adapter 职责 | OpenClaw |
 | --- | --- |
 | `context.global` | Workspace：`AGENTS.md`（managed block） |
-| `skills` | Workspace：`skills/<name>/`；Bundle：随 Claude/Codex plugin 布局 |
+| `skills` | Workspace：`skills/<name>/`；Bundle：随 Claude/Codex plugin 布局；两者均保留 `references/`、`scripts/`、`assets/` 支持文件 |
 | `hooks` | Workspace：`HOOK.md`+`handler.js`；Bundle：优先 Codex 基底才能执行 |
 | `commands` / `agents` / `mcp.servers` | Workspace：诚实 `degraded`（无安全的项目级写入面）；Bundle：按上表映射或 detect-only |
 | Artifact | `workspace` \| `compatible-bundle`（RFC-0002） |

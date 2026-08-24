@@ -55,7 +55,7 @@ Bundle mapping highlights:
 | Canonical / Adapter duty | OpenClaw |
 | --- | --- |
 | `context.global` | Workspace: `AGENTS.md` (managed block) |
-| `skills` | Workspace: `skills/<name>/`; Bundle: Claude/Codex plugin layout |
+| `skills` | Workspace: `skills/<name>/`; Bundle: Claude/Codex plugin layout; both preserve `references/`, `scripts/`, and `assets/` support files |
 | `hooks` | Workspace: `HOOK.md`+`handler.js`; Bundle: prefer Codex base to execute |
 | `commands` / `agents` / `mcp.servers` | Workspace: honest `degraded`; Bundle: per official mapping / detect-only |
 | Artifact | `workspace` \| `compatible-bundle` (RFC-0002) |
