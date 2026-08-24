@@ -36,6 +36,30 @@ describe("openclaw compatible-bundle confirmation", () => {
     }
   });
 
+  it("confirms the generic plugin artifact through the compatible-bundle path", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-openclaw-confirm-plugin-"));
+    roots.push(root);
+    fs.mkdirSync(path.join(root, ".codex-plugin"), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, ".codex-plugin", "plugin.json"),
+      JSON.stringify({ name: "jue-bundle", version: "0.1.0" }),
+    );
+
+    const originalPath = process.env.PATH;
+    process.env.PATH = "";
+    try {
+      const result = await confirm([], {
+        scope: "project",
+        artifactRoot: root,
+        artifactKind: "plugin",
+      });
+      expect(result).toMatchObject({ target: "openclaw", status: "unconfirmed" });
+      expect(result.evidence).toContain("codex marker");
+    } finally {
+      process.env.PATH = originalPath;
+    }
+  });
+
   it("fails when a bundle hook is missing its handler", async () => {
     const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-openclaw-confirm-invalid-"));
     roots.push(root);

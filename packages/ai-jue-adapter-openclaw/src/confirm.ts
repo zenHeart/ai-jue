@@ -10,7 +10,8 @@ import {
 } from "./capabilities/layout";
 
 export interface ConfirmContext extends CoreConfirmContext {
-  artifactKind?: OpenClawArtifactKind;
+  /** Generic CLI plugin aliases are confirmed as OpenClaw compatible bundles. */
+  artifactKind?: OpenClawArtifactKind | "plugin" | "bundle";
   /**
    * Isolated OpenClaw profile name (defaults to a per-process unique
    * value so concurrent test runs never collide). The profile state
@@ -253,7 +254,8 @@ export async function confirm(
   _results: ArtifactResult[],
   context: ConfirmContext,
 ): Promise<Confirmation> {
-  if ((context.artifactKind ?? detectArtifactKind(context.artifactRoot)) === "compatible-bundle") {
+  const requestedKind = context.artifactKind ?? detectArtifactKind(context.artifactRoot);
+  if (["compatible-bundle", "plugin", "bundle"].includes(requestedKind)) {
     return confirmCompatibleBundle(context);
   }
 
