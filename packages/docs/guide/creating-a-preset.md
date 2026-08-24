@@ -48,6 +48,8 @@ jue-preset-team/
 
 ## 3. 添加能力
 
+- 简单 command、rule、agent 或 hook 使用 `<类型>/<id>.md`；需要目录结构时使用
+  `<类型>/<id>/`。同一 `<id>` 只选择一种模式。
 - 只属于当前 Preset：直接写入对应能力目录。
 - 被多个 Preset 共用：通过 `ai.capabilities` 引用单一来源。
 - 第三方 skill/MCP：使用 外部 Capability 引用与显式 format。

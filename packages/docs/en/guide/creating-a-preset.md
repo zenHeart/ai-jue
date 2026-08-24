@@ -25,6 +25,9 @@ See [Preset Manifest Reference](../reference/preset-manifest.md).
 
 ## 3. Add capabilities
 
+Use `<type>/<id>.md` for a simple command, rule, agent, or hook, and
+`<type>/<id>/` when directory structure is needed. Use one mode per `<id>`.
+
 Place owned capabilities directly in their directories. Use `ai.capabilities`
 for shared or third-party content. Put target-private configuration under
 `tools/<target>/config.json`. Runtime code belongs in a separate Jue Extension.
