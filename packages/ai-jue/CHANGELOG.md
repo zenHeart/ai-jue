@@ -1,3 +1,14 @@
+## [2.1.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v2.0.0...ai-jue@v2.1.0) (2026-08-24)
+
+### Features
+
+- Presets support flat Markdown files and directory layouts for commands,
+  rules, agents, and hooks.
+- Flat-file language variants select the requested locale without creating
+  suffixed Canonical Capability names.
+- Flat hooks preserve YAML frontmatter as structured hook metadata.
+- Duplicate flat-file and directory definitions fail explicitly.
+
 ## [2.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v1.5.3...ai-jue@v2.0.0) (2026-08-21)
 
 ### Breaking changes
@@ -195,4 +206,3 @@
 ### Features
 
 * init with ai ([24aedc9](https://github.com/zenHeart/ai-jue/commit/24aedc9415ff234ff9d46a98382942c8a64e7c72))
-

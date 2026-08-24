@@ -1,6 +1,6 @@
 {
   "name": "ai-jue",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "description": "The AI coding capability management framework.",
   "bin": {
     "jue": "dist/cli.js",
