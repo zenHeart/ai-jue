@@ -243,9 +243,21 @@ async function loadNamedAssetDir(
 
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
   await Promise.all(
-    entries
-      .filter((entry) => entry.isDirectory())
-      .map(async (entry) => {
+    entries.map(async (entry) => {
+      // 1. Flat file capability: <section>/<name>.md
+      if (entry.isFile() && entry.name.endsWith('.md')) {
+        const assetName = entry.name.slice(0, -3);
+        const rawContent = await fs.promises.readFile(path.join(dirPath, entry.name), 'utf8');
+        const parsed = parseMarkdownWithFrontmatter(rawContent);
+        config[section][assetName] = {
+          ...parsed.attributes,
+          content: parsed.content,
+        };
+        return;
+      }
+
+      // 2. Directory capability: <section>/<name>/...
+      if (entry.isDirectory()) {
         const assetName = entry.name;
         const assetDir = path.join(dirPath, assetName);
         const contentPath = findLocalizedFile(assetDir, preferredFiles, userLanguage);
@@ -265,7 +277,8 @@ async function loadNamedAssetDir(
           content: parsed.content,
           ...bundle,
         };
-      }),
+      }
+    }),
   );
 }
 
@@ -275,9 +288,22 @@ async function loadCommands(config: MergedConfig, dirPath: string, userLanguage?
 
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
   await Promise.all(
-    entries
-      .filter((entry) => entry.isDirectory())
-      .map(async (entry) => {
+    entries.map(async (entry) => {
+      // 1. Flat file command: commands/<name>.md
+      if (entry.isFile() && entry.name.endsWith('.md')) {
+        const commandName = entry.name.slice(0, -3);
+        const rawPrompt = await fs.promises.readFile(path.join(dirPath, entry.name), 'utf8');
+        const parsed = parseMarkdownWithFrontmatter(rawPrompt);
+        commands[commandName] = {
+          ...parsed.attributes,
+          prompt: parsed.content,
+          content: parsed.content,
+        };
+        return;
+      }
+
+      // 2. Directory command: commands/<name>/prompt.md
+      if (entry.isDirectory()) {
         const commandName = entry.name;
         const commandDir = path.join(dirPath, commandName);
         const promptPath = findLocalizedFile(commandDir, ['prompt.md'], userLanguage);
@@ -290,7 +316,8 @@ async function loadCommands(config: MergedConfig, dirPath: string, userLanguage?
           prompt: parsed.content,
           content: parsed.content,
         };
-      }),
+      }
+    }),
   );
 }
 
@@ -300,9 +327,22 @@ async function loadAgents(config: MergedConfig, dirPath: string, userLanguage?: 
 
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
   await Promise.all(
-    entries
-      .filter((entry) => entry.isDirectory())
-      .map(async (entry) => {
+    entries.map(async (entry) => {
+      // 1. Flat file agent: agents/<name>.md
+      if (entry.isFile() && entry.name.endsWith('.md')) {
+        const agentName = entry.name.slice(0, -3);
+        const rawPrompt = await fs.promises.readFile(path.join(dirPath, entry.name), 'utf8');
+        const parsed = parseMarkdownWithFrontmatter(rawPrompt);
+        agents[agentName] = {
+          ...parsed.attributes,
+          prompt: parsed.content,
+          content: parsed.content,
+        };
+        return;
+      }
+
+      // 2. Directory agent: agents/<name>/prompt.md (with optional references/ bundle)
+      if (entry.isDirectory()) {
         const agentName = entry.name;
         const agentDir = path.join(dirPath, agentName);
         const meta = await readJsonIfExists(path.join(agentDir, 'index.json'));
@@ -311,13 +351,17 @@ async function loadAgents(config: MergedConfig, dirPath: string, userLanguage?: 
 
         const rawPrompt = await fs.promises.readFile(promptPath, 'utf8');
         const parsed = parseMarkdownWithFrontmatter(rawPrompt);
+        const bundle = await loadAssetBundle(agentDir);
+
         agents[agentName] = {
           ...meta,
           ...parsed.attributes,
           prompt: parsed.content,
           content: parsed.content,
+          ...bundle,
         };
-      }),
+      }
+    }),
   );
 }
 
@@ -327,9 +371,17 @@ async function loadHooks(config: MergedConfig, dirPath: string, userLanguage?: s
 
   const entries = await fs.promises.readdir(dirPath, { withFileTypes: true });
   await Promise.all(
-    entries
-      .filter((entry) => entry.isDirectory())
-      .map(async (entry) => {
+    entries.map(async (entry) => {
+      // 1. Flat file hook: hooks/<name>.md
+      if (entry.isFile() && entry.name.endsWith('.md')) {
+        const hookName = entry.name.slice(0, -3);
+        const script = (await fs.promises.readFile(path.join(dirPath, entry.name), 'utf8')).trim();
+        hooks[hookName] = script;
+        return;
+      }
+
+      // 2. Directory hook: hooks/<name>/prompt.md
+      if (entry.isDirectory()) {
         const hookName = entry.name;
         const hookDir = path.join(dirPath, hookName);
         const meta = await readJsonIfExists(path.join(hookDir, 'index.json'));
@@ -346,7 +398,8 @@ async function loadHooks(config: MergedConfig, dirPath: string, userLanguage?: s
         if (typeof meta.script === 'string' && meta.script.trim()) {
           hooks[hookName] = meta;
         }
-      }),
+      }
+    }),
   );
 }
 
