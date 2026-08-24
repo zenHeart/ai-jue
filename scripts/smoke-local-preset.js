@@ -561,6 +561,15 @@ async function main() {
       for (const relative of requiredWorkspaceFiles) {
         assertExists(consumerDir, relative, 'workspace apply');
       }
+      for (const name of skillNames) {
+        const flat = name.includes('/') ? name.split('/').pop() : name;
+        for (const [label, relative] of [
+          ['codex workspace', path.join('.agents', 'skills', flat, 'SKILL.md')],
+          ['claude workspace', path.join('.claude', 'skills', flat, 'SKILL.md')],
+          ['openclaw workspace', path.join('skills', flat, 'SKILL.md')],
+          ['hermes workspace', path.join('skills', 'general', flat, 'SKILL.md')],
+        ]) assertExists(consumerDir, relative, label);
+      }
       assertCursorSkillTree(consumerDir, 'cursor apply');
       assertCursorMcpJson(consumerDir, 'cursor apply');
       verifySupportFiles(skillName, skill, consumerDir);
