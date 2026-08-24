@@ -1,0 +1,7 @@
+{
+  "mcpServers": {
+    "neutral-fixture-server": {
+      "command": 42
+    }
+  }
+}

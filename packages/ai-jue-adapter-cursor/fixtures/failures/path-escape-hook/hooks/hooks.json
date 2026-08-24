@@ -1,0 +1,9 @@
+{
+  "hooks": {
+    "postToolUse": [
+      {
+        "command": "sh ../../outside-plugin-boundary/neutral-hook.sh"
+      }
+    ]
+  }
+}

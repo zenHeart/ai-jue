@@ -1,6 +1,6 @@
 import path from "path";
 import type { CapabilityMapping } from "ai-jue-core";
-import { mergedJsonFile } from "ai-jue-core";
+import { assertNoLiteralCredentials, mergedJsonFile } from "ai-jue-core";
 import { componentRoot, type CursorArtifactKind } from "./layout";
 
 function enrichStdioServer(server: Record<string, unknown>): Record<string, unknown> {
@@ -20,12 +20,16 @@ export function mcp(artifactKind: CursorArtifactKind): CapabilityMapping<{ serve
         : path.join(root, "mcp.json"),
     toCanonical: (native) => {
       const servers = (native as { mcpServers?: Record<string, unknown> }).mcpServers;
+      for (const [name, server] of Object.entries(servers ?? {})) {
+        assertNoLiteralCredentials(server, `Cursor MCP server "${name}"`);
+      }
       return servers && Object.keys(servers).length > 0 ? { servers } : undefined;
     },
     toNative: (canonical) => {
       const servers: Record<string, unknown> = {};
       for (const [name, server] of Object.entries(canonical.servers ?? {})) {
         if (!server || typeof server !== "object") continue;
+        assertNoLiteralCredentials(server, `Cursor MCP server "${name}"`);
         const enriched = enrichStdioServer(server as Record<string, unknown>);
         if (typeof enriched.command === "string" || typeof enriched.url === "string") {
           servers[name] = enriched;
