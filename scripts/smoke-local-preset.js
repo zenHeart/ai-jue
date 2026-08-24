@@ -238,8 +238,12 @@ function executeClassifier(skillDirs) {
   let expected = null;
   for (const [label, skillDir] of skillDirs) {
     const script = path.join(skillDir, 'scripts', 'classify_intake.mjs');
+    const capture = path.join(skillDir, 'scripts', 'capture_workflow_issue.mjs');
     if (!fs.existsSync(script)) {
       throw new Error(`${label}: missing executable jot classifier`);
+    }
+    if (!fs.existsSync(capture)) {
+      throw new Error(`${label}: missing portable jot gh capture bridge`);
     }
     const output = fixtures.map((fixture) => {
       const result = spawnSync(process.execPath, [script], {
