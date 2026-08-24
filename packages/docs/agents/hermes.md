@@ -31,7 +31,7 @@ Adapter 实现状态见 [implementation-status](../developer/implementation-stat
 | Canonical / Adapter 职责 | Hermes |
 | --- | --- |
 | `context.global` | `MEMORY.md`（managed block） |
-| `skills` | `skills/<category>/<name>/SKILL.md`（三层） |
+| `skills` | `skills/<category>/<name>/SKILL.md`（三层），保留 `references/`、`scripts/`、`assets/` 支持文件 |
 | `mcp.servers` | `config.yaml` 的 `mcp.servers` |
 | `cron`（Hermes 专属附加字段，与六类原子 Capability 并列） | `cron/jobs.json` 整文件直通 |
 | `rules` / `hooks` | 诚实 `unsupported`：无 per-workspace 承载面 |

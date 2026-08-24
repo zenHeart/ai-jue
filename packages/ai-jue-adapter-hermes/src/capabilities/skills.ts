@@ -6,8 +6,8 @@ import type { ArtifactChange, CapabilityMapping } from "ai-jue-core";
 
 const SAFE_SEGMENT = /^[a-zA-Z0-9][a-zA-Z0-9._-]*$/;
 const MAIN_FILE = "SKILL.md";
-/** Only bundle key actually observed on a live installation (e.g. `hermes-windows-maintenance/references/*.md`, `subagent-driven-development/references/*.md`). Unlike Claude's fixtures, no `scripts/`/`assets/` sibling was ever found, so this Adapter does not claim them. */
-const BUNDLE_KEYS = ["references"] as const;
+/** Skill-relative support files stay beside SKILL.md so portable Presets keep their complete contract. */
+const BUNDLE_KEYS = ["references", "scripts", "assets"] as const;
 
 function assertSafeSegment(kind: string, value: string): void {
   if (!SAFE_SEGMENT.test(value)) {
@@ -62,7 +62,7 @@ function buildTextChange(
 }
 
 /**
- * `skills/<category>/<name>/SKILL.md` (+ optional `references/*`), verified
+ * `skills/<category>/<name>/SKILL.md` (+ optional support directories), verified
  * against a live Hermes installation's `~/.hermes/skills/` tree — e.g.
  * `skills/software-development/plan/SKILL.md`,
  * `skills/software-development/hermes-windows-maintenance/references/*.md`.

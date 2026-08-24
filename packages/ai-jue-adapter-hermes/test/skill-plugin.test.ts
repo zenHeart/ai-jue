@@ -92,6 +92,39 @@ describe("hermes skill-plugin", () => {
   });
 });
 
+describe("hermes workspace skill sidecars", () => {
+  const roots: string[] = [];
+  afterEach(() => {
+    for (const root of roots) fs.rmSync(root, { recursive: true, force: true });
+    roots.length = 0;
+  });
+
+  it("preserves references, scripts, and assets beside a portable skill", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-hermes-workspace-sidecars-"));
+    roots.push(root);
+    const changes = await write(
+      {
+        skills: {
+          jot: {
+            content: "Capture a task.",
+            prompt: "Capture a task.",
+            references: { "contract.md": "Reference" },
+            scripts: { "validate.mjs": "export default true;\n" },
+            assets: { "template.txt": "Template" },
+          },
+        },
+      },
+      { scope: "project", artifactRoot: root, artifactKind: "workspace" },
+    );
+    applyChangesOrThrow(root, changes);
+
+    const skillRoot = path.join(root, "skills", "general", "jot");
+    expect(fs.existsSync(path.join(skillRoot, "references", "contract.md"))).toBe(true);
+    expect(fs.existsSync(path.join(skillRoot, "scripts", "validate.mjs"))).toBe(true);
+    expect(fs.existsSync(path.join(skillRoot, "assets", "template.txt"))).toBe(true);
+  });
+});
+
 describe("detectArtifactKind", () => {
   const roots: string[] = [];
   afterEach(() => {

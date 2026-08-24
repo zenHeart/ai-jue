@@ -21,6 +21,6 @@ export function skills(): CapabilityMapping<Record<string, unknown>> {
   return directoryPerItem({
     dirPath: (root) => path.join(root, "skills"),
     mainFileName: "SKILL.md",
-    bundleKeys: ["references", "files"],
+    bundleKeys: ["references", "scripts", "assets", "files"],
   });
 }

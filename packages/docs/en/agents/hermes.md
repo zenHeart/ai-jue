@@ -34,7 +34,7 @@ recorded by the Adapter documentation.
 | Canonical / Facet | Hermes |
 | --- | --- |
 | `context.global` | `MEMORY.md` (managed block) |
-| `skills` | `skills/<category>/<name>/SKILL.md` (three levels) |
+| `skills` | `skills/<category>/<name>/SKILL.md` (three levels), preserving `references/`, `scripts/`, and `assets/` support files |
 | `mcp.servers` | `config.yaml`'s `mcp.servers` |
 | `cron` (Hermes-specific extra field alongside the six atomic Capability types) | Full-file pass-through of `cron/jobs.json` |
 | `rules` / `hooks` | Honestly `unsupported`: no per-workspace surface |
