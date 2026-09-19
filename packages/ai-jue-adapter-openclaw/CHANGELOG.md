@@ -2,7 +2,7 @@
 
 ### Bug fixes
 
-- Align the Core peer range with the current in-repo Core release.
+- Align Core, Claude, and Codex peer ranges with the current in-repo releases.
 
 ## [0.3.2](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-openclaw@v0.3.1...ai-jue-adapter-openclaw@v0.3.2) (2026-09-19)
 
