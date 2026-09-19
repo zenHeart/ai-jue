@@ -87,16 +87,22 @@ every aggregate Artifact kind, and known failure/edge cases — see
 `plugin/`, `plugin-auto-discovered/`, `marketplace/`, `conflicts/`,
 `failures/*`).
 
-1. One directory per Artifact kind (e.g. project-native config vs. an
+1. **Multiple Artifact kinds?** Before writing mappings, record whether
+   the target has more than one native layout (for example Cursor
+   project `.cursor/` vs Plugin root + `.cursor-plugin/plugin.json`).
+   If yes, add `capabilities/layout.ts` first and parameterize every
+   mapping; see `references/IMPLEMENTATION-patterns.md` § Dual layout
+   (Cursor).
+2. One directory per Artifact kind (e.g. project-native config vs. an
    installable Plugin/Bundle).
-2. One fixture per target-private field you intend to preserve verbatim.
-3. One fixture per known edge case: empty value, name collision, illegal
+3. One fixture per target-private field you intend to preserve verbatim.
+4. One fixture per known edge case: empty value, name collision, illegal
    path, sensitive-looking reference, unsupported semantics.
-4. Validate every fixture against the agent's own tooling (its `validate`,
+5. Validate every fixture against the agent's own tooling (its `validate`,
    `list`, or equivalent) and record the exact command + outcome in a
    `fixtures/README.md`. A fixture that only exists to make your own parser
    happy proves nothing.
-5. **Aggregate-Artifact investigation**: before adding a new Artifact kind
+6. **Aggregate-Artifact investigation**: before adding a new Artifact kind
    (a coarser "package of Artifacts" form — a Bundle, marketplace-style
    index, or similar) because the target Agent's ecosystem happens to
    support one, apply the trade-off test in
@@ -152,8 +158,10 @@ changes, never performing I/O directly (Core executes approved
    `delete`.
 3. Handle multiple native Artifact "layouts" (e.g. project vs. Plugin) by
    parameterizing the mapping factories on a small `layout.ts`-style helper
-   (see the Claude adapter's `capabilities/layout.ts`), not by duplicating
-   `read.ts`/`write.ts` per layout.
+   (see the Claude adapter's `capabilities/layout.ts` and Cursor
+   `packages/ai-jue-adapter-cursor/src/capabilities/layout.ts`), not by
+   duplicating `read.ts`/`write.ts` per layout. If the target has more
+   than one kind, Phase 2 must have already recorded that gate.
 4. **Don't write your own apply/rollback logic.** Once `write()` returns
    `ArtifactChange[]`, run it through `packages/ai-jue-core/src/
    core-executor.ts`'s `planExecution`/`applyExecution`/`checkExecution`

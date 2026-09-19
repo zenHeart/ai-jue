@@ -5,12 +5,12 @@ intent_status: accepted
 phase: iterating
 vcs: git
 branch: main
-slice_id: patch-release-after-verified-defects
+slice_id: issue-10-adapter-creator-cursor-dual-layout
 scale: patch
 slice_gate: implementing
 health: ok
 user_accepted:
-skipped_gates: spec_ok,plan_ok (patch slice; user authorized merge and publish)
+skipped_gates: spec_ok,plan_ok (patch slice; continuous completion authorization)
 ---
 # NOW
 
@@ -18,28 +18,27 @@ skipped_gates: spec_ok,plan_ok (patch slice; user authorized merge and publish)
 
 ## Intent
 
-把已合入主干、尚未发包的隐私与发布合同修复发布为一轮 patch，
-并保持各 Adapter 对 Core 的有界 peer/dev 范围对齐。
+补齐 adapter-creator 对 Cursor project/plugin 双布局的正向合同，使作者按
+现有 `ai-jue-adapter-cursor` 实现写出同一套布局，而不是仍把 Cursor 当成
+单一 `.cursor/` 根。
 
 ## Spec
 
-- 只发布已合入主干的变更，不夹带 INBOX 中的 RFC/Feature/Epic。
-- 入库测试与 changelog 只写中性描述。
-- `ssh cwr` / `ssh mp` 只做不入库的 `jue --version` / 帮助消费。
-- 发布后 npm 上的版本与 git tag 一致。
+- `IMPLEMENTATION-patterns.md` 增加 Cursor 双布局一节，指向真实路径。
+- `SKILL.md` Phase 2/3 增加「多种 Artifact kind？」门禁。
+- 不声称 Cursor 只有 project；不实现 marketplace 或 failure fixtures。
+- `smoke-apply` / docs 构建不受影响。
 
 ## Plan
 
-1. 为将要 bump 的包补齐 CHANGELOG。
-2. 跑测试、隐私扫描与 release-gate。
-3. `npm run release -- --yes --bump=patch`。
-4. 第一轮 Release 因 Hermes/OpenClaw peer 未对齐失败；对齐后补发 0.3.3，
-   再写回 `release-note.md` 触发未上架的 2.1.2 / 2.0.2 包。
-5. 现场 SSH 只确认版本号，不写回仓库。
+1. 按现有 Cursor `layout.ts` / hooks / manifest 写短摘录 + 链接。
+2. 更新 SKILL 检查清单。
+3. 跑 smoke-apply 与相关测试。
 
 ## Deferred-MPF
 
-- INBOX 中的 RFC/Feature/Epic 保持 open，不在本轮实现。
+- #11 Cursor failure fixtures（下一刀）。
+- #1 / RFC / 其余 INBOX 项。
 
 ## Open questions
 

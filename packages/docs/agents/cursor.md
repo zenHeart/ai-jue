@@ -3,7 +3,9 @@
 > Jue 状态：Read、Write、Artifact（project 与 Plugin 两种）、Confirm 均为
 > Implemented（`packages/ai-jue-adapter-cursor/`）。Plugin 无官方 headless
 > 校验 CLI，`confirm()` 对 project 与 plugin 均返回 `unconfirmed`，plugin 附带
-> 结构证据（诚实降级，非缺口）。
+> 结构证据（诚实降级，非缺口）。`adapter-creator` 以
+> `packages/ai-jue-adapter-cursor/src/capabilities/layout.ts` 为合同写出
+> project/plugin 双布局。
 >
 > 官方依据：[Cursor Rules](https://docs.cursor.com/context/rules)、
 > [Agent Skills](https://docs.cursor.com/context/skills)、
@@ -68,5 +70,4 @@
 | --- | --- |
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json`（Team marketplace 索引） |
 | [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw `compatible-bundle` 以 Cursor 布局为第三基底（[RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) 已知边界 3） |
-| [#10](https://github.com/zenHeart/ai-jue/issues/10) | `adapter-creator` 补充 Cursor 双布局实现模式 |
 | [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + 安全合同样本（与 Claude [JUE-105](../developer/delivery-plan.md) 同级） |

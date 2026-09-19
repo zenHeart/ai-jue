@@ -418,13 +418,15 @@ OpenClaw 使用非交互 install + list + inspect，并要求 inspect format 匹
 
 ## Cursor 后续工作
 
-[JUE-304](delivery-plan.md) 已完成 Cursor project/plugin 正反转。下列 GitHub Issues 为**独立后续任务**——Agent 开工前必须阅读 issue 全文（含 Acceptance criteria 与 Implementation notes）：
+[JUE-304](delivery-plan.md) 已完成 Cursor project/plugin 正反转。
+`jue-preset-internal` 的 `adapter-creator` 以
+`packages/ai-jue-adapter-cursor/src/capabilities/layout.ts` 写出双布局合同。
+下列 GitHub Issues 为**独立后续任务**——Agent 开工前必须阅读 issue 全文（含 Acceptance criteria 与 Implementation notes）：
 
 | Issue | 任务 |
 | --- | --- |
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json` 生成 |
 | [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw compatible-bundle 第三基底：Cursor 布局 |
-| [#10](https://github.com/zenHeart/ai-jue/issues/10) | adapter-creator 双布局文档 |
 | [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + 安全合同 |
 
 详见 [`agents/cursor.md` §5](../agents/cursor.md#5-后续工作github-issues)。

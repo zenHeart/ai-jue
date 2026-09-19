@@ -141,7 +141,63 @@ Force a shape through the generic engine only when a sibling Capability
 already uses the same shape — otherwise the wrapper adds ceremony without
 reuse (YAGNI).
 
-## 7. Testing contract
+## 7. Dual layout (Cursor)
+
+Cursor has two native Artifact kinds. Detect the kind from the Artifact
+root, then parameterize every mapping — do not copy `read.ts`/`write.ts`.
+
+Worked implementation: `packages/ai-jue-adapter-cursor/src/capabilities/`.
+Contract fixtures: `packages/ai-jue-adapter-cursor/fixtures/`
+(`project/`, `plugin/`, `plugin-minimal/`). Agent profile:
+`packages/docs/agents/cursor.md`.
+
+1. **Detect kind before assuming `.cursor/`.**
+   `detectArtifactKind` in `layout.ts` checks
+   `.cursor-plugin/plugin.json` first, then `.cursor/`. A root with
+   neither marker is not a managed Cursor layout.
+
+2. **One component root per kind.**
+   `componentRoot(root, "project")` is `<root>/.cursor`.
+   `componentRoot(root, "plugin")` is `<root>` itself (rules, skills,
+   commands, agents, hooks live at the plugin root).
+
+3. **Parameterize capabilities.**
+   `skills(artifactKind)`, `hooks(artifactKind)`, and siblings take the
+   detected kind so `dirPath` / `filePath` stay one declaration.
+
+4. **Hooks have two native envelopes.**
+   Project writes `{ version: 1, hooks }`. Plugin writes `{ hooks }`.
+   Event names stay in the Cursor mapping; do not invent a second hook
+   Capability.
+
+5. **Context and Cursor-only tools are project-only.**
+   `context.ts` manages root `AGENTS.md`. Plugin apply does not emit
+   `context.global`. `tools.cursor` stays Adapter-private.
+
+6. **Manifest is Plugin identity, not a Canonical Capability.**
+   `manifest.ts` writes `.cursor-plugin/plugin.json` from
+   `tools.cursor.pluginManifest` and `variables`. Team marketplace index
+   generation is a separate Artifact decision.
+
+7. **Confirm is structural only.**
+   There is no official headless Cursor validate CLI. `confirm()` reports
+   `unconfirmed` with structural evidence. Do not treat a second apply
+   or a parseable `plugin.json` as native confirmation.
+
+```typescript
+// capabilities/layout.ts — detect, then select the component root
+export function detectArtifactKind(root: string): "project" | "plugin" | undefined {
+  if (existsSync(join(root, ".cursor-plugin", "plugin.json"))) return "plugin";
+  if (existsSync(join(root, ".cursor"))) return "project";
+  return undefined;
+}
+
+export function componentRoot(root: string, artifactKind: "project" | "plugin"): string {
+  return artifactKind === "project" ? join(root, ".cursor") : root;
+}
+```
+
+## 8. Testing contract
 
 - Unit test each `capabilities/*.ts` mapping directly (read/write/round-trip)
   independent of the fixtures, the way
