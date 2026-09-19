@@ -73,11 +73,8 @@ async function main() {
     console.log("[3/3] confirm() -> real 'openclaw --profile ... config validate --json'");
     const confirmation = await confirm([], { scope: "project", artifactRoot: workDir });
     console.log("      confirm() returned:", JSON.stringify(confirmation));
-    if (confirmation.status === "failed") {
-      throw new Error(
-        "openclaw config validate --json reported 'failed' evidence=" +
-          confirmation.evidence,
-      );
+    if (confirmation.status !== "confirmed") {
+      throw new Error("OpenClaw native confirmation did not return confirmed");
     }
 
     console.log("\nJue-302 OpenClaw Adapter native verify passed.");

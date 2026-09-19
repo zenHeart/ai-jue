@@ -56,8 +56,8 @@ async function main() {
     console.log("[3/3] confirm() -> real 'tirith config validate'");
     const confirmation = await confirm([], { scope: "project", artifactRoot: workDir });
     console.log("      confirm() returned:", JSON.stringify(confirmation));
-    if (confirmation.status === "failed") {
-      throw new Error("tirith config validate reported 'failed' evidence=" + confirmation.evidence);
+    if (confirmation.status !== "confirmed") {
+      throw new Error("Hermes native confirmation did not return confirmed");
     }
 
     console.log("\nJue-303 Hermes Adapter native verify passed.");
