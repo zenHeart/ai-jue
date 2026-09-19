@@ -33,7 +33,9 @@ skipped_gates: spec_ok,plan_ok (patch slice; user authorized merge and publish)
 1. 为将要 bump 的包补齐 CHANGELOG。
 2. 跑测试、隐私扫描与 release-gate。
 3. `npm run release -- --yes --bump=patch`。
-4. 现场 SSH 只确认版本号，不写回仓库。
+4. 第一轮 Release 因 Hermes/OpenClaw peer 未对齐失败；对齐后补发 0.3.3，
+   再写回 `release-note.md` 触发未上架的 2.1.2 / 2.0.2 包。
+5. 现场 SSH 只确认版本号，不写回仓库。
 
 ## Deferred-MPF
 
