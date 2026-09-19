@@ -63,11 +63,12 @@ describe("published package release contract", () => {
   });
 
   it("publishes one explicit root entry for every Extension", () => {
+    const coreRange = `^${byName.get("ai-jue-core")!.version}`;
     for (const directory of PUBLISHED_DIRS.filter((name) => name.startsWith("ai-jue-adapter-"))) {
       const item = manifest(directory);
       expect(Object.keys(item.exports ?? {}), item.name).toEqual(["."]);
-      expect(item.peerDependencies?.["ai-jue-core"], item.name).toBe("^2.0.0");
-      expect(item.devDependencies?.["ai-jue-core"], item.name).toBe("^2.0.0");
+      expect(item.peerDependencies?.["ai-jue-core"], item.name).toBe(coreRange);
+      expect(item.devDependencies?.["ai-jue-core"], item.name).toBe(coreRange);
       expect(item.dependencies?.["ai-jue-core"], item.name).toBeUndefined();
       for (const [dependency, range] of Object.entries(item.peerDependencies ?? {})) {
         if (!byName.has(dependency)) continue;

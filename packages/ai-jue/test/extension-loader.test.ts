@@ -9,6 +9,9 @@ import {
 } from '../src/extension-loader';
 
 const tempDirs: string[] = [];
+const HOST_CORE_VERSION = JSON.parse(
+  fs.readFileSync(path.join(process.cwd(), 'packages', 'ai-jue-core', 'package.json'), 'utf8'),
+).version as string;
 
 function tempDir(): string {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'jue-extension-loader-'));
@@ -75,7 +78,7 @@ describe('resolveExtensionPackage', () => {
       name: 'jue-extension-neutral',
       version: '1.0.0',
       peerRange: '^2.0.0',
-      hostCoreVersion: '2.0.0',
+      hostCoreVersion: HOST_CORE_VERSION,
       compatible: true,
     });
     expect(fs.realpathSync(resolved.entryPath)).toBe(fs.realpathSync(path.join(root, 'index.js')));
@@ -147,7 +150,7 @@ describe('resolveExtensionPackage', () => {
     expect(resolved.compatible).toBe(false);
     expect(resolved.issues[0]).toMatchObject({ code: 'incompatible-peer-dependency' });
     expect(resolved.issues[0].message).toContain('jue-extension-neutral@1.0.0');
-    expect(resolved.issues[0].message).toContain('ai-jue-core@2.0.0');
+    expect(resolved.issues[0].message).toContain(`ai-jue-core@${HOST_CORE_VERSION}`);
     expect(resolved.issues[0].message).toContain('ai-jue-core@^1.0.0');
     expect(fs.existsSync(sideEffectPath)).toBe(false);
   });
