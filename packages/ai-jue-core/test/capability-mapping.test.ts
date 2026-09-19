@@ -100,7 +100,7 @@ describe('directoryPerItem', () => {
   const mapping = directoryPerItem({
     dirPath: (root) => path.join(root, 'skills'),
     mainFileName: 'SKILL.md',
-    bundleKeys: ['references'],
+    bundleKeys: ['references', 'files'],
   });
 
   it('reads one directory per item', () => {
@@ -136,20 +136,31 @@ describe('directoryPerItem', () => {
           name: 'demo',
           content: 'Do the thing.',
           references: { 'notes.md': 'Neutral reference.' },
+          files: { 'search.md': 'Root sidecar.', 'nested/data.bin': { content: 'AP+A', encoding: 'base64' } },
         },
       },
       'neutral-agent',
     );
 
     const paths = changes.map((c) => c.path).sort();
-    expect(paths).toEqual(['skills/demo/SKILL.md', 'skills/demo/references/notes.md']);
+    expect(paths).toEqual([
+      'skills/demo/SKILL.md',
+      'skills/demo/nested/data.bin',
+      'skills/demo/references/notes.md',
+      'skills/demo/search.md',
+    ]);
     expect(changes.find((c) => c.path === 'skills/demo/SKILL.md')?.content).not.toContain('references:');
   });
 
   it('round-trips including bundle files', () => {
     const root = tempDir();
     const original = {
-      demo: { name: 'demo', content: 'Do the thing.', references: { 'notes.md': 'Neutral reference.' } },
+      demo: {
+        name: 'demo',
+        content: 'Do the thing.',
+        references: { 'notes.md': 'Neutral reference.' },
+        files: { 'search.md': 'Root sidecar.' },
+      },
     };
     const changes = mapping.write(root, original, 'neutral-agent');
     for (const change of changes) {
@@ -160,7 +171,13 @@ describe('directoryPerItem', () => {
     }
 
     expect(mapping.read(root)).toEqual({
-      demo: { name: 'demo', content: 'Do the thing.', prompt: 'Do the thing.' },
+      demo: {
+        name: 'demo',
+        content: 'Do the thing.',
+        prompt: 'Do the thing.',
+        references: { 'notes.md': 'Neutral reference.' },
+        files: { 'search.md': 'Root sidecar.' },
+      },
     });
   });
 });

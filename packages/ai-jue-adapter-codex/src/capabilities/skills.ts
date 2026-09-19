@@ -18,6 +18,6 @@ export function skills(
         ? path.join(root, "skills")
         : path.join(root, ".agents", "skills"),
     mainFileName: "SKILL.md",
-    bundleKeys: ["references", "scripts", "assets"],
+    bundleKeys: ["references", "scripts", "assets", "files"],
   });
 }

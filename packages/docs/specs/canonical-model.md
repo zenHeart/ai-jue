@@ -106,8 +106,13 @@ skills?: Record<string, {
   references?: Record<string, string>
   scripts?: Record<string, string>
   assets?: Record<string, string>
+  files?: Record<string, string> // Skill 根目录相对 sidecar
 }>
 ```
+
+`files` 保留 `SKILL.md` 同级及其他自定义子目录中的安全相对路径；标准
+`references`、`scripts`、`assets` 仍使用各自命名空间。二进制值使用
+`{ content, encoding: "base64" }`。
 
 规范化规则：
 

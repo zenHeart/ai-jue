@@ -51,6 +51,9 @@ describe('adapter contract matrix', () => {
               encoding: 'base64',
             },
           },
+          files: {
+            'search.md': 'Root sidecar',
+          },
         },
       },
       commands: {
@@ -159,6 +162,12 @@ describe('adapter contract matrix', () => {
     // than via a separate AGENTS.md + `@AGENTS.md` import.
     expect(claude).toContain('Global context');
     expect(codexSkill).toContain('Review skill');
+    expect(
+      fs.readFileSync(
+        path.join(TEST_DIR, '.agents', 'skills', 'review', 'search.md'),
+        'utf8',
+      ),
+    ).toBe('Root sidecar');
     expect(codexAgent.developer_instructions).toBe('Review changes');
     // tools.codex and mcp.servers are NOT projected (honest unsupported/
     // degraded per JUE-301); config.toml is either absent or empty.
@@ -179,6 +188,12 @@ describe('adapter contract matrix', () => {
     // verified Claude-native equivalent, so it passes through unrenamed.
     expect(claudeRule).toContain('alwaysApply: true');
     expect(claudeSkill).toContain('Review skill');
+    expect(
+      fs.readFileSync(
+        path.join(TEST_DIR, '.claude', 'skills', 'review', 'search.md'),
+        'utf8',
+      ),
+    ).toBe('Root sidecar');
     expect(
       fs.readFileSync(
         path.join(
@@ -204,6 +219,12 @@ describe('adapter contract matrix', () => {
     expect(cursorSkill).toMatch(/^---\n/);
     expect(cursorSkill).toContain('name: review');
     expect(cursorSkill).toContain('Review skill');
+    expect(
+      fs.readFileSync(
+        path.join(TEST_DIR, '.cursor', 'skills', 'review', 'search.md'),
+        'utf8',
+      ),
+    ).toBe('Root sidecar');
     expect(
       fs.readFileSync(
         path.join(

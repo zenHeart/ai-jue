@@ -111,7 +111,7 @@ export function writeSkillPlugin(
       dirPath: (r) => path.join(r, "skills"),
       mainFileName: "SKILL.md",
       // Preserve ai-assets sidecars; Hermes loads SKILL.md and can follow relative refs.
-      bundleKeys: ["references", "scripts", "assets"],
+      bundleKeys: ["references", "scripts", "assets", "files"],
     });
     changes.push(...mapping.write(root, flatSkills, TARGET));
   }

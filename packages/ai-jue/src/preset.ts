@@ -70,17 +70,31 @@ async function loadAssetBundle(assetDir: string): Promise<{
   references?: Record<string, SupportFile>;
   scripts?: Record<string, SupportFile>;
   assets?: Record<string, SupportFile>;
+  files?: Record<string, SupportFile>;
 }> {
-  const [references, scripts, assets] = await Promise.all([
+  const [references, scripts, assets, files] = await Promise.all([
     loadAssetSubdir(path.join(assetDir, 'references')),
     loadAssetSubdir(path.join(assetDir, 'scripts')),
     loadAssetSubdir(path.join(assetDir, 'assets')),
+    loadAssetSubdir(assetDir),
   ]);
+  for (const excluded of [
+    'SKILL.md',
+    'package.json',
+    'source.tgz',
+    ...Object.keys(files).filter((file) =>
+      /^(?:references|scripts|assets)\//.test(file) ||
+      /^SKILL(?:\.[^/]+)?\.md$/.test(file),
+    ),
+  ]) {
+    delete files[excluded];
+  }
 
   return {
     references: Object.keys(references).length > 0 ? references : undefined,
     scripts: Object.keys(scripts).length > 0 ? scripts : undefined,
     assets: Object.keys(assets).length > 0 ? assets : undefined,
+    files: Object.keys(files).length > 0 ? files : undefined,
   };
 }
 

@@ -24,6 +24,9 @@ function writeSkill(root: string, body = 'Use the neutral workflow.'): Buffer {
     path.join(root, 'references', 'nested', '说明.md'),
     'Neutral reference',
   );
+  fs.writeFileSync(path.join(root, 'search.md'), 'Root sidecar');
+  fs.mkdirSync(path.join(root, 'guides'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'guides', 'usage.md'), 'Nested root sidecar');
   const binary = Buffer.from([0, 255, 128, 10]);
   fs.writeFileSync(path.join(root, 'assets', 'sample.bin'), binary);
   return binary;
@@ -64,6 +67,10 @@ describe('Capability Source', () => {
     ).toEqual({
       content: binary.toString('base64'),
       encoding: 'base64',
+    });
+    expect(result.config.skills?.['neutral-skill']?.files).toEqual({
+      'guides/usage.md': 'Nested root sidecar',
+      'search.md': 'Root sidecar',
     });
     expect(JSON.stringify(result.lock)).not.toContain(root);
   });

@@ -252,6 +252,36 @@ function bufferForSupportFile(file: string | { content: string; encoding: 'utf8'
   return typeof file === 'string' ? Buffer.from(file, 'utf8') : Buffer.from(file.content, file.encoding);
 }
 
+function supportFileForBuffer(content: Buffer): SupportFileBundle[string] {
+  const utf8 = content.toString('utf8');
+  return Buffer.from(utf8, 'utf8').equals(content)
+    ? utf8
+    : { content: content.toString('base64'), encoding: 'base64' };
+}
+
+function readSupportFileBundle(
+  baseDir: string,
+  excludedTopLevel: ReadonlySet<string> = new Set(),
+): SupportFileBundle {
+  const files: SupportFileBundle = {};
+  const visit = (dir: string, relativeDir = ''): void => {
+    if (!fs.existsSync(dir)) return;
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (!relativeDir && excludedTopLevel.has(entry.name)) continue;
+      const absolute = path.join(dir, entry.name);
+      const relative = path.join(relativeDir, entry.name);
+      if (entry.isDirectory()) visit(absolute, relative);
+      if (entry.isFile()) {
+        files[relative.split(path.sep).join('/')] = supportFileForBuffer(
+          fs.readFileSync(absolute),
+        );
+      }
+    }
+  };
+  visit(baseDir);
+  return files;
+}
+
 /**
  * One directory per item, containing a main frontmatter file plus optional
  * attachment bundles, e.g. Claude Code's `skills/<name>/SKILL.md` with
@@ -272,7 +302,20 @@ export function directoryPerItem(options: {
         const mainFilePath = path.join(dirPath, entry.name, options.mainFileName);
         if (!fs.existsSync(mainFilePath)) continue;
         const { content, attributes } = parseFrontmatterFile(mainFilePath);
-        result[entry.name] = { ...attributes, content, prompt: content };
+        const bundles: Record<string, SupportFileBundle> = {};
+        for (const bundleKey of bundleKeys) {
+          const isRootBundle = bundleKey === 'files';
+          const files = readSupportFileBundle(
+            isRootBundle
+              ? path.join(dirPath, entry.name)
+              : path.join(dirPath, entry.name, bundleKey),
+            isRootBundle
+              ? new Set([options.mainFileName, ...bundleKeys.filter((key) => key !== 'files')])
+              : new Set(),
+          );
+          if (Object.keys(files).length > 0) bundles[bundleKey] = files;
+        }
+        result[entry.name] = { ...attributes, content, prompt: content, ...bundles };
       }
       return Object.keys(result).length > 0 ? result : undefined;
     },
@@ -298,7 +341,7 @@ export function directoryPerItem(options: {
         );
         if (change) changes.push(change);
         for (const [bundleKey, files] of Object.entries(bundles)) {
-          const bundleDir = path.join(itemDir, bundleKey);
+          const bundleDir = bundleKey === 'files' ? itemDir : path.join(itemDir, bundleKey);
           for (const [relativePath, file] of Object.entries(files ?? {})) {
             const safePath = resolveSupportFilePath(bundleDir, relativePath);
             const bundleChange = buildFullOwnershipBinaryChange(

@@ -32,6 +32,10 @@ Preset 在 `package.json#ai.capabilities` 使用相同引用形状。
 Capability；需要引用多个 Capability 时使用 Preset。发布者应先把第三方内容整理
 为对应 Canonical 目录格式；Jue 不加载来源中的转换代码或脚本。
 
+`skill` 来源以 `SKILL.md` 为主文档，并保留 `references/`、`scripts/`、
+`assets/` 及其他根相对 sidecar 的路径和字节。`package.json`、缓存档案、符号链接、
+硬链接与设备文件不进入 Skill bundle，来源代码不会执行。
+
 解析顺序为递归 Preset、当前包引用、当前包声明式目录、项目 `.ai/` 与内联覆盖。
 引用始终是叶子；类型冲突失败并保留来源信息。
 
