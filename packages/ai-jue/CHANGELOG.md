@@ -1,3 +1,10 @@
+## [2.1.2](https://github.com/zenHeart/ai-jue/compare/ai-jue@v2.1.1...ai-jue@v2.1.2) (2026-09-20)
+
+### Bug fixes
+
+- Keep published package metadata free of personal contact fields.
+- Derive release-contract versions from in-repo manifests.
+
 ## [2.1.1](https://github.com/zenHeart/ai-jue/compare/ai-jue@v2.1.0...ai-jue@v2.1.1) (2026-09-19)
 
 ### Bug fixes

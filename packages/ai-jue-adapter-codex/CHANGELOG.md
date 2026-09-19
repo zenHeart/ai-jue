@@ -1,3 +1,10 @@
+## [0.3.2](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-codex@v0.3.1...ai-jue-adapter-codex@v0.3.2) (2026-09-20)
+
+### Bug fixes
+
+- Keep published package metadata free of personal contact fields.
+- Align the Core peer range with the current in-repo Core release.
+
 ## [0.3.1](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-codex@v0.3.0...ai-jue-adapter-codex@v0.3.1) (2026-09-19)
 
 ### Bug fixes

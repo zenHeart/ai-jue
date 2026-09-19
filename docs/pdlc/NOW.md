@@ -5,12 +5,12 @@ intent_status: accepted
 phase: iterating
 vcs: git
 branch: main
-slice_id: issue-3-native-confirmation-hardening
-scale: major
-slice_gate: user_ok
+slice_id: patch-release-after-verified-defects
+scale: patch
+slice_gate: implementing
 health: ok
-user_accepted: continuous completion authorization (2026-09-19T23:09:00+08:00)
-skipped_gates: plan_ok (minor slice; continuous completion authorization)
+user_accepted:
+skipped_gates: spec_ok,plan_ok (patch slice; user authorized merge and publish)
 ---
 # NOW
 
@@ -18,28 +18,26 @@ skipped_gates: plan_ok (minor slice; continuous completion authorization)
 
 ## Intent
 
-修复 Issue #3：Hermes 与 OpenClaw 的确认和 ownership 在导入/执行原生 CLI 前
-验证真实受管字节、regular-file/realpath 边界，并使用隔离状态、最小环境和脱敏证据。
+把已合入主干、尚未发包的隐私与发布合同修复发布为一轮 patch，
+并保持各 Adapter 对 Core 的有界 peer/dev 范围对齐。
 
 ## Spec
 
-- Hermes 仅在 `__init__.py` 精确等于受管模板时无审批替换。
-- Hermes skill-plugin 拒绝 symlink、非 regular 文件、非法 manifest 与 marker comment。
-- Hermes/OpenClaw 原生确认使用隔离 HOME/state 与最小环境；错误证据有界且不回显路径/凭据。
-- OpenClaw list 必须包含 manifest identity，inspect format 必须匹配生成 marker。
-- 原生验证脚本只接受 `confirmed`；`unconfirmed` 非零失败。
+- 只发布已合入主干的变更，不夹带 INBOX 中的 RFC/Feature/Epic。
+- 入库测试与 changelog 只写中性描述。
+- `ssh cwr` / `ssh mp` 只做不入库的 `jue --version` / 帮助消费。
+- 发布后 npm 上的版本与 git tag 一致。
 
 ## Plan
 
-1. 为 ownership、symlink、inventory、format、环境和证据边界写失败测试。
-2. 收紧共享结构验证与原生 CLI 调用，更新验证脚本。
-3. 跑聚焦/全量/发布门禁，并在授权 cwr/mp 现场执行原生确认。
-4. 发布脱敏证据；仅两端真实确认通过后关闭 #3。
+1. 为将要 bump 的包补齐 CHANGELOG。
+2. 跑测试、隐私扫描与 release-gate。
+3. `npm run release -- --yes --bump=patch`。
+4. 现场 SSH 只确认版本号，不写回仓库。
 
 ## Deferred-MPF
 
-- RFC/Feature/Epic 进入 INBOX。
-- 发布与合并：所有已确认缺陷切片完成后统一执行。
+- INBOX 中的 RFC/Feature/Epic 保持 open，不在本轮实现。
 
 ## Open questions
 

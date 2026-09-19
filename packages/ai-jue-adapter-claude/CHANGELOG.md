@@ -1,3 +1,10 @@
+## [2.0.2](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v2.0.1...ai-jue-adapter-claude@v2.0.2) (2026-09-20)
+
+### Bug fixes
+
+- Keep published package metadata free of personal contact fields.
+- Align the Core peer range with the current in-repo Core release.
+
 ## [2.0.1](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v2.0.0...ai-jue-adapter-claude@v2.0.1) (2026-09-19)
 
 ### Bug fixes
