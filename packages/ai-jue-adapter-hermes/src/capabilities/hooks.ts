@@ -3,7 +3,7 @@ import type { CapabilityMapping } from "ai-jue-core";
 /**
  * Hermes has no per-workspace `hooks/` directory — the
  * `hooks_auto_accept` block in the real `config.yaml` (verified
- * against cwr:/d/devuser/.hermes/config.yaml) configures the
+ * against a redacted Hermes `config.yaml` fixture) configures the
  * session-level hooks-acceptance policy, and the
  * `~/.hermes/hooks/` directory exists but is **empty** on the real
  * installation. Per the JUE-303 honest-stance principle, the `hooks`

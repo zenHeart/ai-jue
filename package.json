@@ -8,6 +8,8 @@
   "scripts": {
     "prepare": "git config core.hooksPath .githooks",
     "security-scan": "node scripts/security-scan.js",
+    "security-scan:tracked": "node scripts/security-scan.js --all-tracked",
+    "test:security-scan": "node --test scripts/security-scan.test.js",
     "privacy-scan:release": "node scripts/package-privacy-scan.js",
     "test:release-privacy": "node --test scripts/package-privacy-scan.test.js",
     "test": "vitest run",
@@ -34,7 +36,7 @@
   ],
   "overrides": {
     "brace-expansion": "5.0.9",
-    "js-yaml": "4.3.1",
+    "js-yaml": "4.3.2",
     "nanoid": "3.3.18",
     "dompurify": "3.4.13",
     "mermaid": "11.16.1"

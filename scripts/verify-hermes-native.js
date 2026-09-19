@@ -2,11 +2,10 @@
 /**
  * JUE-303 native verification script for the Hermes Adapter.
  *
- * Replays the full Hermes round-trip against the real `tirith` binary
- * (D:\devuser\.hermes\bin\tirith, 9.8MB on the user's cwr machine; on
- * this local machine it must be on PATH or a manual symlink). Stages the
- * fixture workspace at a fresh temp HOME so we don't touch the
- * operator's real Hermes state.
+ * Replays the Hermes round-trip against `tirith` on PATH. Stages the
+ * fixture workspace at a fresh temp HOME so the operator's real Hermes
+ * state is not touched. Live SSH Agent consumption is out of band and
+ * not committed.
  *
  * Not part of `npm test`: per JUE-302's empirical quirk, calling
  * `tirith config validate` via `execFileSync` from inside the vitest

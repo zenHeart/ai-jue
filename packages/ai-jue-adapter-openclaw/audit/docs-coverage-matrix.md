@@ -1,10 +1,10 @@
 # JUE-302 docs cross-check (2026-07-26)
 
-Source of truth: the user's real `cwr:/d/devuser/.openclaw/openclaw.json`
-(2026.6.11, redacted copy at
-`packages/ai-jue-adapter-openclaw/audit/cwr-openclaw.redacted.json`).
+Source of truth: the redacted in-repo fixture
+`packages/ai-jue-adapter-openclaw/audit/cwr-openclaw.redacted.json`.
+Live Agent consumption is verified out of band over SSH and is not committed.
 
-## Top-level field coverage matrix (JUE-302 vs. real cwr install)
+## Top-level field coverage matrix (JUE-302 vs. redacted fixture)
 
 | # | field        | cwr present? | cwr shape (size hint) | JUE-302 support | Verified by |
 |---|--------------|--------------|------------------------|------------------|--------------|

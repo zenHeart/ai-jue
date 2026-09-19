@@ -9,15 +9,12 @@ import { read } from "../src/read";
 import { write } from "../src/write";
 
 /**
- * CWR-REAL-CONFIG REGRESSION TEST (added by the JUE-302 deep audit):
- * the user's real `D:\devuser\.openclaw\openclaw.json` (a 17-top-level-key
- * config) was being silently read as `mcp: {}` because `mcp.read()` was
- * returning the inner `{browser-use, zentao, ...}` map instead of
- * `{servers: {browser-use, zentao, ...}}` — `toCanonicalDocument` would
- * then normalize `mcp` to `{}` because the schema requires
- * `mcp.servers.optional()`. This regression test reads the redacted cwr
- * fixture and asserts the canonical `mcp.servers` map contains the
- * real-world keys, so the same regression cannot recur silently.
+ * Neutral OpenClaw config regression: a large top-level config was being
+ * silently read as `mcp: {}` because `mcp.read()` returned the inner
+ * servers map instead of `{servers: ...}`. `toCanonicalDocument` then
+ * normalized `mcp` to `{}`. This in-repo test uses a redacted fixture
+ * and asserts canonical `mcp.servers` keys survive. Live Agent consumption
+ * is verified out of band over SSH and is not committed.
  */
 
 /**
@@ -84,16 +81,11 @@ const SYNTHETIC_CANONICAL: CanonicalDocument = {
 };
 
 describe("openclaw adapter contract", () => {
-  it("cwr-real-config regression: reads the real user's openclaw.json without losing mcp.servers", async () => {
-    // The redacted copy of cwr:/d/devuser/.openclaw/openclaw.json
-    // (with all secrets replaced by placeholders). The regression we
-    // care about: mcp.read must return `{servers: ...}`, NOT just the
-    // inner servers map, because the Canonical schema requires
+  it("redacted-config regression: preserves mcp.servers from a large openclaw.json", async () => {
+    // Neutral fixture: mcp.read must return `{servers: ...}`, not the
+    // inner servers map, because Canonical requires
     // `mcp: z.object({servers: ...}).optional()`. Returning the inner
-    // map would make toCanonicalDocument normalize `mcp` to `{}` (silent
-    // data loss). The cwr fixture has 4 well-formed MCP servers
-    // (browser-use, zentao, minimax, minimax-coding-plan); the test
-    // confirms all 4 survive a full read+canonical-parse round-trip.
+    // map would make toCanonicalDocument normalize `mcp` to `{}`.
     const cwrConfig = path.join(__dirname, "..", "audit", "cwr-openclaw.redacted.json");
     expect(fs.existsSync(cwrConfig), `expected redacted cwr config at ${cwrConfig}`).toBe(true);
     const cwrRoot = fs.mkdtempSync(path.join(os.tmpdir(), "jue-302-cwr-regress-"));
@@ -106,10 +98,8 @@ describe("openclaw adapter contract", () => {
       const servers = (c.mcp as { servers?: Record<string, unknown> }).servers;
       expect(servers).toBeTypeOf("object");
       const names = Object.keys(servers ?? {});
-      // The cwr fixture's MCP server names are part of the
-      // ground-truth; the regression test asserts the actual
-      // round-trip preserves them all, so a future refactor can't
-      // accidentally drop one.
+      // Neutral fixture MCP server names are part of the
+      // contract; the test asserts the round-trip preserves them.
       expect(names).toContain("browser-use");
       expect(names).toContain("zentao");
       expect(names).toContain("minimax");

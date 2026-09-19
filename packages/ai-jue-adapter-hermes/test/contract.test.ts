@@ -74,12 +74,8 @@ defineAdapterContractSuite({
     {
       name: "workspace",
       root: path.join(FIXTURES_ROOT, "project"),
-      // Native confirmation via the real Hermes `tirith config
-      // validate` binary (D:\devuser\.hermes\bin\tirith, 9.8MB) is
-      // out-of-suite per the same openclaw-spawnSync quirk discovered
-      // in JUE-302; the standalone
-      // scripts/verify-hermes-native.js drives the round-trip in a
-      // normal shell context where it works.
+      // Native CLI confirmation is out-of-suite; live Agent consumption
+      // is verified over SSH and is not committed.
     },
   ],
 });

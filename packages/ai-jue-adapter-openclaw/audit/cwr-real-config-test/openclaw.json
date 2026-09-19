@@ -17,7 +17,7 @@
   },
   "logging": {
     "level": "info",
-    "file": "D:/devuser/.openclaw/logs/openclaw.log",
+    "file": "C:/Users/example/.openclaw/logs/openclaw.log",
     "consoleLevel": "info",
     "consoleStyle": "compact",
     "redactSensitive": "tools"
@@ -56,8 +56,8 @@
           "kimi/kimi-for-coding"
         ]
       },
-      "workspace": "D:\\devuser\\.openclaw\\workspace",
-      "repoRoot": "D:\\devuser\\.openclaw",
+      "workspace": "C:\\Users\\example\\.openclaw\\workspace",
+      "repoRoot": "C:\\Users\\example\\.openclaw",
       "userTimezone": "Asia/Shanghai",
       "timeFormat": "24",
       "compaction": {
@@ -82,7 +82,7 @@
         "id": "walle",
         "name": "Walle",
         "default": true,
-        "workspace": "D:\\devuser\\.openclaw\\workspace",
+        "workspace": "C:\\Users\\example\\.openclaw\\workspace",
         "model": {
           "primary": "minimax-company/MiniMax-M3",
           "fallbacks": [
@@ -141,7 +141,7 @@
       {
         "id": "tars",
         "name": "Tars",
-        "workspace": "D:\\devuser\\.openclaw\\workspace-tars",
+        "workspace": "C:\\Users\\example\\.openclaw\\workspace-tars",
         "model": {
           "primary": "minimax-company/MiniMax-M3",
           "fallbacks": [
@@ -273,7 +273,7 @@
     "debug": true,
     "restart": true,
     "ownerDisplay": "raw",
-    "ownerDisplaySecret": "22118596c769fbf2cd6293f4767d602216eec6a5b4e9628ebbcedee3b9f8f6a9"
+    "ownerDisplaySecret": "${OWNER_DISPLAY_SECRET}"
   },
   "session": {
     "dmScope": "per-account-channel-peer",
@@ -291,7 +291,7 @@
     "bind": "loopback",
     "auth": {
       "mode": "token",
-      "token": "3f6201dda6237458ca4af9364bebd94ce9dbdbf41d3fdee1"
+      "token": "${GATEWAY_TOKEN}"
     }
   },
   "mcp": {
@@ -305,9 +305,9 @@
         ]
       },
       "zentao": {
-        "command": "D:\\app\\nodejs\\node.exe",
+        "command": "C:\\Tools\\nodejs\\node.exe",
         "args": [
-          "D:\\app\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+          "C:\\Tools\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
           "-y",
           "--registry=http://203.0.113.10:4873/",
           "@nn/mcp-zentao"
@@ -325,7 +325,7 @@
         ],
         "env": {
           "MINIMAX_API_KEY": "<REDACTED>",
-          "MINIMAX_MCP_BASE_PATH": "D:/devuser/.openclaw/resource/minimax-output",
+          "MINIMAX_MCP_BASE_PATH": "C:/Users/example/.openclaw/resource/minimax-output",
           "MINIMAX_API_HOST": "https://api.minimaxi.com"
         }
       },
@@ -340,9 +340,9 @@
         }
       },
       "gitlab": {
-        "command": "D:\\app\\nodejs\\node.exe",
+        "command": "C:\\Tools\\nodejs\\node.exe",
         "args": [
-          "D:\\app\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
+          "C:\\Tools\\nodejs\\node_modules\\npm\\bin\\npx-cli.js",
           "-y",
           "--registry=http://203.0.113.10:4873/",
           "@nn/mcp-gitlab"
@@ -526,20 +526,20 @@
   },
   "channels": {
     "feishu": {
-      "appId": "cli_a93e686526f91cc4",
-      "appSecret": "TcGdJ8E3IpTghYRZiKFgac1WeJ11lrU0",
+      "appId": "app_example_default",
+      "appSecret": "${FEISHU_APP_SECRET}",
       "connectionMode": "websocket",
       "enabled": true,
       "domain": "feishu",
       "accounts": {
         "default": {},
         "tars": {
-          "appId": "cli_a945833232381bd9",
-          "appSecret": "c9Bj0mJ5N0Xdcw1UnbsjWgC0WXcKnrDA",
+          "appId": "app_example_secondary",
+          "appSecret": "${FEISHU_SECONDARY_APP_SECRET}",
           "dmPolicy": "pairing",
           "allowFrom": [
-            "ou_fffd91c9a060d787fcbaf4dc39742e01",
-            "ou_905169037ed0ea70b29ae8dc6548ef5a"
+            "user_example_one",
+            "user_example_two"
           ]
         }
       },
@@ -551,14 +551,14 @@
       "typingIndicator": true,
       "resolveSenderNames": true,
       "allowFrom": [
-        "ou_fffd91c9a060d787fcbaf4dc39742e01",
-        "ou_905169037ed0ea70b29ae8dc6548ef5a"
+        "user_example_one",
+        "user_example_two"
       ]
     },
     "wecom": {
       "enabled": true,
-      "secret": "oGEEZaaH1Skr4bcvJw5gl22xOl5nV6CfjYPkkjxWMM1",
-      "botId": "aibpuN_2wSB_i0tC30hMONguS35gQTSbx_u"
+      "secret": "${WECOM_SECRET}",
+      "botId": "bot_example"
     }
   }
 }

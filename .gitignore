@@ -22,3 +22,8 @@ cache
 
 # local-only security blocklist (never commit real identifiers)
 .security/blocklist.local.txt
+
+# Live SSH Agent consumption on cwr/mp: scripts and evidence stay local
+.tmp-ssh-verify/
+scripts/local-ssh-*.js
+scripts/local-ssh-*.sh

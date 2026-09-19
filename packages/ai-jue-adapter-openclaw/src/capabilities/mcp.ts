@@ -46,7 +46,7 @@ export function mcp(): CapabilityMapping<Record<string, unknown>> {
       // `mcp: z.object({servers: ...}).optional()` — returning the bare
       // map makes the schema normalize `mcp` to `{}` (silent data
       // loss). Discovered this real bug in the JUE-302 deep audit
-      // when reading the user's real cwr:/d/devuser/.openclaw install
+      // when reading a large OpenClaw install that already has mcp.servers
       // produced `mcp: {}` even though the fixture's openclaw.json
       // contained four well-formed MCP servers.
       return { servers };

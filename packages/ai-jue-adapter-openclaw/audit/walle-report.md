@@ -19,7 +19,7 @@
 **(d) 投产判断**
 **❌ 不能投产**。根本原因不是"有 bug"，是"这个东西还没出生"。建议按 4 步路线图先建包再实现；直接 `subprocess` `openclaw config validate` 复用官方校验，避免重复造轮子。
 
-报告全文落地：`D:\devuser\jue-302-real-audit\report.md`（13.7 KB，已三次扫密钥无残留）。原 `openclaw.json` 已 sha256 校验还原，未被修改。
+报告全文落地：`<isolated-home>\jue-302-real-audit\report.md`（13.7 KB，已三次扫密钥无残留）。原 `openclaw.json` 已 sha256 校验还原，未被修改。
 
 [2026-07-26 21:45] app: | openclaw config validate --json（用脱敏后 openclaw.json） | 0   | 同上；脱敏不影响 schema                                      | ✅ 验证脱敏无损                                                   |
 | openclaw config validate --json --file <path>       | 1   | --file 选项不存在                                         | CLI 不支持指定文件路径，需通过 swap 真实文件实现（已用 backup→swap→restore 流程完成） |
@@ -68,7 +68,7 @@ D. 投产判断
 附录：审计产物清单
 
 ```
-D:\devuser\jue-302-real-audit\
+<isolated-home>\jue-302-real-audit\
 ├── openclaw.redacted.json          36 KB，脱敏版（10 个字段被替换为 <REDACTED>）
 ├── openclaw.real.bak.json          14 KB，原文件备份
 ├── validate-redacted.json          openclaw config validate --json 输出
@@ -188,8 +188,8 @@ B2. `plugins` 完全未处理
 
 **审计日期**：2026-07-26 21:36 GMT+8
 **审计对象**：`packages/ai-jue-adapter-openclaw`（JUE-302 适配器）
-**OpenClaw 实例**：`D:\devuser\.openclaw\` （OpenClaw 2026.6.11 / commit `e085fa1`）
-**ai-jue monorepo**：`D:\devuser\code\github\ai-jue\`（main 分支，`9a6ddcb`）
+**OpenClaw 实例**：`<isolated-home>\.openclaw\` （OpenClaw 2026.6.11 / commit `e085fa1`）
+**ai-jue monorepo**：`<isolated-home>\code\github\ai-jue\`（main 分支，`9a6ddcb`）
 
 ───
 
@@ -204,7 +204,7 @@ TL;DR（先看结论）
 | 真实 OpenClaw 配置能否被原生命令校验？                                           | ✅ 通过。 openclaw config validate --json 退出码 0，仅 2 个 plugins 警告。                      |
 | 能否投产使用？                                                            | ❌ 不能。 适配器本身缺失，连"测试适配器是否能正确读 OpenClaw 配置"都做不到。                                      |
 ```
-**路径偏差说明**：原始请求里写的是 macOS 风格路径 `/tmp/jue-302-real-audit` 与 `/Users/zenheart/code/project/todo/ai-jue`。本机是 Windows，OpenClaw 装在 `D:\devuser\.openclaw\`，ai-jue monorepo 在 `D:\devuser\code\github\ai-jue\`。所有中间产物落地于 `D:\devuser\jue-302-real-audit\`。
+**路径偏差说明**：原始请求里写的是 macOS 风格路径 `/tmp/jue-302-real-audit` 与 `<local-repo>`。本机是 Windows，OpenClaw 装在 `<isolated-home>\.openclaw\`，ai-jue monorepo 在 `<isolated-home>\code\github\ai-jue\`。所有中间产物落地于 `<isolated-home>\jue-302-real-audit\`。
 
 ───
 

@@ -15,16 +15,12 @@ const TARGET = "hermes";
  * Hermes v0.18.0 has no per-file validate command analogous to
  * `claude plugin validate --strict` (Claude) or
  * `codex plugin marketplace add <local>` (Codex). The strongest native
- * confirmation path is the real Hermes `tirith` binary
- * (D:\devuser\.hermes\bin\tirith, 9.8MB), which exposes
- * `config validate` for the on-disk config tree.
+ * confirmation path is the Hermes `tirith` binary on PATH, which
+ * exposes `config validate` for the on-disk config tree.
  *
- * We invoke `tirith config validate <artifactRoot>` against the
- * freshly-written workspace (Atomically swap the real cwr fixture
- * into a temp HOME, run validate, swap back — preserves the operator's
- * real Hermes state in the rare case the user has one on the same
- * machine, even though in this contract test we use a freshly-built
- * workspace).
+ * Live Agent consumption is verified out of band over SSH against an
+ * isolated HOME and is not committed. In-repo confirmation uses
+ * structural fixtures only.
  *
  * For workspace scope, `tirith` validates the config tree. For the thin
  * skill-plugin Artifact, the generated plugin surface provides structural
