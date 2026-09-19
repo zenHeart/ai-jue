@@ -49,6 +49,7 @@
 - Project hooks 写 `{ version: 1, hooks }`；Plugin hooks 写 `{ hooks }`（无 version）。
 - Hooks 事件名：Canonical PascalCase → Cursor camelCase。
 - MCP command 型 server 自动补 `type: "stdio"`。
+- MCP server 的 `env` 只接受运行时环境变量引用；Read 与 Write 均拒绝字面凭据。
 - 空 hooks / 空 mcp 不写文件。
 
 ## 4. 当前差距
@@ -69,4 +70,3 @@
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json`（Team marketplace 索引） |
 | [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw `compatible-bundle` 以 Cursor 布局为第三基底（[RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) 已知边界 3） |
 | [#10](https://github.com/zenHeart/ai-jue/issues/10) | `adapter-creator` 补充 Cursor 双布局实现模式 |
-| [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + 安全合同样本（与 Claude [JUE-105](../developer/delivery-plan.md) 同级） |

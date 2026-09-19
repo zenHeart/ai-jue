@@ -49,6 +49,7 @@ Root `AGENTS.md`, `.cursor/rules/*.mdc`, `.cursor/commands/*.md`,
 - Project hooks write `{ version: 1, hooks }`; plugin hooks write `{ hooks }` (no version).
 - Hook events: Canonical PascalCase → Cursor camelCase.
 - Command-based MCP servers get `type: "stdio"`.
+- MCP server `env` accepts runtime environment references only; both Read and Write reject literal credentials.
 - Empty hooks or MCP sets must not write files.
 
 ## 4. Current gaps
@@ -69,4 +70,3 @@ Root `AGENTS.md`, `.cursor/rules/*.mdc`, `.cursor/commands/*.md`,
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json` (Team marketplace index) |
 | [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw `compatible-bundle` with Cursor layout as third base ([RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) known-boundary 3) |
 | [#10](https://github.com/zenHeart/ai-jue/issues/10) | `adapter-creator` Cursor dual-layout patterns |
-| [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + security contract samples (parity with Claude [JUE-105](../developer/delivery-plan.md)) |

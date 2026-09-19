@@ -4,11 +4,24 @@ Neutral, offline fixtures for `packages/ai-jue-adapter-cursor` contract tests.
 
 ## Layouts
 
-| Directory | Artifact kind | Purpose |
+| Directory | Artifact kind | Purpose | Native manual verification |
+| --- | --- | --- | --- |
+| `project/` | project | Full `.cursor/*` tree + managed `AGENTS.md` | No headless validator; contract tests only |
+| `plugin/` | plugin | Full plugin tree + `.cursor-plugin/plugin.json` + `variables` | Optional local load |
+| `plugin-minimal/` | plugin | Manifest + one skill | Optional local load |
+
+## Failure and security samples
+
+| Directory | Expected behavior | Native manual verification |
 | --- | --- | --- |
-| `project/` | project | Full `.cursor/*` tree + managed `AGENTS.md` |
-| `plugin/` | plugin | Full plugin tree + `.cursor-plugin/plugin.json` + `variables` |
-| `plugin-minimal/` | plugin | Manifest + one skill |
+| `failures/sensitive-reference/` | `read()` rejects the explicitly synthetic literal MCP environment value through the shared credential contract; `write()` enforces the same contract | No |
+| `failures/invalid-mcp-command/` | `read()` rejects a non-string MCP `command` through the Canonical schema | No |
+| `failures/path-escape-skill-reference/` | `read()` preserves the skill data; `write()` rejects the support-file path before any Artifact changes are applied | No |
+| `failures/path-escape-hook/` | `read()` keeps the command as opaque shell text; Jue does not reinterpret parent-directory segments as a structured file path | No |
+
+Unknown hook event names remain opaque data until an official Cursor validation
+contract can be replayed. These fixtures therefore encode only locally
+deterministic schema and security outcomes.
 
 ## Manual Plugin verification
 
