@@ -1,3 +1,9 @@
+## [2.0.3](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v2.0.2...ai-jue-adapter-cursor@v2.0.3) (2026-09-20)
+
+### Features
+
+- Reject literal MCP env values and hook commands that leave the Artifact root.
+
 ## [2.0.2](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v2.0.1...ai-jue-adapter-cursor@v2.0.2) (2026-09-20)
 
 ### Bug fixes

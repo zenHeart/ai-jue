@@ -1,3 +1,9 @@
+## [0.3.4](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-openclaw@v0.3.3...ai-jue-adapter-openclaw@v0.3.4) (2026-09-20)
+
+### Features
+
+- Accept explicit `tools.openclaw.bundleFormat: "cursor"` without changing `auto`.
+
 ## [0.3.3](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-openclaw@v0.3.2...ai-jue-adapter-openclaw@v0.3.3) (2026-09-20)
 
 ### Bug fixes

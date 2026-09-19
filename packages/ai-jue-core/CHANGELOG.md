@@ -1,3 +1,9 @@
+## [2.0.3](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v2.0.2...ai-jue-core@v2.0.3) (2026-09-20)
+
+### Features
+
+- Delete orphan `directoryPerItem` entries when Canonical no longer declares them.
+
 ## [2.0.2](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v2.0.1...ai-jue-core@v2.0.2) (2026-09-20)
 
 ### Bug fixes
