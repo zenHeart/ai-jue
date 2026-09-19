@@ -21,6 +21,7 @@ RFC 记录会改变公共合同、Canonical、Adapter 或 Extension 机制的方
 | [RFC-0001：最小转换模型](0001-minimal-conversion-model.md) | Accepted | 单一管线、两类适配职责、Extension 注册 Adapter |
 | [RFC-0002：Plugin / Bundle Artifact 的 apply 合同](0002-plugin-artifact-apply.md) | Implemented | CLI/`targets` 与四 Agent plugin 路径已接线；OpenClaw `compatible-bundle` 委托 Claude/Codex；Hermes thin `skill-plugin` 已落地 |
 | [RFC-0003：apply 作用域与目标根](0003-apply-scope-target-root.md) | Implemented | project/user 显式作用域；Core 授权根，Adapter 生成目标原生相对路径 |
+| [RFC-0004：项目层 cross-tool symlink 模式的可移植发现合同](0004-portable-discovery-cross-tool-symlink.md) | Proposed | 在 `jue inspect --diagnostics` 暴露 link-pattern 检查；同步把「物化优于 symlink」写进 `documentation-contract.md` / `creating-a-preset.md`；`jue materialize-cross-links` 暂缓 |
 
 ## 新 RFC 必需章节
 
