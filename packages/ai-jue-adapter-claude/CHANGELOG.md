@@ -1,3 +1,9 @@
+## [2.0.1](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v2.0.0...ai-jue-adapter-claude@v2.0.1) (2026-09-19)
+
+### Bug fixes
+
+- Preserve root-relative Skill sidecars in generated Claude artifacts.
+
 ## [2.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v1.4.1...ai-jue-adapter-claude@v2.0.0) (2026-08-21)
 
 ### Breaking changes

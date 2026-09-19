@@ -1,3 +1,12 @@
+## [2.1.1](https://github.com/zenHeart/ai-jue/compare/ai-jue@v2.1.0...ai-jue@v2.1.1) (2026-09-19)
+
+### Bug fixes
+
+- Reject incompatible Adapter packages before import and report resolved identity.
+- Keep dry-run, check, and diagnostics remote Capability resolution read-only.
+- Skip registry lookups for local Presets and fail explicitly for invalid MCP sources.
+- Preserve root-relative Skill sidecars when loading Presets.
+
 ## [2.1.0](https://github.com/zenHeart/ai-jue/compare/ai-jue@v2.0.0...ai-jue@v2.1.0) (2026-08-24)
 
 ### Features

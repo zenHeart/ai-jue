@@ -1,3 +1,9 @@
+## [2.0.1](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v2.0.0...ai-jue-adapter-cursor@v2.0.1) (2026-09-19)
+
+### Bug fixes
+
+- Preserve root-relative Skill sidecars in generated Cursor artifacts.
+
 ## [2.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-cursor@v1.4.2...ai-jue-adapter-cursor@v2.0.0) (2026-08-21)
 
 ### Breaking changes

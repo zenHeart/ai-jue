@@ -1,3 +1,11 @@
+## [0.3.2](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-hermes@v0.3.1...ai-jue-adapter-hermes@v0.3.2) (2026-09-19)
+
+### Bug fixes
+
+- Preserve root-relative Skill sidecars in generated Hermes artifacts.
+- Require exact managed initializer bytes and contained regular files.
+- Confirm native installation through an isolated local Git source and inventory.
+
 ## [0.3.1](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-hermes@v0.3.0...ai-jue-adapter-hermes@v0.3.1) (2026-08-24)
 
 ### Bug fixes

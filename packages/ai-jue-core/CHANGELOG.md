@@ -1,3 +1,11 @@
+## [2.0.1](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v2.0.0...ai-jue-core@v2.0.1) (2026-09-19)
+
+### Bug fixes
+
+- Reject unsafe merge keys and invalid existing JSON instead of mutating targets.
+- Reject dangling symlinks before execution and remove newly created directories on rollback.
+- Preserve root-relative Skill sidecars through Canonical mappings.
+
 ## [2.0.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v1.4.2...ai-jue-core@v2.0.0) (2026-08-21)
 
 ### Breaking changes

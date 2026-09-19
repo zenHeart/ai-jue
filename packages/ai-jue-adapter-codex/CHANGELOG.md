@@ -1,3 +1,9 @@
+## [0.3.1](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-codex@v0.3.0...ai-jue-adapter-codex@v0.3.1) (2026-09-19)
+
+### Bug fixes
+
+- Preserve root-relative Skill sidecars in generated Codex artifacts.
+
 ## [0.3.0](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-codex@v0.2.1...ai-jue-adapter-codex@v0.3.0) (2026-08-21)
 
 ### Breaking changes
