@@ -92,4 +92,43 @@ describe("runExtensionDiagnostics", () => {
     expect(fs.readdirSync(projectDirectory)).toEqual([]);
     expect(fs.readdirSync(userHome)).toEqual([]);
   });
+
+  it("reports incompatible package identity without importing or calling write", async () => {
+    const root = tempDir();
+    const sideEffectPath = path.join(root, "should-not-exist.txt");
+    fs.writeFileSync(
+      path.join(root, "package.json"),
+      JSON.stringify({
+        name: "jue-extension-incompatible",
+        version: "1.0.0",
+        main: "index.js",
+        peerDependencies: { "ai-jue-core": "^1.0.0" },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(root, "index.js"),
+      `require("fs").writeFileSync(${JSON.stringify(sideEffectPath)}, "ran");`,
+    );
+
+    const diagnostics = await runExtensionDiagnostics(root, {
+      cwd: root,
+      applyCheck: {
+        canonical: {} as any,
+        artifactRoot: root,
+      },
+    });
+
+    expect(diagnostics).toMatchObject({
+      name: "jue-extension-incompatible",
+      version: "1.0.0",
+      peerRange: "^1.0.0",
+      hostCoreVersion: "2.0.0",
+      adapters: [],
+    });
+    expect(diagnostics.issues).toEqual([
+      expect.objectContaining({ code: "incompatible-peer-dependency" }),
+    ]);
+    expect(diagnostics.applyReadiness).toBeUndefined();
+    expect(fs.existsSync(sideEffectPath)).toBe(false);
+  });
 });

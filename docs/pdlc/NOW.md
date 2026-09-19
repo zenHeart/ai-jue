@@ -5,7 +5,7 @@ intent_status: accepted
 phase: iterating
 vcs: git
 branch: main
-slice_id: issue-14-apply-safety-residuals
+slice_id: issue-24-adapter-compatibility-preflight
 scale: major
 slice_gate: user_ok
 health: ok
@@ -18,29 +18,28 @@ skipped_gates:
 
 ## Intent
 
-修复 Issue #14 中仍可在当前代码复现的 apply scope 安全残差，保证危险输入和
-只读命令在任何 Artifact 写入前失败，并且 diagnostics 使用与 apply 相同的上下文。
+修复 Issue #24：Host 在导入 Adapter 前统一解析 npm 包身份并验证
+`peerDependencies.ai-jue-core` 与实际 Host Core 版本兼容；不兼容时明确失败且零写入。
 
 ## Spec
 
-- 深合并在任意深度拒绝原型污染键，错误不包含输入值。
-- merged JSON 遇到非法或非对象内容时拒绝覆盖。
-- plan/check/apply 在写入前拒绝悬空文件或目录 symlink。
-- dry-run/check 不写持久 cache、lock、config 或 target。
-- inspect diagnostics 使用与 apply 相同的 scope/root/kind 且保持只读。
-- rollback 清除失败批次创建的路径，但保留批次前已有目录。
+- 一个 Host-owned resolver 返回入口、包名/版本、来源、Core peer range 与 Host Core 版本。
+- 缺失、非法或不兼容 peer range 在 import/read/write/confirm 前失败。
+- 保留 project-local-first；不兼容时不静默回退或自动升级。
+- apply、extension validate、inspect diagnostics 使用同一兼容性结果。
+- dry-run/check 失败路径不写项目、HOME、lock、cache 或依赖。
 
 ## Plan
 
-1. 将 Issue 的六组残差映射到现有测试并运行聚焦复现。
-2. 对每个仍失败的残差先保留最小失败测试，再做最小实现。
-3. 跑 Core/CLI 聚焦测试、全套测试、构建、隐私与安全门禁。
-4. 在 `cwr`、`mp` 的隔离临时目录消费 pack 产物，不保留现场材料。
-5. 发布脱敏证据并关闭 #14。
+1. 审计 apply、extension、inspect 的解析与加载路径。
+2. 用合成包 fixture 先复现不兼容、缺失、非法 peer range。
+3. 收敛到一个 resolver 并接入三条路径，确保加载前失败。
+4. 跑聚焦/全量/发布门禁及双远程隔离消费。
+5. 发布脱敏证据并关闭 #24。
 
 ## Deferred-MPF
 
-- #14 之外的其他 Issue。
+- #24 之外的其他 Issue。
 - 发布与合并：所有已确认缺陷切片完成后统一执行。
 
 ## Open questions

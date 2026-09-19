@@ -45,8 +45,13 @@ export interface ApplyReadinessDiagnostic {
 }
 
 export interface ExtensionDiagnostics {
+  name: string;
+  version: string;
+  packageDir: string;
   packageJsonPath: string;
   entryPath: string;
+  peerRange: string | null;
+  hostCoreVersion: string;
   issues: ExtensionPackageIssue[];
   adapters: ExtensionAdapterDiagnostic[];
   applyReadiness?: ApplyReadinessDiagnostic;
@@ -79,8 +84,13 @@ export async function runExtensionDiagnostics(
 ): Promise<ExtensionDiagnostics> {
   const resolved = resolveExtensionPackage(pathOrPackage, options.cwd ?? process.cwd());
   const diagnostics: ExtensionDiagnostics = {
+    name: resolved.name,
+    version: resolved.version,
+    packageDir: resolved.packageDir,
     packageJsonPath: resolved.packageJsonPath,
     entryPath: resolved.entryPath,
+    peerRange: resolved.peerRange,
+    hostCoreVersion: resolved.hostCoreVersion,
     issues: resolved.issues,
     adapters: [],
   };

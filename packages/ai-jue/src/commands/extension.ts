@@ -55,8 +55,13 @@ export const command = "extension <subcommand>";
 export const describe = ""; // Set in cli.ts for dynamic translation, matching other commands.
 
 export interface ExtensionValidateResult {
+  name: string;
+  version: string;
+  packageDir: string;
   packageJsonPath: string;
   entryPath: string;
+  peerRange: string | null;
+  hostCoreVersion: string;
   issues: ExtensionPackageIssue[];
   loaded: boolean;
   adapterIds: string[];
@@ -75,8 +80,13 @@ export function runExtensionValidate(
 ): ExtensionValidateResult {
   const resolved = resolveExtensionPackage(pathOrPackage, options.cwd ?? process.cwd());
   const result: ExtensionValidateResult = {
+    name: resolved.name,
+    version: resolved.version,
+    packageDir: resolved.packageDir,
     packageJsonPath: resolved.packageJsonPath,
     entryPath: resolved.entryPath,
+    peerRange: resolved.peerRange,
+    hostCoreVersion: resolved.hostCoreVersion,
     issues: resolved.issues,
     loaded: false,
     adapterIds: [],

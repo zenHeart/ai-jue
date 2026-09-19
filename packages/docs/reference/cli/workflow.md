@@ -57,8 +57,9 @@ apply 不要求交互授权确认，预览与 CI 校验使用 `--dry-run` 与 `-
 必须通过 `--adapter`、`--all` 或 `targets` 明确选择 Adapter，不使用项目 footprint
 作为用户目录授权。拼写错误的 `--adpater` 仍被接受并显示警告。
 
-退出码：无变更或已应用 0，待定或漂移冲突 3，未授权 4，回滚或原生确认失败 1。Adapter
-不支持所选 scope，或 user scope 与 Plugin 类 Artifact 组合时退出码 2。
+退出码：无变更或已应用 0，待定或漂移冲突 3，未授权 4，回滚或原生确认失败 1。
+Adapter Core peer range 缺失、非法或不兼容，Adapter 不支持所选 scope，或 user
+scope 与 Plugin 类 Artifact 组合时退出码 2；这些错误均发生在 Adapter 导入和写入前。
 
 ## `jue inspect`
 

@@ -62,8 +62,9 @@ project footprints are not user-home authorization. The misspelled `--adpater`
 is still accepted and prints a warning.
 
 Exit codes: no change or applied 0, pending or blocked by drift 3, unauthorized
-4, rolled back or native confirmation failed 1. An unsupported scope or a user-scope Plugin-class Artifact
-combination exits 2.
+4, rolled back or native confirmation failed 1. A missing, invalid, or
+Host-incompatible Adapter Core peer range, an unsupported scope, or a user-scope
+Plugin-class Artifact combination exits 2 before Adapter import or writes.
 
 ## `jue inspect`
 
