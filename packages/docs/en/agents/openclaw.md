@@ -65,8 +65,9 @@ Bundle mapping highlights:
 
 - Workspace MCP stays outside the project-level Artifact, protecting the
   user's global `openclaw.json`.
-- `compatible-bundle` reuses the official Claude/Codex
-  `artifactKind: "plugin"` layouts.
+- `compatible-bundle` reuses official Claude/Codex layouts, or an explicit
+  `bundleFormat: "cursor"` Cursor `artifactKind: "plugin"` layout. `auto`
+  never selects Cursor.
 - Canonical packs keep the Bundle's narrow trust boundary; the OpenClaw native
   runtime surface stays described by the Agent's official capability table.
 - When hooks run under OpenClaw, choose the Codex bundle base; without runnable

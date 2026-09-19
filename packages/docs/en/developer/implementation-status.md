@@ -542,12 +542,14 @@ Partial means local code or tests exist, not complete Agent support. See
 `packages/ai-jue-adapter-cursor/src/capabilities/layout.ts`.
 Cursor `fixtures/failures/` feeds the shared suite `securityRejectionCases`
 and records hook path-escape rejection plus unknown-event pass-through.
+OpenClaw `compatible-bundle` can delegate to the Cursor plugin layout when
+`tools.openclaw.bundleFormat` is the explicit value `cursor`; `auto` still
+selects only Claude or Codex.
 These GitHub Issues are **separate follow-ups** — agents must read the full issue (Acceptance criteria + Implementation notes) before starting:
 
 | Issue | Task |
 | --- | --- |
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json` generation |
-| [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw compatible-bundle third base: Cursor layout |
 
 See [`agents/cursor.md` §5](../agents/cursor.md#5-follow-up-work-github-issues).
 

@@ -455,12 +455,12 @@ async function main() {
       const configuredFormat = typeof configured === 'string'
         ? configured.trim().toLowerCase()
         : 'auto';
-      const format = configuredFormat === 'claude' || configuredFormat === 'codex'
+      const format = configuredFormat === 'claude' || configuredFormat === 'codex' || configuredFormat === 'cursor'
         ? configuredFormat
         : Object.keys(config.hooks || {}).length > 0 ? 'codex' : 'claude';
-      return format === 'codex'
-        ? path.join('.codex-plugin', 'plugin.json')
-        : path.join('.claude-plugin', 'plugin.json');
+      if (format === 'codex') return path.join('.codex-plugin', 'plugin.json');
+      if (format === 'cursor') return path.join('.cursor-plugin', 'plugin.json');
+      return path.join('.claude-plugin', 'plugin.json');
     }
 
     if (pluginMode) {

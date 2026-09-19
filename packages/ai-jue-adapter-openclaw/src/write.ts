@@ -16,10 +16,12 @@ export type WriteContext = CoreWriteContext;
 
 const TARGET = "openclaw";
 
+type BundleFormat = "claude" | "codex" | "cursor";
+
 function resolveBundleFormat(
   toolsConfig: Record<string, unknown> | undefined,
   canonical: CanonicalDocument,
-): "claude" | "codex" {
+): BundleFormat {
   const configuredValue = toolsConfig?.bundleFormat;
   if (
     configuredValue !== undefined &&
@@ -27,7 +29,7 @@ function resolveBundleFormat(
     typeof configuredValue !== "string"
   ) {
     const error = new Error(
-      `OpenClaw tools.bundleFormat must be a string: auto, claude, or codex; received ${typeof configuredValue}.`,
+      `OpenClaw tools.bundleFormat must be a string: auto, claude, codex, or cursor; received ${typeof configuredValue}.`,
     ) as Error & { exitCode?: number };
     error.exitCode = 2;
     throw error;
@@ -37,21 +39,25 @@ function resolveBundleFormat(
       ? configuredValue.trim().toLowerCase()
       : "";
   const raw = configured || "auto";
-  if (raw === "claude" || raw === "codex") return raw;
+  if (raw === "claude" || raw === "codex" || raw === "cursor") return raw;
   if (raw !== "auto") {
     const error = new Error(
-      `OpenClaw tools.bundleFormat must be one of: auto, claude, codex; received "${raw}".`,
+      `OpenClaw tools.bundleFormat must be one of: auto, claude, codex, cursor; received "${raw}".`,
     ) as Error & { exitCode?: number };
     error.exitCode = 2;
     throw error;
   }
-  // OpenClaw only executes OpenClaw-style hook packs (Codex-compatible).
+  // auto never selects Cursor. Hooks pick the Codex-executable base.
   return canonical.hooks && Object.keys(canonical.hooks).length > 0 ? "codex" : "claude";
 }
 
-function loadBundleWriter(format: "claude" | "codex"): Adapter {
+function loadBundleWriter(format: BundleFormat): Adapter {
   const packageName =
-    format === "claude" ? "ai-jue-adapter-claude" : "ai-jue-adapter-codex";
+    format === "claude"
+      ? "ai-jue-adapter-claude"
+      : format === "codex"
+        ? "ai-jue-adapter-codex"
+        : "ai-jue-adapter-cursor";
   let resolved: string;
   try {
     // Prefer consumer project resolution, then this package's node_modules.
@@ -128,10 +134,11 @@ async function writeWorkspace(
  * Computes the `ArtifactChange[]` needed to make an OpenClaw workspace
  * or compatible bundle match `canonical`, without performing I/O itself.
  *
- * `compatible-bundle` does **not** invent a third directory dialect —
- * it delegates to Claude or Codex `artifactKind: "plugin"` writers so
- * `openclaw plugins install` can treat the output as Format: bundle
- * (RFC-0002 / https://docs.openclaw.ai/plugins/bundles).
+ * `compatible-bundle` does **not** invent a fourth directory dialect —
+ * it delegates to Claude, Codex, or explicit Cursor `artifactKind: "plugin"`
+ * writers so `openclaw plugins install` can treat the output as Format: bundle
+ * (RFC-0002 / https://docs.openclaw.ai/plugins/bundles). `auto` still never
+ * selects Cursor.
  */
 export async function write(
   canonical: CanonicalDocument,

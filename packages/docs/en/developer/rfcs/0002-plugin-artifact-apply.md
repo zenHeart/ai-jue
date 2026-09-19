@@ -112,7 +112,8 @@ See decision.
 1. Default base format: **`claude`** (skills/commands-heavy presets).
 2. If Canonical has hooks that must **run** in OpenClaw → base **`codex`**
    (only Codex-style hook packs execute; Claude `hooks.json` is detect-only).
-3. `tools.openclaw.bundleFormat: "claude" | "codex" | "auto"`.
+3. `tools.openclaw.bundleFormat: "claude" | "codex" | "cursor" | "auto"`.
+   `auto` never selects Cursor.
 4. No duplicated layout code — call existing adapters/helpers.
 5. Success criterion is compatible **bundle**, not native `openclaw.plugin.json`.
 
@@ -149,7 +150,7 @@ export default {
     hermes: { artifact: "workspace" } // or "skill-plugin"
   },
   tools: {
-    openclaw: { bundleFormat: "auto" } // "claude" | "codex" | "auto"
+    openclaw: { bundleFormat: "auto" } // "claude" | "codex" | "cursor" | "auto"
   }
 };
 ```
@@ -203,7 +204,7 @@ Keep the string `compatible-bundle` (already in Guides) with the frozen meaning
 
 1. OpenClaw CLI availability across CI; the contract uses install+inspect when present and returns structured `unconfirmed` evidence when absent.
 2. Whether Hermes skill-plugin should add real `hermes plugins install/list` headless evidence.
-3. Cursor bundle as third base; OpenClaw can discover it while Jue's current Cursor Artifact kind remains project.
+3. Cursor is an explicit `bundleFormat: "cursor"` third base; `auto` never selects it.
 
 ## Implementation slices
 

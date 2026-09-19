@@ -20,6 +20,7 @@
   "peerDependencies": {
     "ai-jue-adapter-claude": "^2.0.2",
     "ai-jue-adapter-codex": "^0.3.2",
+    "ai-jue-adapter-cursor": "^2.0.2",
     "ai-jue-core": "^2.0.2"
   },
   "peerDependenciesMeta": {
@@ -28,11 +29,15 @@
     },
     "ai-jue-adapter-codex": {
       "optional": true
+    },
+    "ai-jue-adapter-cursor": {
+      "optional": true
     }
   },
   "devDependencies": {
     "ai-jue-adapter-claude": "^2.0.2",
     "ai-jue-adapter-codex": "^0.3.2",
+    "ai-jue-adapter-cursor": "^2.0.2",
     "ai-jue-core": "^2.0.2"
   },
   "author": {

@@ -63,6 +63,8 @@
 | Confirm | Implemented | 无原生 CLI；返回 `unconfirmed` |
 
 `fixtures/failures/` 提供脱敏安全合同：字面量 MCP env 拒绝、hook 路径穿越拒绝、未知 hook 事件透传。
+OpenClaw `compatible-bundle` 可通过显式 `tools.openclaw.bundleFormat: "cursor"`
+复用本 Adapter 的 plugin 布局。
 
 ## 5. 后续工作（GitHub Issues）
 
@@ -71,4 +73,3 @@
 | Issue | 范围 |
 | --- | --- |
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json`（Team marketplace 索引） |
-| [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw `compatible-bundle` 以 Cursor 布局为第三基底（[RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) 已知边界 3） |

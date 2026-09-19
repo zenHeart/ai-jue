@@ -18,7 +18,7 @@ import {
 import {
   adapterConfigKey,
   resolveArtifactKind,
-  resolveBundlePluginManifest,
+  resolveApplyPluginManifest,
   resolveTargetSelection,
   shortAdapterName,
   UnsupportedArtifactKindError,
@@ -162,16 +162,12 @@ export async function runCoreAdapter(
 
   const canonical = toCanonicalDocument(config as unknown as Record<string, unknown>);
   const toolsConfig = (config as Record<string, any>)?.tools?.[configKey];
-  const pluginManifest =
-    artifactKind === "plugin" ||
-    artifactKind === "compatible-bundle" ||
-    artifactKind === "skill-plugin"
-      ? // Delegate writers first: OpenClaw bundles are Claude/Codex plugin
-        // layouts, so the identity must match what those writers emit —
-        // otherwise multiple Adapters re-write one plugin.json differently
-        // on every run and the Artifact is never idempotent.
-        resolveBundlePluginManifest(config as Record<string, unknown>, short)
-      : undefined;
+  const pluginManifest = resolveApplyPluginManifest(
+    config as Record<string, unknown>,
+    short,
+    artifactKind,
+    toolsConfig,
+  );
 
   const writeContext: WriteContext = {
     artifactRoot,

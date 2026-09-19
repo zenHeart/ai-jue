@@ -7,7 +7,7 @@
 - `gh-1` Feature: [resolve installed npm Capability data packages from the declaring Preset](https://github.com/zenHeart/ai-jue/issues/1) [done]
 - `gh-5` Epic: [Private final Preset → four-agent Plugin/Bundle apply](https://github.com/zenHeart/ai-jue/issues/5)
 - `gh-8` Feature: [Cursor Team marketplace index Artifact](https://github.com/zenHeart/ai-jue/issues/8)
-- `gh-9` Feature: [Cursor base for OpenClaw compatible bundles](https://github.com/zenHeart/ai-jue/issues/9)
+- `gh-9` Feature: [Cursor base for OpenClaw compatible bundles](https://github.com/zenHeart/ai-jue/issues/9) [done]
 - `gh-10` Documentation feature: [adapter-creator Cursor project/plugin layouts](https://github.com/zenHeart/ai-jue/issues/10) [done]
 - `gh-11` Test enhancement: [Cursor failure fixtures and safety contract samples](https://github.com/zenHeart/ai-jue/issues/11) [done]
 - `gh-22` Feature: [multi-agent user-scope MCP Adapters](https://github.com/zenHeart/ai-jue/issues/22)

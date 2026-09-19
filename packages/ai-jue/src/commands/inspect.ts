@@ -10,7 +10,7 @@ import { resolveFinalConfig } from "../resolver";
 import {
   adapterConfigKey,
   resolveArtifactKind,
-  resolveBundlePluginManifest,
+  resolveApplyPluginManifest,
   resolveTargetSelection,
   shortAdapterName,
   UnsupportedArtifactKindError,
@@ -141,10 +141,12 @@ export async function runExtensionDiagnostics(
     }
     const configKey = adapterConfigKey(adapter.id);
     const toolsConfig = (config as Record<string, any>)?.tools?.[configKey];
-    const pluginManifest =
-      ["plugin", "compatible-bundle", "skill-plugin"].includes(artifactKind)
-        ? resolveBundlePluginManifest(config as Record<string, unknown>, shortAdapterName(adapter.id))
-        : undefined;
+    const pluginManifest = resolveApplyPluginManifest(
+      config as Record<string, unknown>,
+      shortAdapterName(adapter.id),
+      artifactKind,
+      toolsConfig,
+    );
     const changes = await adapter.write(options.applyCheck.canonical, {
       artifactRoot,
       scope,

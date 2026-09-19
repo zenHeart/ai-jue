@@ -61,7 +61,8 @@ Bundle 映射要点（官方）：
 ## 3. 转换边界
 
 - Workspace MCP 保持在项目级 Artifact 之外，保护用户的全局 `openclaw.json`。
-- `compatible-bundle` 复用 Claude/Codex `artifactKind: "plugin"` 的官方兼容布局。
+- `compatible-bundle` 复用 Claude/Codex，或显式 `bundleFormat: "cursor"` 的 Cursor
+  `artifactKind: "plugin"` 官方兼容布局。`auto` 永不选 Cursor。
 - Canonical 能力包沿用 Bundle 的窄信任边界；OpenClaw native runtime surface 继续
   由 Agent 官方能力表管理。
 - hooks 需要在 OpenClaw 执行时，bundle 基底选 Codex；无 runnable hooks 时使用 Claude 基底。

@@ -63,6 +63,8 @@ Root `AGENTS.md`, `.cursor/rules/*.mdc`, `.cursor/commands/*.md`,
 | Confirm | Implemented | no native CLI; returns `unconfirmed` |
 
 `fixtures/failures/` records the redacted security contract: literal MCP env rejection, hook path-escape rejection, and unknown hook-event pass-through.
+OpenClaw `compatible-bundle` reuses this Adapter's plugin layout when
+`tools.openclaw.bundleFormat` is the explicit value `cursor`.
 
 ## 5. Follow-up work (GitHub Issues)
 
@@ -71,4 +73,3 @@ Root `AGENTS.md`, `.cursor/rules/*.mdc`, `.cursor/commands/*.md`,
 | Issue | Scope |
 | --- | --- |
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json` (Team marketplace index) |
-| [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw `compatible-bundle` with Cursor layout as third base ([RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) known-boundary 3) |

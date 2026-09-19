@@ -3,6 +3,7 @@ import {
   resolveArtifactKind,
   resolvePluginManifest,
   resolveBundlePluginManifest,
+  resolveApplyPluginManifest,
   isTargetEnabled,
   resolveTargetSelection,
   UnsupportedArtifactKindError,
@@ -223,5 +224,49 @@ describe("resolveBundlePluginManifest", () => {
     // with no identity configuration is still deterministic.
     expect(resolveBundlePluginManifest({}, "claude")?.name).toBe("jue-plugin");
     expect(resolveBundlePluginManifest({}, "openclaw")?.name).toBe("jue-plugin");
+  });
+});
+
+describe("resolveApplyPluginManifest", () => {
+  const mixed = {
+    tools: {
+      claude: { pluginManifest: { name: "cc-pack", version: "1.0.0" } },
+      cursor: {
+        pluginManifest: {
+          name: "cursor-pack",
+          version: "2.0.0",
+          variables: { apiKey: { type: "string" } },
+        },
+      },
+      openclaw: { pluginManifest: { name: "oc-pack", version: "1.0.0" } },
+    },
+  };
+
+  it("uses Cursor identity and variables for an explicit Cursor OpenClaw bundle", () => {
+    expect(
+      resolveApplyPluginManifest(mixed, "openclaw", "compatible-bundle", {
+        bundleFormat: "cursor",
+      }),
+    ).toEqual({
+      name: "cursor-pack",
+      version: "2.0.0",
+      description: undefined,
+      author: { name: "ai-jue" },
+      variables: { apiKey: { type: "string" } },
+    });
+  });
+
+  it("does not leak Cursor variables into Claude or auto OpenClaw bundles", () => {
+    expect(resolveApplyPluginManifest(mixed, "claude", "plugin")?.variables).toBeUndefined();
+    expect(
+      resolveApplyPluginManifest(mixed, "openclaw", "compatible-bundle", {
+        bundleFormat: "auto",
+      })?.variables,
+    ).toBeUndefined();
+    expect(resolveApplyPluginManifest(mixed, "openclaw", "compatible-bundle")?.name).toBe("cc-pack");
+  });
+
+  it("uses Cursor identity for a Cursor plugin Artifact", () => {
+    expect(resolveApplyPluginManifest(mixed, "cursor", "plugin")?.name).toBe("cursor-pack");
   });
 });

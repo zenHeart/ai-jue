@@ -293,3 +293,39 @@ export function resolveBundlePluginManifest(
     resolvePluginManifest(config, adapterShort)
   );
 }
+
+function withoutVariables(
+  identity: PluginManifestIdentity | undefined,
+): PluginManifestIdentity | undefined {
+  if (!identity) return undefined;
+  const { variables: _variables, ...rest } = identity;
+  return rest;
+}
+
+/**
+ * Plugin identity for one apply/inspect write. Cursor identity and
+ * `variables` only reach an explicit Cursor plugin or an OpenClaw
+ * `bundleFormat: "cursor"` bundle. Claude/Codex paths never inherit them.
+ */
+export function resolveApplyPluginManifest(
+  config: Record<string, unknown> | null | undefined,
+  adapterShort: string,
+  artifactKind: string,
+  toolsConfig?: Record<string, unknown>,
+): PluginManifestIdentity | undefined {
+  if (!["plugin", "compatible-bundle", "skill-plugin"].includes(artifactKind)) {
+    return undefined;
+  }
+  const key = normalizeAdapterKey(adapterShort);
+  const format =
+    typeof toolsConfig?.bundleFormat === "string"
+      ? toolsConfig.bundleFormat.trim().toLowerCase()
+      : "";
+  if (key === "cursor") {
+    return resolvePluginManifest(config, "cursor");
+  }
+  if (key === "openclaw" && format === "cursor") {
+    return resolvePluginManifest(config, "cursor") ?? resolvePluginManifest(config, "openclaw");
+  }
+  return withoutVariables(resolveBundlePluginManifest(config, adapterShort));
+}

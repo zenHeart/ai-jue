@@ -113,7 +113,7 @@ Jue 从 Canonical 导出的内容包。
 
 1. **默认 bundle 基底：`claude`**（ai-assets 以 skills/commands 为主；Claude `commands/`→OpenClaw skill 根）。
 2. 当 Canonical **含 hooks** 且需要 OpenClaw **可执行** hooks 时，改用 **`codex`** 基底（官方：仅 Codex 式 `HOOK.md`+handler 可执行；Claude `hooks/hooks.json` 为 detect-only）。
-3. 选择来源：`tools.openclaw.bundleFormat: "claude" | "codex" | "auto"`（`auto` = 有 runnable hooks → codex，否则 claude）。
+3. 选择来源：`tools.openclaw.bundleFormat: "claude" | "codex" | "cursor" | "auto"`（`auto` = 有 runnable hooks → codex，否则 claude；**永不**自动选 Cursor）。
 4. Adapter 代码路径：OpenClaw `write` 在 `compatible-bundle` 分支 **委托**  
    `ai-jue-adapter-claude` / `ai-jue-adapter-codex` 的 `write`（或抽共享 helper），禁止复制粘贴第二套目录逻辑。
 5. Confirm：隔离目录上优先执行
@@ -167,7 +167,7 @@ export default {
     hermes: { artifact: "workspace" } // 或 "skill-plugin"
   },
   tools: {
-    openclaw: { bundleFormat: "auto" } // "claude" | "codex" | "auto"
+    openclaw: { bundleFormat: "auto" } // "claude" | "codex" | "cursor" | "auto"
   }
 };
 ```
@@ -228,8 +228,7 @@ export default {
 1. OpenClaw CLI 是否在所有 CI 环境提供；当前合同为 CLI 可用时 install+inspect，
    CLI 缺席时返回结构化 `unconfirmed`。
 2. Hermes skill-plugin 是否增加真实 `hermes plugins install/list` headless 证据。
-3. Cursor bundle 是否第三优先（OpenClaw 可发现 Cursor Bundle，但 Jue 当前 Adapter
-   的 Artifact kind 仍为 project）。
+3. Cursor 仅作为显式 `bundleFormat: "cursor"` 第三基底；`auto` 不选 Cursor。
 
 ## 实施切片
 
