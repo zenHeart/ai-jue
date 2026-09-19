@@ -193,6 +193,16 @@ describe("documentation contract", () => {
     expect(chineseContract).toContain("变化放大门禁");
     expect(englishContract).toContain("Change-amplification gate");
     expect(governance).toContain("变化放大门禁");
+    expect(chineseContract).toContain("首选");
+    expect(chineseContract).toContain("次选");
+    expect(chineseContract).toContain("末选");
+    expect(englishContract).toContain("Preferred");
+    expect(englishContract).toContain("Secondary");
+    expect(englishContract).toContain("Last choice");
+    expect(readRepoFile("packages", "docs", "guide", "creating-a-preset.md")).toContain("首选");
+    expect(readRepoFile("packages", "docs", "en", "guide", "creating-a-preset.md")).toContain(
+      "Preferred",
+    );
   });
 
   it("keeps Developer pages paired across locales", () => {
@@ -206,7 +216,9 @@ describe("documentation contract", () => {
       path.join("rfcs", "0001-minimal-conversion-model.md"),
       path.join("rfcs", "0002-plugin-artifact-apply.md"),
       path.join("rfcs", "0003-apply-scope-target-root.md"),
+      path.join("rfcs", "0004-inspect-link-pattern.md"),
       path.join("rfcs", "0005-directory-per-item-prune.md"),
+      path.join("rfcs", "0006-skill-same-runtime-collision.md"),
     ]) {
       expectLocalePair("developer", file);
     }
@@ -223,11 +235,15 @@ describe("documentation contract", () => {
       "/developer/rfcs/0001-minimal-conversion-model",
       "/developer/rfcs/0002-plugin-artifact-apply",
       "/developer/rfcs/0003-apply-scope-target-root",
+      "/developer/rfcs/0004-inspect-link-pattern",
       "/developer/rfcs/0005-directory-per-item-prune",
+      "/developer/rfcs/0006-skill-same-runtime-collision",
       "/en/developer/rfcs/0001-minimal-conversion-model",
       "/en/developer/rfcs/0002-plugin-artifact-apply",
       "/en/developer/rfcs/0003-apply-scope-target-root",
+      "/en/developer/rfcs/0004-inspect-link-pattern",
       "/en/developer/rfcs/0005-directory-per-item-prune",
+      "/en/developer/rfcs/0006-skill-same-runtime-collision",
     ]) {
       expect(sidebar).toContain(link);
     }

@@ -3,6 +3,7 @@ export * from './canonical-document';
 export * from './capability-mapping';
 export * from './capability-ref';
 export * from './core-executor';
+export * from './diagnostics';
 export * from './extension-host';
 export * from './file-io';
 export * from './frontmatter';

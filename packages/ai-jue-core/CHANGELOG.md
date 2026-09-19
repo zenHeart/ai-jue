@@ -1,3 +1,9 @@
+## [2.0.4](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v2.0.3...ai-jue-core@v2.0.4) (2026-09-20)
+
+### Features
+
+- Report project-layer Skill link patterns for inspect diagnostics.
+
 ## [2.0.3](https://github.com/zenHeart/ai-jue/compare/ai-jue-core@v2.0.2...ai-jue-core@v2.0.3) (2026-09-20)
 
 ### Features

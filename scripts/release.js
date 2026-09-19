@@ -217,6 +217,17 @@ const getChangedPackages = () => {
     return changed;
   });
 
+  if (changed.includes('ai-jue-core')) {
+    for (const name of allPackages) {
+      if (changed.includes(name)) continue;
+      const pkg = getPackageJson(name);
+      if (pkg.peerDependencies?.['ai-jue-core']) {
+        log.success(`${name} included for Core peer alignment`);
+        changed.push(name);
+      }
+    }
+  }
+
   return changed;
 };
 

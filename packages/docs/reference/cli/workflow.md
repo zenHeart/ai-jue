@@ -69,9 +69,9 @@ scope 与 Plugin 类 Artifact 组合时退出码 2；这些错误均发生在 Ad
 jue inspect [--extension <id>] [--diagnostics]
 ```
 
-`--extension <id>` 指定要检查的 Extension 包，`--diagnostics` 追加诊断。不指定 `--extension` 时只输出一条警告并结束，不输出任何摘要。
+`--diagnostics` 扫描当前项目的 `.claude/skills`、`.cursor/skills`、`.codex/skills` 与 `.agents/skills`，报告破损、降级、仓库内和仓库外的 Skill 链接模式（RFC-0004）。`--extension <id>` 指定要检查的 Extension 包。两者同时给出时，先打印链接 finding，再打印 Extension 诊断。未指定任一选项时输出一条警告并结束。
 
-`--diagnostics` 报告 Extension 的 npm 解析问题、其声明 adapter 的能力支持级别，以及当前项目 apply 的就绪状态（待定变更、漂移冲突、未授权变更计数）。就绪检查使用与 apply 相同的 scope、Artifact root 和 Artifact kind；该命令不写配置、cache、lock 或 Artifact。
+`--extension` 与 `--diagnostics` 一起使用时，还报告 Extension 的 npm 解析问题、其声明 adapter 的能力支持级别，以及当前项目 apply 的就绪状态（待定变更、漂移冲突、未授权变更计数）。就绪检查使用与 apply 相同的 scope、Artifact root 和 Artifact kind。链接 finding 打印后退出码仍为 0。该命令不写配置、cache、lock 或 Artifact。
 
 ## JSON 输出
 

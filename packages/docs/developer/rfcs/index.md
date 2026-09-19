@@ -21,7 +21,9 @@ RFC 记录会改变公共合同、Canonical、Adapter 或 Extension 机制的方
 | [RFC-0001：最小转换模型](0001-minimal-conversion-model.md) | Accepted | 单一管线、两类适配职责、Extension 注册 Adapter |
 | [RFC-0002：Plugin / Bundle Artifact 的 apply 合同](0002-plugin-artifact-apply.md) | Implemented | CLI/`targets` 与四 Agent plugin 路径已接线；OpenClaw `compatible-bundle` 委托 Claude/Codex；Hermes thin `skill-plugin` 已落地 |
 | [RFC-0003：apply 作用域与目标根](0003-apply-scope-target-root.md) | Implemented | project/user 显式作用域；Core 授权根，Adapter 生成目标原生相对路径 |
+| [RFC-0004：项目层 cross-tool 链接模式的 inspect 合同](0004-inspect-link-pattern.md) | Implemented | `jue inspect --diagnostics` 只读报告破损、降级、仓库内和仓库外 Skill 链接 |
 | [RFC-0005：directoryPerItem 孤儿条目删除](0005-directory-per-item-prune.md) | Implemented | `read()` 识别但 Canonical 已不存在的条目目录发出 `delete` |
+| [RFC-0006：同一运行时的 Skill 碰撞规划](0006-skill-same-runtime-collision.md) | Proposed | Adapter 提供发现根证据，Core 在写入前规划同名碰撞 |
 
 ## 新 RFC 必需章节
 

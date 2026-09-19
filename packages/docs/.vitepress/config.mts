@@ -111,8 +111,16 @@ const zhDeveloperSidebar = [
         link: "/developer/rfcs/0003-apply-scope-target-root",
       },
       {
+        text: "RFC-0004 项目层链接 inspect 合同",
+        link: "/developer/rfcs/0004-inspect-link-pattern",
+      },
+      {
         text: "RFC-0005 directoryPerItem 孤儿删除",
         link: "/developer/rfcs/0005-directory-per-item-prune",
+      },
+      {
+        text: "RFC-0006 同一运行时 Skill 碰撞",
+        link: "/developer/rfcs/0006-skill-same-runtime-collision",
       },
     ],
   },
@@ -243,8 +251,16 @@ const enDeveloperSidebar = [
         link: "/en/developer/rfcs/0003-apply-scope-target-root",
       },
       {
+        text: "RFC-0004 Inspect link-pattern contract",
+        link: "/en/developer/rfcs/0004-inspect-link-pattern",
+      },
+      {
         text: "RFC-0005 directoryPerItem orphan removal",
         link: "/en/developer/rfcs/0005-directory-per-item-prune",
+      },
+      {
+        text: "RFC-0006 Same-runtime Skill collision",
+        link: "/en/developer/rfcs/0006-skill-same-runtime-collision",
       },
     ],
   },

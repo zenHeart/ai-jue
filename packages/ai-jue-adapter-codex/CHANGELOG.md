@@ -1,3 +1,9 @@
+## [0.3.4](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-codex@v0.3.3...ai-jue-adapter-codex@v0.3.4) (2026-09-20)
+
+### Bug fixes
+
+- Align the Core peer range with ai-jue-core 2.0.4.
+
 ## [0.3.3](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-codex@v0.3.2...ai-jue-adapter-codex@v0.3.3) (2026-09-20)
 
 ### Bug fixes

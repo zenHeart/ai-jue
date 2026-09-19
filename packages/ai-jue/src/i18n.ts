@@ -183,12 +183,16 @@ const resources = {
           describe: "Read-only inspection of Presets, Capabilities, Adapters, and Artifacts",
           extension_describe: "Path or npm package name of the Extension to inspect",
           diagnostics_describe:
-            "Also report loaded Adapter capabilities and apply-readiness against the current project (--capability/--preset/--target/--artifact filters are not implemented yet)",
-          no_target: "Specify --extension <path> (--capability/--preset/--target are not implemented yet).",
+            "Report project Skill link patterns; with --extension also report Adapter capabilities and apply-readiness",
+          no_target: "Specify --diagnostics or --extension <path> (--capability/--preset/--target are not implemented yet).",
           invalid_extension: "❌ Extension package metadata is invalid:",
           adapter_line: "Adapter: {{id}}",
           apply_readiness:
             "Apply readiness for {{id}}: {{status}} (pending: {{pending}}, conflicts: {{conflicts}}, unauthorized: {{unauthorized}})",
+          link_pattern_header: "Link pattern findings ({{count}}):",
+          link_pattern_none: "No project-layer skill link patterns found.",
+          link_pattern_finding: "[{{severity}}] {{code}}: {{path}}",
+          link_pattern_remediation: "  {{remediation}}",
           failed: "Failed to inspect: {{message}}",
         },
         "create-preset": {
@@ -404,12 +408,16 @@ const resources = {
           describe: "只读查看 Preset、Capability、Adapter 和 Artifact",
           extension_describe: "要查看的 Extension 路径或 npm 包名",
           diagnostics_describe:
-            "同时报告已加载 Adapter 的能力支持级别，以及对当前项目的 apply 就绪状态（--capability/--preset/--target/--artifact 筛选尚未实现）",
-          no_target: "请指定 --extension <path>（--capability/--preset/--target 尚未实现）。",
+            "报告项目 Skill 链接模式；与 --extension 同时使用时还报告 Adapter 能力与 apply 就绪状态",
+          no_target: "请指定 --diagnostics 或 --extension <path>（--capability/--preset/--target 尚未实现）。",
           invalid_extension: "❌ Extension 包元数据无效：",
           adapter_line: "Adapter：{{id}}",
           apply_readiness:
             "{{id}} 的 apply 就绪状态：{{status}}（待处理：{{pending}}，冲突：{{conflicts}}，未授权：{{unauthorized}}）",
+          link_pattern_header: "链接模式 finding（{{count}}）：",
+          link_pattern_none: "未发现项目层 Skill 链接模式。",
+          link_pattern_finding: "[{{severity}}] {{code}}: {{path}}",
+          link_pattern_remediation: "  {{remediation}}",
           failed: "查看失败: {{message}}",
         },
         "create-preset": {

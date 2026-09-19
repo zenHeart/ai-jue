@@ -2,7 +2,7 @@ import fs from "fs";
 import os from "os";
 import path from "path";
 import { afterEach, describe, expect, it } from "vitest";
-import { runExtensionDiagnostics } from "../../src/commands/inspect";
+import { runExtensionDiagnostics, runProjectLinkDiagnostics } from "../../src/commands/inspect";
 
 const CLAUDE_ADAPTER = "ai-jue-adapter-claude";
 const HOST_CORE_VERSION = JSON.parse(
@@ -19,6 +19,24 @@ afterEach(() => {
   for (const dir of tempDirs.splice(0)) {
     fs.rmSync(dir, { recursive: true, force: true });
   }
+});
+
+describe("runProjectLinkDiagnostics", () => {
+  it("returns RFC-0004 findings for a degraded checkout file", () => {
+    const root = tempDir();
+    fs.mkdirSync(path.join(root, ".cursor", "skills"), { recursive: true });
+    fs.writeFileSync(
+      path.join(root, ".cursor", "skills", "demo"),
+      "../../.agents/skills/demo",
+    );
+
+    expect(runProjectLinkDiagnostics(root)).toEqual([
+      expect.objectContaining({
+        code: "symlink-checkout-degraded",
+        path: ".cursor/skills/demo",
+      }),
+    ]);
+  });
 });
 
 describe("runExtensionDiagnostics", () => {

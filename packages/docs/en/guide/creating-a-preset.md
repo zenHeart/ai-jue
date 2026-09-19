@@ -32,6 +32,33 @@ Place owned capabilities directly in their directories. Use `ai.capabilities`
 for shared or third-party content. Put target-private configuration under
 `tools/<target>/config.json`. Runtime code belongs in a separate Jue Extension.
 
+When the same Skill must appear under more than one Agent project root, follow
+[cross-client-root discovery](../developer/documentation-contract.md#cross-client-root-discovery):
+
+1. **Preferred**: `jue apply` materializes each Adapter Artifact.
+
+   ```bash
+   npx jue apply --adapter claude --adapter cursor
+   ```
+
+2. **Secondary**: copy the directory into each in-repo root and keep them in sync.
+
+   ```text
+   .claude/skills/review/
+   .agents/skills/review/
+   ```
+
+3. **Last choice**: an in-repo symlink plus a checkout script that restores
+   links. Windows Git defaults to `core.symlinks=false` and turns those links
+   into regular files, so the Agent cannot find `SKILL.md`.
+
+   ```text
+   .claude/skills/review -> ../../.agents/skills/review
+   ```
+
+`jue inspect --diagnostics` reports broken, degraded, in-repo, and out-of-repo
+links.
+
 ## 4. Validate and package
 
 `jue validate` checks the **consuming project's** `ai.config.js` (`presets`

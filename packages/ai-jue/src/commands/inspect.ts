@@ -1,8 +1,14 @@
 import { Arguments, CommandBuilder } from "yargs";
 import os from "os";
 import pc from "picocolors";
-import { checkExecution } from "ai-jue-core";
-import type { ApplyScope, CanonicalDocument, CapabilitySupport, ExecutionStatus } from "ai-jue-core";
+import { checkExecution, diagnoseLinkPattern } from "ai-jue-core";
+import type {
+  ApplyScope,
+  CanonicalDocument,
+  CapabilitySupport,
+  ExecutionStatus,
+  LinkPatternFinding,
+} from "ai-jue-core";
 import { logger } from "../logger";
 import { t } from "../i18n";
 import { loadConfig, MergedConfig, toCanonicalDocument } from "../config";
@@ -67,6 +73,37 @@ export interface ApplyCheckInput {
   artifactKind?: string;
 }
 
+/** RFC-0004: read-only Skill link findings for a project root. */
+export function runProjectLinkDiagnostics(projectRoot: string): LinkPatternFinding[] {
+  return diagnoseLinkPattern(projectRoot);
+}
+
+function printLinkFindings(findings: LinkPatternFinding[]): void {
+  if (findings.length === 0) {
+    logger.info(t("commands.inspect.link_pattern_none"));
+    return;
+  }
+  logger.info(t("commands.inspect.link_pattern_header", { count: String(findings.length) }));
+  for (const finding of findings) {
+    const location = finding.target
+      ? `${finding.path} -> ${finding.target}`
+      : finding.expectedTarget
+        ? `${finding.path} -> ${finding.expectedTarget}`
+        : finding.path;
+    const line = t("commands.inspect.link_pattern_finding", {
+      severity: finding.severity,
+      code: finding.code,
+      path: location,
+    });
+    if (finding.severity === "error") {
+      logger.error(line);
+    } else {
+      logger.warn(pc.yellow(line));
+    }
+    logger.log(t("commands.inspect.link_pattern_remediation", { remediation: finding.remediation }));
+  }
+}
+
 /**
  * The `--extension --diagnostics` slice of `jue inspect`'s target contract
  * (`packages/docs/reference/cli/workflow.md`): resolves an Extension
@@ -74,9 +111,10 @@ export interface ApplyCheckInput {
  * declared Adapter(s)' capability-support levels. When `applyCheck` is
  * supplied (a resolved project Canonical + its root), also reports whether
  * applying would need changes, be blocked by drift, or be a no-op, via the
- * real Core executor (JUE-108) — read-only, never writes. `--capability`/
- * `--preset`/`--target`/`--artifact` filters are not implemented yet; see
- * `implementation-status.md`.
+ * real Core executor (JUE-108) — read-only, never writes. `--diagnostics`
+ * without `--extension` reports project-layer Skill link patterns
+ * (RFC-0004). `--capability`/`--preset`/`--target`/`--artifact` filters
+ * are not implemented yet; see `implementation-status.md`.
  */
 export async function runExtensionDiagnostics(
   pathOrPackage: string,
@@ -189,12 +227,18 @@ export const builder: CommandBuilder = (yargs) =>
 export const handler = async (argv: Arguments) => {
   const { extension, diagnostics } = argv as unknown as { extension?: string; diagnostics?: boolean };
 
-  if (!extension) {
-    logger.warn(pc.yellow(t("commands.inspect.no_target")));
-    return;
-  }
-
   try {
+    if (diagnostics) {
+      printLinkFindings(runProjectLinkDiagnostics(process.cwd()));
+    }
+
+    if (!extension) {
+      if (!diagnostics) {
+        logger.warn(pc.yellow(t("commands.inspect.no_target")));
+      }
+      return;
+    }
+
     let applyCheck: ApplyCheckInput | undefined;
     try {
       const userConfig: MergedConfig = await loadConfig();

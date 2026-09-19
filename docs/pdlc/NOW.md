@@ -5,9 +5,9 @@ intent_status: accepted
 phase: iterating
 vcs: git
 branch: main
-slice_id: issue-26-35-directory-per-item-prune
+slice_id: issue-33-rfc-0004-link-pattern
 scale: patch
-slice_gate: implementing
+slice_gate: done
 health: ok
 user_accepted:
 skipped_gates: spec_ok,plan_ok (patch slice; continuous completion authorization)
@@ -18,24 +18,23 @@ skipped_gates: spec_ok,plan_ok (patch slice; continuous completion authorization
 
 ## Intent
 
-`directoryPerItem` 在再次 apply 时删除 Canonical 已不存在、但 `read()` 仍识别
-的条目目录。不新增 CLI 命令或第七概念。
+项目层 Skill 目录的符号链接模式由 `jue inspect --diagnostics` 只读报告。
 
 ## Spec
 
-见 RFC-0005。仅识别带主文件的条目目录；人手目录（无 SKILL.md 等）保留。
-`delete` 走现有 ArtifactChange 与 dry-run/check。
+见 RFC-0004。
 
 ## Plan
 
-1. 写入 RFC-0005 并挂导航。
-2. TDD：rename 留下旧目录、recursive delete、人手目录存活。
-3. Core 两处修补。
+1. RFC-0004 Implemented，#33 已关。
+2. RFC-0006 Proposed，#31 挂起至 Accepted。
+3. #8 / #22 / #30 已写阻塞说明。
 
 ## Deferred-MPF
 
-- 全量 managed-file manifest（#26 宽方案）。
-- #8 / #22 / #30 / #31 / #33 / #5。
+- RFC-0004 方案 C。
+- RFC-0006 实现。
+- #8 / #22 / #30 证据门禁。
 
 ## Open questions
 

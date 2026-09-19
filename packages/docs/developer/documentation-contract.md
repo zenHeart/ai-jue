@@ -63,3 +63,14 @@ Developer 状态和契约测试。新增概念必须通过 RFC 证明六概念�
 稳定文档只描述当前合同。被否决或删除的方案只保留在 RFC 决策历史，不以否定句
 回流到 README、Guide、Architecture、Specification、Reference 或 Agent profile。
 如果删除一句话不影响读者完成操作、实现或验收，该句应删除。
+
+### 跨 client root 发现
+
+同一 Skill 需要出现在多个 Agent 项目根时，按此顺序选择（RFC-0004）：
+
+1. **首选**：`jue apply` 为每个 Adapter 物化 Artifact。
+2. **次选**：在仓库内复制目录并保持同步。
+3. **末选**：仓库内符号链接，并配套 checkout 后恢复链接的脚本。Windows Git
+   默认 `core.symlinks=false` 会把链接变成普通文件。
+
+`jue inspect --diagnostics` 报告破损、降级、仓库内和仓库外的链接模式。

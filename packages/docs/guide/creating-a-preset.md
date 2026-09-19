@@ -56,6 +56,33 @@ jue-preset-team/
 - 目标私有配置：写入 `tools/<target>/config.json`。
 - 运行时代码：不要放进 Preset；创建独立 Jue Extension。
 
+同一 Skill 需要出现在多个 Agent 项目根时，按
+[跨 client root 发现](../developer/documentation-contract.md#跨-client-root-发现)
+合同选择：
+
+1. **首选**：`jue apply` 为每个 Adapter 物化 Artifact。
+
+   ```bash
+   npx jue apply --adapter claude --adapter cursor
+   ```
+
+2. **次选**：在仓库内复制目录并保持同步。
+
+   ```text
+   .claude/skills/review/
+   .agents/skills/review/
+   ```
+
+3. **末选**：仓库内符号链接，并配套 checkout 后恢复链接的脚本。Windows Git
+   默认 `core.symlinks=false` 会把链接变成普通文件，Agent 因此找不到
+   `SKILL.md`。
+
+   ```text
+   .claude/skills/review -> ../../.agents/skills/review
+   ```
+
+`jue inspect --diagnostics` 报告破损、降级、仓库内和仓库外的链接。
+
 ## 4. 验证和打包
 
 `jue validate` 校验的是**消费项目**的 `ai.config.js`（`presets` 数组、预设

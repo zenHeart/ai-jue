@@ -21,7 +21,7 @@
 | --- | --- | --- | --- |
 | `jue init` | Partial | Interactive initialization exists | Align minimal config and no-overwrite behavior |
 | `jue apply` | Partial | Core `--dry-run`/`--check`/apply follow the exit-code table; project/user scope, an absolute preflight target, per-Adapter root authorization, batch failure aggregation, and post-apply native confirmation are implemented; dry-run/check write neither the config root nor the Artifact root; Claude user-native paths are implemented and other built-ins are project-only | Finish `jue inspect` filters |
-| `jue inspect` | Partial | `--extension <path> --diagnostics` is implemented: read-only report of the loaded Adapter's `id`/`capabilities`, plus a real apply-readiness check when a project config exists in cwd (JUE-203) | Implement `--capability`/`--preset`/`--target`/`--artifact` filters |
+| `jue inspect` | Partial | `--diagnostics` reports project-layer Skill link findings (RFC-0004); `--extension <path> --diagnostics` is a read-only report of the loaded Adapter's `id`/`capabilities`, plus a real apply-readiness check when a project config exists in cwd (JUE-203) | Implement `--capability`/`--preset`/`--target`/`--artifact` filters |
 | `jue capability update` | Implemented | Updates one/all sources | Preserve lock and safety contracts |
 | `jue preset create/validate/pack` | Partial | Historical commands are scattered | Converge under author namespace |
 | `jue extension validate` | Partial | `--load` validates and loads an Extension (JUE-103); `--fixtures <dir>` runs `read()` + `CanonicalDocumentSchema` per subdirectory (JUE-203); the Claude Adapter now exports a real `confirm()` and is assembled as `defineExtension()` — the repo's first Extension that actually passes this check | Keep reusing it as each R3 Agent Extension lands |
@@ -79,6 +79,8 @@ Partial means local code or tests exist, not complete Agent support. See
   `directoryPerItem` deletes item directories that `read()` still recognizes
   after Canonical dropped them, when that Capability is part of the write
   ([RFC-0005](rfcs/0005-directory-per-item-prune.md)).
+  `jue inspect --diagnostics` reports project-layer Skill link patterns
+  ([RFC-0004](rfcs/0004-inspect-link-pattern.md)).
 - `ArtifactChange`/`ArtifactResult`/`Confirmation` types frozen, with
   `assertArtifactChange`/`assertConfirmation` structural invariants: a safe
   relative path, hash presence matching `kind`, and `confirmed` requiring
@@ -579,7 +581,10 @@ Marketplace/aggregate-index Artifact (packaging several Plugins for
 distribution) is not implemented and not in scope for the current Gate; it
 becomes relevant only if R5's ai-assets migration actually needs to ship
 several Presets as one distributable unit — see the trade-off recorded in
-`packages/docs/architecture/adapter-standardization.md`. The
+`packages/docs/architecture/adapter-standardization.md`. Same-runtime Skill
+collision planning is [RFC-0006](rfcs/0006-skill-same-runtime-collision.md)
+(Proposed); Adapter discovery evidence and Core planning are not wired, and
+Antigravity coverage follows #30. The
 `capabilities` `integrity` field can be supplied but is not yet enforced for
 remote sources. Of Preset, Extension, Adapter, and Artifact, Extension/Adapter
 now have dedicated `ExtensionDefinition`/`Adapter` public types; Preset and

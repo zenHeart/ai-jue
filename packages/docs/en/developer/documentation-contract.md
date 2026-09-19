@@ -55,3 +55,17 @@ removed alternatives stay in RFC decision history and do not flow back into
 README, Guides, Architecture, Specifications, Reference, or Agent profiles. If
 removing a sentence leaves operation, implementation, and acceptance complete,
 remove it.
+
+### Cross-client-root discovery
+
+When the same Skill must appear under more than one Agent project root, choose
+in this order (RFC-0004):
+
+1. **Preferred**: `jue apply` materializes each Adapter Artifact.
+2. **Secondary**: copy the directory into each in-repo root and keep them in sync.
+3. **Last choice**: an in-repo symlink plus a checkout script that restores
+   links. Windows Git defaults to `core.symlinks=false` and turns those links
+   into regular files.
+
+`jue inspect --diagnostics` reports broken, degraded, in-repo, and out-of-repo
+link patterns.

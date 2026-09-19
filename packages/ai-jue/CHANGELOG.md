@@ -1,3 +1,9 @@
+## [2.1.4](https://github.com/zenHeart/ai-jue/compare/ai-jue@v2.1.3...ai-jue@v2.1.4) (2026-09-20)
+
+### Features
+
+- Print RFC-0004 Skill link findings from `jue inspect --diagnostics`.
+
 ## [2.1.3](https://github.com/zenHeart/ai-jue/compare/ai-jue@v2.1.2...ai-jue@v2.1.3) (2026-09-20)
 
 ### Features

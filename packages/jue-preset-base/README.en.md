@@ -39,6 +39,13 @@ module.exports = {
 npx jue apply
 ```
 
+## Discovery
+
+Across Agent project roots, follow the preferred / secondary / last-choice
+contract in
+[creating a preset](../docs/en/guide/creating-a-preset.md)
+([RFC-0004](../docs/en/developer/rfcs/0004-inspect-link-pattern.md)).
+
 ## Capability Surface
 
 - `AGENTS.md` as the global meta-rule entry

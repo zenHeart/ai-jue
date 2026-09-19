@@ -72,9 +72,9 @@ Plugin-class Artifact combination exits 2 before Adapter import or writes.
 jue inspect [--extension <id>] [--diagnostics]
 ```
 
-`--extension <id>` selects the Extension package to inspect; `--diagnostics` appends diagnostics. Without `--extension`, it prints a warning and exits, with no summary.
+`--diagnostics` scans `.claude/skills`, `.cursor/skills`, `.codex/skills`, and `.agents/skills` in the current project and reports broken, degraded, in-repo, and out-of-repo Skill link patterns (RFC-0004). `--extension <id>` selects the Extension package to inspect. When both flags are set, link findings print first, then Extension diagnostics. With neither option, inspect prints a warning and ends.
 
-`--diagnostics` reports the Extension's npm resolution issues, the capability-support levels of its declared Adapters, and the current project's apply readiness (pending changes, drift conflicts, unauthorized changes). Readiness uses the same scope, Artifact root, and Artifact kind as apply. The command never writes configuration, cache entries, locks, or Artifacts.
+Together, `--extension` and `--diagnostics` also report the Extension's npm resolution issues, the capability-support levels of its declared Adapters, and the current project's apply readiness (pending changes, drift conflicts, unauthorized changes). Readiness uses the same scope, Artifact root, and Artifact kind as apply. The command exits 0 after printing link findings. It never writes configuration, cache entries, locks, or Artifacts.
 
 ## JSON output
 

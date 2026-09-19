@@ -1,3 +1,9 @@
+## [0.3.5](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-hermes@v0.3.4...ai-jue-adapter-hermes@v0.3.5) (2026-09-20)
+
+### Bug fixes
+
+- Align the Core peer range with ai-jue-core 2.0.4.
+
 ## [0.3.4](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-hermes@v0.3.3...ai-jue-adapter-hermes@v0.3.4) (2026-09-20)
 
 ### Bug fixes

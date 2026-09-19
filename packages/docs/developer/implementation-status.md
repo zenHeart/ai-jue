@@ -18,7 +18,7 @@
 | --- | --- | --- | --- |
 | `jue init` | 部分实现 | 已有交互初始化 | 对齐最小配置与非覆盖合同 |
 | `jue apply` | 部分实现 | Core `--dry-run`/`--check`/apply 均按退出码表工作；project/user scope、绝对 preflight 目标、逐 Adapter 根授权、批处理失败聚合与 apply 后原生确认已实现；dry-run/check 对配置根和 Artifact 根零写入；Claude user 原生路径已实现，其他内置 Adapter project-only | 补齐 `jue inspect` 筛选 |
-| `jue inspect` | 部分实现 | `--extension <path> --diagnostics` 已实现：只读报告已加载 Adapter 的 `id`/`capabilities`，若 cwd 有项目配置则额外报告真实 apply 就绪状态（JUE-203） | 实现 `--capability`/`--preset`/`--target`/`--artifact` 筛选 |
+| `jue inspect` | 部分实现 | `--diagnostics` 已实现项目层 Skill 链接 finding（RFC-0004）；`--extension <path> --diagnostics` 只读报告已加载 Adapter 的 `id`/`capabilities`，若 cwd 有项目配置则额外报告真实 apply 就绪状态（JUE-203） | 实现 `--capability`/`--preset`/`--target`/`--artifact` 筛选 |
 | `jue capability update` | 已实现 | 支持单项/全部来源更新 | 保持 lock 与安全合同 |
 | `jue preset create/validate/pack` | 部分实现 | 历史命令分散 | 收敛到作者命名空间 |
 | `jue extension validate` | 部分实现 | `--load` 校验并加载 Extension（JUE-103）；`--fixtures <dir>` 对每个子目录跑 `read()` + `CanonicalDocumentSchema` 校验（JUE-203）；Claude Adapter 现已导出真实 `confirm()` 并组装为 `defineExtension()`，是仓库首个可真实通过此校验的 Extension | 随 R3 各 Agent Extension 落地持续复用 |
@@ -70,6 +70,8 @@ OpenClaw 使用非交互 install + list + inspect，并要求 inspect format 匹
   目录解析。
   `directoryPerItem` 在该 Capability 参与本次 write 时，删除 `read()` 仍识别
   但 Canonical 已不存在的条目目录（[RFC-0005](rfcs/0005-directory-per-item-prune.md)）。
+  `jue inspect --diagnostics` 只读报告项目层 Skill 链接模式
+  （[RFC-0004](rfcs/0004-inspect-link-pattern.md)）。
 - `ArtifactChange`/`ArtifactResult`/`Confirmation` 类型冻结，含
   `assertArtifactChange`/`assertConfirmation` 结构不变量：安全相对路径、
   hash 是否存在与 `kind` 一致、`confirmed` 必须带脱敏 `evidence`
@@ -475,3 +477,6 @@ OpenClaw `compatible-bundle` 可通过显式 `tools.openclaw.bundleFormat: "curs
 - Marketplace/聚合索引 Artifact（多 Plugin 打包发布）尚未实现，也不在当前
   Gate 范围内；只有 R5 ai-assets 真的需要把多个 Preset 作为一个可分发单元
   时才实现，取舍原则见 `packages/docs/architecture/adapter-standardization.md`。
+- 同一运行时跨发现根的 Skill 碰撞规划见
+  [RFC-0006](rfcs/0006-skill-same-runtime-collision.md)（Proposed）。
+  Adapter 发现证据与 Core 规划尚未接线；Antigravity 覆盖跟随 #30。
