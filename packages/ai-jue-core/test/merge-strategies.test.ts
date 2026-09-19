@@ -32,6 +32,22 @@ describe('deepMerge', () => {
     const result = deepMerge(target, source);
     expect(result).toEqual({ a: [3, 4] });
   });
+
+  it.each([
+    '{"__proto__":{"polluted":"hidden-value"}}',
+    '{"nested":{"constructor":{"prototype":{"polluted":"hidden-value"}}}}',
+  ])('rejects prototype-polluting keys without disclosing values', (sourceJson) => {
+    const source = JSON.parse(sourceJson);
+    let error: Error | undefined;
+    try {
+      deepMerge({}, source);
+    } catch (caught) {
+      error = caught as Error;
+    }
+    expect(error?.message).toBe('Unsafe JSON merge key');
+    expect(error?.message).not.toContain('hidden-value');
+    expect(({} as { polluted?: string }).polluted).toBeUndefined();
+  });
 });
 
 describe('computeManagedMarkdown', () => {
@@ -90,6 +106,12 @@ describe('computeMergedJson', () => {
     const result = computeMergedJson(existing, { nested: { c: 3 } });
     expect(result).toEqual({ a: 1, nested: { b: 2, c: 3 } });
     expect(existing).toEqual({ a: 1, nested: { b: 2 } });
+  });
+
+  it.each(['text', 1, null, []])('rejects a non-object existing document', (existing) => {
+    expect(() => computeMergedJson(existing, { a: 1 })).toThrow(
+      'Existing JSON content must be an object',
+    );
   });
 
   it('matches what generateJsonFile actually writes to disk', () => {
@@ -192,16 +214,13 @@ describe('generateJsonFile', () => {
     );
   });
 
-  it('should overwrite if existing json is invalid (with warning)', () => {
+  it('should refuse to overwrite invalid existing json', () => {
     (fs.existsSync as any).mockReturnValue(true);
     (fs.readFileSync as any).mockReturnValue('invalid json');
-    const consoleSpy = vi.spyOn(console, 'warn').mockImplementation(() => {});
 
-    generateJsonFile(filePath, { a: 1 });
-    expect(fs.writeFileSync).toHaveBeenCalledWith(
-      filePath,
-      JSON.stringify({ a: 1 }, null, 2)
+    expect(() => generateJsonFile(filePath, { a: 1 })).toThrow(
+      'Existing JSON file is invalid and cannot be merged',
     );
-    expect(consoleSpy).toHaveBeenCalled();
+    expect(fs.writeFileSync).not.toHaveBeenCalled();
   });
 });

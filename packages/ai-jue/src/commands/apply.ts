@@ -769,6 +769,7 @@ export const handler = async (argv: Arguments, runtime: ApplyRuntime = {}) => {
       const finalConfig = await resolveFinalConfig(config, {
         frozen: Boolean((argv as Arguments<{ frozen?: boolean }>).frozen),
         persistLock: !readOnly,
+        readOnly,
       });
 
       const exitCode = await runAdapters(finalConfig, process.cwd(), applyOptions);

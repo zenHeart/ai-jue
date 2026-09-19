@@ -237,6 +237,23 @@ describe('mergedJsonFile', () => {
 
     expect(mapping.write(root, { a: 1 }, 'neutral-agent')).toEqual([]);
   });
+
+  it.each([
+    ['invalid JSON', '{'],
+    ['a JSON array', '[]'],
+    ['a JSON scalar', '"text"'],
+  ])('refuses to replace an existing target containing %s', (_label, existing) => {
+    const mapping = mergedJsonFile({
+      filePath: (root) => path.join(root, 'settings.json'),
+      key: 'hooks',
+    });
+    const root = tempDir();
+    const target = path.join(root, 'settings.json');
+    fs.writeFileSync(target, existing);
+
+    expect(() => mapping.write(root, { a: 1 }, 'neutral-agent')).toThrow();
+    expect(fs.readFileSync(target, 'utf8')).toBe(existing);
+  });
 });
 
 describe('readCapabilities / writeCapabilities', () => {

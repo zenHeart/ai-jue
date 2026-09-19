@@ -40,8 +40,9 @@ jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
 | `--check` | 否 | CI 中检查配置、漂移与授权；目标已收敛时执行只读确认，确认不可用时警告，确认失败时非零退出 |
 
 `--dry-run` 与 `--check` 要求配置和 Adapter 已存在，不触发初始化或安装，也不更新
-`ai-jue.lock`。两种模式对配置根与 Artifact 根都保持零写入。每个 Adapter 在调用
-writer 前输出唯一的已解析目标行：
+`ai-jue.lock` 或持久 Capability cache。精确固定且已缓存的远程 Capability 可直接
+读取；未缓存的远程 Capability 明确失败并提示先执行正式 apply。两种模式对配置根
+与 Artifact 根都保持零写入。每个 Adapter 在调用 writer 前输出唯一的已解析目标行：
 
 ```text
 adapter=<id> scope=<project|user> root=<absolute path> artifact=<kind>
@@ -69,7 +70,7 @@ jue inspect [--extension <id>] [--diagnostics]
 
 `--extension <id>` 指定要检查的 Extension 包，`--diagnostics` 追加诊断。不指定 `--extension` 时只输出一条警告并结束，不输出任何摘要。
 
-`--diagnostics` 报告 Extension 的 npm 解析问题、其声明 adapter 的能力支持级别，以及当前项目 apply 的就绪状态（待定变更、漂移冲突、未授权变更计数）。该命令不写配置、lock 或 Artifact。
+`--diagnostics` 报告 Extension 的 npm 解析问题、其声明 adapter 的能力支持级别，以及当前项目 apply 的就绪状态（待定变更、漂移冲突、未授权变更计数）。就绪检查使用与 apply 相同的 scope、Artifact root 和 Artifact kind；该命令不写配置、cache、lock 或 Artifact。
 
 ## JSON 输出
 

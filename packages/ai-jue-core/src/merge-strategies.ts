@@ -1,16 +1,34 @@
 import fs from 'fs';
 import path from 'path';
 
+const UNSAFE_MERGE_KEYS = new Set(['__proto__', 'constructor', 'prototype']);
+
+function isJsonObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function assertNoUnsafeMergeKeys(value: unknown): void {
+  if (typeof value !== 'object' || value === null) return;
+  for (const key of Object.keys(value)) {
+    if (UNSAFE_MERGE_KEYS.has(key)) {
+      throw new Error('Unsafe JSON merge key');
+    }
+    assertNoUnsafeMergeKeys((value as Record<string, unknown>)[key]);
+  }
+}
+
 /** Deep merges `source` into `target` (recursive, mutates and returns `target`). */
-export function deepMerge(target: any, source: any) {
-  for (const key in source) {
-    if (source.hasOwnProperty(key)) {
-      if (typeof source[key] === 'object' && source[key] !== null && !Array.isArray(source[key]) &&
-          typeof target[key] === 'object' && target[key] !== null && !Array.isArray(target[key])) {
-        target[key] = deepMerge(target[key], source[key]);
-      } else {
-        target[key] = source[key];
-      }
+export function deepMerge(target: any, source: any): any {
+  if (!isJsonObject(target) || !isJsonObject(source)) {
+    throw new Error('JSON merge inputs must be objects');
+  }
+  assertNoUnsafeMergeKeys(target);
+  assertNoUnsafeMergeKeys(source);
+  for (const key of Object.keys(source)) {
+    if (isJsonObject(source[key]) && isJsonObject(target[key])) {
+      target[key] = deepMerge(target[key], source[key]);
+    } else {
+      target[key] = source[key];
     }
   }
   return target;
@@ -92,7 +110,15 @@ export function generateMarkdownFile(filePath: string, content: string) {
  * Adapter `write()` that needs identical merge semantics.
  */
 export function computeMergedJson(existingContent: any | undefined, content: any): any {
+    if (!isJsonObject(content)) {
+      throw new Error('JSON content must be an object');
+    }
+    assertNoUnsafeMergeKeys(content);
     if (existingContent === undefined) return content;
+    if (!isJsonObject(existingContent)) {
+      throw new Error('Existing JSON content must be an object');
+    }
+    assertNoUnsafeMergeKeys(existingContent);
     return deepMerge(JSON.parse(JSON.stringify(existingContent)), content);
 }
 
@@ -103,16 +129,17 @@ export function generateJsonFile(filePath: string, content: any) {
     let finalContent = content;
 
     if (fs.existsSync(filePath)) {
+        const existingRaw = fs.readFileSync(filePath, 'utf8');
+        let existingContent: unknown;
         try {
-            const existingRaw = fs.readFileSync(filePath, 'utf8');
-            const existingContent = JSON.parse(existingRaw);
-            finalContent = computeMergedJson(existingContent, content);
+            existingContent = JSON.parse(existingRaw);
+        } catch {
+            throw new Error('Existing JSON file is invalid and cannot be merged');
+        }
+        finalContent = computeMergedJson(existingContent, content);
 
-            if (existingRaw.trim() === JSON.stringify(finalContent, null, 2).trim()) {
-                return;
-            }
-        } catch (e) {
-            console.warn(`[ai-jue-core] Warning: Failed to parse existing JSON file ${filePath}. Overwriting with new content.`);
+        if (existingRaw.trim() === JSON.stringify(finalContent, null, 2).trim()) {
+            return;
         }
     } else {
         const dir = path.dirname(filePath);

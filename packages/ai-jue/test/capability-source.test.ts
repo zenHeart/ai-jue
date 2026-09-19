@@ -289,6 +289,7 @@ describe('Capability Source', () => {
     const second = await loadCapabilityRefs({ 'neutral-skill': ref }, root, undefined, {
       cacheDir,
       fetch: fetchSpy as unknown as typeof fetch,
+      readOnly: true,
     });
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -296,6 +297,34 @@ describe('Capability Source', () => {
       'neutral workflow',
     );
   }, 30_000);
+
+  it('fails read-only resolution before fetching or creating an uncached remote source', async () => {
+    const root = tempDir();
+    const cacheDir = path.join(root, 'cache');
+    const fetchSpy = vi.fn();
+
+    await expect(
+      loadCapabilityRefs(
+        {
+          neutral: {
+            source: 'github:example/neutral-repo',
+            ref: 'v1.0.0',
+            type: 'skill',
+          },
+        },
+        root,
+        undefined,
+        {
+          cacheDir,
+          fetch: fetchSpy as unknown as typeof fetch,
+          readOnly: true,
+        },
+      ),
+    ).rejects.toThrow('populated cache');
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(fs.existsSync(cacheDir)).toBe(false);
+  });
 
   it('forceRefresh bypasses the github: cache and re-fetches', async () => {
     const root = tempDir();
@@ -409,6 +438,22 @@ describe('Capability Source', () => {
       command: 'npx',
       args: ['-y', 'neutral'],
     });
+  });
+
+  it.each([
+    'npm:neutral-package',
+    'npm:neutral-package@latest',
+    'npm:neutral-package@^1.0.0',
+  ])('rejects floating npm identity %s before consulting the cache', async (source) => {
+    const root = tempDir();
+    await expect(
+      loadCapabilityRefs(
+        { neutral: { source, type: 'mcp' } },
+        root,
+        undefined,
+        { cacheDir: path.join(root, 'cache'), readOnly: true },
+      ),
+    ).rejects.toThrow('exact version');
   });
 
   it('rejects floating github refs in frozen mode', async () => {

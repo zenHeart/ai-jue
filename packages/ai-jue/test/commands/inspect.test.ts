@@ -66,4 +66,30 @@ describe("runExtensionDiagnostics", () => {
     });
     expect(second.applyReadiness?.status).toBe("pending");
   });
+
+  it("uses configured scope and artifact kind while keeping both roots read-only", async () => {
+    const projectDirectory = tempDir();
+    const userHome = tempDir();
+    const diagnostics = await runExtensionDiagnostics(CLAUDE_ADAPTER, {
+      applyCheck: {
+        canonical: { commands: { demo: { description: "d", content: "c" } } } as any,
+        config: {
+          targets: {
+            claude: { scope: "user", artifact: "project" },
+          },
+        } as any,
+        projectDirectory,
+        userHome,
+      },
+    });
+
+    expect(diagnostics.applyReadiness).toMatchObject({
+      adapterId: "claude-code",
+      scope: "user",
+      artifactKind: "project",
+      status: "pending",
+    });
+    expect(fs.readdirSync(projectDirectory)).toEqual([]);
+    expect(fs.readdirSync(userHome)).toEqual([]);
+  });
 });

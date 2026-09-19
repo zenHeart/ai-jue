@@ -64,15 +64,30 @@ function absolutePathFor(root: string, relativePath: string): string {
     throw new Error(`ArtifactChange.path escapes the authorized root: ${relativePath}`);
   }
 
-  let existingAncestor = absolute;
-  while (!fs.existsSync(existingAncestor)) {
-    const parent = path.dirname(existingAncestor);
-    if (parent === existingAncestor) break;
-    existingAncestor = parent;
-  }
-  const realAncestor = fs.realpathSync(existingAncestor);
-  if (!isWithinRoot(realRoot, realAncestor)) {
-    throw new Error(`ArtifactChange.path escapes the authorized root through a symlink: ${relativePath}`);
+  let candidate = realRoot;
+  for (const segment of path.relative(realRoot, absolute).split(path.sep).filter(Boolean)) {
+    candidate = path.join(candidate, segment);
+    let stat: fs.Stats;
+    try {
+      stat = fs.lstatSync(candidate);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT' || code === 'ENOTDIR') break;
+      throw error;
+    }
+    if (!stat.isSymbolicLink()) continue;
+    let realCandidate: string;
+    try {
+      realCandidate = fs.realpathSync(candidate);
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException).code === 'ENOENT') {
+        throw new Error(`ArtifactChange.path traverses a dangling symlink: ${relativePath}`);
+      }
+      throw error;
+    }
+    if (!isWithinRoot(realRoot, realCandidate)) {
+      throw new Error(`ArtifactChange.path escapes the authorized root through a symlink: ${relativePath}`);
+    }
   }
   return absolute;
 }
@@ -170,12 +185,36 @@ interface Snapshot {
   change: ArtifactChange;
   existed: boolean;
   originalContent: Buffer | null;
+  createdParentDirectories: string[];
 }
 
 function snapshotBeforeWrite(root: string, change: ArtifactChange): Snapshot {
   const absolute = absolutePathFor(root, change.path);
   const existed = fs.existsSync(absolute);
-  return { change, existed, originalContent: existed ? fs.readFileSync(absolute) : null };
+  const realRoot = fs.realpathSync(root);
+  const createdParentDirectories: string[] = [];
+  let parent = path.dirname(absolute);
+  while (parent !== realRoot && isWithinRoot(realRoot, parent)) {
+    try {
+      fs.lstatSync(parent);
+      break;
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code === 'ENOENT') {
+        createdParentDirectories.push(parent);
+        parent = path.dirname(parent);
+        continue;
+      }
+      if (code === 'ENOTDIR') break;
+      throw error;
+    }
+  }
+  return {
+    change,
+    existed,
+    originalContent: existed ? fs.readFileSync(absolute) : null,
+    createdParentDirectories,
+  };
 }
 
 function writeOne(root: string, change: ArtifactChange): void {
@@ -207,6 +246,16 @@ function restoreSnapshot(root: string, snapshot: Snapshot): void {
   } catch (error) {
     const code = (error as NodeJS.ErrnoException).code;
     if (code !== 'ENOENT' && code !== 'ENOTDIR') throw error;
+  }
+  for (const directory of snapshot.createdParentDirectories) {
+    try {
+      fs.rmdirSync(directory);
+    } catch (error) {
+      const code = (error as NodeJS.ErrnoException).code;
+      if (code !== 'ENOENT' && code !== 'ENOTDIR' && code !== 'ENOTEMPTY') {
+        throw error;
+      }
+    }
   }
 }
 

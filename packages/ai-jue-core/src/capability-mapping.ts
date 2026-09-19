@@ -143,7 +143,7 @@ function buildMergedJsonArtifactChange(
     try {
       existingParsed = JSON.parse(existingRaw);
     } catch {
-      existingParsed = undefined;
+      throw new Error('Existing JSON file is invalid and cannot be merged');
     }
   }
   const finalContent = computeMergedJson(existingParsed, content);
