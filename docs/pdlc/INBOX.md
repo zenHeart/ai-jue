@@ -4,7 +4,7 @@
 
 <!-- pdlc-inbox: append-only bullets with id -->
 
-- `gh-1` Feature: [resolve installed npm Capability data packages from the declaring Preset](https://github.com/zenHeart/ai-jue/issues/1)
+- `gh-1` Feature: [resolve installed npm Capability data packages from the declaring Preset](https://github.com/zenHeart/ai-jue/issues/1) [done]
 - `gh-5` Epic: [Private final Preset → four-agent Plugin/Bundle apply](https://github.com/zenHeart/ai-jue/issues/5)
 - `gh-8` Feature: [Cursor Team marketplace index Artifact](https://github.com/zenHeart/ai-jue/issues/8)
 - `gh-9` Feature: [Cursor base for OpenClaw compatible bundles](https://github.com/zenHeart/ai-jue/issues/9)

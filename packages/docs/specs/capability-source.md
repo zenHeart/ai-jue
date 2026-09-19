@@ -28,6 +28,13 @@ Preset 在 `package.json#ai.capabilities` 使用相同引用形状。
 | `path` | 否 | 来源内安全相对路径 |
 | `integrity` | 远程来源必需 | 内容完整性 |
 
+精确 `npm:<name>@<version>` 先查看声明该引用的 Preset（或项目）`package.json`
+是否把 `<name>` 列为直接依赖。若是，则从该包目录做 Node 包解析，核验已安装
+包的 `name` 与精确 `version`，再应用 `path`。未安装或没有直接依赖时，回退到
+现有精确版本 `npm pack`。`npm:file:<archive.tgz>` 与 `file:` 行为不变。
+
+嵌套 Preset 从其父 Preset 包目录解析，不依赖进程 cwd。
+
 `type` 是 Canonical 类型判别字段，不是可执行扩展点。每个引用只解析一个
 Capability；需要引用多个 Capability 时使用 Preset。发布者应先把第三方内容整理
 为对应 Canonical 目录格式；Jue 不加载来源中的转换代码或脚本。

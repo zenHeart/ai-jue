@@ -26,6 +26,15 @@ reference resolves exactly one Capability; use a Preset for a collection.
 Publishers normalize third-party content before distribution; Jue never
 executes source scripts while resolving it.
 
+An exact `npm:<name>@<version>` source first checks whether the declaring
+Preset (or project) lists `<name>` as a direct dependency. If it does, Jue
+resolves that package with Node package resolution from the declaring package
+directory, verifies the installed `name` and exact `version`, then applies
+`path`. If the package is not installed or is not a direct dependency, the
+existing exact-version `npm pack` path remains the fallback.
+`npm:file:<archive.tgz>` and `file:` are unchanged. Nested Presets resolve from
+their parent Preset package directory, not only the process cwd.
+
 A `skill` source uses `SKILL.md` as its primary document and preserves paths
 and bytes from `references/`, `scripts/`, `assets/`, and other root-relative
 sidecars. `package.json`, cache archives, symbolic links, hard links, and

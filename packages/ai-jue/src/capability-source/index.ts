@@ -81,6 +81,13 @@ function safeChild(baseDir: string, relativePath: string): string {
   if (target !== base && !target.startsWith(`${base}${path.sep}`)) {
     throw new Error(`Capability path must stay inside its source: ${relativePath}`);
   }
+  if (fs.existsSync(target)) {
+    const realBase = fs.realpathSync(base);
+    const realTarget = fs.realpathSync(target);
+    if (realTarget !== realBase && !realTarget.startsWith(`${realBase}${path.sep}`)) {
+      throw new Error(`Capability path must stay inside its source: ${relativePath}`);
+    }
+  }
   return target;
 }
 
@@ -167,11 +174,75 @@ function resolveLocalNpmArchive(
   return extractArchive(archivePath, cacheDir);
 }
 
+function parseExactNpmSpecifier(specifier: string): { name: string; version: string } | null {
+  const match = specifier.match(/^(?:(@[^/]+\/[^@]+)|([^@/]+))@([^@]+)$/);
+  if (!match || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(match[3])) {
+    return null;
+  }
+  return { name: match[1] || match[2], version: match[3] };
+}
+
 function assertExactNpmSpecifier(specifier: string): void {
-  const match = specifier.match(/^(?:@[^/]+\/[^@]+|[^@/]+)@([^@]+)$/);
-  if (!match || !/^\d+\.\d+\.\d+(?:-[0-9A-Za-z.-]+)?$/.test(match[1])) {
+  if (!parseExactNpmSpecifier(specifier)) {
     throw new Error('npm: Capability source must include an exact version');
   }
+}
+
+function readDeclaringPackage(baseDir: string): Record<string, unknown> | null {
+  const packageJsonPath = path.join(baseDir, 'package.json');
+  if (!fs.existsSync(packageJsonPath)) return null;
+  try {
+    const parsed = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as unknown;
+    return parsed && typeof parsed === 'object' && !Array.isArray(parsed)
+      ? (parsed as Record<string, unknown>)
+      : null;
+  } catch {
+    return null;
+  }
+}
+
+function hasDirectDependency(pkg: Record<string, unknown>, name: string): boolean {
+  for (const key of ['dependencies', 'devDependencies', 'optionalDependencies'] as const) {
+    const bucket = pkg[key];
+    if (bucket && typeof bucket === 'object' && !Array.isArray(bucket) && name in bucket) {
+      return true;
+    }
+  }
+  const bundled = pkg.bundleDependencies ?? pkg.bundledDependencies;
+  return Array.isArray(bundled) && bundled.includes(name);
+}
+
+/**
+ * Reuse a matching installed direct dependency of the declaring package.
+ * Returns null so the exact-version `npm pack` path remains the fallback.
+ */
+function tryResolveInstalledNpm(ref: CapabilityRef, baseDir: string): string | null {
+  if (!ref.source.startsWith('npm:') || ref.source.startsWith('npm:file:')) return null;
+  const parsed = parseExactNpmSpecifier(ref.source.slice('npm:'.length));
+  if (!parsed) return null;
+  const declaring = readDeclaringPackage(baseDir);
+  if (!declaring || !hasDirectDependency(declaring, parsed.name)) return null;
+  let packageJsonPath: string;
+  try {
+    packageJsonPath = require.resolve(`${parsed.name}/package.json`, { paths: [baseDir] });
+  } catch {
+    return null;
+  }
+  let installed: { name?: unknown; version?: unknown };
+  try {
+    installed = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8')) as {
+      name?: unknown;
+      version?: unknown;
+    };
+  } catch {
+    throw new Error(`Installed npm Capability "${parsed.name}" is not a readable package`);
+  }
+  if (installed.name !== parsed.name || installed.version !== parsed.version) {
+    throw new Error(
+      `Installed npm Capability "${String(installed.name)}@${String(installed.version)}" does not match ${parsed.name}@${parsed.version}`,
+    );
+  }
+  return path.dirname(packageJsonPath);
 }
 
 interface SpawnCommand {
@@ -336,6 +407,15 @@ async function resolveSource(
   const mirrorArchive = mirrorDir
     ? path.join(mirrorDir, `${path.basename(destination)}.tgz`)
     : '';
+
+  const installedRoot = tryResolveInstalledNpm(ref, baseDir);
+  if (installedRoot) {
+    const selected = ref.path ? safeChild(installedRoot, ref.path) : installedRoot;
+    if (!fs.existsSync(selected)) {
+      throw new Error('Capability source path does not exist');
+    }
+    return selected;
+  }
 
   if (options.readOnly && !ref.source.startsWith('file:')) {
     if (ref.source.startsWith('npm:') && !ref.source.startsWith('npm:file:')) {

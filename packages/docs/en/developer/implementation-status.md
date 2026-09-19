@@ -72,6 +72,10 @@ Partial means local code or tests exist, not complete Agent support. See
   `jue-native` converter was removed, so every reference now resolves exactly
   one leaf Capability (JUE-101,
   `packages/ai-jue/src/capability-source/index.ts`).
+  An exact `npm:<name>@<version>` source reuses a matching installed direct
+  dependency of the declaring Preset (Node package resolution plus name/version
+  verification) and falls back to `npm pack` when it is not installed. Nested
+  Presets resolve from their parent Preset directory.
 - `ArtifactChange`/`ArtifactResult`/`Confirmation` types frozen, with
   `assertArtifactChange`/`assertConfirmation` structural invariants: a safe
   relative path, hash presence matching `kind`, and `confirmed` requiring

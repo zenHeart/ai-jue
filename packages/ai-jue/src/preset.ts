@@ -566,6 +566,7 @@ async function loadPresetRecursive(
   userLanguage: string | undefined,
   resolvingStack: string[],
   sourceOptions: CapabilitySourceOptions,
+  parentPresetPath?: string,
 ): Promise<LoadedCapabilities> {
   const packageName = normalizePresetPackageName(presetName);
 
@@ -577,10 +578,12 @@ async function loadPresetRecursive(
   const nextStack = [...resolvingStack, packageName];
 
   const packageJsonPath = require.resolve(`${packageName}/package.json`, {
-      // Project-local presets must win for both a locally installed CLI and a
-      // globally invoked CLI. `__dirname` keeps bundled/default presets
-      // discoverable as the fallback.
-      paths: [process.cwd(), __dirname],
+      // Nested Presets resolve from the parent Preset first. Project-local
+      // presets still win for a locally installed or globally invoked CLI.
+      // `__dirname` keeps bundled/default presets discoverable as fallback.
+      paths: [parentPresetPath, process.cwd(), __dirname].filter(
+        (entry): entry is string => Boolean(entry),
+      ),
   });
   const presetPath = path.dirname(packageJsonPath);
   const packageJson = JSON.parse(await fs.promises.readFile(packageJsonPath, 'utf8'));
@@ -597,6 +600,7 @@ async function loadPresetRecursive(
       userLanguage,
       nextStack,
       sourceOptions,
+      presetPath,
     );
     mergedConfig = mergeConfigWithLayeredContext(mergedConfig, nestedPreset.config);
     locks.push(nestedPreset.lock);

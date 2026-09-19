@@ -5,7 +5,7 @@ intent_status: accepted
 phase: iterating
 vcs: git
 branch: main
-slice_id: issue-11-cursor-failure-fixtures
+slice_id: issue-1-npm-capability-from-preset
 scale: patch
 slice_gate: verifying
 health: ok
@@ -18,26 +18,28 @@ skipped_gates: spec_ok,plan_ok (patch slice; continuous completion authorization
 
 ## Intent
 
-为 Cursor Adapter 补齐脱敏 failure fixtures 与安全合同：字面量凭据拒绝、
-hook 路径穿越拒绝，并记录未知 hook 事件的透传降级。
+`npm:<name>@<exact>` Capability 先从声明 Preset 的已安装直接依赖解析，
+校验包名与精确版本后再读 `path`。没有匹配安装时保留现有 `npm pack`。
+嵌套 Preset 从其父 Preset 目录解析，不依赖进程 cwd。
 
 ## Spec
 
-- `fixtures/failures/sensitive-reference/` 触发 `assertNoLiteralCredentials`。
-- `fixtures/failures/path-escape-hook/` 在 read/write 前失败。
-- `fixtures/failures/invalid-hook-event/` 透传未知事件名并写入 README。
-- 合同套件接入至少一条 sensitive-reference 用例。
-- fixture 名不含 `/`；值为合成标记，不是真实密钥。
+- 不新增 `CapabilityRef.root` 或并行身份字段。
+- 声明 Preset 有匹配直接依赖时，用 Node 包解析（起点为该 Preset）。
+- 包名/版本不符则显式失败；未安装则回退 `npm pack`。
+- `path` 仍受 containment 约束。
+- 覆盖 hoisted、nested、bundled、source-workspace 布局。
+- 现有 `file:`、`npm:file:*.tgz`、远程精确 npm 不回归。
 
 ## Plan
 
-1. 先写失败测试与中性 fixture。
-2. 在 Cursor MCP/hooks mapping 复用 Core 安全规则。
-3. 更新 fixtures README 与 Cursor 后续工作表。
+1. 更新 Capability Source 规范。
+2. 先写失败测试（无 registry、无绝对路径 source）。
+3. 在 `resolveNpm` / `loadPresetRecursive` 落地。
 
 ## Deferred-MPF
 
-- 其余 INBOX 项。
+- 其余 INBOX 项（#26/#35 RFC、#9、#8、#33、#31、#5/#22/#30）。
 
 ## Open questions
 

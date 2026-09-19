@@ -65,6 +65,9 @@ OpenClaw 使用非交互 install + list + inspect，并要求 inspect format 匹
   （`rule`/`command`/`skill`/`agent`/`hook`/`mcp`），移除了可批量加载整个目录
   的 `jue-native`；每个引用现在只解析一个叶 Capability
   （JUE-101，`packages/ai-jue/src/capability-source/index.ts`）。
+  精确 `npm:<name>@<version>` 先复用声明 Preset 的已安装直接依赖（Node 包解析
+  + 包名/版本核验），未安装时回退 `npm pack`；嵌套 Preset 从其父 Preset
+  目录解析。
 - `ArtifactChange`/`ArtifactResult`/`Confirmation` 类型冻结，含
   `assertArtifactChange`/`assertConfirmation` 结构不变量：安全相对路径、
   hash 是否存在与 `kind` 一致、`confirmed` 必须带脱敏 `evidence`
