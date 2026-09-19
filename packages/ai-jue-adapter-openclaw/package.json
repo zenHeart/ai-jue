@@ -1,6 +1,6 @@
 {
   "name": "ai-jue-adapter-openclaw",
-  "version": "0.3.3",
+  "version": "0.3.4",
   "description": "Adapter for generating OpenClaw configurations.",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
@@ -20,8 +20,8 @@
   "peerDependencies": {
     "ai-jue-adapter-claude": "^2.0.2",
     "ai-jue-adapter-codex": "^0.3.2",
-    "ai-jue-adapter-cursor": "^2.0.2",
-    "ai-jue-core": "^2.0.2"
+    "ai-jue-adapter-cursor": "^2.0.3",
+    "ai-jue-core": "^2.0.3"
   },
   "peerDependenciesMeta": {
     "ai-jue-adapter-claude": {
@@ -37,8 +37,8 @@
   "devDependencies": {
     "ai-jue-adapter-claude": "^2.0.2",
     "ai-jue-adapter-codex": "^0.3.2",
-    "ai-jue-adapter-cursor": "^2.0.2",
-    "ai-jue-core": "^2.0.2"
+    "ai-jue-adapter-cursor": "^2.0.3",
+    "ai-jue-core": "^2.0.3"
   },
   "author": {
     "name": "ZenHeart",
