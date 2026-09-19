@@ -14,10 +14,10 @@
     "build": "tsc"
   },
   "devDependencies": {
-    "ai-jue-core": "^2.0.2"
+    "ai-jue-core": "^2.0.3"
   },
   "peerDependencies": {
-    "ai-jue-core": "^2.0.2"
+    "ai-jue-core": "^2.0.3"
   },
   "author": "AI-Jue Team",
   "license": "MIT",

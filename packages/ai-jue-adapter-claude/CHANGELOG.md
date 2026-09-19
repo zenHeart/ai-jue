@@ -1,3 +1,9 @@
+## [2.0.3](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v2.0.2...ai-jue-adapter-claude@v2.0.3) (2026-09-20)
+
+### Bug fixes
+
+- Align the Core peer range with ai-jue-core 2.0.3.
+
 ## [2.0.2](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-claude@v2.0.1...ai-jue-adapter-claude@v2.0.2) (2026-09-20)
 
 ### Bug fixes
