@@ -5,6 +5,9 @@ import { afterEach, describe, expect, it } from "vitest";
 import { runExtensionDiagnostics } from "../../src/commands/inspect";
 
 const CLAUDE_ADAPTER = "ai-jue-adapter-claude";
+const HOST_CORE_VERSION = JSON.parse(
+  fs.readFileSync(path.join(process.cwd(), "packages", "ai-jue-core", "package.json"), "utf8"),
+).version as string;
 
 const tempDirs: string[] = [];
 function tempDir(): string {
@@ -122,7 +125,7 @@ describe("runExtensionDiagnostics", () => {
       name: "jue-extension-incompatible",
       version: "1.0.0",
       peerRange: "^1.0.0",
-      hostCoreVersion: "2.0.0",
+      hostCoreVersion: HOST_CORE_VERSION,
       adapters: [],
     });
     expect(diagnostics.issues).toEqual([
