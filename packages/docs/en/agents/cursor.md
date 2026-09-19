@@ -62,6 +62,8 @@ Root `AGENTS.md`, `.cursor/rules/*.mdc`, `.cursor/commands/*.md`,
 | Artifact | Implemented | project and Plugin both implemented |
 | Confirm | Implemented | no native CLI; returns `unconfirmed` |
 
+`fixtures/failures/` records the redacted security contract: literal MCP env rejection, hook path-escape rejection, and unknown hook-event pass-through.
+
 ## 5. Follow-up work (GitHub Issues)
 
 [JUE-304](../developer/delivery-plan.md) delivered project/plugin round-trip. The items below are **out of MVP scope** and tracked separately — agents must read the full issue before implementing:
@@ -70,4 +72,3 @@ Root `AGENTS.md`, `.cursor/rules/*.mdc`, `.cursor/commands/*.md`,
 | --- | --- |
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json` (Team marketplace index) |
 | [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw `compatible-bundle` with Cursor layout as third base ([RFC-0002](../developer/rfcs/0002-plugin-artifact-apply.md) known-boundary 3) |
-| [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + security contract samples (parity with Claude [JUE-105](../developer/delivery-plan.md)) |

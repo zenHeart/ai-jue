@@ -56,6 +56,17 @@ function toCursorEvent(eventName: string): string {
   return EVENT_ALIASES[eventName] ?? eventName;
 }
 
+/**
+ * Reject hook commands that walk out of the Artifact root via `..`.
+ * Unknown event names stay pass-through (honest degrade); path escape is
+ * a security rejection shared by read and write.
+ */
+function assertSafeHookCommand(command: string, location: string): void {
+  if (/(?:^|[\\/\s"'`=])\.\.(?:[\\/\s"'`]|$)/.test(command) || command.includes("../") || command.includes("..\\")) {
+    throw new Error(`${location} hook command leaves the Artifact root`);
+  }
+}
+
 function toCanonicalHooks(
   nativeRoot: { version?: number; hooks?: CursorHooksNative } | CursorHooksNative,
 ): Record<string, CanonicalHookEntry | CanonicalHookEntry[]> {
@@ -66,13 +77,16 @@ function toCanonicalHooks(
     if (!Array.isArray(commands)) continue;
     const entries = commands
       .filter((cmd) => typeof cmd.command === "string" && cmd.command.trim())
-      .map((cmd) => ({
-        script: cmd.command,
-        ...(cmd.matcher !== undefined ? { matcher: cmd.matcher } : {}),
-        ...(cmd.async !== undefined ? { async: cmd.async } : {}),
-        ...(cmd.timeout !== undefined ? { timeout: cmd.timeout } : {}),
-        type: "command",
-      }));
+      .map((cmd) => {
+        assertSafeHookCommand(cmd.command, `Cursor hook "${eventName}"`);
+        return {
+          script: cmd.command,
+          ...(cmd.matcher !== undefined ? { matcher: cmd.matcher } : {}),
+          ...(cmd.async !== undefined ? { async: cmd.async } : {}),
+          ...(cmd.timeout !== undefined ? { timeout: cmd.timeout } : {}),
+          type: "command",
+        };
+      });
     if (entries.length === 0) continue;
     // 原生事件名通过反向表映射回 canonical;未知事件显式透传,不做猜测转换。
     const canonicalEvent = NATIVE_TO_CANONICAL[eventName] ?? eventName;
@@ -92,12 +106,16 @@ function buildNativeHooks(canonical: Record<string, unknown>): CursorHooksNative
         : [value as CanonicalHookEntry];
     const commands = entries
       .filter((entry) => typeof entry.script === "string" && entry.script.trim())
-      .map((entry) => ({
-        command: entry.script!.trim(),
-        ...(entry.matcher !== undefined ? { matcher: entry.matcher } : {}),
-        ...(entry.async !== undefined ? { async: entry.async } : {}),
-        ...(entry.timeout !== undefined ? { timeout: entry.timeout } : {}),
-      }));
+      .map((entry) => {
+        const command = entry.script!.trim();
+        assertSafeHookCommand(command, `Cursor hook "${eventName}"`);
+        return {
+          command,
+          ...(entry.matcher !== undefined ? { matcher: entry.matcher } : {}),
+          ...(entry.async !== undefined ? { async: entry.async } : {}),
+          ...(entry.timeout !== undefined ? { timeout: entry.timeout } : {}),
+        };
+      });
     if (commands.length > 0) hooks[cursorEvent] = commands;
   }
   return hooks;

@@ -5,9 +5,9 @@ intent_status: accepted
 phase: iterating
 vcs: git
 branch: main
-slice_id: issue-10-adapter-creator-cursor-dual-layout
+slice_id: issue-11-cursor-failure-fixtures
 scale: patch
-slice_gate: implementing
+slice_gate: verifying
 health: ok
 user_accepted:
 skipped_gates: spec_ok,plan_ok (patch slice; continuous completion authorization)
@@ -18,27 +18,26 @@ skipped_gates: spec_ok,plan_ok (patch slice; continuous completion authorization
 
 ## Intent
 
-补齐 adapter-creator 对 Cursor project/plugin 双布局的正向合同，使作者按
-现有 `ai-jue-adapter-cursor` 实现写出同一套布局，而不是仍把 Cursor 当成
-单一 `.cursor/` 根。
+为 Cursor Adapter 补齐脱敏 failure fixtures 与安全合同：字面量凭据拒绝、
+hook 路径穿越拒绝，并记录未知 hook 事件的透传降级。
 
 ## Spec
 
-- `IMPLEMENTATION-patterns.md` 增加 Cursor 双布局一节，指向真实路径。
-- `SKILL.md` Phase 2/3 增加「多种 Artifact kind？」门禁。
-- 不声称 Cursor 只有 project；不实现 marketplace 或 failure fixtures。
-- `smoke-apply` / docs 构建不受影响。
+- `fixtures/failures/sensitive-reference/` 触发 `assertNoLiteralCredentials`。
+- `fixtures/failures/path-escape-hook/` 在 read/write 前失败。
+- `fixtures/failures/invalid-hook-event/` 透传未知事件名并写入 README。
+- 合同套件接入至少一条 sensitive-reference 用例。
+- fixture 名不含 `/`；值为合成标记，不是真实密钥。
 
 ## Plan
 
-1. 按现有 Cursor `layout.ts` / hooks / manifest 写短摘录 + 链接。
-2. 更新 SKILL 检查清单。
-3. 跑 smoke-apply 与相关测试。
+1. 先写失败测试与中性 fixture。
+2. 在 Cursor MCP/hooks mapping 复用 Core 安全规则。
+3. 更新 fixtures README 与 Cursor 后续工作表。
 
 ## Deferred-MPF
 
-- #11 Cursor failure fixtures（下一刀）。
-- #1 / RFC / 其余 INBOX 项。
+- 其余 INBOX 项。
 
 ## Open questions
 

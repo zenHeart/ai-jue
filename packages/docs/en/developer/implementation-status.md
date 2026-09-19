@@ -536,13 +536,14 @@ Partial means local code or tests exist, not complete Agent support. See
 [JUE-304](delivery-plan.md) delivered Cursor project/plugin round-trip.
 `jue-preset-internal` `adapter-creator` records that dual layout against
 `packages/ai-jue-adapter-cursor/src/capabilities/layout.ts`.
+Cursor `fixtures/failures/` feeds the shared suite `securityRejectionCases`
+and records hook path-escape rejection plus unknown-event pass-through.
 These GitHub Issues are **separate follow-ups** — agents must read the full issue (Acceptance criteria + Implementation notes) before starting:
 
 | Issue | Task |
 | --- | --- |
 | [#8](https://github.com/zenHeart/ai-jue/issues/8) | `.cursor-plugin/marketplace.json` generation |
 | [#9](https://github.com/zenHeart/ai-jue/issues/9) | OpenClaw compatible-bundle third base: Cursor layout |
-| [#11](https://github.com/zenHeart/ai-jue/issues/11) | failure fixtures + security contract samples |
 
 See [`agents/cursor.md` §5](../agents/cursor.md#5-follow-up-work-github-issues).
 

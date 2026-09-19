@@ -213,3 +213,8 @@ export function componentRoot(root: string, artifactKind: "project" | "plugin"):
 - Test unmanaged-field preservation (an existing file's unrelated keys or
   prose survive a write) and idempotency (identical input on a second
   `write()` call produces `[]`).
+- Register at least one `securityRejectionCases` fixture that rejects a
+  literal MCP env value via `assertNoLiteralCredentials`. Add Adapter-specific
+  failure samples (path-escaping hook commands fail; unknown hook events
+  pass through and are documented). Cursor samples:
+  `packages/ai-jue-adapter-cursor/fixtures/failures/`.

@@ -59,4 +59,28 @@ describe("cursor hooks shape", () => {
     const readBack = hooks("project").read(root);
     expect(Object.keys(readBack ?? {}).sort()).toEqual(Object.keys(canonicalHooks).sort());
   });
+
+  it("rejects a hook command that leaves the Artifact root", () => {
+    const root = path.join(__dirname, "..", "fixtures", "failures", "path-escape-hook");
+    expect(() => hooks("project").read(root)).toThrow(/leaves the Artifact root|path traversal|unsafe hook command/i);
+  });
+
+  it("rejects writing a hook command that leaves the Artifact root", () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-cursor-hooks-escape-"));
+    expect(() =>
+      hooks("project").write(
+        root,
+        { preToolUse: { type: "command", script: "sh ../../outside-root/neutral.sh" } },
+        "cursor",
+      ),
+    ).toThrow(/leaves the Artifact root|path traversal|unsafe hook command/i);
+  });
+
+  it("passes unknown hook event names through unchanged", () => {
+    const root = path.join(__dirname, "..", "fixtures", "failures", "invalid-hook-event");
+    const readBack = hooks("project").read(root);
+    expect(readBack).toEqual({
+      notARealCursorEvent: { type: "command", script: "echo documented-passthrough" },
+    });
+  });
 });

@@ -9,6 +9,7 @@ Neutral, offline fixtures for `packages/ai-jue-adapter-cursor` contract tests.
 | `project/` | project | Full `.cursor/*` tree + managed `AGENTS.md` |
 | `plugin/` | plugin | Full plugin tree + `.cursor-plugin/plugin.json` + `variables` |
 | `plugin-minimal/` | plugin | Manifest + one skill |
+| `failures/` | project | Rejection and honest-degrade samples; see `failures/README.md` |
 
 ## Manual Plugin verification
 

@@ -1,0 +1,10 @@
+{
+  "version": 1,
+  "hooks": {
+    "preToolUse": [
+      {
+        "command": "sh ../../outside-root/neutral.sh"
+      }
+    ]
+  }
+}
