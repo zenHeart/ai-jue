@@ -322,6 +322,22 @@ export function directoryPerItem(options: {
     write(root, value, target, scope = 'project') {
       const dirPath = options.dirPath(root);
       const changes: ArtifactChange[] = [];
+      const declaredNames = new Set(Object.keys(value));
+      for (const name of Object.keys(this.read(root) ?? {})) {
+        if (declaredNames.has(name)) continue;
+        changes.push({
+          target,
+          kind: 'delete',
+          ownership: 'full',
+          scope,
+          path: relativePortablePath(root, path.join(dirPath, name)),
+          beforeHash: null,
+          afterHash: null,
+          risk: 'low',
+          requiresApproval: false,
+          atomicState: 'planned',
+        });
+      }
       for (const [name, rawEntry] of Object.entries(value)) {
         const itemDir = path.join(dirPath, name);
         const { content, prompt, ...rest } = rawEntry as Record<string, any>;

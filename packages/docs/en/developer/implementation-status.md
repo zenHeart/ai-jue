@@ -76,6 +76,9 @@ Partial means local code or tests exist, not complete Agent support. See
   dependency of the declaring Preset (Node package resolution plus name/version
   verification) and falls back to `npm pack` when it is not installed. Nested
   Presets resolve from their parent Preset directory.
+  `directoryPerItem` deletes item directories that `read()` still recognizes
+  after Canonical dropped them, when that Capability is part of the write
+  ([RFC-0005](rfcs/0005-directory-per-item-prune.md)).
 - `ArtifactChange`/`ArtifactResult`/`Confirmation` types frozen, with
   `assertArtifactChange`/`assertConfirmation` structural invariants: a safe
   relative path, hash presence matching `kind`, and `confirmed` requiring

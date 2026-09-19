@@ -311,4 +311,22 @@ describe('applyChangesOrThrow', () => {
     fs.writeFileSync(path.join(root, 'notes.md'), 'someone else wrote this');
     expect(() => applyChangesOrThrow(root, [createChange()])).toThrow('notes.md');
   });
+
+  it('deletes a directory containing nested files', () => {
+    const root = tempDir();
+    const itemDir = path.join(root, 'skills', 'old-name');
+    fs.mkdirSync(path.join(itemDir, 'references'), { recursive: true });
+    fs.writeFileSync(path.join(itemDir, 'SKILL.md'), 'stale');
+    fs.writeFileSync(path.join(itemDir, 'references', 'guide.md'), 'nested');
+    applyChangesOrThrow(root, [
+      createChange({
+        kind: 'delete',
+        path: 'skills/old-name',
+        beforeHash: null,
+        afterHash: null,
+        content: undefined,
+      }),
+    ]);
+    expect(fs.existsSync(itemDir)).toBe(false);
+  });
 });

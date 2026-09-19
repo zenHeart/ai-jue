@@ -206,6 +206,7 @@ describe("documentation contract", () => {
       path.join("rfcs", "0001-minimal-conversion-model.md"),
       path.join("rfcs", "0002-plugin-artifact-apply.md"),
       path.join("rfcs", "0003-apply-scope-target-root.md"),
+      path.join("rfcs", "0005-directory-per-item-prune.md"),
     ]) {
       expectLocalePair("developer", file);
     }
@@ -222,9 +223,11 @@ describe("documentation contract", () => {
       "/developer/rfcs/0001-minimal-conversion-model",
       "/developer/rfcs/0002-plugin-artifact-apply",
       "/developer/rfcs/0003-apply-scope-target-root",
+      "/developer/rfcs/0005-directory-per-item-prune",
       "/en/developer/rfcs/0001-minimal-conversion-model",
       "/en/developer/rfcs/0002-plugin-artifact-apply",
       "/en/developer/rfcs/0003-apply-scope-target-root",
+      "/en/developer/rfcs/0005-directory-per-item-prune",
     ]) {
       expect(sidebar).toContain(link);
     }

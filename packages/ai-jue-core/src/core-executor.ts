@@ -95,6 +95,7 @@ function absolutePathFor(root: string, relativePath: string): string {
 function currentHash(root: string, relativePath: string): string | null {
   const absolute = absolutePathFor(root, relativePath);
   if (!fs.existsSync(absolute)) return null;
+  if (fs.statSync(absolute).isDirectory()) return null;
   return hashArtifactContent(fs.readFileSync(absolute));
 }
 
@@ -212,7 +213,8 @@ function snapshotBeforeWrite(root: string, change: ArtifactChange): Snapshot {
   return {
     change,
     existed,
-    originalContent: existed ? fs.readFileSync(absolute) : null,
+    originalContent:
+      existed && !fs.statSync(absolute).isDirectory() ? fs.readFileSync(absolute) : null,
     createdParentDirectories,
   };
 }
@@ -220,7 +222,7 @@ function snapshotBeforeWrite(root: string, change: ArtifactChange): Snapshot {
 function writeOne(root: string, change: ArtifactChange): void {
   const absolute = absolutePathFor(root, change.path);
   if (change.kind === 'delete') {
-    fs.rmSync(absolute, { force: true });
+    fs.rmSync(absolute, { force: true, recursive: true });
     return;
   }
   if (change.content === undefined) {
@@ -234,7 +236,11 @@ function restoreSnapshot(root: string, snapshot: Snapshot): void {
   const absolute = absolutePathFor(root, snapshot.change.path);
   if (snapshot.existed) {
     fs.mkdirSync(path.dirname(absolute), { recursive: true });
-    fs.writeFileSync(absolute, snapshot.originalContent as Buffer);
+    if (snapshot.originalContent === null) {
+      fs.mkdirSync(absolute, { recursive: true });
+      return;
+    }
+    fs.writeFileSync(absolute, snapshot.originalContent);
     return;
   }
   // The write that failed may never have created `absolute` — e.g. a parent

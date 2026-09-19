@@ -11,8 +11,8 @@
 - `gh-10` Documentation feature: [adapter-creator Cursor project/plugin layouts](https://github.com/zenHeart/ai-jue/issues/10) [done]
 - `gh-11` Test enhancement: [Cursor failure fixtures and safety contract samples](https://github.com/zenHeart/ai-jue/issues/11) [done]
 - `gh-22` Feature: [multi-agent user-scope MCP Adapters](https://github.com/zenHeart/ai-jue/issues/22)
-- `gh-26` Feature: [managed Artifact pruning](https://github.com/zenHeart/ai-jue/issues/26)
+- `gh-26` Feature: [managed Artifact pruning](https://github.com/zenHeart/ai-jue/issues/26) [done:narrow RFC-0005]
 - `gh-30` Adapter feature: [Antigravity 2.x user-scope Skills Artifact](https://github.com/zenHeart/ai-jue/issues/30)
 - `gh-31` RFC: [prevent duplicate Skill injection across discovery roots](https://github.com/zenHeart/ai-jue/issues/31)
 - `gh-33` RFC-0004: [project-layer cross-tool symlink discovery contract](https://github.com/zenHeart/ai-jue/issues/33)
-- `gh-35` Feature: [prune renamed or deleted source capabilities](https://github.com/zenHeart/ai-jue/issues/35)
+- `gh-35` Feature: [prune renamed or deleted source capabilities](https://github.com/zenHeart/ai-jue/issues/35) [done]

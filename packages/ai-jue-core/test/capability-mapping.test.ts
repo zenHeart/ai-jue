@@ -10,6 +10,7 @@ import {
   readCapabilities,
   writeCapabilities,
 } from '../src/capability-mapping';
+import { applyChangesOrThrow } from '../src/core-executor';
 
 const tempDirs: string[] = [];
 
@@ -179,6 +180,24 @@ describe('directoryPerItem', () => {
         files: { 'search.md': 'Root sidecar.' },
       },
     });
+  });
+
+  it('emits delete for a renamed item directory and leaves unrecognized human dirs', () => {
+    const root = tempDir();
+    const v1 = mapping.write(root, { 'old-name': { content: 'Do the thing.' } }, 'neutral-agent');
+    applyChangesOrThrow(root, v1);
+    fs.mkdirSync(path.join(root, 'skills', 'human-made'), { recursive: true });
+    fs.writeFileSync(path.join(root, 'skills', 'human-made', 'notes.txt'), 'keep');
+
+    const v2 = mapping.write(root, { 'new-name': { content: 'Do the thing.' } }, 'neutral-agent');
+    expect(v2.filter((change) => change.kind === 'delete').map((change) => change.path)).toEqual([
+      'skills/old-name',
+    ]);
+    applyChangesOrThrow(root, v2);
+
+    expect(fs.existsSync(path.join(root, 'skills', 'new-name', 'SKILL.md'))).toBe(true);
+    expect(fs.existsSync(path.join(root, 'skills', 'old-name'))).toBe(false);
+    expect(fs.existsSync(path.join(root, 'skills', 'human-made', 'notes.txt'))).toBe(true);
   });
 });
 

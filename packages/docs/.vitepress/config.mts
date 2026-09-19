@@ -110,6 +110,10 @@ const zhDeveloperSidebar = [
         text: "RFC-0003 apply 作用域与目标根",
         link: "/developer/rfcs/0003-apply-scope-target-root",
       },
+      {
+        text: "RFC-0005 directoryPerItem 孤儿删除",
+        link: "/developer/rfcs/0005-directory-per-item-prune",
+      },
     ],
   },
 ];
@@ -237,6 +241,10 @@ const enDeveloperSidebar = [
       {
         text: "RFC-0003 Apply Scope and Target Root",
         link: "/en/developer/rfcs/0003-apply-scope-target-root",
+      },
+      {
+        text: "RFC-0005 directoryPerItem orphan removal",
+        link: "/en/developer/rfcs/0005-directory-per-item-prune",
       },
     ],
   },

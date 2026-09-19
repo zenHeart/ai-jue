@@ -5,7 +5,7 @@ intent_status: accepted
 phase: iterating
 vcs: git
 branch: main
-slice_id: issue-9-openclaw-cursor-bundle
+slice_id: issue-26-35-directory-per-item-prune
 scale: patch
 slice_gate: implementing
 health: ok
@@ -18,27 +18,24 @@ skipped_gates: spec_ok,plan_ok (patch slice; continuous completion authorization
 
 ## Intent
 
-OpenClaw `compatible-bundle` 增加显式 `tools.openclaw.bundleFormat: "cursor"`，
-委托现有 Cursor Extension 默认导出。`auto` 仍只选 Claude/Codex。
+`directoryPerItem` 在再次 apply 时删除 Canonical 已不存在、但 `read()` 仍识别
+的条目目录。不新增 CLI 命令或第七概念。
 
 ## Spec
 
-- `bundleFormat` 接受 `auto | claude | codex | cursor`。
-- `auto` 永不选 Cursor。
-- 通过 Cursor 包默认 Extension 的唯一 Adapter 写入 plugin 布局。
-- 缺失 Cursor peer 在产生变更前失败。
-- Cursor `variables` 只进入 Cursor 基底；Claude/Codex 清单不含该字段。
-- 身份：Cursor 基底用 `tools.cursor.pluginManifest`，不先吃 Claude/Codex。
+见 RFC-0005。仅识别带主文件的条目目录；人手目录（无 SKILL.md 等）保留。
+`delete` 走现有 ArtifactChange 与 dry-run/check。
 
 ## Plan
 
-1. 先写失败测试。
-2. 扩展 OpenClaw writer 与 identity 解析。
-3. 对齐 peer/dev 与文档。
+1. 写入 RFC-0005 并挂导航。
+2. TDD：rename 留下旧目录、recursive delete、人手目录存活。
+3. Core 两处修补。
 
 ## Deferred-MPF
 
-- #26/#35 prune RFC、#8 marketplace、#33/#31 RFC、#5/#22/#30。
+- 全量 managed-file manifest（#26 宽方案）。
+- #8 / #22 / #30 / #31 / #33 / #5。
 
 ## Open questions
 
