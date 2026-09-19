@@ -100,7 +100,7 @@ defineAdapterContractSuite({
   ],
   securityRejectionCases: [
     {
-      name: "literal secret in MCP server env",
+      name: "literal value in MCP server env",
       root: path.join(FIXTURES_ROOT, "failures", "sensitive-reference"),
       expectedErrorSubstring: "must reference a runtime environment variable",
     },

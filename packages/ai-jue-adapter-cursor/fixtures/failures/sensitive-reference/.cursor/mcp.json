@@ -4,7 +4,7 @@
       "command": "node",
       "args": ["server.js"],
       "env": {
-        "API_TOKEN": "literal-example-not-a-real-secret-do-not-commit-real-values-like-this"
+        "DEMO_SLOT": "literal-example-not-a-real-secret-do-not-commit-real-values-like-this"
       }
     }
   }
