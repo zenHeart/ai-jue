@@ -12,7 +12,7 @@
     "build": "tsc"
   },
   "keywords": [],
-  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "author": "AI-Jue Team",
   "license": "MIT",
   "type": "commonjs",
   "dependencies": {

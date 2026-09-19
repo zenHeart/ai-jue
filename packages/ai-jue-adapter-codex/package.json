@@ -23,7 +23,7 @@
   "peerDependencies": {
     "ai-jue-core": "^2.0.1"
   },
-  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "author": "AI-Jue Team",
   "license": "MIT",
   "repository": {
     "type": "git",

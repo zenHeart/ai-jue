@@ -20,7 +20,7 @@
     "build": "tsc"
   },
   "keywords": [],
-  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "author": "AI-Jue Team",
   "license": "MIT",
   "dependencies": {
     "deepmerge": "^4.3.1",
