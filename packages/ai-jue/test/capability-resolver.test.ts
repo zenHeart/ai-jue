@@ -120,4 +120,35 @@ describe('resolveFinalConfig Capability Source integration', () => {
       fs.rmSync(projectDir, { recursive: true, force: true });
     }
   });
+
+  it('fails explicitly and writes no lock when an MCP source has no declaration or bin', async () => {
+    const projectDir = fs.mkdtempSync(
+      path.join(os.tmpdir(), 'jue-capability-invalid-mcp-'),
+    );
+    const sourceDir = path.join(projectDir, 'vendor', 'neutral-mcp');
+    fs.mkdirSync(sourceDir, { recursive: true });
+    fs.writeFileSync(
+      path.join(sourceDir, 'package.json'),
+      JSON.stringify({ name: 'neutral-mcp', version: '1.0.0' }),
+    );
+    const originalCwd = process.cwd();
+    process.chdir(projectDir);
+    try {
+      await expect(
+        resolveFinalConfig({
+          capabilities: {
+            neutral: {
+              source: 'file:./vendor/neutral-mcp',
+              type: 'mcp',
+            },
+          },
+        }),
+      ).rejects.toThrow('no valid server declaration');
+
+      expect(fs.existsSync(path.join(projectDir, 'ai-jue.lock'))).toBe(false);
+    } finally {
+      process.chdir(originalCwd);
+      fs.rmSync(projectDir, { recursive: true, force: true });
+    }
+  });
 });
