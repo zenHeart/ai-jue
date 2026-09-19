@@ -42,3 +42,12 @@ test("allows public project metadata without an email", () => {
     [],
   );
 });
+
+test("allows credential environment references without allowing literals", () => {
+  assert.deepEqual(scanText('"TOKEN": "${DEMO_TOKEN}"'), []);
+  const literal = ["literal", "sensitive", "value"].join("-");
+  assert.deepEqual(
+    scanText(`"TOKEN": "${literal}"`).map((finding) => finding.rule),
+    ["Literal credential assignment"],
+  );
+});

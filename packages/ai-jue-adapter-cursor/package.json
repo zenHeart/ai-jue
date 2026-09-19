@@ -18,7 +18,7 @@
     "adapter",
     "cursor"
   ],
-  "author": "AI-Jue Team <contact@ai-jue.dev>",
+  "author": "AI-Jue Team",
   "license": "MIT",
   "dependencies": {
     "js-yaml": "^4.3.1"

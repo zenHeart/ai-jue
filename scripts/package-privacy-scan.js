@@ -33,6 +33,12 @@ function scanText(content) {
   const findings = [];
   content.split("\n").forEach((line, index) => {
     for (const [rule, pattern] of PRIVACY_RULES) {
+      if (
+        rule === "Literal credential assignment" &&
+        /["']\$\{[A-Z][A-Z0-9_]*\}["']/.test(line)
+      ) {
+        continue;
+      }
       if (pattern.test(line)) findings.push({ line: index + 1, rule });
     }
   });
