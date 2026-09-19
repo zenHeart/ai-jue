@@ -19,6 +19,13 @@ global mutation. npm `peerDependencies` declares the consumer-compatible
 for local builds; `exports` declares the entrypoint. An Adapter does not put
 `ai-jue-core` in runtime `dependencies`, which would install a second Core.
 
+The Host resolves Extensions with Node's project-local-first order and validates
+the package name, version, resolved path, and `ai-jue-core` peer range before
+importing the entrypoint. A missing, invalid, or Host-incompatible range fails
+closed; the Host neither falls back to another Adapter copy nor rewrites
+dependencies. `apply`, `extension validate`, and `inspect --diagnostics` use
+the same resolution result.
+
 ## `defineExtension`
 
 ```ts

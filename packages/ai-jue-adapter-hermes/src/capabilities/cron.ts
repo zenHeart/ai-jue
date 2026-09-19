@@ -5,7 +5,7 @@ import type { ArtifactChange, CapabilityMapping } from "ai-jue-core";
 
 /**
  * Hermes cron jobs live at `<workspace>/cron/jobs.json` (verified
- * against cwr:/d/devuser/.hermes/cron/jobs.json — a top-level JSON
+ * against a redacted Hermes `cron/jobs.json` fixture — a top-level JSON
  * object mapping job_id → {name, prompt, schedule, repeat, deliver,
  * enabled, model, provider, base_url, skills, created_at}). Each
  * schedule is a standard cron string (e.g. "0 23 * * *"). Per the

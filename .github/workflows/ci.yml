@@ -28,6 +28,9 @@ jobs:
     - name: Test
       run: npm test
 
+    - name: Tracked-file privacy scan
+      run: npm run test:security-scan && npm run security-scan:tracked
+
     - name: Adapter Matrix Test
       run: npx vitest packages/ai-jue/test/adapter-matrix.test.ts
 

@@ -26,6 +26,11 @@ reference resolves exactly one Capability; use a Preset for a collection.
 Publishers normalize third-party content before distribution; Jue never
 executes source scripts while resolving it.
 
+A `skill` source uses `SKILL.md` as its primary document and preserves paths
+and bytes from `references/`, `scripts/`, `assets/`, and other root-relative
+sidecars. `package.json`, cache archives, symbolic links, hard links, and
+device files do not enter the Skill bundle.
+
 Resolution merges recursive Presets, references, declarative directories, then
 project overrides. References are leaves. `ai-jue.lock` records reference hash,
 resolved version, content hash, type, and schema. `--frozen` forbids implicit

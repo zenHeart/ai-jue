@@ -48,7 +48,7 @@ function writeExtensionPackage(
         name: 'jue-extension-neutral',
         version: '1.0.0',
         main: 'index.js',
-        peerDependencies: options.peerDependencies ?? { 'ai-jue-core': '^1.0.0' },
+        peerDependencies: options.peerDependencies ?? { 'ai-jue-core': '^2.0.0' },
       },
       null,
       2,
@@ -71,6 +71,13 @@ describe('resolveExtensionPackage', () => {
     const resolved = resolveExtensionPackage(root, root);
 
     expect(resolved.issues).toEqual([]);
+    expect(resolved).toMatchObject({
+      name: 'jue-extension-neutral',
+      version: '1.0.0',
+      peerRange: '^2.0.0',
+      hostCoreVersion: '2.0.0',
+      compatible: true,
+    });
     expect(fs.realpathSync(resolved.entryPath)).toBe(fs.realpathSync(path.join(root, 'index.js')));
   });
 
@@ -112,6 +119,39 @@ describe('resolveExtensionPackage', () => {
     ]);
   });
 
+  it('rejects an invalid ai-jue-core peer range', () => {
+    const root = tempDir();
+    writeExtensionPackage(root, {
+      entryContent: NEUTRAL_DEFINITION,
+      peerDependencies: { 'ai-jue-core': 'not-a-range' },
+    });
+
+    const resolved = resolveExtensionPackage(root, root);
+
+    expect(resolved.compatible).toBe(false);
+    expect(resolved.issues).toEqual([
+      expect.objectContaining({ code: 'invalid-peer-range' }),
+    ]);
+  });
+
+  it('rejects a peer range incompatible with the Host Core before import', () => {
+    const root = tempDir();
+    const sideEffectPath = path.join(root, 'should-not-exist.txt');
+    writeExtensionPackage(root, {
+      entryContent: `require('fs').writeFileSync(${JSON.stringify(sideEffectPath)}, 'ran'); ${NEUTRAL_DEFINITION}`,
+      peerDependencies: { 'ai-jue-core': '^1.0.0' },
+    });
+
+    const resolved = resolveExtensionPackage(root, root);
+
+    expect(resolved.compatible).toBe(false);
+    expect(resolved.issues[0]).toMatchObject({ code: 'incompatible-peer-dependency' });
+    expect(resolved.issues[0].message).toContain('jue-extension-neutral@1.0.0');
+    expect(resolved.issues[0].message).toContain('ai-jue-core@2.0.0');
+    expect(resolved.issues[0].message).toContain('ai-jue-core@^1.0.0');
+    expect(fs.existsSync(sideEffectPath)).toBe(false);
+  });
+
   it('reports a missing exports/main entry', () => {
     const root = tempDir();
     fs.writeFileSync(
@@ -119,7 +159,7 @@ describe('resolveExtensionPackage', () => {
       JSON.stringify({
         name: 'jue-extension-neutral',
         version: '1.0.0',
-        peerDependencies: { 'ai-jue-core': '^1.0.0' },
+        peerDependencies: { 'ai-jue-core': '^2.0.0' },
       }),
     );
 
@@ -138,7 +178,7 @@ describe('resolveExtensionPackage', () => {
         name: 'jue-extension-neutral',
         version: '1.0.0',
         main: 'missing.js',
-        peerDependencies: { 'ai-jue-core': '^1.0.0' },
+        peerDependencies: { 'ai-jue-core': '^2.0.0' },
       }),
     );
 

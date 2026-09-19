@@ -21,7 +21,11 @@ import {
   runCoreAdapter,
   RunCoreAdapterOptions,
 } from "../core-apply";
-import { loadExtensionAdapterGuarded } from "../extension-loader";
+import {
+  assertExtensionPackageCompatible,
+  loadExtensionAdapterGuarded,
+  resolveExtensionPackage,
+} from "../extension-loader";
 
 export const command = "apply";
 export const describe = ""; // Managed in cli.ts for dynamic translation
@@ -453,10 +457,9 @@ async function runSingleAdapter(
     t("commands.apply.running_adapter", { name: adapterName }),
   ).start();
   try {
-    const adapterPath = require.resolve(adapterName, {
-      paths: [process.cwd(), __dirname],
-    });
-    const adapter = loadExtensionAdapterGuarded(adapterPath);
+    const resolved = resolveExtensionPackage(adapterName, process.cwd());
+    assertExtensionPackageCompatible(resolved);
+    const adapter = loadExtensionAdapterGuarded(resolved.entryPath);
     adapterSpinner.stop();
     return await runCoreAdapter(adapter, config, outputDir, coreOptions);
   } catch (error: any) {
@@ -769,6 +772,7 @@ export const handler = async (argv: Arguments, runtime: ApplyRuntime = {}) => {
       const finalConfig = await resolveFinalConfig(config, {
         frozen: Boolean((argv as Arguments<{ frozen?: boolean }>).frozen),
         persistLock: !readOnly,
+        readOnly,
       });
 
       const exitCode = await runAdapters(finalConfig, process.cwd(), applyOptions);

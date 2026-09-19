@@ -1,11 +1,25 @@
 import { Arguments, CommandBuilder } from "yargs";
+import os from "os";
 import pc from "picocolors";
 import { checkExecution } from "ai-jue-core";
-import type { CanonicalDocument, CapabilitySupport, ExecutionStatus } from "ai-jue-core";
+import type { ApplyScope, CanonicalDocument, CapabilitySupport, ExecutionStatus } from "ai-jue-core";
 import { logger } from "../logger";
 import { t } from "../i18n";
 import { loadConfig, MergedConfig, toCanonicalDocument } from "../config";
 import { resolveFinalConfig } from "../resolver";
+import {
+  adapterConfigKey,
+  resolveArtifactKind,
+  resolveBundlePluginManifest,
+  resolveTargetSelection,
+  shortAdapterName,
+  UnsupportedArtifactKindError,
+} from "../artifact-kind";
+import {
+  assertAdapterSupportsScope,
+  resolveApplyScope,
+  resolveArtifactRoot,
+} from "../apply-scope";
 import {
   ExtensionPackageIssue,
   loadExtensionGuarded,
@@ -22,6 +36,8 @@ export interface ExtensionAdapterDiagnostic {
 
 export interface ApplyReadinessDiagnostic {
   adapterId: string;
+  scope: ApplyScope;
+  artifactKind: string;
   status: ExecutionStatus;
   pendingCount: number;
   conflictCount: number;
@@ -29,8 +45,13 @@ export interface ApplyReadinessDiagnostic {
 }
 
 export interface ExtensionDiagnostics {
+  name: string;
+  version: string;
+  packageDir: string;
   packageJsonPath: string;
   entryPath: string;
+  peerRange: string | null;
+  hostCoreVersion: string;
   issues: ExtensionPackageIssue[];
   adapters: ExtensionAdapterDiagnostic[];
   applyReadiness?: ApplyReadinessDiagnostic;
@@ -38,7 +59,12 @@ export interface ExtensionDiagnostics {
 
 export interface ApplyCheckInput {
   canonical: CanonicalDocument;
-  artifactRoot: string;
+  config?: MergedConfig;
+  projectDirectory?: string;
+  userHome?: string;
+  artifactRoot?: string;
+  scope?: ApplyScope;
+  artifactKind?: string;
 }
 
 /**
@@ -58,8 +84,13 @@ export async function runExtensionDiagnostics(
 ): Promise<ExtensionDiagnostics> {
   const resolved = resolveExtensionPackage(pathOrPackage, options.cwd ?? process.cwd());
   const diagnostics: ExtensionDiagnostics = {
+    name: resolved.name,
+    version: resolved.version,
+    packageDir: resolved.packageDir,
     packageJsonPath: resolved.packageJsonPath,
     entryPath: resolved.entryPath,
+    peerRange: resolved.peerRange,
+    hostCoreVersion: resolved.hostCoreVersion,
     issues: resolved.issues,
     adapters: [],
   };
@@ -76,13 +107,61 @@ export async function runExtensionDiagnostics(
 
   if (options.applyCheck) {
     const adapter = definition.adapters[0];
+    const config = options.applyCheck.config ?? {};
+    const targetSelection = resolveTargetSelection(config, adapter.id);
+    const scope =
+      options.applyCheck.scope ??
+      resolveApplyScope(undefined, targetSelection?.scope);
+    assertAdapterSupportsScope(
+      shortAdapterName(adapter.id),
+      adapter.supportedScopes,
+      scope,
+    );
+    const projectDirectory =
+      options.applyCheck.projectDirectory ??
+      options.applyCheck.artifactRoot ??
+      options.cwd ??
+      process.cwd();
+    const artifactRoot =
+      options.applyCheck.artifactRoot ??
+      resolveArtifactRoot(
+        scope,
+        projectDirectory,
+        options.applyCheck.userHome ?? os.homedir(),
+      );
+    const artifactKind =
+      options.applyCheck.artifactKind ??
+      resolveArtifactKind({ adapterName: adapter.id, config });
+    if (scope === "user" && !["project", "workspace"].includes(artifactKind)) {
+      throw new UnsupportedArtifactKindError(
+        shortAdapterName(adapter.id),
+        artifactKind,
+        ["project", "workspace"],
+      );
+    }
+    const configKey = adapterConfigKey(adapter.id);
+    const toolsConfig = (config as Record<string, any>)?.tools?.[configKey];
+    const pluginManifest =
+      ["plugin", "compatible-bundle", "skill-plugin"].includes(artifactKind)
+        ? resolveBundlePluginManifest(config as Record<string, unknown>, shortAdapterName(adapter.id))
+        : undefined;
     const changes = await adapter.write(options.applyCheck.canonical, {
-      artifactRoot: options.applyCheck.artifactRoot,
-      scope: "project",
+      artifactRoot,
+      scope,
+      artifactKind,
+      toolsConfig:
+        toolsConfig && Object.keys(toolsConfig).length > 0
+          ? toolsConfig
+          : undefined,
+      pluginManifest,
     });
-    const result = checkExecution(options.applyCheck.artifactRoot, changes);
+    const result = checkExecution(artifactRoot, changes, {
+      expectedScope: scope,
+    });
     diagnostics.applyReadiness = {
       adapterId: adapter.id,
+      scope,
+      artifactKind,
       status: result.status,
       pendingCount: result.pending.length,
       conflictCount: result.conflicts.length,
@@ -117,8 +196,16 @@ export const handler = async (argv: Arguments) => {
     let applyCheck: ApplyCheckInput | undefined;
     try {
       const userConfig: MergedConfig = await loadConfig();
-      const finalConfig = await resolveFinalConfig(userConfig);
-      applyCheck = { canonical: toCanonicalDocument(finalConfig), artifactRoot: process.cwd() };
+      const finalConfig = await resolveFinalConfig(userConfig, {
+        persistLock: false,
+        readOnly: true,
+      });
+      applyCheck = {
+        canonical: toCanonicalDocument(finalConfig),
+        config: finalConfig,
+        projectDirectory: process.cwd(),
+        userHome: os.homedir(),
+      };
     } catch {
       // No project config in cwd — diagnostics still report Extension/Adapter facts alone.
     }

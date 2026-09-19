@@ -109,8 +109,13 @@ skills?: Record<string, {
   references?: Record<string, string>
   scripts?: Record<string, string>
   assets?: Record<string, string>
+  files?: Record<string, string> // root-relative Skill sidecars
 }>
 ```
+
+`files` preserves safe paths beside `SKILL.md` and in custom subdirectories;
+the standard `references`, `scripts`, and `assets` namespaces remain separate.
+Binary values use `{ content, encoding: "base64" }`.
 
 Normalization rule:
 

@@ -66,4 +66,69 @@ describe("runExtensionDiagnostics", () => {
     });
     expect(second.applyReadiness?.status).toBe("pending");
   });
+
+  it("uses configured scope and artifact kind while keeping both roots read-only", async () => {
+    const projectDirectory = tempDir();
+    const userHome = tempDir();
+    const diagnostics = await runExtensionDiagnostics(CLAUDE_ADAPTER, {
+      applyCheck: {
+        canonical: { commands: { demo: { description: "d", content: "c" } } } as any,
+        config: {
+          targets: {
+            claude: { scope: "user", artifact: "project" },
+          },
+        } as any,
+        projectDirectory,
+        userHome,
+      },
+    });
+
+    expect(diagnostics.applyReadiness).toMatchObject({
+      adapterId: "claude-code",
+      scope: "user",
+      artifactKind: "project",
+      status: "pending",
+    });
+    expect(fs.readdirSync(projectDirectory)).toEqual([]);
+    expect(fs.readdirSync(userHome)).toEqual([]);
+  });
+
+  it("reports incompatible package identity without importing or calling write", async () => {
+    const root = tempDir();
+    const sideEffectPath = path.join(root, "should-not-exist.txt");
+    fs.writeFileSync(
+      path.join(root, "package.json"),
+      JSON.stringify({
+        name: "jue-extension-incompatible",
+        version: "1.0.0",
+        main: "index.js",
+        peerDependencies: { "ai-jue-core": "^1.0.0" },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(root, "index.js"),
+      `require("fs").writeFileSync(${JSON.stringify(sideEffectPath)}, "ran");`,
+    );
+
+    const diagnostics = await runExtensionDiagnostics(root, {
+      cwd: root,
+      applyCheck: {
+        canonical: {} as any,
+        artifactRoot: root,
+      },
+    });
+
+    expect(diagnostics).toMatchObject({
+      name: "jue-extension-incompatible",
+      version: "1.0.0",
+      peerRange: "^1.0.0",
+      hostCoreVersion: "2.0.0",
+      adapters: [],
+    });
+    expect(diagnostics.issues).toEqual([
+      expect.objectContaining({ code: "incompatible-peer-dependency" }),
+    ]);
+    expect(diagnostics.applyReadiness).toBeUndefined();
+    expect(fs.existsSync(sideEffectPath)).toBe(false);
+  });
 });

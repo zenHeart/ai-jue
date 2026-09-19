@@ -100,7 +100,7 @@ describe('directoryPerItem', () => {
   const mapping = directoryPerItem({
     dirPath: (root) => path.join(root, 'skills'),
     mainFileName: 'SKILL.md',
-    bundleKeys: ['references'],
+    bundleKeys: ['references', 'files'],
   });
 
   it('reads one directory per item', () => {
@@ -136,20 +136,31 @@ describe('directoryPerItem', () => {
           name: 'demo',
           content: 'Do the thing.',
           references: { 'notes.md': 'Neutral reference.' },
+          files: { 'search.md': 'Root sidecar.', 'nested/data.bin': { content: 'AP+A', encoding: 'base64' } },
         },
       },
       'neutral-agent',
     );
 
     const paths = changes.map((c) => c.path).sort();
-    expect(paths).toEqual(['skills/demo/SKILL.md', 'skills/demo/references/notes.md']);
+    expect(paths).toEqual([
+      'skills/demo/SKILL.md',
+      'skills/demo/nested/data.bin',
+      'skills/demo/references/notes.md',
+      'skills/demo/search.md',
+    ]);
     expect(changes.find((c) => c.path === 'skills/demo/SKILL.md')?.content).not.toContain('references:');
   });
 
   it('round-trips including bundle files', () => {
     const root = tempDir();
     const original = {
-      demo: { name: 'demo', content: 'Do the thing.', references: { 'notes.md': 'Neutral reference.' } },
+      demo: {
+        name: 'demo',
+        content: 'Do the thing.',
+        references: { 'notes.md': 'Neutral reference.' },
+        files: { 'search.md': 'Root sidecar.' },
+      },
     };
     const changes = mapping.write(root, original, 'neutral-agent');
     for (const change of changes) {
@@ -160,7 +171,13 @@ describe('directoryPerItem', () => {
     }
 
     expect(mapping.read(root)).toEqual({
-      demo: { name: 'demo', content: 'Do the thing.', prompt: 'Do the thing.' },
+      demo: {
+        name: 'demo',
+        content: 'Do the thing.',
+        prompt: 'Do the thing.',
+        references: { 'notes.md': 'Neutral reference.' },
+        files: { 'search.md': 'Root sidecar.' },
+      },
     });
   });
 });
@@ -236,6 +253,23 @@ describe('mergedJsonFile', () => {
     fs.writeFileSync(path.join(root, 'settings.json'), JSON.stringify({ hooks: { a: 1 } }, null, 2));
 
     expect(mapping.write(root, { a: 1 }, 'neutral-agent')).toEqual([]);
+  });
+
+  it.each([
+    ['invalid JSON', '{'],
+    ['a JSON array', '[]'],
+    ['a JSON scalar', '"text"'],
+  ])('refuses to replace an existing target containing %s', (_label, existing) => {
+    const mapping = mergedJsonFile({
+      filePath: (root) => path.join(root, 'settings.json'),
+      key: 'hooks',
+    });
+    const root = tempDir();
+    const target = path.join(root, 'settings.json');
+    fs.writeFileSync(target, existing);
+
+    expect(() => mapping.write(root, { a: 1 }, 'neutral-agent')).toThrow();
+    expect(fs.readFileSync(target, 'utf8')).toBe(existing);
   });
 });
 

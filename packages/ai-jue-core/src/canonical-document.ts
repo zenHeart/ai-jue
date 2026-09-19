@@ -23,6 +23,7 @@ const AssetBundleSchema = z.object({
   references: z.record(z.string(), SupportFileSchema).optional(),
   scripts: z.record(z.string(), SupportFileSchema).optional(),
   assets: z.record(z.string(), SupportFileSchema).optional(),
+  files: z.record(z.string(), SupportFileSchema).optional(),
 }).passthrough();
 
 const PromptLikeAssetSchema = z.object({

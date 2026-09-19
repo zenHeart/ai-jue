@@ -9,7 +9,7 @@ export type ReadContext = CoreReadContext;
 
 /**
  * Hermes Adapter's read: thin composition over a small subset of the
- * real `cwr:/d/devuser/.hermes` surface — per the JUE-303 honest-stance
+ * documented Hermes home surface — per the JUE-303 honest-stance
  * principle, only the surfaces we have ground-truth evidence for:
  *   - `context.global`  ← workspace-root `MEMORY.md`
  *   - `hooks`            ← empty no-op (the real ~/.hermes/hooks/ is empty)

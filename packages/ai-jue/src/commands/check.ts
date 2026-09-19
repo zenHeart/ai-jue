@@ -1,12 +1,146 @@
 import { Arguments, CommandBuilder } from "yargs";
 import { loadConfig } from "../config";
-import { exec } from "child_process";
+import fs from "fs";
+import path from "path";
+import { execFile } from "child_process";
 import { promisify } from "util";
 import pc from "picocolors";
 import { logger } from "../logger";
 import { t } from "../i18n";
 
-const execAsync = promisify(exec);
+const execFileAsync = promisify(execFile);
+
+export interface PresetCheckResult {
+  preset: string;
+  packageName: string;
+  installedVersion: string;
+  latestVersion?: string;
+  hasUpdate: boolean;
+  skipped?: boolean;
+  error?: string;
+}
+
+function isLocalDependencySpec(value: unknown): boolean {
+  return typeof value === "string" && /^(?:file|workspace|link):/.test(value);
+}
+
+function isLocalPreset(
+  packageName: string,
+  packageJsonPath: string,
+  packageJson: Record<string, any>,
+  cwd: string,
+): boolean {
+  if (packageJson.private === true) return true;
+  const packageDir = fs.realpathSync(path.dirname(packageJsonPath));
+  const projectRoot = fs.realpathSync(cwd);
+  const relative = path.relative(projectRoot, packageDir);
+  if (
+    relative &&
+    !relative.startsWith(`..${path.sep}`) &&
+    relative !== ".." &&
+    !relative.split(path.sep).includes("node_modules")
+  ) {
+    return true;
+  }
+
+  const rootManifestPath = path.join(projectRoot, "package.json");
+  if (fs.existsSync(rootManifestPath)) {
+    const rootManifest = JSON.parse(fs.readFileSync(rootManifestPath, "utf8"));
+    const declared = {
+      ...rootManifest.dependencies,
+      ...rootManifest.devDependencies,
+      ...rootManifest.optionalDependencies,
+    }[packageName];
+    if (isLocalDependencySpec(declared)) return true;
+  }
+
+  const lockPath = path.join(projectRoot, "package-lock.json");
+  if (fs.existsSync(lockPath)) {
+    const lock = JSON.parse(fs.readFileSync(lockPath, "utf8"));
+    const entry = lock.packages?.[`node_modules/${packageName}`];
+    if (entry?.link === true || isLocalDependencySpec(entry?.resolved)) return true;
+  }
+  return false;
+}
+
+export async function checkPresetVersions(
+  presets: string[],
+  options: {
+    cwd?: string;
+    viewVersion?: (packageName: string) => Promise<string>;
+  } = {},
+): Promise<PresetCheckResult[]> {
+  const cwd = options.cwd ?? process.cwd();
+  const viewVersion =
+    options.viewVersion ??
+    (async (packageName: string) => {
+      const { stdout } = await execFileAsync("npm", ["view", packageName, "version"], {
+        cwd,
+      });
+      return stdout.trim();
+    });
+
+  return Promise.all(
+    presets.map(async (presetName): Promise<PresetCheckResult> => {
+      if (!/^[a-zA-Z0-9\-_@/]+$/.test(presetName)) {
+        return {
+          preset: presetName,
+          packageName: "",
+          installedVersion: "unknown",
+          hasUpdate: false,
+          error: "Invalid preset name",
+        };
+      }
+      const packageName = presetName.startsWith("jue-preset-")
+        ? presetName
+        : `jue-preset-${presetName}`;
+      let installedVersion = "unknown";
+      try {
+        const packageJsonPath = require.resolve(`${packageName}/package.json`, {
+          paths: [cwd],
+        });
+        const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, "utf8"));
+        installedVersion =
+          typeof packageJson.version === "string"
+            ? packageJson.version
+            : "unknown";
+        if (isLocalPreset(packageName, packageJsonPath, packageJson, cwd)) {
+          return {
+            preset: presetName,
+            packageName,
+            installedVersion,
+            hasUpdate: false,
+            skipped: true,
+          };
+        }
+      } catch {
+        // Registry lookup still gives a useful latest version for an uninstalled preset.
+      }
+
+      try {
+        const latestVersion = await viewVersion(packageName);
+        return {
+          preset: presetName,
+          packageName,
+          installedVersion,
+          latestVersion,
+          hasUpdate:
+            installedVersion !== "unknown" &&
+            Boolean(latestVersion) &&
+            installedVersion !== latestVersion,
+        };
+      } catch (error: any) {
+        return {
+          preset: presetName,
+          packageName,
+          installedVersion,
+          hasUpdate: false,
+          error: error.message,
+        };
+      }
+    }),
+  );
+}
 
 export const command = "check";
 export const describe = "";
@@ -37,82 +171,30 @@ export const handler = async (argv: Arguments) => {
     return;
   }
 
-  const results: any[] = [];
+  const results = await checkPresetVersions(presets);
 
-  const checks = presets.map(async (presetName: string) => {
-    // Security check: ensure presetName contains only safe characters to prevent shell injection
-    if (!/^[a-zA-Z0-9\-_@\/]+$/.test(presetName)) {
-      if (!isJson) {
-        logger.error(
-          pc.red(`[SECURITY] Invalid preset name skipped: "${presetName}"`),
-        );
-      }
-      return;
-    }
-
-    const packageName = `jue-preset-${presetName}`;
-    try {
-      // Try to find the package.json of the installed preset
-      let installedVersion = "unknown";
-      try {
-        const pkgJsonPath = require.resolve(`${packageName}/package.json`, {
-          paths: [process.cwd()],
-        });
-        installedVersion = require(pkgJsonPath).version;
-      } catch (e) {
-        // console.warn(`Could not find installed version for ${packageName}`);
-      }
-
-      // Check latest version from npm
-      const { stdout } = await execAsync(`npm view ${packageName} version`);
-      const latestVersion = stdout.trim();
-
-      const hasUpdate =
-        installedVersion !== "unknown" &&
-        latestVersion &&
-        installedVersion !== latestVersion;
-
-      results.push({
-        preset: presetName,
-        packageName,
-        installedVersion,
-        latestVersion,
-        hasUpdate,
-      });
-
-      if (!isJson) {
-        if (hasUpdate) {
+  if (!isJson) {
+    for (const result of results) {
+      if (result.error) {
+        logger.error(pc.red(t("commands.check.failed", { message: result.error })));
+        process.exitCode = 1;
+      } else if (result.skipped) {
+        logger.info(`${result.packageName}: ${pc.dim("[LOCAL — SKIPPED]")}`);
+      } else if (result.hasUpdate) {
           logger.info(
-            `${packageName}: ${installedVersion} -> ${pc.green(latestVersion)} ${pc.yellow("[UPDATE]")}`,
+          `${result.packageName}: ${result.installedVersion} -> ${pc.green(result.latestVersion!)} ${pc.yellow("[UPDATE]")}`,
           );
-        } else if (installedVersion === latestVersion) {
+      } else if (result.installedVersion === result.latestVersion) {
           logger.info(
-            `${packageName}: ${pc.green(installedVersion)} ${pc.dim("[LATEST]")}`,
+          `${result.packageName}: ${pc.green(result.installedVersion)} ${pc.dim("[LATEST]")}`,
           );
-        } else {
-          logger.info(
-            `${packageName}: Installed=${installedVersion}, Latest=${latestVersion}`,
-          );
-        }
-      }
-    } catch (error: any) {
-      if (!isJson) {
-        logger.error(
-          pc.red(t("commands.check.failed", { message: error.message })),
-        );
       } else {
-        results.push({
-          preset: presetName,
-          packageName,
-          error: error.message,
-        });
+          logger.info(
+          `${result.packageName}: Installed=${result.installedVersion}, Latest=${result.latestVersion}`,
+          );
       }
     }
-  });
-
-  await Promise.all(checks);
-
-  if (isJson) {
+  } else {
     console.log(JSON.stringify({ presets: results }));
   }
 };

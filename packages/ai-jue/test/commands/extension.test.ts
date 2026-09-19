@@ -33,7 +33,7 @@ module.exports.default = {
 };
 `;
 
-function writeExtensionPackage(root: string, entryContent: string, peerDependencies: Record<string, string> = { 'ai-jue-core': '^1.0.0' }): void {
+function writeExtensionPackage(root: string, entryContent: string, peerDependencies: Record<string, string> = { 'ai-jue-core': '^2.0.0' }): void {
   fs.writeFileSync(
     path.join(root, 'package.json'),
     JSON.stringify({ name: 'jue-extension-neutral', version: '1.0.0', main: 'index.js', peerDependencies }),
@@ -85,6 +85,24 @@ describe('runExtensionValidate', () => {
     expect(result.issues).toEqual([]);
     expect(result.loaded).toBe(true);
     expect(result.adapterIds).toEqual(['neutral-agent']);
+  });
+
+  it('reports an incompatible peer and skips import even with --load', () => {
+    const root = tempDir();
+    const sideEffectPath = path.join(root, 'should-not-exist.txt');
+    writeExtensionPackage(
+      root,
+      `require('fs').writeFileSync(${JSON.stringify(sideEffectPath)}, 'ran'); ${NEUTRAL_DEFINITION}`,
+      { 'ai-jue-core': '^1.0.0' },
+    );
+
+    const result = runExtensionValidate(root, { cwd: root, load: true });
+
+    expect(result.issues).toEqual([
+      expect.objectContaining({ code: 'incompatible-peer-dependency' }),
+    ]);
+    expect(result.loaded).toBe(false);
+    expect(fs.existsSync(sideEffectPath)).toBe(false);
   });
 
   it('surfaces a guarded side-effect violation as a thrown error with --load', () => {

@@ -142,6 +142,19 @@ describe('planExecution', () => {
     ).toThrow('authorized root');
     expect(fs.existsSync(path.join(outside, 'notes.md'))).toBe(false);
   });
+
+  it.each([
+    ['file target', 'dangling.md', 'file'],
+    ['directory ancestor', 'dangling/notes.md', 'dir'],
+  ] as const)('rejects a dangling symlink at the %s', (_label, changePath, type) => {
+    const root = tempDir();
+    const linkPath = path.join(root, changePath.split('/')[0]);
+    fs.symlinkSync(path.join(root, 'missing-target'), linkPath, type);
+
+    expect(() =>
+      planExecution(root, [createChange({ path: changePath })]),
+    ).toThrow('dangling symlink');
+  });
 });
 
 describe('applyExecution', () => {
@@ -207,6 +220,24 @@ describe('applyExecution', () => {
     expect(result.status).toBe('rolled-back');
     expect(fs.readFileSync(path.join(root, 'existing.md'), 'utf8')).toBe('original');
     expect(fs.existsSync(path.join(root, 'new.md'))).toBe(false);
+  });
+
+  it('removes directories created by a failed batch and preserves pre-existing directories', () => {
+    const root = tempDir();
+    fs.mkdirSync(path.join(root, 'existing-dir'));
+    fs.writeFileSync(path.join(root, 'broken'), 'not a directory');
+    const changes = [
+      createChange({ path: 'existing-dir/new.md' }),
+      createChange({ path: 'new-dir/nested/new.md' }),
+      createChange({ path: 'broken/nested.md' }),
+    ];
+
+    const result = applyExecution(root, changes);
+
+    expect(result.status).toBe('rolled-back');
+    expect(fs.existsSync(path.join(root, 'existing-dir'))).toBe(true);
+    expect(fs.readdirSync(path.join(root, 'existing-dir'))).toEqual([]);
+    expect(fs.existsSync(path.join(root, 'new-dir'))).toBe(false);
   });
 
   it('rolls back a partial user-scope batch inside the authorized user root', () => {

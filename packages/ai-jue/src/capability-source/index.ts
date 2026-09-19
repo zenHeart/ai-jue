@@ -30,6 +30,8 @@ export interface CapabilitySourceOptions {
   fetch?: typeof fetch;
   frozen?: boolean;
   mirrorDir?: string;
+  /** For dry-run/check/diagnostics: permit direct files and populated caches only. */
+  readOnly?: boolean;
   /** `true` forces every Capability to bypass the cache; a name set scopes the bypass to those Capabilities only. */
   forceRefresh?: boolean | ReadonlySet<string>;
 }
@@ -334,6 +336,29 @@ async function resolveSource(
   const mirrorArchive = mirrorDir
     ? path.join(mirrorDir, `${path.basename(destination)}.tgz`)
     : '';
+
+  if (options.readOnly && !ref.source.startsWith('file:')) {
+    if (ref.source.startsWith('npm:') && !ref.source.startsWith('npm:file:')) {
+      assertExactNpmSpecifier(ref.source.slice('npm:'.length));
+    }
+    if (options.forceRefresh) {
+      throw new Error('Read-only Capability resolution cannot refresh the cache');
+    }
+    const cachedRoot = ref.source.startsWith('github:')
+      ? path.join(destination, 'unpacked')
+      : destination;
+    if (!isPopulated(cachedRoot)) {
+      throw new Error(
+        'Read-only Capability resolution requires a populated cache; run jue apply first',
+      );
+    }
+    const root = extractedRoot(cachedRoot);
+    const selected = ref.path ? safeChild(root, ref.path) : root;
+    if (!fs.existsSync(selected)) {
+      throw new Error('Capability source path does not exist');
+    }
+    return selected;
+  }
 
   let root: string;
   if (mirrorArchive && fs.existsSync(mirrorArchive)) {

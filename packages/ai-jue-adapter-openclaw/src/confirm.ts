@@ -27,6 +27,26 @@ export interface ConfirmContext extends CoreConfirmContext {
 const TARGET = "openclaw";
 const SAFE_PROFILE = /^[A-Za-z0-9._-]+$/;
 
+function minimalEnvironment(home: string): NodeJS.ProcessEnv {
+  const env: NodeJS.ProcessEnv = { HOME: home, USERPROFILE: home };
+  for (const key of ["PATH", "SystemRoot", "ComSpec", "PATHEXT", "TEMP", "TMP"]) {
+    if (process.env[key]) env[key] = process.env[key];
+  }
+  return env;
+}
+
+function isRegularContained(root: string, candidate: string): boolean {
+  try {
+    if (!fs.lstatSync(candidate).isFile()) return false;
+    const realRoot = fs.realpathSync(root);
+    const realCandidate = fs.realpathSync(candidate);
+    const relative = path.relative(realRoot, realCandidate);
+    return relative === "" || (!relative.startsWith(`..${path.sep}`) && relative !== ".." && !path.isAbsolute(relative));
+  } catch {
+    return false;
+  }
+}
+
 function profileName(context: ConfirmContext): string {
   const value = context.profile ?? `jue-302-verify-${process.pid}-${Date.now()}`;
   if (!SAFE_PROFILE.test(value)) {
@@ -47,8 +67,7 @@ function verificationEnvironment(context: ConfirmContext): {
   if (!fs.existsSync(root) || !fs.statSync(root).isDirectory()) {
     throw new Error(`OpenClaw verification home must be an existing directory: ${root}`);
   }
-  const env: NodeJS.ProcessEnv = { ...process.env, HOME: root, USERPROFILE: root };
-  delete env.OPENCLAW_CONFIG_PATH;
+  const env = minimalEnvironment(root);
   return { root, owned, env };
 }
 
@@ -74,6 +93,9 @@ function validateBundleStructure(root: string): string {
       "OpenClaw compatible-bundle requires a Claude, Codex, or Cursor plugin marker.",
     );
   }
+  if (!isRegularContained(root, marker.manifest)) {
+    throw new Error("OpenClaw bundle marker must be a contained regular file.");
+  }
 
   const hookRoot = path.join(root, "hooks");
   if (fs.existsSync(hookRoot)) {
@@ -81,7 +103,7 @@ function validateBundleStructure(root: string): string {
       if (!entry.isDirectory()) continue;
       const hookDir = path.join(hookRoot, entry.name);
       for (const fileName of ["HOOK.md", "handler.js"]) {
-        if (!fs.existsSync(path.join(hookDir, fileName))) {
+        if (!isRegularContained(root, path.join(hookDir, fileName))) {
           throw new Error(`OpenClaw hook ${entry.name} is missing ${fileName}.`);
         }
       }
@@ -131,7 +153,7 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
     const manifest = JSON.parse(fs.readFileSync(marker.manifest, "utf8")) as { name?: unknown };
     manifestName = typeof manifest.name === "string" ? manifest.name : "";
   } catch {
-    return { target: TARGET, status: "failed", evidence: `invalid JSON in ${marker.manifest}` };
+    return { target: TARGET, status: "failed", evidence: "bundle manifest contains invalid JSON" };
   }
   if (!manifestName.trim()) {
     return {
@@ -175,7 +197,15 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
     createdProfile = true;
     const installOutput = execFileSync(
       "openclaw",
-      ["--profile", profile, "plugins", "install", context.artifactRoot],
+      [
+        "--profile",
+        profile,
+        "plugins",
+        "install",
+        context.artifactRoot,
+        "--force",
+        "--accept-capabilities",
+      ],
       { encoding: "utf8", stdio: ["ignore", "pipe", "pipe"], env: verification.env },
     );
     const listOutput = execFileSync(
@@ -193,7 +223,14 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
         evidence: `openclaw plugins list --json returned non-JSON: ${listOutput.slice(0, 500)}`,
       };
     }
-    const pluginId = pluginIdFromList(listJson, manifestName, context.artifactRoot) ?? manifestName;
+    const pluginId = pluginIdFromList(listJson, manifestName, context.artifactRoot);
+    if (!pluginId) {
+      return {
+        target: TARGET,
+        status: "failed",
+        evidence: "OpenClaw plugin inventory is missing the installed manifest identity",
+      };
+    }
     const inspectOutput = execFileSync(
       "openclaw",
       ["--profile", profile, "plugins", "inspect", pluginId],
@@ -202,12 +239,12 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
     const evidence = `${installOutput}\n${listOutput}\n${inspectOutput}`;
     if (
       !/["']?format["']?\s*[:=]\s*["']?bundle/i.test(evidence) ||
-      !/["']?bundle\s*format["']?\s*[:=]\s*["']?(claude|codex|cursor)/i.test(evidence)
+      !new RegExp(`["']?bundle\\s*format["']?\\s*[:=]\\s*["']?${marker.format}`, "i").test(evidence)
     ) {
       return {
         target: TARGET,
         status: "failed",
-        evidence: `OpenClaw installed the bundle but inspect did not report Format: bundle and its bundle format: ${evidence.slice(0, 500)}`,
+        evidence: "OpenClaw inspect did not report the generated bundle marker format",
       };
     }
     return {
@@ -226,13 +263,10 @@ async function confirmCompatibleBundle(context: ConfirmContext): Promise<Confirm
         evidence: `${structure}; OpenClaw CLI is unavailable, so native install/inspect was not run`,
       };
     }
-    const stderr = error && typeof error === "object" && "stderr" in error
-      ? String((error as { stderr: unknown }).stderr)
-      : "";
     return {
       target: TARGET,
       status: "failed",
-      evidence: `OpenClaw bundle install/inspect failed: ${stderr.slice(0, 500) || String(error).slice(0, 500)}`,
+      evidence: "OpenClaw isolated bundle install, inventory, or inspect confirmation failed",
     };
   } finally {
     if (createdProfile) fs.rmSync(profileDir, { recursive: true, force: true });
@@ -266,6 +300,9 @@ export async function confirm(
       status: "unconfirmed",
       evidence: "no openclaw.json in fixture root (workspace has no MCP to confirm)",
     };
+  }
+  if (!isRegularContained(context.artifactRoot, fixtureConfig)) {
+    return { target: TARGET, status: "failed", evidence: "openclaw.json must be a contained regular file" };
   }
 
   let profile: string;
@@ -319,17 +356,15 @@ export async function confirm(
       },
     );
   } catch (error) {
+    if ((error as NodeJS.ErrnoException)?.code === "ENOENT") {
+      return { target: TARGET, status: "unconfirmed", evidence: "OpenClaw CLI is unavailable; native validation was not run" };
+    }
     exitStatus = (error as { status?: number | null }).status ?? null;
     out = ((error as { stdout?: string | Buffer }).stdout?.toString() ?? "");
-    const stderr =
-      error && typeof error === "object" && "stderr" in error
-        ? String((error as { stderr: unknown }).stderr)
-        : "";
-    const message = error instanceof Error ? error.message : String(error);
     return {
       target: TARGET,
       status: "failed",
-      evidence: `exit=${exitStatus} message=${message.slice(0, 200)} stdout=${out.slice(0, 300)} stderr=${stderr.slice(0, 300)}`,
+      evidence: `OpenClaw isolated config validation failed with exit=${exitStatus ?? "unknown"}`,
     };
   } finally {
     if (createdProfile) {
@@ -349,19 +384,19 @@ export async function confirm(
     return {
       target: TARGET,
       status: "failed",
-      evidence: `openclaw config validate --json returned non-JSON: stdout=${out.slice(0, 500)}`,
+      evidence: "openclaw config validate --json returned non-JSON output",
     };
   }
   if (parsed.valid === true) {
     return {
       target: TARGET,
       status: "confirmed",
-      evidence: `openclaw --profile ${profile} config validate --json reported valid=true against ${profileConfig}`,
+      evidence: "OpenClaw isolated config validation reported valid=true",
     };
   }
   return {
     target: TARGET,
     status: "failed",
-    evidence: `openclaw config validate --json reported valid=false: ${JSON.stringify(parsed.issues ?? parsed).slice(0, 500)}`,
+    evidence: "OpenClaw isolated config validation reported valid=false",
   };
 }

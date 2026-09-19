@@ -1,7 +1,7 @@
 # JUE-303 Phase-1 notes (incomplete, 2026-07-26)
 
-Real Hermes install on cwr: `D:\devuser\.hermes\` (v0.18.0 per the prior
-worker report; real config at `D:\devuser\.hermes\config.yaml`).
+Isolated Hermes install: `<isolated-home>/.hermes/` (version recorded in the
+redacted fixture; live SSH consumption is not committed).
 
 ## Top-level fields in the REAL config.yaml (verified by direct read)
 
@@ -46,7 +46,7 @@ I read the first ~200 lines of `config.yaml`. Fields seen so far:
 This is the first ~200 lines. The file is much longer; a JUE-303 build
 needs a complete field-by-field read before mapping to Canonical.
 
-## Skills tree at D:\devuser\.hermes\skills\
+## Skills tree at <isolated-home>\.hermes\skills\
 
 The skills/ directory contains ~30 top-level category directories:
 `.archive`, `.bundled_manifest`, `.curator_backups`, `.curator_state`,
@@ -66,20 +66,20 @@ huggingface-hub, etc.) — each with an MD5 hash suffix. This is a
 
 ## Real SKILL.md format
 
-`D:\devuser\.hermes\skills\hermes\self-manage\SKILL.md` (likely path
+`<isolated-home>\.hermes\skills\hermes\self-manage\SKILL.md` (likely path
 after the `\skills\<category>\<name>\SKILL.md` pattern). Will need
 direct read to confirm frontmatter shape.
 
 ## Hooks dir
 
-`D:\devuser\.hermes\hooks` is empty in the SSH listing (compare to
+`<isolated-home>\.hermes\hooks` is empty in the SSH listing (compare to
 OpenClaw's `~/.openclaw/hooks/`). Either Hermes doesn't have a
 per-workspace hooks dir, or hooks live elsewhere (e.g. global
 `hooks.d/` or a config key in `config.yaml`).
 
 ## Plugins
 
-`D:\devuser\.hermes\plugins` — need to look inside.
+`<isolated-home>\.hermes\plugins` — need to look inside.
 
 ## What the existing JUE-303 prior worker reported
 
@@ -107,5 +107,5 @@ for "OpenClaw-like hook" round-tripping).
    + scripts/verify-hermes-native.js.
 5. Walle ↔ Hermes can be the native confirmation bridge, but Walle's
    responsiveness has been slow in this session; consider falling back to
-   running `tirith` (the real Hermes binary at `D:\devuser\.hermes\bin\tirith`,
+   running `tirith` (the real Hermes binary at `<isolated-home>\.hermes\bin\tirith`,
    ~9.8MB) directly via SSH for native confirmation.

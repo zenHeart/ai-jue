@@ -30,7 +30,7 @@ const SECRET_RULES = [
   {
     name: "Literal token/secret/password assignment",
     pattern:
-      /(["']?(?:[A-Z0-9_]*_)?(?:API_?KEY|TOKEN|SECRET|PASSWORD)["']?\s*[:=]\s*)["']([^"'\s]{8,})["']/,
+      /(["']?[A-Za-z0-9_-]*(?:API[_-]?KEY|TOKEN|SECRET|PASSWORD)["']?\s*[:=]\s*)["']([^"'\s]{8,})["']/i,
     isPlaceholder: (value) =>
       /^\$\{[A-Za-z_][A-Za-z0-9_.]*\}$/.test(value) ||
       /^<?(REDACTED|redacted|placeholder|xxx+|\*+)>?$/i.test(value) ||
@@ -59,11 +59,25 @@ function getStagedFiles() {
   return output.split("\n").filter(Boolean);
 }
 
+function getTrackedFiles() {
+  const output = execFileSync("git", ["ls-files", "-z"], { encoding: "utf8" });
+  return output.split("\0").filter(Boolean);
+}
+
 function readStagedContent(filePath) {
   try {
     return execFileSync("git", ["show", `:${filePath}`], { encoding: "utf8" });
   } catch {
     return null; // binary or unreadable as utf8 — skip rather than crash the hook
+  }
+}
+
+function readTrackedContent(filePath) {
+  try {
+    const content = fs.readFileSync(path.join(REPO_ROOT, filePath), "utf8");
+    return content.includes("\0") ? null : content;
+  } catch {
+    return null;
   }
 }
 
@@ -76,7 +90,7 @@ function scanFile(filePath, content, blocklistTerms) {
       const match = line.match(rule.pattern);
       if (!match) continue;
       if (rule.isPlaceholder && rule.isPlaceholder(match[2] ?? "")) continue;
-      findings.push({ file: filePath, line: index + 1, rule: rule.name, snippet: line.trim().slice(0, 120) });
+      findings.push({ file: filePath, line: index + 1, rule: rule.name });
     }
     for (const term of blocklistTerms) {
       if (line.toLowerCase().includes(term.toLowerCase())) {
@@ -84,7 +98,6 @@ function scanFile(filePath, content, blocklistTerms) {
           file: filePath,
           line: index + 1,
           rule: `Blocklisted identifier "${term}"`,
-          snippet: line.trim().slice(0, 120),
         });
       }
     }
@@ -122,13 +135,16 @@ function runNpmAuditIfNeeded(stagedFiles) {
   return true;
 }
 
-function main() {
-  const stagedFiles = getStagedFiles();
+function main(argv = process.argv.slice(2)) {
+  const scanAllTracked = argv.includes("--all-tracked");
+  const files = scanAllTracked ? getTrackedFiles() : getStagedFiles();
   const blocklistTerms = loadLocalBlocklist();
 
   const allFindings = [];
-  for (const filePath of stagedFiles) {
-    const content = readStagedContent(filePath);
+  for (const filePath of files) {
+    const content = scanAllTracked
+      ? readTrackedContent(filePath)
+      : readStagedContent(filePath);
     if (content === null) continue;
     allFindings.push(...scanFile(filePath, content, blocklistTerms));
   }
@@ -136,7 +152,7 @@ function main() {
   if (allFindings.length > 0) {
     console.error("\n[security-scan] Blocked commit — possible secret or private-network/identifier leak:\n");
     for (const f of allFindings) {
-      console.error(`  ${f.file}:${f.line}  [${f.rule}]\n    ${f.snippet}`);
+      console.error(`  ${f.file}:${f.line}  [${f.rule}]`);
     }
     console.error(
       "\nRedact the value, or if this is a verified false positive, adjust scripts/security-scan.js's " +
@@ -145,9 +161,15 @@ function main() {
     process.exit(1);
   }
 
-  if (!runNpmAuditIfNeeded(stagedFiles)) {
+  if (!scanAllTracked && !runNpmAuditIfNeeded(files)) {
     process.exit(1);
   }
 }
 
-main();
+if (require.main === module) {
+  main();
+}
+
+module.exports = {
+  scanFile,
+};

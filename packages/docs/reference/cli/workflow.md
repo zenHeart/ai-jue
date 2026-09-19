@@ -40,8 +40,9 @@ jue apply [--watch] [--adapter <name>...] [--all] [--frozen] \
 | `--check` | 否 | CI 中检查配置、漂移与授权；目标已收敛时执行只读确认，确认不可用时警告，确认失败时非零退出 |
 
 `--dry-run` 与 `--check` 要求配置和 Adapter 已存在，不触发初始化或安装，也不更新
-`ai-jue.lock`。两种模式对配置根与 Artifact 根都保持零写入。每个 Adapter 在调用
-writer 前输出唯一的已解析目标行：
+`ai-jue.lock` 或持久 Capability cache。精确固定且已缓存的远程 Capability 可直接
+读取；未缓存的远程 Capability 明确失败并提示先执行正式 apply。两种模式对配置根
+与 Artifact 根都保持零写入。每个 Adapter 在调用 writer 前输出唯一的已解析目标行：
 
 ```text
 adapter=<id> scope=<project|user> root=<absolute path> artifact=<kind>
@@ -56,8 +57,9 @@ apply 不要求交互授权确认，预览与 CI 校验使用 `--dry-run` 与 `-
 必须通过 `--adapter`、`--all` 或 `targets` 明确选择 Adapter，不使用项目 footprint
 作为用户目录授权。拼写错误的 `--adpater` 仍被接受并显示警告。
 
-退出码：无变更或已应用 0，待定或漂移冲突 3，未授权 4，回滚或原生确认失败 1。Adapter
-不支持所选 scope，或 user scope 与 Plugin 类 Artifact 组合时退出码 2。
+退出码：无变更或已应用 0，待定或漂移冲突 3，未授权 4，回滚或原生确认失败 1。
+Adapter Core peer range 缺失、非法或不兼容，Adapter 不支持所选 scope，或 user
+scope 与 Plugin 类 Artifact 组合时退出码 2；这些错误均发生在 Adapter 导入和写入前。
 
 ## `jue inspect`
 
@@ -69,11 +71,13 @@ jue inspect [--extension <id>] [--diagnostics]
 
 `--extension <id>` 指定要检查的 Extension 包，`--diagnostics` 追加诊断。不指定 `--extension` 时只输出一条警告并结束，不输出任何摘要。
 
-`--diagnostics` 报告 Extension 的 npm 解析问题、其声明 adapter 的能力支持级别，以及当前项目 apply 的就绪状态（待定变更、漂移冲突、未授权变更计数）。该命令不写配置、lock 或 Artifact。
+`--diagnostics` 报告 Extension 的 npm 解析问题、其声明 adapter 的能力支持级别，以及当前项目 apply 的就绪状态（待定变更、漂移冲突、未授权变更计数）。就绪检查使用与 apply 相同的 scope、Artifact root 和 Artifact kind；该命令不写配置、cache、lock 或 Artifact。
 
 ## JSON 输出
 
-没有统一的 `--json` 选项。唯一带 `--json` 的是 `jue check`（检查预设安装版本），输出预设清单 JSON 到 stdout：
+没有统一的 `--json` 选项。唯一带 `--json` 的是 `jue check`（检查预设安装版本），
+输出预设清单 JSON 到 stdout。private、workspace、`file:` 与 `link:` Preset 标记为
+`skipped: true`，不查询 Registry：
 
 ```json
 {

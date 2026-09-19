@@ -38,8 +38,11 @@ One invocation reads and validates the config, converts it to the Canonical DSL,
 | `--check` | No | CI check for config, drift, and authorization; when converged, run read-only confirmation, warn when unavailable, and exit non-zero when confirmation fails |
 
 `--dry-run` and `--check` require the config and Adapter to exist. They do not
-initialize config, install packages, or update `ai-jue.lock`, and they write
-neither the config root nor the Artifact root. Before invoking each writer Jue
+initialize config, install packages, update `ai-jue.lock`, or populate the
+durable Capability cache. Exact pinned remote Capabilities may use an existing
+cache entry; uncached remote Capabilities fail with guidance to run a real
+apply first. They write neither the config root nor the Artifact root. Before
+invoking each writer Jue
 prints one resolved-target line:
 
 ```text
@@ -59,8 +62,9 @@ project footprints are not user-home authorization. The misspelled `--adpater`
 is still accepted and prints a warning.
 
 Exit codes: no change or applied 0, pending or blocked by drift 3, unauthorized
-4, rolled back or native confirmation failed 1. An unsupported scope or a user-scope Plugin-class Artifact
-combination exits 2.
+4, rolled back or native confirmation failed 1. A missing, invalid, or
+Host-incompatible Adapter Core peer range, an unsupported scope, or a user-scope
+Plugin-class Artifact combination exits 2 before Adapter import or writes.
 
 ## `jue inspect`
 
@@ -70,11 +74,14 @@ jue inspect [--extension <id>] [--diagnostics]
 
 `--extension <id>` selects the Extension package to inspect; `--diagnostics` appends diagnostics. Without `--extension`, it prints a warning and exits, with no summary.
 
-`--diagnostics` reports the Extension's npm resolution issues, the capability-support levels of its declared Adapters, and the current project's apply readiness (pending changes, drift conflicts, unauthorized changes). The command never writes configuration, locks, or Artifacts.
+`--diagnostics` reports the Extension's npm resolution issues, the capability-support levels of its declared Adapters, and the current project's apply readiness (pending changes, drift conflicts, unauthorized changes). Readiness uses the same scope, Artifact root, and Artifact kind as apply. The command never writes configuration, cache entries, locks, or Artifacts.
 
 ## JSON output
 
-There is no unified `--json` option. The only command with `--json` is `jue check` (checks installed preset versions), which prints a preset-list JSON to stdout:
+There is no unified `--json` option. The only command with `--json` is
+`jue check` (checks installed preset versions), which prints a preset-list JSON
+to stdout. Private, workspace, `file:`, and `link:` Presets report
+`skipped: true` and do not query the registry:
 
 ```json
 {

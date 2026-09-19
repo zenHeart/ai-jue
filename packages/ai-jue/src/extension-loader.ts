@@ -1,5 +1,6 @@
 import fs from 'fs';
 import path from 'path';
+import * as semver from 'semver';
 import {
   assertExtensionDefinition,
   type Adapter,
@@ -7,14 +8,33 @@ import {
 } from 'ai-jue-core';
 
 export interface ExtensionPackageIssue {
-  code: 'missing-entry' | 'missing-peer-dependency';
+  code:
+    | 'missing-entry'
+    | 'missing-peer-dependency'
+    | 'invalid-peer-range'
+    | 'incompatible-peer-dependency';
   message: string;
 }
 
 export interface ResolvedExtensionPackage {
   packageJsonPath: string;
+  packageDir: string;
   entryPath: string;
+  name: string;
+  version: string;
+  peerRange: string | null;
+  hostCoreVersion: string;
+  compatible: boolean;
   issues: ExtensionPackageIssue[];
+}
+
+export class ExtensionPackageCompatibilityError extends Error {
+  readonly exitCode = 2;
+
+  constructor(readonly resolved: ResolvedExtensionPackage) {
+    super(resolved.issues.map((issue) => issue.message).join('\n'));
+    this.name = 'ExtensionPackageCompatibilityError';
+  }
 }
 
 function resolveEntryRelativePath(packageJson: Record<string, unknown>): string | undefined {
@@ -58,11 +78,21 @@ function resolveExtensionLocation(
   // Resolve only the package's public entry. Package `exports` intentionally
   // may hide package.json, so metadata discovery must not require a private
   // `./package.json` subpath export.
-  const resolvedEntryPath = require.resolve(pathOrPackage, { paths: [baseDir] });
+  const resolvedEntryPath = require.resolve(pathOrPackage, { paths: [baseDir, __dirname] });
   return {
     packageJsonPath: findOwningPackageJson(resolvedEntryPath),
     resolvedEntryPath,
   };
+}
+
+function hostCoreVersion(): string {
+  const entry = require.resolve('ai-jue-core', { paths: [__dirname] });
+  const packageJsonPath = findOwningPackageJson(entry);
+  const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
+  if (typeof packageJson.version !== 'string' || !semver.valid(packageJson.version)) {
+    throw new Error('Host ai-jue-core package has an invalid version');
+  }
+  return packageJson.version;
 }
 
 /**
@@ -80,6 +110,9 @@ export function resolveExtensionPackage(
   const packageJson = JSON.parse(fs.readFileSync(packageJsonPath, 'utf8'));
   const packageDir = path.dirname(packageJsonPath);
   const issues: ExtensionPackageIssue[] = [];
+  const name = typeof packageJson.name === 'string' ? packageJson.name : path.basename(packageDir);
+  const version = typeof packageJson.version === 'string' ? packageJson.version : 'unknown';
+  const actualHostCoreVersion = hostCoreVersion();
 
   const entryRelative = resolveEntryRelativePath(packageJson);
   let entryPath = resolvedEntryPath ?? '';
@@ -93,14 +126,50 @@ export function resolveExtensionPackage(
   }
 
   const peerVersion = packageJson.peerDependencies?.['ai-jue-core'];
-  if (typeof peerVersion !== 'string' || !peerVersion.trim()) {
+  const peerRange = typeof peerVersion === 'string' && peerVersion.trim()
+    ? peerVersion.trim()
+    : null;
+  if (!peerRange) {
     issues.push({
       code: 'missing-peer-dependency',
       message: 'Extension package.json must declare peerDependencies["ai-jue-core"]',
     });
+  } else if (!semver.validRange(peerRange)) {
+    issues.push({
+      code: 'invalid-peer-range',
+      message: `Invalid Adapter compatibility range for ${name}@${version}: ai-jue-core@${peerRange}`,
+    });
+  } else if (!semver.satisfies(actualHostCoreVersion, peerRange)) {
+    issues.push({
+      code: 'incompatible-peer-dependency',
+      message:
+        `Incompatible Adapter: ${name}@${version}\n` +
+        `Resolved from: ${packageDir}\n` +
+        `Host: ai-jue-core@${actualHostCoreVersion}\n` +
+        `Adapter requires: ai-jue-core@${peerRange}\n` +
+        'Upgrade the selected Adapter before rerunning Jue.',
+    });
   }
 
-  return { packageJsonPath, entryPath, issues };
+  return {
+    packageJsonPath,
+    packageDir,
+    entryPath,
+    name,
+    version,
+    peerRange,
+    hostCoreVersion: actualHostCoreVersion,
+    compatible: issues.length === 0,
+    issues,
+  };
+}
+
+export function assertExtensionPackageCompatible(
+  resolved: ResolvedExtensionPackage,
+): void {
+  if (!resolved.compatible) {
+    throw new ExtensionPackageCompatibilityError(resolved);
+  }
 }
 
 function disallowedSideEffectMessage(api: string): string {

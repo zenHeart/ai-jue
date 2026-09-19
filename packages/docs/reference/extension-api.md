@@ -17,6 +17,11 @@ export default defineExtension({
 以相同的有界版本提供本地构建依赖，`exports` 声明入口。Adapter 不把
 `ai-jue-core` 放入运行时 `dependencies`，避免安装第二份 Core。
 
+Host 按 Node 的 project-local-first 顺序解析 Extension，并在导入入口前校验
+包名、版本、解析路径和 `ai-jue-core` peer range。缺失、非法或与 Host Core
+不兼容的 range 均 fail closed；Host 不回退到另一份 Adapter，也不自动改写依赖。
+`apply`、`extension validate` 与 `inspect --diagnostics` 使用同一解析结果。
+
 ## `defineExtension`
 
 ```ts

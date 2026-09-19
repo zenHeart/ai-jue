@@ -24,6 +24,9 @@ function writeSkill(root: string, body = 'Use the neutral workflow.'): Buffer {
     path.join(root, 'references', 'nested', '说明.md'),
     'Neutral reference',
   );
+  fs.writeFileSync(path.join(root, 'search.md'), 'Root sidecar');
+  fs.mkdirSync(path.join(root, 'guides'), { recursive: true });
+  fs.writeFileSync(path.join(root, 'guides', 'usage.md'), 'Nested root sidecar');
   const binary = Buffer.from([0, 255, 128, 10]);
   fs.writeFileSync(path.join(root, 'assets', 'sample.bin'), binary);
   return binary;
@@ -64,6 +67,10 @@ describe('Capability Source', () => {
     ).toEqual({
       content: binary.toString('base64'),
       encoding: 'base64',
+    });
+    expect(result.config.skills?.['neutral-skill']?.files).toEqual({
+      'guides/usage.md': 'Nested root sidecar',
+      'search.md': 'Root sidecar',
     });
     expect(JSON.stringify(result.lock)).not.toContain(root);
   });
@@ -289,6 +296,7 @@ describe('Capability Source', () => {
     const second = await loadCapabilityRefs({ 'neutral-skill': ref }, root, undefined, {
       cacheDir,
       fetch: fetchSpy as unknown as typeof fetch,
+      readOnly: true,
     });
 
     expect(fetchSpy).toHaveBeenCalledTimes(1);
@@ -296,6 +304,34 @@ describe('Capability Source', () => {
       'neutral workflow',
     );
   }, 30_000);
+
+  it('fails read-only resolution before fetching or creating an uncached remote source', async () => {
+    const root = tempDir();
+    const cacheDir = path.join(root, 'cache');
+    const fetchSpy = vi.fn();
+
+    await expect(
+      loadCapabilityRefs(
+        {
+          neutral: {
+            source: 'github:example/neutral-repo',
+            ref: 'v1.0.0',
+            type: 'skill',
+          },
+        },
+        root,
+        undefined,
+        {
+          cacheDir,
+          fetch: fetchSpy as unknown as typeof fetch,
+          readOnly: true,
+        },
+      ),
+    ).rejects.toThrow('populated cache');
+
+    expect(fetchSpy).not.toHaveBeenCalled();
+    expect(fs.existsSync(cacheDir)).toBe(false);
+  });
 
   it('forceRefresh bypasses the github: cache and re-fetches', async () => {
     const root = tempDir();
@@ -409,6 +445,22 @@ describe('Capability Source', () => {
       command: 'npx',
       args: ['-y', 'neutral'],
     });
+  });
+
+  it.each([
+    'npm:neutral-package',
+    'npm:neutral-package@latest',
+    'npm:neutral-package@^1.0.0',
+  ])('rejects floating npm identity %s before consulting the cache', async (source) => {
+    const root = tempDir();
+    await expect(
+      loadCapabilityRefs(
+        { neutral: { source, type: 'mcp' } },
+        root,
+        undefined,
+        { cacheDir: path.join(root, 'cache'), readOnly: true },
+      ),
+    ).rejects.toThrow('exact version');
   });
 
   it('rejects floating github refs in frozen mode', async () => {

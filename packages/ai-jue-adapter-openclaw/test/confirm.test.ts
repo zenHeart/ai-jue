@@ -76,4 +76,26 @@ describe("openclaw compatible-bundle confirmation", () => {
       status: "failed",
     });
   });
+
+  it("rejects a symlinked bundle marker before native CLI execution", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-openclaw-confirm-link-"));
+    const outside = fs.mkdtempSync(path.join(os.tmpdir(), "jue-openclaw-confirm-outside-"));
+    roots.push(root, outside);
+    fs.mkdirSync(path.join(root, ".codex-plugin"), { recursive: true });
+    fs.writeFileSync(
+      path.join(outside, "plugin.json"),
+      JSON.stringify({ name: "jue-bundle", version: "0.1.0" }),
+    );
+    fs.symlinkSync(
+      path.join(outside, "plugin.json"),
+      path.join(root, ".codex-plugin", "plugin.json"),
+    );
+
+    await expect(
+      confirm([], { scope: "project", artifactRoot: root, artifactKind: "compatible-bundle" }),
+    ).resolves.toMatchObject({
+      status: "failed",
+      evidence: expect.stringContaining("contained regular"),
+    });
+  });
 });

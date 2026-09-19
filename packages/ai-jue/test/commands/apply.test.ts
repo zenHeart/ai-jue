@@ -72,6 +72,47 @@ describe("runAdapterList per-adapter isolation", () => {
     }
   });
 
+  it("rejects an incompatible project-local Adapter before importing it", async () => {
+    const root = fs.mkdtempSync(path.join(os.tmpdir(), "jue-incompatible-adapter-"));
+    const packageRoot = path.join(root, "node_modules", "ai-jue-adapter-stale");
+    const outputDir = path.join(root, "output");
+    const marker = path.join(root, "imported");
+    const originalCwd = process.cwd();
+    fs.mkdirSync(packageRoot, { recursive: true });
+    fs.mkdirSync(outputDir);
+    fs.writeFileSync(
+      path.join(packageRoot, "package.json"),
+      JSON.stringify({
+        name: "ai-jue-adapter-stale",
+        version: "1.0.0",
+        main: "index.js",
+        peerDependencies: { "ai-jue-core": "^1.0.0" },
+      }),
+    );
+    fs.writeFileSync(
+      path.join(packageRoot, "index.js"),
+      `require("fs").writeFileSync(${JSON.stringify(marker)}, "imported");`,
+    );
+
+    try {
+      process.chdir(root);
+      const exitCode = await runAdapterList(
+        ["ai-jue-adapter-stale"],
+        {} as MergedConfig,
+        outputDir,
+        { dryRun: true },
+      );
+
+      expect(exitCode).toBe(2);
+      expect(fs.existsSync(marker)).toBe(false);
+      expect(fs.readdirSync(outputDir)).toEqual([]);
+    } finally {
+      process.chdir(originalCwd);
+      fs.rmSync(root, { recursive: true, force: true });
+      process.exitCode = 0;
+    }
+  });
+
   it.each(["dry-run", "check"] as const)(
     "keeps the config project and isolated user root unchanged during --%s",
     async (mode) => {

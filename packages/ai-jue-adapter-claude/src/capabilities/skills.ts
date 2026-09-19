@@ -8,6 +8,6 @@ export function skills(artifactKind: ArtifactKind): CapabilityMapping<Record<str
   return directoryPerItem({
     dirPath: (root) => path.join(componentRoot(root, artifactKind), "skills"),
     mainFileName: "SKILL.md",
-    bundleKeys: ["references", "scripts", "assets"],
+    bundleKeys: ["references", "scripts", "assets", "files"],
   });
 }
