@@ -1,3 +1,11 @@
+## [0.3.2](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-openclaw@v0.3.1...ai-jue-adapter-openclaw@v0.3.2) (2026-09-19)
+
+### Bug fixes
+
+- Preserve root-relative Skill sidecars across workspace and bundle artifacts.
+- Require contained regular marker files and exact native inventory identity.
+- Confirm bundle format through isolated install, list, and inspect operations.
+
 ## [0.3.1](https://github.com/zenHeart/ai-jue/compare/ai-jue-adapter-openclaw@v0.3.0...ai-jue-adapter-openclaw@v0.3.1) (2026-08-24)
 
 ### Bug fixes
